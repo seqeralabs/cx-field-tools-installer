@@ -246,28 +246,28 @@ With that said, for design purposes, this tool assumes that multiple project ins
 ### Modules
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="vpc"></a> [vpc](001-vpc.tf) | [terraform-aws-modules/s3-bucket/aws](https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/5.1.2) | 5.1.2 |
-| <a name="tower_eice_ingress_sg"></a> [tower_eice_ingress_sg](002-security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
-| <a name="tower_eice_egress_sg"></a> [tower_eice_egress_sg](002-security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
-| <a name="tower_ec2_ssh_sg"></a> [tower_ec2_ssh_sg](002-security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
-| <a name="tower_ec2_egress_sg"></a> [tower_ec2_egress_sg](002-security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
-| <a name="tower_ec2_direct_sg"></a> [tower_ec2_direct_sg](002-security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
-| <a name="tower_alb_sg"></a> [tower_alb_sg](002-security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
-| <a name="tower_db_sg"></a> [tower_db_sg](002-security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
-| <a name="tower_batch_sg"></a> [tower_batch_sg](002-security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
-| <a name="rds"></a> [rds](003-database.tf) | [terraform-aws-modules/rds/aws](https://registry.terraform.io/modules/terraform-aws-modules/rds/aws/6.1.1) | 6.1.1 |
-| <a name="alb"></a> [alb](007-load_balancer.tf) | [terraform-aws-modules/alb/aws](https://registry.terraform.io/modules/terraform-aws-modules/alb/aws/8.7.0) | 8.7.0 |
+| <a name="vpc"></a> [vpc](001_vpc.tf) | [terraform-aws-modules/s3-bucket/aws](https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/5.1.2) | 5.1.2 |
+| <a name="tower_eice_ingress_sg"></a> [tower_eice_ingress_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
+| <a name="tower_eice_egress_sg"></a> [tower_eice_egress_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
+| <a name="tower_ec2_ssh_sg"></a> [tower_ec2_ssh_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
+| <a name="tower_ec2_egress_sg"></a> [tower_ec2_egress_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
+| <a name="tower_ec2_direct_sg"></a> [tower_ec2_direct_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
+| <a name="tower_alb_sg"></a> [tower_alb_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
+| <a name="tower_db_sg"></a> [tower_db_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
+| <a name="tower_batch_sg"></a> [tower_batch_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
+| <a name="rds"></a> [rds](003_database.tf) | [terraform-aws-modules/rds/aws](https://registry.terraform.io/modules/terraform-aws-modules/rds/aws/6.1.1) | 6.1.1 |
+| <a name="alb"></a> [alb](007_load_balancer.tf) | [terraform-aws-modules/alb/aws](https://registry.terraform.io/modules/terraform-aws-modules/alb/aws/8.7.0) | 8.7.0 |
 
 ### Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="aws_account_id"></a> [aws_account_id](011-outputs.tf) | AWS Account ID |
-| <a name="aws_caller_arn"></a> [aws_caller_arn](011-outputs.tf) | Assumed role used to deploy the project |
-| <a name="aws_caller_user"></a> [aws_caller_user](011-outputs.tf) | User used to deploy the project |
-| <a name="ec2_ssh_key"></a> [ec2_ssh_key](011-outputs.tf) | SSH key attached to the EC2 instance |
-| <a name="aws_ec2_private_ip"></a> [aws_ec2_private_ip](011-outputs.tf) | Private IP of the EC2 Instance |
-| <a name="tower_server_url"></a> [tower_server_url](011-outputs.tf) | Platform  server URL |
-| <a name="route53_record_status"></a> [route53_record_status](011-outputs.tf) | Status of Route53 record |
-| <a name="tower_api_endpoint"></a> [tower_api_endpoint](011-outputs.tf) | Platform API endpoint |
-| <a name="seqera_configuration"></a> [seqera_configuration](011-outputs.tf) | Path to the SeqeraKit setup file |
+| <a name="aws_account_id"></a> [aws_account_id](012_outputs.tf) | AWS Account ID |
+| <a name="aws_caller_arn"></a> [aws_caller_arn](012_outputs.tf) | Assumed role used to deploy the project |
+| <a name="aws_caller_user"></a> [aws_caller_user](012_outputs.tf) | User used to deploy the project |
+| <a name="ec2_ssh_key"></a> [ec2_ssh_key](012_outputs.tf) | SSH key attached to the EC2 instance |
+| <a name="aws_ec2_private_ip"></a> [aws_ec2_private_ip](012_outputs.tf) | Private IP of the EC2 Instance |
+| <a name="tower_server_url"></a> [tower_server_url](012_outputs.tf) | Platform  server URL |
+| <a name="route53_record_status"></a> [route53_record_status](012_outputs.tf) | Status of Route53 record |
+| <a name="tower_api_endpoint"></a> [tower_api_endpoint](012_outputs.tf) | Platform API endpoint |
+| <a name="seqera_configuration"></a> [seqera_configuration](012_outputs.tf) | Path to the SeqeraKit setup file |
