@@ -1,0 +1,154 @@
+---
+- hosts: localhost
+
+  vars:
+  # https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_privilege_escalation.html#using-become
+  # When 'become' is yes and 'become_user' not mentioned, becomes root user by default. Setting anyways for explicitness.
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  tasks:
+
+  - name: Install wget & nano.
+    ansible.builtin.yum:
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+        - wget
+        - nano
+        - git
+
+
+  - name: Install docker.
+  # https://docs.docker.com/engine/install/ubuntu/
+    ansible.builtin.dnf:
+      name: docker-24.0.5
+      state: present
+
+  - name: Ensure docker is running
+  # https://stackoverflow.com/questions/42040688/docker-daemon-start-using-ansible
+    service:
+      name: docker
+      state: started
+
+  - name: Enable docker.service
+    # https://stackoverflow.com/questions/42040688/docker-daemon-start-using-ansible
+    ansible.builtin.systemd:
+      name: docker.service
+      daemon_reload: true
+      enabled: true
+
+  - name: Sudoless Docker - Create Group
+    # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/group_module.html 
+    ansible.builtin.group:
+      name: docker
+      state: present
+
+  - name: Sudoless Docker - Add ec2-user to docker
+    # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/user_module.html
+    ansible.builtin.user:
+      name: ec2-user
+      groups: docker
+      append: yes
+
+
+  - name: MySQL - Get RPM
+    # https://serverfault.com/questions/946219/how-to-install-mysql-server-using-ansible-playbook
+    ansible.builtin.shell: |
+      mkdir -p /opt/mysql && cd /opt/mysql
+      rm -rf /opt/mysql/mysql*.rpm*
+
+      # Stopped working ~Jan 15/24. Commented out but keeping for reference.
+      # wget https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
+      # rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+
+      # Sudo suddenly required to make this work. Very strange. key must be imported first (Jan 16/24)
+      rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2023
+      wget https://dev.mysql.com/get/mysql80-community-release-el9-5.noarch.rpm
+      yum install -y mysql80-community-release-el9-5.noarch.rpm
+
+  # This stopped working when the RPM / GPG problem (above) happened. Commented out but kept for reference.
+  # Consider replacing this whole thing with a MySQL docker container instead to avoid future headaches.
+  # - name: MySQL - Install RPM
+  #   ansible.builtin.yum:
+  #     # name: /opt/mysql/mysql80-community-release-el9-1.noarch.rpm
+  #     name: /opt/mysql/mysql80-community-release-el9-5.noarch.rpm
+  #     state: present
+
+  - name: MySQL - Install Client
+    ansible.builtin.yum:
+      name: mysql-community-client
+      state: installed
+
+
+  - name: Install Java Corretto 17
+    # tw relies on Java Corretto
+    ansible.builtin.yum:
+      name: java-17-amazon-corretto-devel-1:17.0.9+8-1.amzn2023.1 
+      state: present
+
+
+  - name: Install pyyaml (needed by seqerakit)
+    # https://pypi.org/project/PyYAML/
+    ansible.builtin.pip:
+      name: PyYAML==6.0.1
+
+
+  - name: Install Seqerakit
+    # https://github.com/seqeralabs/seqera-kit
+    # Dev branch here for times when dev branch might contain fixes not yet present in master.
+    become: true
+    become_user: ec2-user
+    ansible.builtin.pip:
+      name: seqerakit==0.4.5
+      # name: git+https://github.com/seqeralabs/seqera-kit.git@dev
+      extra_args: --user
+
+  - name: Create .docker folder
+    # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/file_module.html
+    # https://docs.docker.com/compose/install/linux/#install-the-plugin-manually
+    ansible.builtin.file:
+      path: /home/ec2-user/.docker/cli-plugins
+      state: directory
+      mode: '0755'
+
+  - name: Recursively change ownership of the .docker directory
+  # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/file_module.html
+    ansible.builtin.file:
+      path: /home/ec2-user/.docker
+      state: directory
+      recurse: yes
+      owner: ec2-user
+      group: ec2-user
+
+  - name: Install Docker-Compose (v2)
+    # https://www.techcrumble.net/2019/12/how-install-docker-and-docker-compose-using-ansible-playbooks/
+    # https://github.com/docker/compose/releases/
+    # Pinning to specific version rather than latest.
+    get_url:
+      url: https://github.com/docker/compose/releases/download/v2.24.2/docker-compose-linux-x86_64
+      dest: /home/ec2-user/.docker/cli-plugins/docker-compose
+      mode: 'u+x,g+x,o+x'
+
+
+  - name: Install twcli
+    # Source: https://github.com/seqeralabs/tower-cli
+    become: true
+    become_user: ec2-user
+    ansible.builtin.shell: |
+      cd /home/ec2-user
+      wget https://github.com/seqeralabs/tower-cli/releases/download/v0.9.1/tw-linux-x86_64
+
+      mv tw-* tw
+      chmod +x ./tw
+      sudo mv tw /usr/local/bin
+      tw --version
+
+
+  - name: Stop ECS Agent
+    # Unneeded for the Tower host and causes churn in `docker ps -a` command
+    ansible.builtin.shell: |
+      systemctl stop ecs  || true
+      docker rm ecs-agent || true

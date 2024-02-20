@@ -1,0 +1,21 @@
+---
+- hosts: localhost
+
+  vars:
+  # Only run this if TF seqerakit flag set to true.
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  tasks:
+  - name: Wait for Tower to be ready
+    become: true
+    become_user: ec2-user
+    ansible.builtin.shell: |
+      cd /home/ec2-user/target/python && source ~/.bashrc
+
+      # https://gist.github.com/rgl/f90ff293d56dbb0a1e0f7e7e89a81f42 
+      while [[ $(curl -s -o /dev/null -w %{http_code} localhost:8000/api/service-info) != "200" && $(curl -s -o /dev/null -w %{http_code} localhost:8000/api/service-info) != "301" ]]; do
+        echo "Tower not ready. Sleeping 10 seconds."
+        sleep 10
+      done
