@@ -15,7 +15,7 @@ The Seqera CX team has developed a field tool to help simplify these initial eff
 
 The solution is delivered on a best-effort basis, but provides no guarantees of appropriateness for your specific scenario. Please conduct your due diligence prior to execution within your environment.
 
-- Information about project structure, design decisions, and assumptions made can be found in [Design Decisions](documentation/design.md).
+- Information about project structure, design decisions, and assumptions made can be found in [Design Decisions](documentation/design_decisions.md).
 - Information on existing deficiencies and gotchas can be found in [Deficiencies & Gotchas](documentation/deficiencies_and_gotchas.md).
 
 
