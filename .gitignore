@@ -5,3 +5,6 @@
 **/assets/target
 .terraform/
 *_override.tf
+testing*.json
+ssh_key_for*.pem
+ssh_config
