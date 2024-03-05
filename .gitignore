@@ -3,3 +3,5 @@
 **/reference
 **/DONTDELETE
 **/assets/target
+.terraform/
+*_override.tf
