@@ -22,6 +22,11 @@ write_files:
       USER=/home/ec2-user
       cd /home/ec2-user
       curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+      while [ ! -f get-pip.py ]; do 
+        echo "File not found, retrying download..."
+        curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+        sleep 1
+      done
       python3 get-pip.py 
       python3 -m pip install ansible
       echo "$(ansible --version)"
