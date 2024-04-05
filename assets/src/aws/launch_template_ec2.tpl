@@ -31,6 +31,7 @@ write_files:
       done
       if [ $counter -eq 10 ]; then
         echo "Failed to download file after 10 attempts."
+        exit 1
       fi
 
       python3 get-pip.py 
