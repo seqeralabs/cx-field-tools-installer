@@ -2,13 +2,13 @@
 ## File transfer (if allowed)
 ## ------------------------------------------------------------------------------------
 resource "null_resource" "copy_files_to_vm" {
-  count               = var.flag_vm_copy_files_to_instance == true ? 1 : 0
+  count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
 
-  triggers            = { always_run = "${timestamp()}"  }
-  depends_on          = [ null_resource.allow_file_copy_to_start ]
+  triggers   = { always_run = "${timestamp()}" }
+  depends_on = [null_resource.allow_file_copy_to_start]
 
   provisioner "local-exec" {
-    command           = <<-EOT
+    command     = <<-EOT
 
       set -e
 
@@ -34,7 +34,7 @@ resource "null_resource" "copy_files_to_vm" {
       ssh ${var.app_name} 'cd /home/ec2-user/target/ansible && ansible-playbook 03_pull_containers_and_run_tower.yml'
 
     EOT
-    interpreter       = ["/bin/bash", "-c"]
+    interpreter = ["/bin/bash", "-c"]
   }
 }
 
@@ -44,18 +44,18 @@ resource "null_resource" "copy_files_to_vm" {
 ## ------------------------------------------------------------------------------------
 # If new private CA on VM, get generated CA cert back to local machine for local browser use.
 resource "null_resource" "copy_private_ca_cert" {
-  count               = var.flag_generate_private_cacert  == true ? 1 : 0
+  count = var.flag_generate_private_cacert == true ? 1 : 0
 
-  triggers            = { always_run = "${timestamp()}" }
-  depends_on          = [ null_resource.copy_files_to_vm  ]
+  triggers   = { always_run = "${timestamp()}" }
+  depends_on = [null_resource.copy_files_to_vm]
 
   provisioner "local-exec" {
-    command           = <<-EOT
+    command     = <<-EOT
       rm assets/target/customcerts/rootCA.crt || true
       aws s3 cp ${var.bucket_prefix_for_new_private_ca_cert}/rootCA.crt assets/target/customcerts/rootCA.crt || true
       chmod 777 assets/target/customcerts/rootCA.crt || true
     EOT
-    interpreter       = ["/bin/bash", "-c"]
+    interpreter = ["/bin/bash", "-c"]
   }
 }
 
@@ -64,13 +64,13 @@ resource "null_resource" "copy_private_ca_cert" {
 ## Run Seqerakit (if allowed)
 ## ------------------------------------------------------------------------------------
 resource "null_resource" "run_seqerkit" {
-  count               = var.flag_vm_copy_files_to_instance == true && var.flag_run_seqerakit == true ? 1 : 0
-  
-  triggers            = { always_run = "${timestamp()}"  }
-  depends_on          = [ null_resource.copy_files_to_vm ]
+  count = var.flag_vm_copy_files_to_instance == true && var.flag_run_seqerakit == true ? 1 : 0
+
+  triggers   = { always_run = "${timestamp()}" }
+  depends_on = [null_resource.copy_files_to_vm]
 
   provisioner "local-exec" {
-    command           = <<-EOT
+    command     = <<-EOT
 
       set -e
 
@@ -79,6 +79,6 @@ resource "null_resource" "run_seqerkit" {
       ssh ${var.app_name} 'cd /home/ec2-user/target/ansible && ansible-playbook 05_run_seqerakit.yml'
 
     EOT
-    interpreter       = ["/bin/bash", "-c"]
+    interpreter = ["/bin/bash", "-c"]
   }
 }

@@ -21,7 +21,19 @@ write_files:
       # https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html
       USER=/home/ec2-user
       cd /home/ec2-user
-      curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+
+      counter=0
+      while [ ! -f get-pip.py ] && [ $counter -lt 10 ]; do 
+        echo "File not found, retrying download..."
+        curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+        sleep 1
+        counter=$((counter+1))
+      done
+      if [ $counter -eq 10 ]; then
+        echo "Failed to download file after 10 attempts."
+        exit 1
+      fi
+
       python3 get-pip.py 
       python3 -m pip install ansible
       echo "$(ansible --version)"
