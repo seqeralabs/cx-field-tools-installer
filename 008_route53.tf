@@ -2,18 +2,18 @@
 ## Hosted Zone retrieval
 ## ------------------------------------------------------------------------------------
 data "aws_route53_zone" "public" {
-  count                    = var.flag_use_existing_route53_public_zone == true ? 1 : 0
+  count = var.flag_use_existing_route53_public_zone == true ? 1 : 0
 
-  name                     = var.existing_route53_public_zone_name
+  name = var.existing_route53_public_zone_name
 }
 
 
 data "aws_route53_zone" "private" {
-  count                    = var.flag_use_existing_route53_private_zone == true ? 1 : 0
+  count = var.flag_use_existing_route53_private_zone == true ? 1 : 0
 
-  name                     = var.existing_route53_private_zone_name
-  vpc_id                   = local.vpc_id
-  private_zone             = true
+  name         = var.existing_route53_private_zone_name
+  vpc_id       = local.vpc_id
+  private_zone = true
 }
 
 
@@ -21,11 +21,11 @@ data "aws_route53_zone" "private" {
 ## Hosted Zone Generation
 ## ------------------------------------------------------------------------------------
 resource "aws_route53_zone" "private" {
-  count                    = var.flag_create_route53_private_zone == true ? 1 : 0
+  count = var.flag_create_route53_private_zone == true ? 1 : 0
 
-  name                     = var.new_route53_private_zone_name
+  name = var.new_route53_private_zone_name
   vpc {
-    vpc_id                 = local.vpc_id
+    vpc_id = local.vpc_id
   }
 }
 
@@ -37,9 +37,9 @@ resource "aws_route53_zone" "private" {
 resource "aws_route53_record" "alb" {
   count = local.dns_create_alb_record == true ? 1 : 0
 
-  zone_id                   = local.dns_zone_id
-  name                      = "${var.tower_server_url}"
-  type                      = "A"
+  zone_id = local.dns_zone_id
+  name    = var.tower_server_url
+  type    = "A"
 
   alias {
     name                   = module.alb[0].lb_dns_name
@@ -52,10 +52,10 @@ resource "aws_route53_record" "alb" {
 resource "aws_route53_record" "ec2" {
   count = local.dns_create_ec2_record == true ? 1 : 0
 
-  zone_id                   = local.dns_zone_id
-  name                      = "${var.tower_server_url}"
-  type                      = "A"
+  zone_id = local.dns_zone_id
+  name    = var.tower_server_url
+  type    = "A"
 
-  ttl                       = "5"
-  records                   = [local.dns_instance_ip]
+  ttl     = "5"
+  records = [local.dns_instance_ip]
 }
