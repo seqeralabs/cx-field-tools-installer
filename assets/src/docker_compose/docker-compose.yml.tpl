@@ -56,6 +56,8 @@ services:
 %{~ endif ~}
 %{ endif }
 
+# Migrate-db only available for 23.4.1+ or higher. Check to ensure we don't include for 23.3.x or below. 
+%{ if regex("^23\.4\.[1-9]", docker_version)}
   migrate:
     image: cr.seqera.io/private/nf-tower-enterprise/migrate-db:${docker_version}
     platform: linux/amd64
@@ -72,6 +74,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+%{ endif }
 %{ endif }
 
   cron:
