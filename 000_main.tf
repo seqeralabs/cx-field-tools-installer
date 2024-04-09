@@ -231,4 +231,12 @@ locals {
   # These are needed to handle templatefile rendering to Bash echoing to file craziness.
   dollar      = "$"
   singlequote = "'"
+
+  # Migrate-DB Flag
+  # ---------------------------------------------------------------------------------------
+  # Migrate-db only available for 23.4.1+ or higher. Check to ensure we don't include for 23.3.x or below. 
+  flag_activate_migrate_db = (
+    tonumber(length(regexall("^v23.4.[1-9]", var.tower_container_version))) >= 1 || 
+      tonumber(length(regexall("^v2[4-9]", var.tower_container_version))) >= 1 ? true : false
+  )
 }

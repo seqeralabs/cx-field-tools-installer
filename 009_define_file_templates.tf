@@ -120,6 +120,9 @@ locals {
 
       flag_enable_groundswell = var.flag_enable_groundswell
       swell_container_version = var.swell_container_version
+
+      # flag_activate_migrate_db = tonumber(length(regexall("^v23.4.[1-9]", var.tower_container_version)))
+      flag_activate_migrate_db = local.flag_activate_migrate_db
     }
   )
 }
