@@ -25,6 +25,7 @@ services:
 %{ endif ~}
 %{ endif ~}
 
+
 %{ if flag_use_container_redis == true ~}
   redis:
     image: cr.seqera.io/public/redis:6.0
@@ -37,6 +38,7 @@ services:
     volumes:
       - $HOME/.tower/db/redis:/data
 %{ endif ~}
+
 
 %{ if flag_enable_groundswell == true && flag_new_enough_for_groundswell == true ~}
   groundswell:
@@ -55,12 +57,13 @@ services:
 %{ endif ~}
 %{ endif ~}
 
+
 %{ if flag_new_enough_for_migrate_db == true ~}
   migrate:
     image: cr.seqera.io/private/nf-tower-enterprise/migrate-db:${docker_version}
     platform: linux/amd64
     #command: -c "echo 'hello'; sleep 30; /migrate-db.sh"
-    command: -c "echo 'hello'; cat /tower.yml; /migrate-db.sh"
+    command: -c "/migrate-db.sh"
     networks:
       - backend
     volumes:
@@ -74,6 +77,7 @@ services:
         condition: service_healthy
 %{ endif ~}
 %{ endif ~}
+
 
 %{ if flag_new_enough_for_migrate_db == true ~}
   cron:
@@ -95,7 +99,11 @@ services:
 %{ else ~}
   cron:
     image: cr.seqera.io/private/nf-tower-enterprise/backend:${docker_version}
+%{ if flag_use_container_db == true ~}
     command: -c "/wait-for-it.sh db:3306 -t 60; /migrate-db.sh; /tower.sh"
+%{ else ~}
+    command: -c "/migrate-db.sh; /tower.sh"
+%{ endif }
     networks:
       - frontend
       - backend
@@ -106,14 +114,25 @@ services:
     environment:
       - MICRONAUT_ENVIRONMENTS=prod,redis,cron${auth_oidc}${auth_github}
     restart: always
+%{ if flag_use_container_db == true || flag_use_container_redis == true ~}
     depends_on:
+%{ if flag_use_container_db == true ~}
       - db
+%{ endif ~}
+%{ if flag_use_container_redis == true ~}
       - redis
 %{ endif ~}
+%{ endif ~}
+%{ endif ~}
+
 
   backend:
     image: cr.seqera.io/private/nf-tower-enterprise/backend:${docker_version}
+%{ if flag_use_container_db == true ~}
     command: -c "/wait-for-it.sh db:3306 -t 60; /tower.sh"
+%{ else ~}
+    command: -c "/tower.sh"
+%{ endif }
     networks:
       - frontend
       - backend
@@ -135,6 +154,7 @@ services:
 %{ endif ~}
       - cron
 
+
   frontend:
     image: cr.seqera.io/private/nf-tower-enterprise/frontend:${docker_version}
     networks:
@@ -144,6 +164,7 @@ services:
     restart: always
     depends_on:
       - backend
+
 
 %{ if flag_use_custom_docker_compose_file == true ~}
   # Expectations: 
