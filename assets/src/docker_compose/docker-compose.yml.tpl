@@ -20,10 +20,9 @@ services:
       retries: 10
     volumes:
       - $HOME/.tower/db/mysql:/var/lib/mysql
-%{~ if flag_enable_groundswell == true }
+%{~ if flag_enable_groundswell == true && flag_new_enough_for_groundswell == true ~}
       - $HOME/target/groundswell_config/groundswell.sql:/docker-entrypoint-initdb.d/init.sql
 %{~ endif ~}
-
 %{~ endif ~}
 
 %{ if flag_use_container_redis == true }
@@ -39,7 +38,7 @@ services:
       - $HOME/.tower/db/redis:/data
 %{ endif ~}
 
-%{ if flag_enable_groundswell == true }
+%{~ if flag_enable_groundswell == true && flag_new_enough_for_groundswell == true ~}
   groundswell:
     image: cr.seqera.io/private/nf-tower-enterprise/groundswell:${swell_container_version}
     command: bash -c "pip install cryptography; bin/wait-for-it.sh db:3306 -t 60; bin/migrate-db.sh; bin/serve.sh"
@@ -54,10 +53,10 @@ services:
     depends_on:
       - db
 %{~ endif ~}
-%{ endif }
+%{~ endif }
 
 
-%{ if flag_activate_migrate_db == true }
+%{~ if flag_new_enough_for_migrate_db == true }
   migrate:
     image: cr.seqera.io/private/nf-tower-enterprise/migrate-db:${docker_version}
     platform: linux/amd64
@@ -77,6 +76,7 @@ services:
 %{~ endif ~}
 %{ endif }
 
+%{~ if flag_new_enough_for_migrate_db == true }
   cron:
     image: cr.seqera.io/private/nf-tower-enterprise/backend:${docker_version}
     command: -c "/tower.sh"
@@ -90,10 +90,26 @@ services:
     environment:
       - MICRONAUT_ENVIRONMENTS=prod,redis,cron${auth_oidc}${auth_github}
     restart: always
-%{ if flag_activate_migrate_db == true }
     depends_on:
       migrate:
         condition: service_completed_successfully
+%{ else }
+  cron:
+    image: cr.seqera.io/private/nf-tower-enterprise/backend:${docker_version}
+    command: -c "/wait-for-it.sh db:3306 -t 60; /migrate-db.sh; /tower.sh"
+    networks:
+      - frontend
+      - backend
+    volumes:
+      - $HOME/tower.yml:/tower.yml
+    env_file:
+      - tower.env
+    environment:
+      - MICRONAUT_ENVIRONMENTS=prod,redis,cron${auth_oidc}${auth_github}
+    restart: always
+    depends_on:
+      - db
+      - redis
 %{ endif }
 
   backend:

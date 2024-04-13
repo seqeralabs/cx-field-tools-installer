@@ -36,6 +36,9 @@ locals {
 
       flag_data_explorer_enabled        = var.flag_data_explorer_enabled
       data_explorer_disabled_workspaces = var.data_explorer_disabled_workspaces
+
+      flag_new_enough_for_groundswell = local.flag_new_enough_for_groundswell
+      flag_new_enough_for_ses_iam = local.flag_new_enough_for_ses_iam
     }
   )
 
@@ -121,8 +124,9 @@ locals {
       flag_enable_groundswell = var.flag_enable_groundswell
       swell_container_version = var.swell_container_version
 
-      # flag_activate_migrate_db = tonumber(length(regexall("^v23.4.[1-9]", var.tower_container_version)))
-      flag_activate_migrate_db = local.flag_activate_migrate_db
+      # flag_new_enough_for_migrate_db = tonumber(length(regexall("^v23.4.[1-9]", var.tower_container_version)))
+      flag_new_enough_for_migrate_db = local.flag_new_enough_for_migrate_db
+      flag_new_enough_for_groundswell = local.flag_new_enough_for_groundswell
     }
   )
 }

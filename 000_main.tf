@@ -235,8 +235,25 @@ locals {
   # Migrate-DB Flag
   # ---------------------------------------------------------------------------------------
   # Migrate-db only available for 23.4.1+ or higher. Check to ensure we don't include for 23.3.x or below. 
-  flag_activate_migrate_db = (
+  flag_new_enough_for_migrate_db = (
     tonumber(length(regexall("^v23.4.[1-9]", var.tower_container_version))) >= 1 || 
       tonumber(length(regexall("^v2[4-9]", var.tower_container_version))) >= 1 ? true : false
+  )
+
+  flag_new_enough_for_groundswell = (
+    tonumber(length(regexall("^v23.[3-9]", var.tower_container_version))) >= 1 ||
+      tonumber(length(regexall("^v2[4-9]", var.tower_container_version))) >= 1 ? true : false
+  )
+
+  flag_new_enough_for_ses_iam = (
+    tonumber(length(regexall("^v23.[2-9]", var.tower_container_version))) >= 1 ||
+      tonumber(length(regexall("^v2[4-9]", var.tower_container_version))) >= 1 ? true : false
+  )
+
+  # This exists to throw an error if Tower a version earlier than Tower v23.1 is selected
+  flag_new_enough_for_parameter_store = (
+    tonumber(length(regexall("^v23.[1-9]", var.tower_container_version))) >= 1 ||
+      tonumber(length(regexall("^v2[4-9]", var.tower_container_version))) >= 1 ? true : 
+      "[Error] This tool requires secrets to be in Parameter Store. Please use 23.1.0 or newer."
   )
 }
