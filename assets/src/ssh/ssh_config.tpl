@@ -1,5 +1,5 @@
 %{ if flag_private_tower_without_eice == true  || flag_make_instance_public == true ~}
-Host seqera
+Host ${app_name}
     Hostname ${dns_instance_ip}
     User ${user}
     IdentityFile ${pemfile}

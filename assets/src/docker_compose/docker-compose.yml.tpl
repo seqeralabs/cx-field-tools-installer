@@ -1,7 +1,7 @@
 version: "3"
 services:
 
-%{~ if flag_use_container_db == true }
+%{ if flag_use_container_db == true ~}
   db:
     image: mysql:8.0  #mysql:5.7  #mysql:8.0
     networks:
@@ -20,13 +20,13 @@ services:
       retries: 10
     volumes:
       - $HOME/.tower/db/mysql:/var/lib/mysql
-%{~ if flag_enable_groundswell == true }
+%{ if flag_enable_groundswell == true && flag_new_enough_for_groundswell == true ~}
       - $HOME/target/groundswell_config/groundswell.sql:/docker-entrypoint-initdb.d/init.sql
-%{~ endif ~}
+%{ endif ~}
+%{ endif ~}
 
-%{~ endif ~}
 
-%{ if flag_use_container_redis == true }
+%{ if flag_use_container_redis == true ~}
   redis:
     image: cr.seqera.io/public/redis:6.0
     networks:
@@ -39,7 +39,8 @@ services:
       - $HOME/.tower/db/redis:/data
 %{ endif ~}
 
-%{ if flag_enable_groundswell == true }
+
+%{ if flag_enable_groundswell == true && flag_new_enough_for_groundswell == true ~}
   groundswell:
     image: cr.seqera.io/private/nf-tower-enterprise/groundswell:${swell_container_version}
     command: bash -c "pip install cryptography; bin/wait-for-it.sh db:3306 -t 60; bin/migrate-db.sh; bin/serve.sh"
@@ -50,17 +51,19 @@ services:
     env_file:
       - groundswell.env
     restart: always
-%{~ if flag_use_container_db == true }
+%{ if flag_use_container_db == true ~}
     depends_on:
       - db
-%{~ endif ~}
-%{ endif }
+%{ endif ~}
+%{ endif ~}
 
+
+%{ if flag_new_enough_for_migrate_db == true ~}
   migrate:
     image: cr.seqera.io/private/nf-tower-enterprise/migrate-db:${docker_version}
     platform: linux/amd64
     #command: -c "echo 'hello'; sleep 30; /migrate-db.sh"
-    command: -c "echo 'hello'; cat /tower.yml; /migrate-db.sh"
+    command: -c "/migrate-db.sh"
     networks:
       - backend
     volumes:
@@ -68,12 +71,15 @@ services:
     env_file:
       - tower.env
     restart: no
-%{~ if flag_use_container_db == true }
+%{ if flag_use_container_db == true ~}
     depends_on:
       db:
         condition: service_healthy
-%{ endif }
+%{ endif ~}
+%{ endif ~}
 
+
+%{ if flag_new_enough_for_migrate_db == true ~}
   cron:
     image: cr.seqera.io/private/nf-tower-enterprise/backend:${docker_version}
     command: -c "/tower.sh"
@@ -90,10 +96,43 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+%{ else ~}
+  cron:
+    image: cr.seqera.io/private/nf-tower-enterprise/backend:${docker_version}
+%{ if flag_use_container_db == true ~}
+    command: -c "/wait-for-it.sh db:3306 -t 60; /migrate-db.sh; /tower.sh"
+%{ else ~}
+    command: -c "/migrate-db.sh; /tower.sh"
+%{ endif }
+    networks:
+      - frontend
+      - backend
+    volumes:
+      - $HOME/tower.yml:/tower.yml
+    env_file:
+      - tower.env
+    environment:
+      - MICRONAUT_ENVIRONMENTS=prod,redis,cron${auth_oidc}${auth_github}
+    restart: always
+%{ if flag_use_container_db == true || flag_use_container_redis == true ~}
+    depends_on:
+%{ if flag_use_container_db == true ~}
+      - db
+%{ endif ~}
+%{ if flag_use_container_redis == true ~}
+      - redis
+%{ endif ~}
+%{ endif ~}
+%{ endif ~}
+
 
   backend:
     image: cr.seqera.io/private/nf-tower-enterprise/backend:${docker_version}
+%{ if flag_use_container_db == true ~}
     command: -c "/wait-for-it.sh db:3306 -t 60; /tower.sh"
+%{ else ~}
+    command: -c "/tower.sh"
+%{ endif }
     networks:
       - frontend
       - backend
@@ -107,13 +146,14 @@ services:
       - MICRONAUT_ENVIRONMENTS=prod,redis,ha${auth_oidc}${auth_github}
     restart: always
     depends_on:
-%{~ if flag_use_container_db == true }
+%{ if flag_use_container_db == true ~}
       - db
-%{ endif }
-%{~ if flag_use_container_redis == true }
+%{ endif ~}
+%{ if flag_use_container_redis == true ~}
       - redis
-%{ endif }
+%{ endif ~}
       - cron
+
 
   frontend:
     image: cr.seqera.io/private/nf-tower-enterprise/frontend:${docker_version}
@@ -125,7 +165,8 @@ services:
     depends_on:
       - backend
 
-%{~ if flag_use_custom_docker_compose_file == true }
+
+%{ if flag_use_custom_docker_compose_file == true ~}
   # Expectations: 
   #   - docker-compose.yml in `/home/ec2-user/``
   #   - All custom cert files present / generated in `/home/ec2-user/customcerts``
@@ -142,7 +183,7 @@ services:
       - $HOME/target/customcerts/REPLACE_CUSTOM_CRT:/etc/ssl/certs/REPLACE_CUSTOM_CRT
       - $HOME/target/customcerts/REPLACE_CUSTOM_KEY:/etc/ssl/private/REPLACE_CUSTOM_KEY
     restart: always
-%{ endif }
+%{ endif ~}
 
 networks:
   frontend: {}

@@ -12,7 +12,13 @@ resource "null_resource" "copy_files_to_vm" {
 
       set -e
 
-      sleep 5
+      # SSH on host can be slow to initially respond. Attempt connection for 1 minute.
+      counter=0
+      until ssh ${var.app_name} || [ $counter -gt 60 ]; do
+        echo "Waiting for SSH connection to be available."
+        sleep 5
+        counter=$((counter+5))
+      done
 
       # On remote VM, purge old target folder & transfer new target folder
       ssh ${var.app_name} 'cd /home/ec2-user && rm -rf target || true'

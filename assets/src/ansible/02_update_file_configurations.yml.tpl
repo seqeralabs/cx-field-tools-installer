@@ -60,10 +60,10 @@
       if [[ $DB_POPULATE_EXTERNAL_INSTANCE == true ]]; then
         echo "Populating external DB"
 
-        export db-master-user=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
-        export db-master-password=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
+        export db_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
+        export db_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
 
-        mysql --host $DB_URL --port=3306 --user=$db-master-user --password=$db-master-password < target/tower_config/tower.sql  || true
+        mysql --host $DB_URL --port=3306 --user=$db_master_user --password=$db_master_password < target/tower_config/tower.sql  || true
       fi
 
   - name: Populate Groundswell
@@ -76,10 +76,10 @@
       if [[ $DB_POPULATE_EXTERNAL_INSTANCE == true ]]; then
         echo "Populating external DB with Groundswell"
 
-        export db-master-user=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
-        export db-master-password=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
+        export db_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
+        export db_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
 
-        mysql --host $DB_URL --port=3306 --user=$db-master-user --password=$db-master-password < target/groundswell_config/groundswell.sql  || true
+        mysql --host $DB_URL --port=3306 --user=$db_master_user --password=$db_master_password < target/groundswell_config/groundswell.sql  || true
       else
         mysql --host $DB_URL --port=3306 --user=${db_tower_user} --password=${db_tower_password} < target/groundswell_config/groundswell.sql  || true
       fi
