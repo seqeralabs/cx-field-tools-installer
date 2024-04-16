@@ -9,3 +9,4 @@ testing*.json
 ssh_key_for*.pem
 ssh_config
 **/role.json
+output.json

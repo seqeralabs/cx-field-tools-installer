@@ -1,117 +1,81 @@
 #!/usr/bin/env python3
 
-# Preliminary tooling to programmtically check related `terraform.tfvars` settings prior to `terraform apply`.
-# Not yet fully complete (current as of Jan 29/24).
 
 from typing import List
+import ast
+import json
 
 
 tfvars = {}
+
+## ------------------------------------------------------------------------------------
+## Convert terraform.tfvars to JSON
+## Notes:
+##   1. I know it's dumb to home-roll your own parser, but I don't want to introduce extra random
+##      packages from the internet. This is fine for our purposes.
+##   2. Clean command: `sed '/^\s*\/\*/,/^\s*\*\//d;/^\s*#/d' terraform.tfvars > terraform_no_comments.tfvars`
+##      However, `sed` has problem on MacOS, so sticking with (uglier) native Python.
+## ------------------------------------------------------------------------------------
+
 # Rules:
-#   1. Skip any line that is blank.
-#   2. Skip any line starting with a `#``
-#   3. Skip any line starting with `/*` or `*/`
-#   4. Skip any line found between finding `/*` and finding `*/` 
+#   1. Purge any blank line.
+#   2. Purge any line starting with a `#``
+#   3. Purge any line starting with `/*`, `*/`, or in between them.
+#   4. Purge via tracking indices; purge from right-to-left to avoid index shifting.
 
 # Assumptions:
 #   1. Inline comments will only use 1 `#`
 #   2. All discrete keys start on Column 1 of a line.
-#   3. Any blank lines between entries will be via carriage return (not spacebar)
 
 # Edgecase:
 #   1. `default_tags` has closing brace without leading space.
 
-# Notes:
-#   1. I know it's dumb to home-roll your own parser, but I don't want to introduce extra random
-#      packages from the internet. This is fine for our purposes.
-
-
-
-
-
-# lines_without_bulk_comments = []
-# lines_without_inline_comments = []
-# lines_without_inline_whitespace = []
-
-# lines_without_compound_entries = []
-
-# with open('terraform.tfvars', 'r') as f:
-#     raw_lines = f.readlines()
-
-# # print(raw_lines)
-
-# # Rip out all blank lines, single- and block-comment lines.
-# flag_skip_block_comment = False
-# for line in raw_lines:
-#     if (line.strip() == "") or (line.startswith('#')):
-#         pass
-#     elif line.startswith("/*"):
-#         flag_skip_block_comment = True
-#         pass
-#     elif line.startswith("*/"):
-#         flag_skip_block_comment = False
-#         pass
-#     # Must be here so we can deactivate the block comment if encountered
-#     elif flag_skip_block_comment == True:
-#         pass
-#     else:
-#         lines_without_bulk_comments.append(line)
-
-# # Strip out inline comments
-# for line in lines_without_bulk_comments:
-#     line = line.split('#')[0]
-#     lines_without_inline_comments.append(line)
-#     print(f"line: {line}")
-
-# # Strip out inline bulk whitespace
-# for line in lines_without_inline_comments:
-#     while '  ' in line:
-#         line = line.replace('  ', ' ')
-#     lines_without_inline_whitespace.append(line)
-#     print(f"line: {line}")
-
-# # Grab multi-line entries and smash them together.
-# consolidated = False
-# while consolidated == False:
-
-#     flag_loop_again = False
-#     for i, line in enumerate(lines_without_inline_whitespace):
-#         # if line[0] in [ ' ', '{', '}' ]:
-#         if line[0] in [ '{', '}' ]:
-#             # Convert to dict
-#         if line[0] == ' ':
-#             # Smash list together
-#             print(f"[HIT!]: {line}")
-#             lines_without_inline_whitespace[i-1] = lines_without_inline_whitespace[i-1].rstrip() + line.strip()
-#             print(f"Updated: {lines_without_inline_whitespace[i-1]}")
-#             lines_without_inline_whitespace.pop(i)
-#             flag_loop_again = True
-#             break
-
-#     if flag_loop_again == True:
-#         pass
-#     else:
-#         consolidated = True
-
-# for line in lines_without_inline_whitespace:
-#     print(line.strip())
-
-
-
-
-# sed '/^\s*\/\*/,/^\s*\*\//d;/^\s*#/d' terraform.tfvars > terraform_no_comments.tfvars
-import json
-
 data = {}
 default_tags = {}
 
-with open('terraform_no_comments.tfvars', 'r') as file:
+
+def purge_indices_in_reverse(indices_to_pop):
+    for i in reversed(indices_to_pop):
+        lines_array.pop(i)
+
+
+with open('terraform.tfvars', 'r') as file:
     lines = file.readlines()
     lines_array = [line.strip() for line in lines]
 
-    # Handle `default tags` edge case: extract this value specifically into a dict and pop lines.
+
+    # 1) Remove any blank link in file
+    flag_skip_block_comment = False
+    indices_to_pop = []
+
+    for i, line in enumerate(lines_array):
+        if (line.strip() == "") or (line.startswith('#')):
+            indices_to_pop.append(i)
+
+        # Once '/*' detected, flag every line for deletion until '*/' encountered.
+        if line.startswith("/*"):
+            flag_skip_block_comment = True
+            indices_to_pop.append(i)
+            continue
+        elif line.startswith("*/"):
+            flag_skip_block_comment = False
+            indices_to_pop.append(i)
+        elif flag_skip_block_comment == True:
+            indices_to_pop.append(i)
+
+    purge_indices_in_reverse(indices_to_pop)
+
+
+    # 2) Purge inline comments from rationalized kv pairs
+    for i, line in enumerate(lines_array):
+        line = line.rsplit('#')[0]
+        lines_array[i] = line
+
+
+    # 3) Handle `default tags` edge case: extract this value specifically into a dict and pop lines.
     start_handling_tags = False
     indices_to_pop = []
+
     for i, line in enumerate(lines_array):
         if "default_tags" in line:
             start_handling_tags = True
@@ -124,137 +88,73 @@ with open('terraform_no_comments.tfvars', 'r') as file:
             indices_to_pop.append(i)
             break
 
-    # Pop offending values from right side of array to ensure indices don't shift.
-    for i in reversed(indices_to_pop):
-        lines_array.pop(i)
+    purge_indices_in_reverse(indices_to_pop)
+    data['default_tags'] = default_tags
 
 
-print(default_tags)
-exit()
-        
+    # 4) Handle multiline arrays. Find opening line with '=' and ending in '['
+    target_index = None
+    indices_to_pop = []
+    for i, line in enumerate(lines_array):
+        if ("=" in line) and (line.strip()[-1] == "["):
+            target_index = i
+            continue
+
+        if (target_index is not None):
+            lines_array[target_index] += line.strip()
+            indices_to_pop.append(i)
+
+        if (line.strip()[-1] == "]"):
+            target_index = None
+
+    purge_indices_in_reverse(indices_to_pop)
 
 
-    
+    # 5) Convert items to proper python types.
+    for line in lines_array:
+        if "=" in line:
+            key, value = [x.strip() for x in line.split('=', 1)]
+            if value.lower() == 'true':
+                data[key] = True
+            elif value.lower() == 'false':
+                data[key] = False
+            else:
+                data[key] = ast.literal_eval(value)
 
-#     for line in file:
-#         if "=" in line:
-#             key, value = [x.strip() for x in line.split('=', 1)]
-#             if value.startswith('"') and value.endswith('"'):
-#                 data[key] = value.strip('"')
-#             elif value.lower() == 'true':
-#                 data[key] = True
-#             elif value.lower() == 'false':
-#                 data[key] = False
-#             else:
-#                 data[key] = value
 # with open('output.json', 'w') as file:
 #     json.dump(data, file, indent=4)
 
+# exit()
 
 
+## ------------------------------------------------------------------------------------
+## Check flag groupings to only ensure 1 per group is set as `true`.
+## ------------------------------------------------------------------------------------
+def only_one_true_set(flags: List, qualifier: str) -> None:
+    """Aggregate values of all specified values and then count."""
 
+    values = [ data[flag] for flag in flags ]
+    count = values.count(True)
 
-
-# print("lines_without_bulk_comments is: ", lines_without_bulk_comments)
-
-
-# for line in lines_without_bulk_comments:
-#     if line[0] in [ ' ', '{', '}' ]:
-#         pass
-#     else:
-#         print(f"line is: {line}")
-#         k,v = line.split('=', maxsplit=1)
-#         print(f"k is: {k}")
-#         k = k.strip()
-#         v = v.strip()
-#         line = f"{k} = {v}"
-#         lines_without_compound_entries.append(line)
-
-# print("lines_without_compound_entries is: ", lines_without_compound_entries)
-
-exit()
-
-
-
-
-
-flag_skip_block_comment = False
-with open('terraform.tfvars', 'r') as file:
-    lines = file.readlines()
-    for line in lines:
-        if line.strip() == "":
-            pass
-        elif line.startswith('#'):
-            pass
-        elif line.startswith("/*"):
-            flag_skip_block_comment = True
-            pass
-        elif line.startswith("*/"):
-            flag_skip_block_comment = False
-            pass
-        elif flag_skip_block_comment == True:
-            pass
-        else:
-            print(line)
-            # Purge inline comments
-            line = line.split('#')[0]
-            line = line.strip()
-
-            # 
-            kv = line.split('=')
-            key = kv[0].strip()
-            value = kv[1].strip()   # Necessary to remove whitespace to right of '='
-
-            # Cleanse values of after-the-value comments/whitespace. ALL values starts a strings since I've read from a file and split line.
-            # Conventional value starting and ending with a double-quote. Extract value between doublequotes and process no further.
-            # Number, array, doublequoted string with space/hash after.
-            if value.startswith('"'):
-                value = value.split('"')[1]
-            else:
-                value = value.strip()
-            tfvars[key] = value
-
-print("------------------------------")
-
-
-def only_one_true_set(values: List, qualifier: str) -> None:
-    count = values.count('true')
-    if count > 1:
-        raise AssertionError(f'[ERROR]: {qualifier} flags must have only one true.')
-    elif count < 1:
-        raise AssertionError(f'[ERROR]: {qualifier} flags must have one true.')
+    if (count != 1):
+        raise AssertionError(f'[ERROR]: {qualifier} requires one and only one "true".')
     else: 
         print(f"[OK]: {qualifier} flags.")
 
-## ----- Check Starting Flags
-# Check VPC
-flags = ["flag_create_new_vpc", "flag_use_existing_vpc"]
-values = [ tfvars[flag] for flag in flags]
-only_one_true_set(values, "VPC")
 
+flag_checks = [
+    ( [ "flag_create_new_vpc", "flag_use_existing_vpc" ], "VPC" ),
+    ( [ "flag_create_external_db", "flag_use_existing_external_db", "flag_use_container_db" ], "DB" ),
+    ( [ "flag_create_external_redis", "flag_use_container_redis" ], "REDIS"),
+    ( [ "flag_create_load_balancer", "flag_generate_private_cacert", "flag_use_existing_private_cacert", "flag_do_not_use_https" ], "ALB"),
+    ( [ "flag_use_aws_ses_iam_integration", "flag_use_existing_smtp" ], "SMTP" )
+]
 
-# Check DB
-flags = ["flag_create_external_db", "flag_use_existing_external_db", "flag_use_container_db" ]
-values = [ tfvars[flag] for flag in flags]
-only_one_true_set(values, "DB")
+for check in flag_checks:
+    only_one_true_set(*check) 
 
+exit()
 
-# Check Redis
-flags = ["flag_create_external_redis", "flag_use_existing_external_redis", "flag_use_container_redis" ]
-values = [ tfvars[flag] for flag in flags]
-only_one_true_set(values, "REDIS")
-
-
-# Check Load Balancer
-flags = ["flag_create_load_balancer", "flag_generate_private_cacert", "flag_use_existing_private_cacert", "flag_do_not_use_https" ]
-values = [ tfvars[flag] for flag in flags]
-only_one_true_set(values, "LOAD_BALANCER")
-
-
-# Check SMTP
-flags = ["flag_use_aws_ses_iam_integration", "flag_use_existing_smtp" ]
-values = [ tfvars[flag] for flag in flags]
-only_one_true_set(values, "SMTP")
 
 
 ## ----- Private CA Checks (if applicable)
