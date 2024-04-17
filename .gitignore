@@ -10,3 +10,6 @@ ssh_key_for*.pem
 ssh_config
 **/role.json
 output.json
+tmp.log
+**/venv
+.terraform.lock.hcl

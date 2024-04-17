@@ -1,6 +1,8 @@
 import json
 import ast
 
+from utils.logger import logger
+
 
 ## ------------------------------------------------------------------------------------
 ## Convert terraform.tfvars to JSON
@@ -62,7 +64,7 @@ def convert_tfvars_to_dictionary(file):
             elif flag_skip_block_comment:
                 indices_to_pop.append(i)
 
-        print(indices_to_pop)
+        logger.debug(f"Indices to pop: {indices_to_pop}")
         purge_indices_in_reverse(indices_to_pop)
 
 
@@ -125,3 +127,7 @@ def convert_tfvars_to_dictionary(file):
 
     # # with open('output.json', 'w') as file:
     # #     json.dump(data, file, indent=4)
+
+
+def get_tfvars_as_json():
+    return convert_tfvars_to_dictionary('terraform.tfvars')
