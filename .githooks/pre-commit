@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+echo "$PWD"
+python3 .githooks/check_configuration.py

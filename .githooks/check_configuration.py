@@ -2,6 +2,7 @@
 
 import os, sys
 #sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.dont_write_bytecode = True
 
 import re
 from types import SimpleNamespace
@@ -229,7 +230,8 @@ if __name__ == '__main__':
 # - AZs and Region
 # - Pre-existing IAM role
 # - EBS encryption key
-# Handle RC text on newer container versions
+# - DNS hosted zones
+#    - Check existing public / private hosted zones exist if specified in tfvars.
 
 # Don't have access to existing public / private subnets as of yet. Maybe need to add boto3 to get?
 # TO DO: 
