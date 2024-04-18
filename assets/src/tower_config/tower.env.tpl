@@ -46,13 +46,13 @@ TOWER_REDIS_URL=${tower_redis_url}
 # ------------------------------------------------
 # SMTP settings
 # ------------------------------------------------
-%{ if flag_use_aws_ses_iam_integration == true && flag_new_enough_for_ses_iam == true ~}
+%{ if flag_use_aws_ses_iam_integration == true ~}
 TOWER_ENABLE_AWS_SES=true
 %{ else ~}
 TOWER_ENABLE_AWS_SES=false
 %{ endif ~}
 
-%{ if flag_use_existing_smtp == true || flag_new_enough_for_ses_iam == false ~}
+%{ if flag_use_existing_smtp == true ~}
 TOWER_SMTP_HOST=${tower_smtp_host}
 TOWER_SMTP_PORT=${tower_smtp_port}
 
@@ -86,7 +86,7 @@ TOWER_ENABLE_WAVE=false
 # ------------------------------------------------
 # Groundswell
 # ------------------------------------------------
-%{ if flag_enable_groundswell == true && flag_new_enough_for_groundswell ~}
+%{ if flag_enable_groundswell == true ~}
 GROUNDSWELL_SERVER_URL="http://groundswell:8090"
 TOWER_ENABLE_GROUNDSWELL=true
 %{ else ~}
