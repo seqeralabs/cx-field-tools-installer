@@ -80,6 +80,7 @@ if __name__ == '__main__':
     data_dictionary = get_tfvars_as_json()
     data = SimpleNamespace(**data_dictionary)
 
+
     # Check minimum container version
     if not ((data.tower_container_version).startswith('v')) or (data.tower_container_version < "v23.1.0"):
         raise AssertionError(" Tower version minimum is 23.1.0 (for Parameter Store integration).")
@@ -216,6 +217,11 @@ if __name__ == '__main__':
     ensure_dependency_populated(data.flag_use_existing_route53_public_zone, data.existing_route53_public_zone_name, 'Specify an `existing_route53_public_zone_name` value.')
     ensure_dependency_populated(data.flag_use_existing_route53_private_zone, data.existing_route53_private_zone_name, 'Specify an `existing_route53_private_zone_name` value.')
 
+
+    # Check Groundwell validity
+    if data.flag_enable_groundswell:
+        if data.tower_container_version < "v23.3.0":
+            raise AssertionError(' Groundswell only available in Tower 23.3.0+')
 
     logger.info("Finished tfvars configuration check.")
     logger.info("")
