@@ -90,15 +90,19 @@ if __name__ == '__main__':
 
     # Check EC2 subnet configuration
     public_subnets, private_subnets = get_all_subnets("aws")
-    subnet_matches_privacy_type( data.flag_make_instance_public, [data.vpc_new_ec2_subnets, public_subnets], "VPC/EC2 public (new) subnets" )
-    subnet_matches_privacy_type( data.flag_make_instance_public, [data.vpc_existing_ec2_subnets, public_subnets], "VPC/EC2 public (existing) subnets" )
-    subnet_matches_privacy_type( data.flag_make_instance_private, [data.vpc_new_ec2_subnets, private_subnets ], "VPC/EC2 private (new) subnets" )
-    subnet_matches_privacy_type( data.flag_make_instance_private, [data.vpc_existing_ec2_subnets, private_subnets ], "VPC/EC2 private (new) subnets" )
-    subnet_matches_privacy_type( data.flag_make_instance_private_behind_public_alb, [data.vpc_new_ec2_subnets, private_subnets ], "VPC/EC2 ALB-private (new) subnets" )
-    subnet_matches_privacy_type( data.flag_make_instance_private_behind_public_alb, [data.vpc_existing_ec2_subnets, private_subnets ], "VPC/EC2 ALB-private (existing) subnets" )
-    subnet_matches_privacy_type( data.flag_private_tower_without_eice, [data.vpc_new_ec2_subnets, private_subnets ], "VPC/EC2 ALB-private (new) subnets" )
-    subnet_matches_privacy_type( data.flag_private_tower_without_eice, [data.vpc_existing_ec2_subnets, private_subnets ], "VPC/EC2 ALB-private (existing) subnets" )
 
+    if data.flag_create_new_vpc:
+        subnet_matches_privacy_type( data.flag_make_instance_public, [data.vpc_new_ec2_subnets, public_subnets], "VPC/EC2 public (new) subnets" )
+        subnet_matches_privacy_type( data.flag_make_instance_private, [data.vpc_new_ec2_subnets, private_subnets ], "VPC/EC2 private (new) subnets" )
+        subnet_matches_privacy_type( data.flag_make_instance_private_behind_public_alb, [data.vpc_new_ec2_subnets, private_subnets ], "VPC/EC2 ALB-private (new) subnets" )
+        subnet_matches_privacy_type( data.flag_private_tower_without_eice, [data.vpc_new_ec2_subnets, private_subnets ], "VPC/EC2 ALB-private (new) subnets" )
+    elif  data.flag_use_existing_vpc:
+        subnet_matches_privacy_type( data.flag_make_instance_public, [data.vpc_existing_ec2_subnets, public_subnets], "VPC/EC2 public (existing) subnets" )
+        subnet_matches_privacy_type( data.flag_make_instance_private, [data.vpc_existing_ec2_subnets, private_subnets ], "VPC/EC2 private (new) subnets" )
+        subnet_matches_privacy_type( data.flag_make_instance_private_behind_public_alb, [data.vpc_existing_ec2_subnets, private_subnets ], "VPC/EC2 ALB-private (existing) subnets" )
+        subnet_matches_privacy_type( data.flag_private_tower_without_eice, [data.vpc_existing_ec2_subnets, private_subnets ], "VPC/EC2 ALB-private (existing) subnets" )
+    else:
+        raise AssertionError("Invalid VPC options selected.")
 
     # Check ALB subnet configuration
     subnet_matches_privacy_type( data.flag_create_load_balancer, [data.vpc_new_alb_subnets, public_subnets], "VPC/EC2 public (new) subnets" )
