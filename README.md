@@ -288,8 +288,8 @@ With that said, for design purposes, this tool assumes that multiple project ins
 | <a name="aws_caller_arn"></a> [aws_caller_arn](012_outputs.tf) | Assumed role used to deploy the project |
 | <a name="aws_caller_user"></a> [aws_caller_user](012_outputs.tf) | User used to deploy the project |
 | <a name="ec2_ssh_key"></a> [ec2_ssh_key](012_outputs.tf) | SSH key attached to the EC2 instance |
-| <a name="tower_server_url></a> [tower_server_url](012_outputs.tf) | URL to check your Tower intance |
-| <a name="route53_record_status></a> [route53_record_status](012_outputs.tf) | Identifies if a Route53 record was created or not |
+| <a name="tower_server_url"></a> [tower_server_url](012_outputs.tf) | URL to check your Tower intance |
+| <a name="route53_record_status"></a> [route53_record_status](012_outputs.tf) | Identifies if a Route53 record was created or not |
 | <a name="aws_ec2_private_ip"></a> [aws_ec2_private_ip](012_outputs.tf) | Private IP of the EC2 Instance |
 | <a name="aws_ec2_public_ip"></a> [aws_ec2_public_ip](012_outputs.tf) | Public IP of the EC2 Instance (if applicable) |  
 | <a name="tower_api_endpoint"></a> [tower_api_endpoint](012_outputs.tf) | Platform API endpoint |
