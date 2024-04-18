@@ -54,13 +54,14 @@ def convert_tfvars_to_dictionary(file):
                 indices_to_pop.append(i)
 
             # Once '/*' detected, flag every line for deletion until '*/' encountered.
-            if line.startswith("/*"):
+            elif line.startswith("/*"):
                 flag_skip_block_comment = True
                 indices_to_pop.append(i)
                 continue
             elif line.startswith("*/"):
                 flag_skip_block_comment = False
                 indices_to_pop.append(i)
+                continue
             elif flag_skip_block_comment:
                 indices_to_pop.append(i)
 
