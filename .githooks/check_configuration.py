@@ -146,7 +146,7 @@ if __name__ == '__main__':
 
     ## Tower server URL checks
     if data.flag_create_route53_private_zone:
-        assert data.existing_route53_private_zone_name in data.tower_server_url, "[ERROR] `tower_server_url` does not match DNS zone."
+        assert data.new_route53_private_zone_name in data.tower_server_url, "[ERROR] `tower_server_url` does not match DNS zone."
 
     if data.flag_use_existing_route53_public_zone:
         assert data.existing_route53_public_zone_name in data.tower_server_url, "[ERROR] `tower_server_url` does not match DNS zone."
