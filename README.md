@@ -43,6 +43,12 @@ The out-of-the-box solution depends on you meeting the following criteria:
 3. Install a modern version of `openssh`:
     - [https://www.openssh.com/](https://www.openssh.com/)
 
+4. Install `git v2.25.1` or later.
+
+5. Install `GNU Make 4.2.1` or later.
+
+6. Install `python 3.8.10` or later.
+
 
 ## Tool permissions
 
@@ -70,7 +76,7 @@ The tool relies on four core configuration files, all stored within the `templat
     This file exists to make SSM data population more convenient and **should not** be stored in source-control. 
 
 
-### Clone the repository
+### 01 - Clone the repository
 
 1. Download a copy of the repository to your local workstation:
 
@@ -78,7 +84,7 @@ The tool relies on four core configuration files, all stored within the `templat
     git clone <TODO_path_to_offical_repo> && cd <TODO_name_of_directory>
     ```
 
-### Prepare secrets 
+### 02 - Prepare secrets 
 
 1. Select a name for your Seqera Platform application (default: `tower-dev`).
     
@@ -133,7 +139,7 @@ The tool relies on four core configuration files, all stored within the `templat
 7. Remember your application name and SSM prefixes, as these need to be supplied during the configuration of the `terrform.tfvars` file.
 
 
-### Prepare the `terraform.tfvars` file
+### 03 - Prepare the `terraform.tfvars` file
 
 **NOTE:** Fulsome field-level documentation exists inside the `terraform.tfvars` file. Consult there for details beyond the high-level instructions here.
 
@@ -155,7 +161,7 @@ The tool relies on four core configuration files, all stored within the `templat
 6. Review and modify placehoder values as necessary. Do not modify commented fields with `DO_NOT_UNCOMMENT_ME` values. These are in the file solely to provide a visual reminder that these keys are being set behind the scene via SSM secrets values.
 
 
-### Create an AWS IAM Role with the necessary permissions
+### 04 - Create an AWS IAM Role with the necessary permissions
 
 1. Modify the [`permissions.json`](templates/permissions.json) in the `templates` folder:
 
@@ -168,7 +174,7 @@ The tool relies on four core configuration files, all stored within the `templat
     4. Configure this identity into your AWS CLI and ensure it is active when executing the installer (specified  in `var.aws_profile`).
 
 
-### Modify your OpenSSH config
+### 05 - Modify your OpenSSH config
 
 During the installation process, a [SSH config file](https://man.openbsd.org/ssh_config) is created and used to connect to the EC2 instance hosting the Seqera Platform instance. To use the SSH config file successfully, you need a minor modification to your `openssh` configuration:
 
@@ -181,7 +187,15 @@ Include /ABSOLUTE_PATH_TO_INSTALLER_PROJECT_ROOT_DEV/ssh_config
 Include /ABSOLUTE_PATH_TO_INSTALLER_PROJECT_ROOT_STAGING/ssh_config
 ```
 
-### Review your Terraform state storage strategy
+
+### 06 - Update your Git repo settings
+
+The project ships with a `.githooks` folder, which contains a Python script that wil scan your `terraform.tfvars` file for configuration mismatches which cause your deployment to fail.
+
+To automatically invoke the script prior to a commit to your git repository, execute the following in the root of your project: `git config core.hooksPath .githooks`.
+
+
+### 07 - Review your Terraform state storage strategy
 
 By default, the installer writes the Terraform state to a local folder (`<PROJECT_ROOT>/DONTDELETE`). This is convenient for initial testing but likely not a good long-term solution for most clients. 
 
@@ -201,12 +215,20 @@ You can change the state management strategy at the top of the `000-main.tf` fil
 
 10. Create and review an execution plan:
     ```bash
+    # Recommended approach. Execute the Seqera-supplied Python script to check your `terraform.tfvars` file for known configuration conflicts prior to terraform binary invocation.
+    make plan
+
+    # Alternative approach to execute plan without Python script verification execution.
     terraform plan
     ```
 
 11. Execute the actions reviewed in the Terraform plan:
     ```bash
-    # You can append `--auto-append` to the end of the command to avoid the need to type 'yes' to approve the deployment.
+    # Recommended approach. Execute the Seqera-supplied Python script to check your  `terraform.tfvars` file for known configuration conflicts prior to terraform binary invocation.
+    make apply
+
+    # Alternative approach to execute plan without Python script verification execution.
+    # Note: You can append `--auto-append` to the end of the command to avoid the need to type 'yes' to approve the deployment.
     terraform apply
     ```
 
@@ -266,8 +288,10 @@ With that said, for design purposes, this tool assumes that multiple project ins
 | <a name="aws_caller_arn"></a> [aws_caller_arn](012_outputs.tf) | Assumed role used to deploy the project |
 | <a name="aws_caller_user"></a> [aws_caller_user](012_outputs.tf) | User used to deploy the project |
 | <a name="ec2_ssh_key"></a> [ec2_ssh_key](012_outputs.tf) | SSH key attached to the EC2 instance |
+| <a name="tower_server_url"></a> [tower_server_url](012_outputs.tf) | URL to check your Tower intance |
+| <a name="route53_record_status"></a> [route53_record_status](012_outputs.tf) | Identifies if a Route53 record was created or not |
 | <a name="aws_ec2_private_ip"></a> [aws_ec2_private_ip](012_outputs.tf) | Private IP of the EC2 Instance |
-| <a name="tower_server_url"></a> [tower_server_url](012_outputs.tf) | Platform  server URL |
-| <a name="route53_record_status"></a> [route53_record_status](012_outputs.tf) | Status of Route53 record |
+| <a name="aws_ec2_public_ip"></a> [aws_ec2_public_ip](012_outputs.tf) | Public IP of the EC2 Instance (if applicable) |  
 | <a name="tower_api_endpoint"></a> [tower_api_endpoint](012_outputs.tf) | Platform API endpoint |
 | <a name="seqera_configuration"></a> [seqera_configuration](012_outputs.tf) | Path to the SeqeraKit setup file |
+| <a name="redis_endpoint"></a> [redis_endpoint](012_outputs.tf) | URL for your Redis instance |
