@@ -3,6 +3,12 @@
 import os, sys
 #sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 sys.dont_write_bytecode = True
+# This suppresses the stacktrace emitted when assertion errors are thrown. Users will still see the
+# human-friendly message, but not the rest of the noise. We'll need to socialize that that need to 
+# search for the error message in this file to see what the offending values are.
+# Longer-term we can consider externalizing errors to another file so that longer messages can be
+# written and returned without cluttering up the evaluation logic.
+sys.tracebacklimit = 0
 
 import re
 from types import SimpleNamespace
@@ -140,7 +146,7 @@ if __name__ == '__main__':
 
     ## Tower server URL checks
     if data.flag_create_route53_private_zone:
-        assert data.flag_create_route53_private_zone in data.tower_server_url, "[ERROR] `tower_server_url` does not match DNS zone."
+        assert data.existing_route53_private_zone_name in data.tower_server_url, "[ERROR] `tower_server_url` does not match DNS zone."
 
     if data.flag_use_existing_route53_public_zone:
         assert data.existing_route53_public_zone_name in data.tower_server_url, "[ERROR] `tower_server_url` does not match DNS zone."
