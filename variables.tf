@@ -182,6 +182,8 @@ variable "db_engine_version" { type = string }
 variable "db_instance_class" { type = string }
 variable "db_allocated_storage" { type = number }
 
+variable "db_deletion_protection" { type = bool }
+
 
 ## ------------------------------------------------------------------------------------
 ## IAM

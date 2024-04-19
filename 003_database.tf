@@ -37,11 +37,15 @@ module "rds" {
   vpc_security_group_ids = [module.tower_db_sg.security_group_id]
   #parameter_group_name         = aws_db_parameter_group.tower_db.name
   publicly_accessible = true
-  skip_final_snapshot = true
+  skip_final_snapshot = false
 
   # Don't understand why I have to do this but the RDS module screams if I don't
   family               = "${var.db_engine}${var.db_engine_version}" # DB parameter group
   major_engine_version = var.db_engine_version                      # DB option group
+
+  # Deletion protection
+  deletion_protection = var.db_deletion_protection
+
 }
 
 

@@ -75,7 +75,7 @@ if __name__ == '__main__':
     logger.info("")
     logger.info("Beginning tfvars configuration check.")
 
-    # Generaed dictionary from tfvars then convert to SimpleNamespace for cleaner dot-notation access.
+    # Generate dictionary from tfvars then convert to SimpleNamespace for cleaner dot-notation access.
     # Kept the two objects different for convenience when .keys() method is required.
     data_dictionary = get_tfvars_as_json()
     data = SimpleNamespace(**data_dictionary)
@@ -222,6 +222,13 @@ if __name__ == '__main__':
     if data.flag_enable_groundswell:
         if data.tower_container_version < "v23.3.0":
             raise AssertionError(' Groundswell only available in Tower 23.3.0+')
+        
+
+    # External DB Deletion protection
+    if data.db_deletion_protection:
+        logger.info("[REMINDER]: You have Deletion Protection enabled for your external DB. This can affect easy teardown during testing.")
+    elif not data.db_deletion_protection:
+        logger.warning("[WARNING] You have not enabled Deletion Protection on your external DB. This is HIGHLY recommended for Production instances. If you want this, set `db_deletion_protection` to true.")
 
     logger.info("Finished tfvars configuration check.")
     logger.info("")
