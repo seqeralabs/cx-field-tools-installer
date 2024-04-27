@@ -36,7 +36,7 @@ module "rds" {
   db_subnet_group_name   = aws_db_subnet_group.tower_db[0].name
   vpc_security_group_ids = [module.tower_db_sg.security_group_id]
   #parameter_group_name         = aws_db_parameter_group.tower_db.name
-  publicly_accessible = true
+  publicly_accessible = false
   skip_final_snapshot = false
 
   # Don't understand why I have to do this but the RDS module screams if I don't
