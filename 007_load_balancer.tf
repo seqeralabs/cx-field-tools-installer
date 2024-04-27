@@ -17,6 +17,11 @@ module "alb" {
   # https://registry.terraform.io/modules/terraform-aws-modules/alb/aws/latest
   enable_xff_client_port = false
 
+  # Fixes tfsec warning
+  # https://aquasecurity.github.io/tfsec/latest/checks/aws/elb/drop-invalid-headers/
+  drop_invalid_header_fields = true
+  
+
   # access_logs = {
   #   bucket              = "my-alb-logs"
   # }
@@ -41,6 +46,10 @@ module "alb" {
       protocol           = "HTTPS"
       certificate_arn    = var.alb_certificate_arn
       target_group_index = 0
+      # Fixes tfsec warning about "An outdated SSL policy is in use by a load balancer."
+      # https://aquasecurity.github.io/tfsec/v1.0.8/checks/aws/elb/use-secure-tls-policy/
+      # Flag appears undocumented in ALB module code examples and input variables.
+      ssl_policy         = "ELBSecurityPolicy-TLS-1-2-2017-01"
     }
   ]
 
