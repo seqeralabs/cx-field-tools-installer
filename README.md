@@ -55,6 +55,11 @@ The out-of-the-box solution depends on you meeting the following criteria:
 Please see [Permissions](documentation/permissions.md) for a full list of necessary AWS IAM permissions required to run the tool.
 
 
+## Tool security scanning
+
+Please see [Security](documentation/security.md) for details on how we scan for / mitigate tool security vulnerabilities.
+
+
 ## Configuration steps
 
 The tool relies on four core configuration files, all stored within the `templates` folder. These files must be prepared prior to project execution:

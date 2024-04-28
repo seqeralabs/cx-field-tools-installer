@@ -1,3 +1,5 @@
+# Ignore: (1) Flow log enablement; (2) Ingress on all ports; (3) Ingress from public internet
+#trivy:ignore:AVD-AWS-0102 trivy:ignore:AVD-AWS-0105
 module "vpc" {
   # https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/latest?tab=dependencies
   source  = "terraform-aws-modules/vpc/aws"
@@ -20,6 +22,16 @@ module "vpc" {
   enable_nat_gateway     = var.flag_make_instance_private == true || var.flag_make_instance_private_behind_public_alb == true ? true : false
   single_nat_gateway     = var.flag_make_instance_private == true || var.flag_make_instance_private_behind_public_alb == true ? true : false
   one_nat_gateway_per_az = false
+
+  # Flow log config
+  # Config taken from here: https://github.com/terraform-aws-modules/terraform-aws-vpc/blob/master/examples/vpc-flow-logs/main.tf
+  enable_flow_log = var.enable_vpc_flow_logs
+  create_flow_log_cloudwatch_log_group = true
+  create_flow_log_cloudwatch_iam_role  = true
+  flow_log_max_aggregation_interval         = 60
+  flow_log_cloudwatch_log_group_name_prefix = "/${local.global_prefix}/vpc-flow-logs/"
+  flow_log_cloudwatch_log_group_name_suffix = "platform"
+  # flow_log_cloudwatch_log_group_class       = "INFREQUENT_ACCESS"
 }
 
 

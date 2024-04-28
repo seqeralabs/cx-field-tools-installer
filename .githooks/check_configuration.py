@@ -206,6 +206,11 @@ if __name__ == '__main__':
     if data.sg_ssh_cidrs == "0.0.0.0/0":
         logger.warning('[REMINDER]: Security group rule for SSH ingress is loose by default. Please consider tightening.')
 
+    all_all = ["all-all"]
+    for sg in [data.sg_egress_eice, data.sg_egress_tower_ec2, data.sg_egress_tower_alb, data.sg_egress_batch_ec2, data.sg_egress_interface_endpoint]:
+        if key == all_all:
+            logger.warning(f"[REMINDER]: `{key}` allows egress everywhere. Please ensure this was desired behaviour.")
+
 
     # VPC Dependency checks
     ensure_dependency_populated(data.flag_use_existing_vpc, data.vpc_existing_id, 'Specify a `vpc_existing_id` value.')
@@ -226,9 +231,19 @@ if __name__ == '__main__':
 
     # External DB Deletion protection
     if data.db_deletion_protection:
-        logger.info("[REMINDER]: You have Deletion Protection enabled for your external DB. This can affect easy teardown during testing.")
+        logger.info("[REMINDER]: You have Deletion Protection enabled for your external DB. This will affect easy teardown during testing.")
     elif not data.db_deletion_protection:
         logger.warning("[WARNING] You have not enabled Deletion Protection on your external DB. This is HIGHLY recommended for Production instances. If you want this, set `db_deletion_protection` to true.")
+
+    if data.skip_final_snapshot:
+        logger.info("[REMINDER]: You have disabled a final snapshot of your external DB. Enablement of this feature is recommended for Production.")
+    elif not data.skip_final_snapshot:
+        logger.warning("[WARNING] You have enabled a final snapshot on your external DB. This will affect easy teardwon during testing.")
+
+    # Flow logs
+    if (data.flag_create_new_vpc) and (data.enable_vpc_flow_logs):
+        logger.warning("[REMINDER]: You have VPC Flow Logs activated. This will generate extra costs.")
+
 
     logger.info("Finished tfvars configuration check.")
     logger.info("")

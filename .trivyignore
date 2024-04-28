@@ -1,0 +1,33 @@
+# https://aquasecurity.github.io/trivy/test/docs/configuration/filtering/
+
+## Accepted / Mitigated risks (accept until 2025)
+## ------------------------------------------------------------------------
+
+# VPC
+AVD-AWS-0017  exp:2025-01-01          # Cloudwatch KMS-log encryption -- Ignoring to control scope.
+AVD-AWS-0057  exp:2025-01-01          # LogGroup wildcard -- false positive from module examples.
+AVD-AWS-0101  exp:2025-01-01          # Default VPC is used -- false positive from module examples.
+AVD-AWS-0102  exp:2025-01-01          # Network ACL allows all ports  -- manage via SGs.
+AVD-AWS-0105  exp:2025-01-01          # Network ACL allows ingress from internet  -- managed via SGs.
+AVD-AWS-0178  exp:2025-01-01          # VPC Flow logs -- managed by tfvars config.
+
+# Security Groups
+AVD-AWS-0104  exp:2025-01-01          # Egress to public internet -- managed via tfvars config.
+AVD-AWS-0107  exp:2025-01-01          # Ingress from public internet -- managed via tfvars config.
+
+# RDS
+AVD-AWS-0077  exp:2025-01-01          # Backup retentino -- managed via tfvars config.
+AVD-AWS-0080  exp:2025-01-01          # Storage encryption -- managed via tfvars config.
+AVD-AWS-0133  exp:2025-01-01          # False positive -- insights activated as hardcode.
+AVD-AWS-0177  exp:2025-01-01          # Deletion protection -- managed via tfvars config.
+
+# EC2
+AVD-AWS-0028  exp:2025-01-01          # IMDS token not required (EC2) -- managed via tfvars config.
+AVD-AWS-0130  exp:2025-01-01          # IMDS token not required (Launch Template) -- managed via tfvars config.
+AVD-AWS-0131  exp:2025-01-01          # EC2 root block devie not encrypted -- managed via tfvars config.
+
+# ALB
+AVD-AWS-0047  exp:2025-01-01          # ALB outdated TLS poliy -- false positive; hard-coded to drop.
+AVD-AWS-0052  exp:2025-01-01          # ALB drop invalid headers -- false positive; hard-coded to drop.
+AVD-AWS-0053  exp:2025-01-01          # ALB exposure -- managed via tfvars config.
+AVD-AWS-0054  exp:2025-01-01          # ALB HTTP listener -- ignoring; http listener redirects to HTTPS.

@@ -36,8 +36,8 @@ module "rds" {
   db_subnet_group_name   = aws_db_subnet_group.tower_db[0].name
   vpc_security_group_ids = [module.tower_db_sg.security_group_id]
   #parameter_group_name         = aws_db_parameter_group.tower_db.name
+
   publicly_accessible = false
-  skip_final_snapshot = false
 
   # Don't understand why I have to do this but the RDS module screams if I don't
   family               = "${var.db_engine}${var.db_engine_version}" # DB parameter group
@@ -45,6 +45,18 @@ module "rds" {
 
   # Deletion protection
   deletion_protection = var.db_deletion_protection
+  skip_final_snapshot = false
+
+  # Backups
+  backup_retention_period = var.db_backup_retention_period
+  storage_encrypted = var.db_enable_storage_encrypted
+
+  # Performance Insights enablement
+  # Fixes tfsec warning. As per AWS documentation, 7 day retention has no cost implication for customer.
+  # Explicitly setting the 7-day retention period. Can be changed by installations should they wish to pay for longer period.
+  # https://aws.amazon.com/rds/performance-insights/pricing/
+  performance_insights_enabled = true
+  performance_insights_retention_period = 7
 
 }
 
@@ -59,6 +71,7 @@ resource "aws_elasticache_subnet_group" "redis" {
   subnet_ids = local.subnet_ids_db
 }
 
+#tfsec:ignore:aws-elasticache-enable-backup-retention
 resource "aws_elasticache_cluster" "redis" {
   count = var.flag_create_external_redis == true ? 1 : 0
 

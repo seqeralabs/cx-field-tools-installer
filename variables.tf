@@ -119,6 +119,8 @@ variable "vpc_new_redis_subnets" { type = list(string) }
 
 variable "vpc_new_alb_subnets" { type = list(string) }
 
+variable "enable_vpc_flow_logs" { type = bool }
+
 
 ## ------------------------------------------------------------------------------------
 ## VPC (Existing)
@@ -149,6 +151,12 @@ variable "vpc_interface_endpoints_batch" { type = list(any) }
 ## ------------------------------------------------------------------------------------
 variable "sg_ingress_cidrs" { type = list(string) }
 variable "sg_ssh_cidrs" { type = list(string) }
+
+variable "sg_egress_eice" {type = list(string)}
+variable "sg_egress_tower_ec2" {type = list(string)}
+variable "sg_egress_tower_alb" {type = list(string)}
+variable "sg_egress_batch_ec2" {type = list(string)}
+variable "sg_egress_interface_endpoint" {type = list(string)}
 
 
 ## ------------------------------------------------------------------------------------
@@ -183,6 +191,10 @@ variable "db_instance_class" { type = string }
 variable "db_allocated_storage" { type = number }
 
 variable "db_deletion_protection" { type = bool }
+variable "skip_final_snapshot"    { type = bool }
+
+variable "db_backup_retention_period"  { type = number }
+variable "db_enable_storage_encrypted" { type = bool }
 
 
 ## ------------------------------------------------------------------------------------
@@ -190,6 +202,7 @@ variable "db_deletion_protection" { type = bool }
 ## ------------------------------------------------------------------------------------
 variable "flag_iam_use_prexisting_role_arn" { type = bool }
 variable "iam_prexisting_instance_role_arn" { type = string }
+
 
 ## ------------------------------------------------------------------------------------
 ## EC2 Host
@@ -199,6 +212,8 @@ variable "ec2_host_instance_type" { type = string }
 variable "flag_encrypt_ebs" { type = bool }
 variable "flag_use_kms_key" { type = bool }
 variable "ec2_ebs_kms_key" { type = string }
+
+variable "ec2_require_imds_token"  { type = bool }
 
 
 ## ------------------------------------------------------------------------------------

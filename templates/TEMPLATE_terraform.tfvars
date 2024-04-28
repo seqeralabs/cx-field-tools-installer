@@ -270,6 +270,9 @@ vpc_new_redis_subnets                   = [ "10.0.5.0/24" ]
 # Must be >= 2, in different AZs. Ensure only public subnets (nothing needs to be in these).
 vpc_new_alb_subnets                     = [ "10.0.1.0/24", "10.0.2.0/24" ]
 
+# Specify is VPC flow logs should be enabled or not. Have cost implication.
+enable_vpc_flow_logs                    = false
+
 
 /*
 ## ------------------------------------------------------------------------------------
@@ -316,11 +319,19 @@ these are *very* loose. Consider tightening if your deployment model allows it.
 
 If using EICE, please note that individuals must have IAM rights to interact with the endpoint 
 prior to any SSH transaction being allowed against the VM. 
+
+Egress is open by default given variability of client implementations. Can be tightened if need be.
+See: https://github.com/terraform-aws-modules/terraform-aws-security-group/blob/master/rules.tf
 */
 
 sg_ingress_cidrs                        = ["0.0.0.0/0"]
 sg_ssh_cidrs                            = ["0.0.0.0/0"]
 
+sg_egress_eice = ["all-all"]
+sg_egress_tower_ec2 = ["all-all"]
+sg_egress_tower_alb = ["all-all"]
+sg_egress_batch_ec2 = ["all-all"]
+sg_egress_interface_endpoint = ["all-all"]
 
 /*
 ## ------------------------------------------------------------------------------------
@@ -390,6 +401,12 @@ db_engine_version                       = "8.0"
 db_instance_class                       = "db.m5.large"
 db_allocated_storage                    = 30
 
+db_deletion_protection                  = true
+skip_final_snapshot                     = false
+
+db_backup_retention_period              = 7
+db_enable_storage_encrypted             = true
+
 
 /*
 ## ------------------------------------------------------------------------------------
@@ -438,6 +455,8 @@ ec2_host_instance_type                  = "c5.2xlarge"
 flag_encrypt_ebs                        = true
 flag_use_kms_key                        = true
 ec2_ebs_kms_key                         = "REPLACE_ME_IF_NEEDED"
+
+ec2_require_imds_token                  = true
 
 
 /* 
