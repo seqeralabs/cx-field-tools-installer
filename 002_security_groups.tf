@@ -134,7 +134,6 @@ module "tower_db_sg" {
 ## ------------------------------------------------------------------------------------
 ## AWS Batch Security Groups
 ## ------------------------------------------------------------------------------------
-# trivy:ignore:avd-aws-0104
 module "tower_batch_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "5.1.0"
