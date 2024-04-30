@@ -20,7 +20,7 @@ services:
       retries: 10
     volumes:
       - $HOME/.tower/db/mysql:/var/lib/mysql
-%{ if flag_enable_groundswell == true && flag_new_enough_for_groundswell == true ~}
+%{ if flag_enable_groundswell == true ~}
       - $HOME/target/groundswell_config/groundswell.sql:/docker-entrypoint-initdb.d/init.sql
 %{ endif ~}
 %{ endif ~}
@@ -40,7 +40,7 @@ services:
 %{ endif ~}
 
 
-%{ if flag_enable_groundswell == true && flag_new_enough_for_groundswell == true ~}
+%{ if flag_enable_groundswell == true ~}
   groundswell:
     image: cr.seqera.io/private/nf-tower-enterprise/groundswell:${swell_container_version}
     command: bash -c "pip install cryptography; bin/wait-for-it.sh db:3306 -t 60; bin/migrate-db.sh; bin/serve.sh"

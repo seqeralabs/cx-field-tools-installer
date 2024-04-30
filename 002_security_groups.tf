@@ -29,7 +29,7 @@ module "tower_eice_egress_sg" {
   description = "Allowed egress CIDRS EC2 Instance Connect endpoint."
 
   vpc_id       = local.vpc_id
-  egress_rules = ["all-all"]
+  egress_rules = var.sg_egress_eice
 }
 
 
@@ -58,7 +58,7 @@ module "tower_ec2_egress_sg" {
 
   vpc_id              = local.vpc_id
   ingress_cidr_blocks = var.sg_ingress_cidrs
-  egress_rules        = ["all-all"]
+  egress_rules        = var.sg_egress_tower_ec2
 }
 
 
@@ -106,7 +106,7 @@ module "tower_alb_sg" {
   vpc_id              = local.vpc_id
   ingress_cidr_blocks = local.alb_ingress_cidrs #var.sg_ingress_cidrs
   ingress_rules       = ["https-443-tcp", "http-80-tcp"]
-  egress_rules        = ["all-all"]
+  egress_rules        = var.sg_egress_tower_alb
 }
 
 
@@ -142,7 +142,7 @@ module "tower_batch_sg" {
   description = "Security group for Tower Batch instance."
 
   vpc_id       = local.vpc_id
-  egress_rules = ["all-all"]
+  egress_rules = var.sg_egress_batch_ec2
 
   computed_ingress_with_source_security_group_id = [
     {
@@ -186,7 +186,7 @@ module "tower_interface_endpoint_sg" {
   description = "Allowed ingress on VPC endpoints in Tower Subnet."
 
   vpc_id              = local.vpc_id
-  ingress_cidr_blocks = ["0.0.0.0/0"]
+  ingress_cidr_blocks = [var.vpc_new_cidr_range]
   ingress_rules       = ["all-all"]
-  egress_rules        = ["all-all"]
+  egress_rules        = var.sg_egress_interface_endpoint
 }

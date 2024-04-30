@@ -68,6 +68,11 @@ resource "aws_launch_template" "lt" {
     name = data.aws_iam_instance_profile.tower_vm.name
   }
 
+  metadata_options {
+    # IMDS token config
+    http_tokens = var.ec2_require_imds_token == true ? "required" : "optional"
+  }
+
   user_data = base64encode(local.lt_content_raw)
 }
 
@@ -97,6 +102,11 @@ resource "aws_instance" "ec2" {
   #  - https://github.com/hashicorp/terraform/issues/11806
   lifecycle {
     ignore_changes = [user_data]
+  }
+
+  metadata_options {
+    # IMDS token config
+    http_tokens = var.ec2_require_imds_token == true ? "required" : "optional"
   }
 
   tags = {

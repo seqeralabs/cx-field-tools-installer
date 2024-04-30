@@ -75,10 +75,11 @@ if __name__ == '__main__':
     logger.info("")
     logger.info("Beginning tfvars configuration check.")
 
-    # Generaed dictionary from tfvars then convert to SimpleNamespace for cleaner dot-notation access.
+    # Generate dictionary from tfvars then convert to SimpleNamespace for cleaner dot-notation access.
     # Kept the two objects different for convenience when .keys() method is required.
     data_dictionary = get_tfvars_as_json()
     data = SimpleNamespace(**data_dictionary)
+
 
     # Check minimum container version
     if not ((data.tower_container_version).startswith('v')) or (data.tower_container_version < "v23.1.0"):
@@ -205,6 +206,11 @@ if __name__ == '__main__':
     if data.sg_ssh_cidrs == "0.0.0.0/0":
         logger.warning('[REMINDER]: Security group rule for SSH ingress is loose by default. Please consider tightening.')
 
+    all_all = ["all-all"]
+    for sg in [data.sg_egress_eice, data.sg_egress_tower_ec2, data.sg_egress_tower_alb, data.sg_egress_batch_ec2, data.sg_egress_interface_endpoint]:
+        if key == all_all:
+            logger.warning(f"[REMINDER]: `{key}` allows egress everywhere. Please ensure this was desired behaviour.")
+
 
     # VPC Dependency checks
     ensure_dependency_populated(data.flag_use_existing_vpc, data.vpc_existing_id, 'Specify a `vpc_existing_id` value.')
@@ -215,6 +221,28 @@ if __name__ == '__main__':
     ensure_dependency_populated(data.flag_create_route53_private_zone, data.new_route53_private_zone_name, 'Specify an `new_route53_private_zone_name` value.')
     ensure_dependency_populated(data.flag_use_existing_route53_public_zone, data.existing_route53_public_zone_name, 'Specify an `existing_route53_public_zone_name` value.')
     ensure_dependency_populated(data.flag_use_existing_route53_private_zone, data.existing_route53_private_zone_name, 'Specify an `existing_route53_private_zone_name` value.')
+
+
+    # Check Groundwell validity
+    if data.flag_enable_groundswell:
+        if data.tower_container_version < "v23.3.0":
+            raise AssertionError(' Groundswell only available in Tower 23.3.0+')
+        
+
+    # External DB Deletion protection
+    if data.db_deletion_protection:
+        logger.info("[REMINDER]: You have Deletion Protection enabled for your external DB. This will affect easy teardown during testing.")
+    elif not data.db_deletion_protection:
+        logger.warning("[WARNING] You have not enabled Deletion Protection on your external DB. This is HIGHLY recommended for Production instances. If you want this, set `db_deletion_protection` to true.")
+
+    if data.skip_final_snapshot:
+        logger.info("[REMINDER]: You have disabled a final snapshot of your external DB. Enablement of this feature is recommended for Production.")
+    elif not data.skip_final_snapshot:
+        logger.warning("[WARNING] You have enabled a final snapshot on your external DB. This will affect easy teardwon during testing.")
+
+    # Flow logs
+    if (data.flag_create_new_vpc) and (data.enable_vpc_flow_logs):
+        logger.warning("[REMINDER]: You have VPC Flow Logs activated. This will generate extra costs.")
 
 
     logger.info("Finished tfvars configuration check.")
