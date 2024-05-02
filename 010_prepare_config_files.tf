@@ -44,6 +44,7 @@ resource "null_resource" "regenerate_config_files_from_data" {
 
       # Generate SSH_Config
       echo '${local.ssh_config}' > ${path.module}/ssh_config
+      chmod 644 ${path.module}/ssh_config
 
     EOT
     interpreter = ["/bin/bash", "-c"]
