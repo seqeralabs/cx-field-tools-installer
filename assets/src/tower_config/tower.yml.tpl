@@ -26,6 +26,7 @@ mail:
     ### password: ${TOWER_SMTP_PASSWORD}
     auth: ${tower_smtp_auth}
     starttls:
+      # `starttls` should be enabled with a production SMTP host
       enable: ${tower_smtp_starttls_enable}
       required: ${tower_smtp_starttles_required }
     ssl:
