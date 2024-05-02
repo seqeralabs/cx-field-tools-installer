@@ -80,8 +80,6 @@
         export db_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
 
         mysql --host $DB_URL --port=3306 --user=$db_master_user --password=$db_master_password < target/groundswell_config/groundswell.sql  || true
-      else
-        mysql --host $DB_URL --port=3306 --user=$db_master_user --password=$db_master_password < target/groundswell_config/groundswell.sql  || true
       fi
 
   - name: Generate PrivateCA artefacts if necessary
