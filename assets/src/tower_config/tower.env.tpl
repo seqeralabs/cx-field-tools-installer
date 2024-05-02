@@ -85,6 +85,7 @@ TOWER_ENABLE_WAVE=false
 
 # ------------------------------------------------
 # Groundswell
+# Pipeline resource optimization service.
 # ------------------------------------------------
 %{ if flag_enable_groundswell == true ~}
 GROUNDSWELL_SERVER_URL="http://groundswell:8090"

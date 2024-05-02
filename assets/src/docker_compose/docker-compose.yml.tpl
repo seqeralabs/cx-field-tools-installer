@@ -19,6 +19,7 @@ services:
       timeout: 20s
       retries: 10
     volumes:
+      # Store the MySQL data in a directory on the host
       - $HOME/.tower/db/mysql:/var/lib/mysql
 %{ endif ~}
 
@@ -33,6 +34,7 @@ services:
     command: --appendonly yes
     restart: always
     volumes:
+      # Store the Redis data in a directory on the host
       - $HOME/.tower/db/redis:/data
 %{ endif ~}
 
@@ -70,6 +72,7 @@ services:
     volumes:
       - $HOME/tower.yml:/tower.yml
     env_file:
+      # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
       - tower.env
     restart: no
 %{ if flag_use_container_db == true ~}
@@ -90,8 +93,10 @@ services:
     volumes:
       - $HOME/tower.yml:/tower.yml
     env_file:
+      # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
       - tower.env
     environment:
+      # Micronaut environments are required. Do not edit these value
       - MICRONAUT_ENVIRONMENTS=prod,redis,cron${auth_oidc}${auth_github}
     restart: always
     depends_on:
@@ -111,8 +116,10 @@ services:
     volumes:
       - $HOME/tower.yml:/tower.yml
     env_file:
+      # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
       - tower.env
     environment:
+      # Micronaut environments are required. Do not edit these value
       - MICRONAUT_ENVIRONMENTS=prod,redis,cron${auth_oidc}${auth_github}
     restart: always
 %{ if flag_use_container_db == true || flag_use_container_redis == true ~}
