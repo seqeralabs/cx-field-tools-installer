@@ -43,7 +43,11 @@ services:
 %{ if flag_enable_groundswell == true ~}
   groundswell:
     image: cr.seqera.io/private/nf-tower-enterprise/groundswell:${swell_container_version}
+%{ if flag_use_container_db == true ~}
     command: bash -c "pip install cryptography; bin/wait-for-it.sh db:3306 -t 60; bin/migrate-db.sh; bin/serve.sh"
+%{ else ~}
+    command: bash -c "pip install cryptography; bin/migrate-db.sh; bin/serve.sh"
+%{ endif }
     networks:
       - backend
     ports:

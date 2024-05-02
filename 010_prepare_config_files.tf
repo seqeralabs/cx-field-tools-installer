@@ -39,7 +39,8 @@ resource "null_resource" "regenerate_config_files_from_data" {
       # Generate Ansible files
       echo '${local.ansible_02_update_file_configurations}' > ${path.module}/assets/target/ansible/02_update_file_configurations.yml
       echo '${local.ansible_03_pull_containers_and_run_tower}' > ${path.module}/assets/target/ansible/03_pull_containers_and_run_tower.yml
-      echo '${local.ansible_05_run_seqerakit}' > ${path.module}/assets/target/ansible/05_run_seqerakit.yml
+      echo '${local.ansible_05_patch_groundswell}' > ${path.module}/assets/target/ansible/05_patch_groundswell.yml
+      echo '${local.ansible_06_run_seqerakit}' > ${path.module}/assets/target/ansible/06_run_seqerakit.yml
 
       # Generate SSH_Config
       echo '${local.ssh_config}' > ${path.module}/ssh_config

@@ -81,9 +81,8 @@
 
         mysql --host $DB_URL --port=3306 --user=$db_master_user --password=$db_master_password < target/groundswell_config/groundswell.sql  || true
       else
-        mysql --host $DB_URL --port=3306 --user=${db_tower_user} --password=${db_tower_password} < target/groundswell_config/groundswell.sql  || true
+        mysql --host $DB_URL --port=3306 --user=$db_master_user --password=$db_master_password < target/groundswell_config/groundswell.sql  || true
       fi
-
 
   - name: Generate PrivateCA artefacts if necessary
     become: true
