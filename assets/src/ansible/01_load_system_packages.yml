@@ -102,7 +102,7 @@
     become: true
     become_user: ec2-user
     ansible.builtin.pip:
-      name: seqerakit==0.4.5
+      name: seqerakit==0.4.8
       # name: git+https://github.com/seqeralabs/seqera-kit.git@dev
       extra_args: --user
 
