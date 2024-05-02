@@ -26,6 +26,7 @@
     community.docker.docker_compose_v2:
       project_src: /home/ec2-user/
       state: absent
+      remove_orphans: true
 
 
   - name: Docker Compose Up

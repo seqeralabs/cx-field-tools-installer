@@ -342,7 +342,7 @@ Enable to allow pipeline optimization.
 
 flag_enable_groundswell                 = true
 
-swell_container_version                 = "0.3.3"
+swell_container_version                 = "0.4.0"
 swell_database_name                     = "swell"
 ## swell_db_user                        = "DO_NOT_UNCOMMENT_ME"
 ## swell_db_password                    = "DO_NOT_UNCOMMENT_ME"
