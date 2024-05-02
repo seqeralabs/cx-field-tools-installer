@@ -2,7 +2,6 @@
 - hosts: localhost
 
   vars:
-  # Only run this if TF seqerakit flag set to true.
   become: yes
   become_user: root
   become_method: sudo

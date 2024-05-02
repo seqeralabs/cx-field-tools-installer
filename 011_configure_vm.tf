@@ -39,6 +39,12 @@ resource "null_resource" "copy_files_to_vm" {
       echo "Pulling containers and running Tower"
       ssh ${var.app_name} 'cd /home/ec2-user/target/ansible && ansible-playbook 03_pull_containers_and_run_tower.yml'
 
+      echo "Wait for Tower containers to be ready"
+      ssh ${var.app_name} 'cd /home/ec2-user/target/ansible && ansible-playbook 04_wait_for_tower.yml'
+
+      echo "Patching Groundswell (if necessary)"
+      ssh ${var.app_name} 'cd /home/ec2-user/target/ansible && ansible-playbook 05_patch_groundswell.yml'
+
     EOT
     interpreter = ["/bin/bash", "-c"]
   }
@@ -81,8 +87,7 @@ resource "null_resource" "run_seqerkit" {
       set -e
 
       echo "Running Seqerakit"
-      ssh ${var.app_name} 'cd /home/ec2-user/target/ansible && ansible-playbook 04_wait_for_tower.yml'
-      ssh ${var.app_name} 'cd /home/ec2-user/target/ansible && ansible-playbook 05_run_seqerakit.yml'
+      ssh ${var.app_name} 'cd /home/ec2-user/target/ansible && ansible-playbook 06_run_seqerakit.yml'
 
     EOT
     interpreter = ["/bin/bash", "-c"]

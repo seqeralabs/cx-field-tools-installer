@@ -262,7 +262,14 @@ locals {
     }
   )
 
-  ansible_05_run_seqerakit = templatefile("assets/src/ansible/05_run_seqerakit.yml.tpl",
+  ansible_05_patch_groundswell = templatefile("assets/src/ansible/05_patch_groundswell.yml.tpl",
+    {
+      flag_enable_groundswell = tostring(var.flag_enable_groundswell)
+      flag_use_container_db = tostring(var.flag_use_container_db)
+    }
+  )
+
+  ansible_06_run_seqerakit = templatefile("assets/src/ansible/06_run_seqerakit.yml.tpl",
     {
       app_name = var.app_name
     }
