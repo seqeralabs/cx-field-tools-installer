@@ -20,9 +20,6 @@ services:
       retries: 10
     volumes:
       - $HOME/.tower/db/mysql:/var/lib/mysql
-%{ if flag_enable_groundswell == true ~}
-      - $HOME/target/groundswell_config/groundswell.sql:/docker-entrypoint-initdb.d/init.sql
-%{ endif ~}
 %{ endif ~}
 
 
