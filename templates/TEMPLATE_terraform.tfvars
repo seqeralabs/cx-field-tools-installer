@@ -597,5 +597,6 @@ therefore be deactivated if not supplied.
 seqerakit_flag_credential_create_aws        = true
 seqerakit_flag_credential_create_github     = true
 seqerakit_flag_credential_create_docker     = true
+seqerakit_flag_credential_create_codecommit = false
 
 seqerakit_flag_credential_use_aws_role      = true
