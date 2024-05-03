@@ -271,7 +271,8 @@ locals {
 
   ansible_06_run_seqerakit = templatefile("assets/src/ansible/06_run_seqerakit.yml.tpl",
     {
-      app_name = var.app_name
+      app_name = var.app_name,
+      seqerakit_flag_credential_create_codecommit = var.seqerakit_flag_credential_create_codecommit
     }
   )
 }
