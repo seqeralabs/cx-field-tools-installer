@@ -45,6 +45,26 @@ This page lists to-be-built-in-future functionality and various oddities you may
 
     This problem is only likely to be seen during the initial phase of your deployment efforts as you tweak OOTB settings to fit your organization's reality. Once you can successfully complete an end-to-end deployment, it is suggested you run a full destroy-and-redeploy cycle to clean up any extraneous artefacts that may have spawned. 
 
+- `tw cli` limitations
+
+    Current as of May 4/24, the `tw cli` does not support all transactions available via the Tower APIs (_including the creation of some Git credential types like CodeCommit). This lack of support means that direct invocation of Seqerakit after infrastructure creation requires an alternative implementation (_i.e. breaking up the monolith setup.yml file and invoking direct API calls in the middle). This workaround can be retired once `tw` is fully harmonized with the API offerings.
+
+- Limitations of Terraform templating
+
+    The Terraform `templatefile` function is used extensively in this project to generate config files (_e.g. `file.json.tpl` --> `file.json`). This generally works well, but the `$` variable identification notation causes problems when: 
+    
+        1. Trying to create a template file that contains both variables being passed to the `templatefile` function within Terraform and Bash subshell commands / conditional logic which are expected to be interpolated when Ansible runs the resulting file on the EC2. 
+
+        2. Using proper punctuation in comments (_e.g. the `'` in `won't`), which results in hugely frustrating-to-resolve file generation errors which make me want to purge Ansible from this solution every couple of weeks.
+
+    As a result of these challenges, two behaviours are implemented:
+
+        1. Avoidance wherever possible in comments of characters that could be interpreted as string identifiers or code to be executed: `'`, `"`, and `\``.
+
+        2. Break-up of Ansible and Bash scripts into smaller files in a way such that some files can be pushed through the Terraform templating engine, while others are treated as static files.
+
+    TBD whether Terraform templating should remain the longer-term solution (current as of May 2024). The introduction of the new Python-based variable configuration checker could likely be easily extended to handle template file generation as well, and brings all the power of a true programming language. 
+
 
 ## Deficiencies
 
@@ -53,4 +73,3 @@ In no particular order, the following items are acknowledged for eventual future
 - Modify solution to allow use of existing ALB (must create new for now).
 - Replace `mysql` client install (Ansible step) with docker container. Bypasses risk of expiring GPG key.
 - Move hardcoded Elasticache values to `terraform.tfvars` file.
-- Add deletion protection to RDS instance.

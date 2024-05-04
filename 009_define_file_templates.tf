@@ -150,6 +150,7 @@ locals {
       seqerakit_flag_credential_create_aws    = var.seqerakit_flag_credential_create_aws,
       seqerakit_flag_credential_create_github = var.seqerakit_flag_credential_create_github,
       seqerakit_flag_credential_create_docker = var.seqerakit_flag_credential_create_docker,
+      seqerakit_flag_credential_create_codecommit = var.seqerakit_flag_credential_create_codecommit,
 
       seqerakit_flag_credential_use_aws_role = var.seqerakit_flag_credential_use_aws_role
     }
@@ -275,6 +276,14 @@ locals {
       seqerakit_flag_credential_create_codecommit = var.seqerakit_flag_credential_create_codecommit
     }
   )
+
+  codecommit_seqerakit = templatefile("assets/src/bash/remote/codecommit_set_workspace_id.sh.tpl",
+  {
+    seqerakit_org_name = var.seqerakit_org_name,
+    seqerakit_workspace_name =  var.seqerakit_workspace_name
+  }
+)
+
 }
 
 

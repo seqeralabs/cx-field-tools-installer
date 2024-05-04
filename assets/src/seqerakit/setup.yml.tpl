@@ -105,6 +105,20 @@ pipelines:
     pre-run: './pipelines/pre_run.txt'
     overwrite: False
 
+%{~ if seqerakit_flag_credential_create_codecommit == true }
+  # CodeCommitTest
+  # - name: 'cc-test'
+  #   url: 'https://git-codecommit.us-east-1.amazonaws.com/v1/repos/grahamhello'
+  #   workspace: "${seqerakit_org_name}/${seqerakit_workspace_name}"
+  #   description: 'CodeCommit testing pipeline'
+  #   compute-env: "${seqerakit_compute_env_name}"
+  #   work-dir: "${seqerakit_workdir}"
+  #   revision: 'main'
+  #   overwrite: False
+%{ endif ~}
+
+
+
 launch:
   - name: 'hello-world-launchpad'
     workspace: "${seqerakit_org_name}/${seqerakit_workspace_name}"

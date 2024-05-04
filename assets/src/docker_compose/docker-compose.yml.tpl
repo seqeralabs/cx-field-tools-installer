@@ -21,6 +21,9 @@ services:
     volumes:
       # Store the MySQL data in a directory on the host
       - $HOME/.tower/db/mysql:/var/lib/mysql
+%{ if flag_enable_groundswell == true ~}
+      - $HOME/target/groundswell_config/groundswell.sql:/docker-entrypoint-initdb.d/init.sql
+%{ endif ~}
 %{ endif ~}
 
 
