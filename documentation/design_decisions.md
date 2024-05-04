@@ -71,6 +71,7 @@ In response to the outlined design considerations, the following design decision
 9. **Minimize reliance on third-party tooling where possible**
     [Supply-chain attacks](https://www.crowdstrike.com/cybersecurity-101/cyberattacks/supply-chain-attacks/) are growing in popularity and scope. The best way to minimize risk is to reduce reliance on third-party software packages and favour standard libraries or native tooling wherever possible. There is a balance to be struck, however. Using AWS-supported Terraform modules can significantly reduce the number of resources that the project needs to generate/maintain. As a result, we use third-party packages issued by trusted upstream sources and try to minimize reliance on less well-known Github projects (even if this means the resulting code is less elegant).
 
+
 ## Notable design decisions
 In addition to the general design decisions noted above, there are a few decisions which must be called out specifically due to their influence on the project.
 
