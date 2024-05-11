@@ -32,6 +32,7 @@ locals {
       flag_do_not_use_https = var.flag_do_not_use_https,
 
       flag_use_wave           = var.flag_use_wave,
+      wave_server_url         = var.wave_server_url,
       flag_enable_groundswell = var.flag_enable_groundswell,
 
       flag_data_explorer_enabled        = var.flag_data_explorer_enabled,

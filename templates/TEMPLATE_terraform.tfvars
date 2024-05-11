@@ -185,6 +185,15 @@ flag_use_wave                                   = true
 
 /*
 ## ------------------------------------------------------------------------------------
+## Wave Service
+## ------------------------------------------------------------------------------------
+*/
+# Enable Tower to connect to the Wave service hosted by Seqera
+flag_use_wave                      = false
+wave_server_url                    = "https://wave.seqera.io"
+
+/*
+## ------------------------------------------------------------------------------------
 ## Flags - DNS
 ## ------------------------------------------------------------------------------------
 DNS regimes can vary and the installer tries its best to be flexible. Several options are

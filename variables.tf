@@ -76,7 +76,12 @@ variable "flag_vm_copy_files_to_instance" { type = bool }
 
 variable "flag_use_custom_docker_compose_file" { type = bool }
 
+
+## ------------------------------------------------------------------------------------
+## Wave Service
+## ------------------------------------------------------------------------------------
 variable "flag_use_wave" { type = bool }
+variable "wave_server_url" { type = string }
 
 
 ## ------------------------------------------------------------------------------------
