@@ -75,7 +75,7 @@ TOWER_ENABLE_UNSAFE_MODE=false
 # ------------------------------------------------
 # Wave & Fusion v2
 # ------------------------------------------------
-WAVE_SERVER_URL=https://wave.seqera.io
+WAVE_SERVER_URL=${wave_server_url}
 %{ if flag_use_wave == true ~}
 TOWER_ENABLE_WAVE=true
 %{ else ~}
