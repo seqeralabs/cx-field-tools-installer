@@ -266,6 +266,8 @@ variable "flag_oidc_use_github" { type = bool }
 ## EC2 - Docker Driver Logging
 ## ------------------------------------------------------------------------------------
 variable "flag_docker_logging_local" { type = bool }
+variable "flag_docker_logging_journald" { type = bool }
+variable "flag_docker_logging_jsonfile" { type = bool }
 
 
 
