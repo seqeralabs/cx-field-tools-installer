@@ -244,6 +244,15 @@ if __name__ == '__main__':
     if (data.flag_create_new_vpc) and (data.enable_vpc_flow_logs):
         logger.warning("[REMINDER]: You have VPC Flow Logs activated. This will generate extra costs.")
 
+    # Check Docker Daemon logging configuration
+    logging_flags = [
+        data.flag_docker_logging_local, 
+        data.flag_docker_logging_journald,
+        data.flag_docker_logging_jsonfile
+    ]
+    trues = [bool(i) for i in logging_flags]
+    if trues.count(True) != 1:
+        raise AssertionError("Choose one and only one docker logging flag to be true.")
 
     logger.info("Finished tfvars configuration check.")
     logger.info("")
