@@ -308,3 +308,17 @@ locals {
     }
   )
 }
+
+
+## ------------------------------------------------------------------------------------
+## EC2 Docker Logging
+## ------------------------------------------------------------------------------------
+locals {
+  docker_logging = templatefile("assets/src/docker_logging/daemon.json.tpl",
+    {
+      flag_docker_logging_local = var.flag_docker_logging_local,
+      flag_docker_logging_journald = var.flag_docker_logging_journald,
+      flag_docker_logging_jsonfile = var.flag_docker_logging_jsonfile
+    }
+  )
+}

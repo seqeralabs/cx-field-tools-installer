@@ -17,6 +17,7 @@ cp -R $SRC/docker_compose $TARGET
 mkdir -p $TARGET/bash/remote
 mkdir -p $TARGET/tower_config
 mkdir -p $TARGET/groundswell_config
+mkdir -p $TARGET/docker_logging
 
 # Purge template files from target
 find $TARGET -name '*.tpl' -delete

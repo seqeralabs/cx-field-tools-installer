@@ -244,6 +244,12 @@ You can change the state management strategy at the top of the `000-main.tf` fil
     terraform destroy
     ```
 
+
+## Logging
+
+The tool offers the ability to configure the specific docker logging driver used to capture Tower container logs. By default, the [`local file`](https://docs.docker.com/config/containers/logging/local/) logging driver is configured.
+
+
 ## WARNINGS
 
 1. If a database (_regardless if container or RDS_) was created as part of the deployment, teardown **will destroy it and all data within**.<br />Prior to deletion, consider backing up your database if the data may be needed in future.

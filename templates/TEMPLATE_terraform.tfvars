@@ -548,6 +548,17 @@ flag_oidc_use_github                   = false
 
 /*
 ## ------------------------------------------------------------------------------------
+## EC2 - Docker Driver Logging
+## ------------------------------------------------------------------------------------
+# https://docs.docker.com/config/containers/logging/local/
+*/
+flag_docker_logging_local              = false
+flag_docker_logging_journald           = true
+flag_docker_logging_jsonfile           = false
+
+
+/*
+## ------------------------------------------------------------------------------------
 ## seqerakit
 ## ------------------------------------------------------------------------------------
 This section is an optional post-configuration activity. Once infrastructure is provisioned

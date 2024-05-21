@@ -47,6 +47,9 @@ resource "null_resource" "regenerate_config_files_from_data" {
       echo '${local.ssh_config}' > ${path.module}/ssh_config
       chmod 644 ${path.module}/ssh_config
 
+      # Generate Docker Logging Configuration
+      echo '${local.docker_logging}' > ${path.module}/assets/target/docker_logging/daemon.json
+
     EOT
     interpreter = ["/bin/bash", "-c"]
   }
