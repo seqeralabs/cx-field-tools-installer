@@ -545,6 +545,8 @@ flag_oidc_use_generic                  = false
 flag_oidc_use_google                   = false
 flag_oidc_use_github                   = false
 
+flag_disable_email_login               = false
+
 
 /*
 ## ------------------------------------------------------------------------------------

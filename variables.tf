@@ -261,6 +261,8 @@ variable "flag_oidc_use_generic" { type = bool }
 variable "flag_oidc_use_google" { type = bool }
 variable "flag_oidc_use_github" { type = bool }
 
+variable "flag_disable_email_login" { type = bool }
+
 
 # ------------------------------------------------------------------------------------
 ## EC2 - Docker Driver Logging
