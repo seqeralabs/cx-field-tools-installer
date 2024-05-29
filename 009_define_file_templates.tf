@@ -56,7 +56,9 @@ locals {
       tower_smtp_auth               = var.tower_smtp_auth,
       tower_smtp_starttls_enable    = var.tower_smtp_starttls_enable,
       tower_smtp_starttles_required = var.tower_smtp_starttls_required,
-      tower_smtp_ssl_protocols      = var.tower_smtp_ssl_protocols
+      tower_smtp_ssl_protocols      = var.tower_smtp_ssl_protocols,
+
+      flag_disable_email_login = var.flag_disable_email_login,
 
     }
   )

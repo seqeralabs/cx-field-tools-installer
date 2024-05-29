@@ -254,6 +254,20 @@ if __name__ == '__main__':
     if trues.count(True) != 1:
         raise AssertionError("Choose one and only one docker logging flag to be true.")
 
+
+    # Check email disable scenarios
+    if (data.flag_disable_email_login):
+
+        if (data.tower_container_version < "v23.4.5"):
+            raise AssertionError(' You cannot disable email login in versions earlier than 23.4.5')
+
+        oidc_flags = [data.flag_oidc_use_generic, data.flag_oidc_use_google, data.flag_oidc_use_github]
+        if not any(oidc_flags):
+            raise AssertionError(' Email login cannot be disabled if you dont have an OIDC alternative configured.')
+        
+        if data.flag_run_seqerakit:
+            logger.warning("[WARNING] Seqerakit step cannot execute if email login is not active.")
+
     logger.info("Finished tfvars configuration check.")
     logger.info("")
 
