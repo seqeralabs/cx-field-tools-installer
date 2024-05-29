@@ -65,6 +65,12 @@ micronaut:
 
 ### The tower scope is used for providing config for your Tower Enterprise installation
 tower:
+
+  # As of Tower v23.4.5, the email login option can be disabled.
+  # Note: There must be an active OIDC integration configured or else this flag will be ignored.
+  auth:
+    disable-email: false
+
   admin:
     # Control user access to personal (i.e. non-Org-based) Workspace.
     user-workspace-enabled: true
