@@ -1,11 +1,14 @@
 # Security
 
+
+## Hardening the Installer Project
+
 We use [tfsec](https://github.com/aquasecurity/tfsec) to scan this project for vulnerabilities. 
 
 The latest scan was conducted **mid April 2024**, with highlighted vulnerabilities and fixes being tracked and actioned in [Issue #36 - Fix tfsec-identified Critical/High vulnerabilities](https://github.com/seqeralabs/cx-field-tools-installer/issues/36).
 
 
-## Patching vs Suppression vs Ignoring Reported Vulnerabilites
+### Patching vs Suppression vs Ignoring Reported Vulnerabilites
 
 While it would be ideal to completely fix all reported issues, there are a few-complicating factors to be considered:
 
@@ -32,7 +35,7 @@ While it would be ideal to completely fix all reported issues, there are a few-c
     Some features, like configuring redis snapshot retention, arent necessary given how the Seqera Platform application works.
 
 
-## Mitigation approach
+### Mitigation approach
 
 The following approach is being followed to mitigate vulnerabilities:
 
@@ -47,7 +50,7 @@ The following approach is being followed to mitigate vulnerabilities:
 4. Suppress `tfsec` warnings for configurations handled by 2 & 3.
 
 
-## Tfsec suppressions in place
+### Tfsec suppressions in place
 
 !!! warn "Trivy reporting errors on inner module config"
 
@@ -95,3 +98,28 @@ Managed via [`.trivyignore`](../.trivyignore):
     - Load balancer is exposed publicly: [`avd-aws-0053`](https://avd.aquasec.com/misconfig/avd-aws-0053)
     - Listener does not use HTTPS: [`avd-aws-0054`](https://avd.aquasec.com/misconfig/avd-aws-0054)
 
+
+## Hardening Cloud Objects Created By The Project
+
+We must balance security with convenience: 
+
+- If the project is too strict on security, deployment efforts can be significantly slowed as a myriad of connectivity problems emerge and must be resolved. 
+- Conversely, deployments with no security expose our clients to unnecessary risks which could have been easily mitigated with a few easy-to-make decisions.
+
+We try to expose suggested best practices, but it **ultimately the implementer's decision re: what is best for their organization**. As you make this decision, please be mindful of the following items.
+
+
+### AMI Updating 
+
+By default, the installer will try to grab the [very latest Amazon Linux 2023 AMI available](https://github.com/seqeralabs/cx-field-tools-installer/blob/master/006_ec2.tf#L1-L25) in your region. 
+
+This is generally seen as a good idea because it ensures security/application patches are introduced into your environment regularly. Unfortunately, it can occasionally cause VMs to be destroyed and replaced (_potentially resulting in the loss of data if the implementation is using the container db_) and can also knock highly regulated installations out of compliance (_i.e. if an AMI is auto-replaced without the necessary paperwork). 
+
+As of Release 1.3, more control has been introduced to allow implementers to pick a pattern which best fits their needs. [Reference Issue](https://github.com/seqeralabs/cx-field-tools-installer/issues/73)
+
+
+## Egress Rules
+
+Depending on the pipelines your run, many calls may need to egress from your Seqera Platform / Compute Environment to a variety of endpoints exposed on the public internet. 
+
+For ease of deployment, the installer starts from a very loose posture re: security egress controls (`0.0.0.0/0`). While this helps minimize stand-up efforts, it may be inappropriate for your eventual Production deployment stance. Please me mindful of this behaviour and lockdown as necessary once 'happy path' pipeline runs prove successful.

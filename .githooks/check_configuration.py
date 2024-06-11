@@ -72,7 +72,6 @@ def ensure_dependency_populated(flag: bool, child: str, qualifier: str) -> None:
 ## ------------------------------------------------------------------------------------
 if __name__ == '__main__':
 
-    logger.info("")
     logger.info("Beginning tfvars configuration check.")
 
     # Generate dictionary from tfvars then convert to SimpleNamespace for cleaner dot-notation access.
@@ -83,7 +82,7 @@ if __name__ == '__main__':
 
     # Check minimum container version
     if not ((data.tower_container_version).startswith('v')) or (data.tower_container_version < "v23.1.0"):
-        raise AssertionError(" Tower version minimum is 23.1.0 (for Parameter Store integration).")
+        raise AssertionError("Tower version minimum is 23.1.0 (for Parameter Store integration).")
 
 
     # Check true/false blocks
@@ -136,13 +135,13 @@ if __name__ == '__main__':
     if data.flag_use_aws_ses_iam_integration:
 
         if data.tower_container_version < "v23.2.0": 
-            raise AssertionError(" SES IAM integration not available until Tower 23.2.0. Please fix.")
+            raise AssertionError("SES IAM integration not available until Tower 23.2.0. Please fix.")
         
         if "amazonaws.com" not in data.tower_smtp_host: 
-            raise AssertionError(" You want to SES but are not pointing to an SES endpoint. Please fix.")
+            raise AssertionError("You want to SES but are not pointing to an SES endpoint. Please fix.")
         
         if data.tower_smtp_port != "587": 
-            raise AssertionError(" SES integration requires port 587. Plese fix.")
+            raise AssertionError("SES integration requires port 587. Plese fix.")
 
 
     ## Tower server URL checks
@@ -156,7 +155,7 @@ if __name__ == '__main__':
         assert data.existing_route53_private_zone_name in data.tower_server_url, "[ERROR] `tower_server_url` does not match DNS zone."
 
     if data.tower_server_url.startswith('http'):
-        raise AssertionError(" Field `tower_server_url` must not have a prefix.")
+        raise AssertionError("Field `tower_server_url` must not have a prefix.")
 
     if data.tower_server_port != "8000":
         logger.warning("[REMINDER]: Your Tower instance is using a non-default port (8000). Ensure your Docker-Compose file is updated accordingly.")
@@ -167,13 +166,13 @@ if __name__ == '__main__':
         logger.warning("MySQL 8 may need TOWER_DB_URL connection string modifiers.")
 
     if ( data.tower_db_url.startswith('jdbc:') ) or ( data.tower_db_url.startswith('mysql:') ):
-        raise AssertionError(" Do not include protocol in `tower_db_url`. Start with hostname.")
+        raise AssertionError("Do not include protocol in `tower_db_url`. Start with hostname.")
 
     if ( data.tower_db_driver != "org.mariadb.jdbc.Driver" ):
-        raise AssertionError(" Field `tower_db_driver` must be `org.mariadb.jdbc.Driver`.")
+        raise AssertionError("Field `tower_db_driver` must be `org.mariadb.jdbc.Driver`.")
 
     if ( data.tower_db_dialect != "io.seqera.util.MySQL55DialectCollateBin" ):
-        raise AssertionError(" Field `tower_db_dialect` must be `org.mariadb.jdbc.Driver`.")
+        raise AssertionError("Field `tower_db_dialect` must be `org.mariadb.jdbc.Driver`.")
 
     if data.flag_use_container_db:
         
@@ -186,7 +185,7 @@ if __name__ == '__main__':
 
     # Tower root users check
     if data.tower_root_users in [ "REPLACE_ME", "" ]:
-        raise AssertionError(" Please populate `tower_root_user` with at least one email address.")
+        raise AssertionError("Please populate `tower_root_user` with at least one email address.")
 
 
     # Private CA checks
@@ -233,12 +232,12 @@ if __name__ == '__main__':
     if data.db_deletion_protection:
         logger.info("[REMINDER]: You have Deletion Protection enabled for your external DB. This will affect easy teardown during testing.")
     elif not data.db_deletion_protection:
-        logger.warning("[WARNING] You have not enabled Deletion Protection on your external DB. This is HIGHLY recommended for Production instances. If you want this, set `db_deletion_protection` to true.")
+        logger.warning("You have not enabled Deletion Protection on your external DB. This is HIGHLY recommended for Production instances. If you want this, set `db_deletion_protection` to true.")
 
     if data.skip_final_snapshot:
         logger.info("[REMINDER]: You have disabled a final snapshot of your external DB. Enablement of this feature is recommended for Production.")
     elif not data.skip_final_snapshot:
-        logger.warning("[WARNING] You have enabled a final snapshot on your external DB. This will affect easy teardwon during testing.")
+        logger.warning("You have enabled a final snapshot on your external DB. This will affect easy teardwon during testing.")
 
     # Flow logs
     if (data.flag_create_new_vpc) and (data.enable_vpc_flow_logs):
@@ -266,10 +265,18 @@ if __name__ == '__main__':
             raise AssertionError(' Email login cannot be disabled if you dont have an OIDC alternative configured.')
         
         if data.flag_run_seqerakit:
-            logger.warning("[WARNING] Seqerakit step cannot execute if email login is not active.")
+            logger.warning("Seqerakit step cannot execute if email login is not active.")
+
+    # Check AMI update logic
+    if (data.ec2_update_ami_if_available):
+
+        logger.warning("You have chosen to update your EC2 AMI if a newer image becomes available. While this is a wise security decision, it does mean your VM will occasionally be destroyed and recreated.")
+
+        if (data.flag_use_container_db):
+            logger.warning("You have chosen to update your EC2 AMI when available but are using a docker db container. You WILL lose your data when the VM is recreated. Please ensure this pattern matches your intention.")
+
 
     logger.info("Finished tfvars configuration check.")
-    logger.info("")
 
     exit()
 
