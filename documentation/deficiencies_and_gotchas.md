@@ -65,6 +65,16 @@ This page lists to-be-built-in-future functionality and various oddities you may
 
     TBD whether Terraform templating should remain the longer-term solution (current as of May 2024). The introduction of the new Python-based variable configuration checker could likely be easily extended to handle template file generation as well, and brings all the power of a true programming language. 
 
+- Launch Template behaviour
+
+    The `data.aws_ami` resource filtering we use in [`006_ec2.tf`](https://github.com/seqeralabs/cx-field-tools-installer/blob/master/006_ec2.tf) was too loose upon initial release. While it does well at finding updated Amazon Linux 2023 AMIs, existing candidates can be pulled from at least 4 different family types (_standard, minimal, neuron, hvm, etc_). 
+
+    The default behaviour has been remediated in version 1.3:
+
+        - A flag (`ec2_update_ami_if_available`) is now available in the `terraform.tfvars` file to allow implementators to decide whether to allow AMIs to automatically update or pin to a specific version.
+
+        - We mooted whether to make the `data.aws_ami` filtering object more specific but decided to leave as is for reverse compatibility. Implementators seeking greater control over the application can choose to modify the resource directly. [Reference Issue](https://github.com/seqeralabs/cx-field-tools-installer/issues/73)
+
 
 ## Deficiencies
 

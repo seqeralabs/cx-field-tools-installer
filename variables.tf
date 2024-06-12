@@ -220,6 +220,8 @@ variable "ec2_ebs_kms_key" { type = string }
 
 variable "ec2_require_imds_token"  { type = bool }
 
+variable "ec2_update_ami_if_available"  { type = bool }
+
 
 ## ------------------------------------------------------------------------------------
 ## ALB

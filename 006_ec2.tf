@@ -9,6 +9,8 @@ data "aws_ami" "amazon_linux_2023" {
   filter {
     name   = "name"
     values = ["al2023-ami-*"]
+    # values = ["al2023-ami-ecs-hvm-2023.0.20230509-kernel-6.1-x86_64"]
+    # values = ["al2023-ami-ecs-hvm-2023*"]
   }
   filter {
     name   = "root-device-type"
@@ -56,7 +58,9 @@ resource "aws_key_pair" "generated_key" {
 ## ------------------------------------------------------------------------------------
 ## EC2 Launch Template
 ## ------------------------------------------------------------------------------------
-resource "aws_launch_template" "lt" {
+resource "aws_launch_template" "lt_with_no_ami_lifecycle" {
+
+  count = var.ec2_update_ami_if_available == true ? 1 : 0
 
   image_id      = data.aws_ami.amazon_linux_2023.id
   instance_type = var.ec2_host_instance_type
@@ -77,6 +81,33 @@ resource "aws_launch_template" "lt" {
 }
 
 
+resource "aws_launch_template" "lt_with_ami_lifecycle" {
+
+  count = var.ec2_update_ami_if_available == false ? 1 : 0
+
+  image_id      = data.aws_ami.amazon_linux_2023.id
+  instance_type = var.ec2_host_instance_type
+
+  vpc_security_group_ids = local.ec2_sg_final
+  key_name               = aws_key_pair.generated_key.key_name
+
+  iam_instance_profile {
+    name = data.aws_iam_instance_profile.tower_vm.name
+  }
+
+  metadata_options {
+    # IMDS token config
+    http_tokens = var.ec2_require_imds_token == true ? "required" : "optional"
+  }
+
+  user_data = base64encode(local.lt_content_raw)
+
+  lifecycle {
+    ignore_changes = [ image_id ]
+  }
+}
+
+
 ## ------------------------------------------------------------------------------------
 ## EC2 Instance
 ## ------------------------------------------------------------------------------------
@@ -87,7 +118,10 @@ resource "aws_instance" "ec2" {
   subnet_id = local.subnet_ids_ec2[0]
 
   launch_template {
-    id      = aws_launch_template.lt.id
+    # id      = aws_launch_template.lt.id
+    id        = ( var.ec2_update_ami_if_available == true ? 
+      aws_launch_template.lt_with_no_ami_lifecycle[0].id : aws_launch_template.lt_with_ami_lifecycle[0].id
+    )
     version = "$Latest"
   }
 
