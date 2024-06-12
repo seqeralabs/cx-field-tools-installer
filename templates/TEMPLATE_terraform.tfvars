@@ -467,6 +467,8 @@ ec2_ebs_kms_key                         = "REPLACE_ME_IF_NEEDED"
 
 ec2_require_imds_token                  = true
 
+ec2_update_ami_if_available             = true
+
 
 /* 
 ## ------------------------------------------------------------------------------------

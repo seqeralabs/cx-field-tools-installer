@@ -96,6 +96,7 @@ def verify_tfvars_config_dependencies(data: SimpleNamespace):
     ensure_dependency_populated(data.flag_use_existing_vpc, data.vpc_existing_id, '`vpc_existing_id` value is missing.')
     ensure_dependency_populated(data.flag_create_load_balancer, data.alb_certificate_arn, '`alb_certificate_arn` value is missing.')
 
+
     # DNS dependency checks
     ensure_dependency_populated(data.flag_create_route53_private_zone, data.new_route53_private_zone_name, '`new_route53_private_zone_name` value is missing.')
     ensure_dependency_populated(data.flag_use_existing_route53_public_zone, data.existing_route53_public_zone_name, '`existing_route53_public_zone_name` value is missing.')
@@ -299,7 +300,6 @@ if __name__ == '__main__':
     # Kept the two objects different for convenience when .keys() method is required.
     data_dictionary = get_tfvars_as_json()
     data = SimpleNamespace(**data_dictionary)
-
 
     # Check minimum container version
     if not ((data.tower_container_version).startswith('v')) or (data.tower_container_version < "v23.1.0"):
