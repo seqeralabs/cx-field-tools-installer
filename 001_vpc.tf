@@ -51,6 +51,16 @@ data "aws_vpc" "preexisting" {
   id = local.vpc_id
 }
 
+# Needed to grab route tables from pre-existing VPC to create VPC endpoints.
+data "aws_route_tables" "preexisting" {
+  vpc_id = local.vpc_id
+
+  filter {
+    name = "tag:Name"
+    values = ["*private*"]
+  }
+}
+
 
 resource "aws_vpc_endpoint" "global_endpoints" {
   for_each = toset(var.vpc_gateway_endpoints_all)
@@ -58,7 +68,9 @@ resource "aws_vpc_endpoint" "global_endpoints" {
   vpc_id            = local.vpc_id
   vpc_endpoint_type = "Gateway"
   service_name      = "com.amazonaws.${var.aws_region}.${each.key}"
-  route_table_ids   = module.vpc[0].private_route_table_ids
+  # route_table_ids   = module.vpc[0].private_route_table_ids
+  route_table_ids = local.vpc_private_route_table_ids
+
 
   tags = {
     Name = "${local.global_prefix}-global-${each.key}"

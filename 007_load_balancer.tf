@@ -11,7 +11,7 @@ module "alb" {
   vpc_id          = local.vpc_id
   subnets         = local.subnet_ids_alb
   security_groups = [module.tower_alb_sg.security_group_id]
-  internal        = var.flag_make_instance_private == true ? true : false
+  internal        = var.flag_make_instance_private == true || var.flag_private_tower_without_eice == true ? true : false
 
   # Do not keep or breaks Tower audit logging.
   # https://registry.terraform.io/modules/terraform-aws-modules/alb/aws/latest

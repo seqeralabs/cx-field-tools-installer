@@ -179,9 +179,6 @@ flag_vm_copy_files_to_instance                  = true
 # Indicate whether custom section of the docker-compose template file should be included in final render.
 flag_use_custom_docker_compose_file             = false
 
-# Enable Tower to connect to the Wave service host by Seqera
-flag_use_wave                                   = true
-
 
 /*
 ## ------------------------------------------------------------------------------------

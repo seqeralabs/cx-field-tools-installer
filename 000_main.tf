@@ -66,6 +66,7 @@ locals {
   # Networking
   # ---------------------------------------------------------------------------------------
   vpc_id = var.flag_create_new_vpc == true ? module.vpc[0].vpc_id : var.vpc_existing_id
+  vpc_private_route_table_ids = var.flag_create_new_vpc == true ? module.vpc[0].private_route_table_ids : data.aws_route_tables.preexisting.ids
 
   # If creating VPC from scratch, map all subnet CIDRS to corresponding subnet ID
   #  zipmap -- turn 2 lists into a dictionary. https://developer.hashicorp.com/terraform/language/functions/zipmap
@@ -80,8 +81,9 @@ locals {
   subnets_batch = var.flag_create_new_vpc == true ? var.vpc_new_batch_subnets : var.vpc_existing_batch_subnets
   subnets_db    = var.flag_create_new_vpc == true ? var.vpc_new_db_subnets : var.vpc_existing_db_subnets
   subnets_redis = var.flag_create_new_vpc == true ? var.vpc_new_redis_subnets : var.vpc_existing_redis_subnets
+  subnets_alb   = var.flag_create_new_vpc == true ? var.vpc_new_alb_subnets : var.vpc_existing_alb_subnets
 
-  subnets_all = concat(local.subnets_ec2, local.subnets_batch, local.subnets_db, local.subnets_redis)
+  subnets_all = concat(local.subnets_ec2, local.subnets_batch, local.subnets_db, local.subnets_redis, local.subnets_alb)
 
   # If using existing VPC, get subnet IDs by querying datasources with subnet CIDR.
   # If building new VPC, make dictionary from cidr_block and subnet id (two different list outputs from VPC module).
@@ -107,9 +109,9 @@ locals {
 
   subnet_ids_alb = (
     var.flag_create_load_balancer == true && var.flag_create_new_vpc == true ?
-    [for cidr in var.vpc_new_alb_subnets : lookup(local.vpc_new_cidr_block_to_id_unified, cidr)] :
-    var.flag_create_load_balancer == true && var.flag_use_existing_vpc == false ?
-    [for cidr in var.vpc_existing_alb_subnets : data.aws_subnet.existing[cidr].id] : []
+      [for cidr in var.vpc_new_alb_subnets : lookup(local.vpc_new_cidr_block_to_id_unified, cidr)] :
+      var.flag_create_load_balancer == true && var.flag_use_existing_vpc == true ?
+        [for cidr in var.vpc_existing_alb_subnets : data.aws_subnet.existing[cidr].id] : []
   )
 
 
