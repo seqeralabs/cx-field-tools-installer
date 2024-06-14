@@ -52,13 +52,9 @@ data "aws_caller_identity" "current" {}
 
 # https://medium.com/@leslie.alldridge/terraform-external-data-source-using-custom-python-script-with-example-cea5e618d83e
 data "external" "python_database_connection_string" {
-  program = ["python3", "${path.module}/.githooks/generate_tflocals/database_connection_string.py"]
+  program = ["python3", "${path.module}/.githooks/generate_tfconfigs/database_connection_string.py"]
 }
 
-output "pokemon_name" {
-  description = "Name of the pokemon you caught"
-  value = data.external.python_database_connection_string.result
-}
 
 ## ------------------------------------------------------------------------------------
 ## Omnibus Locals
@@ -211,50 +207,11 @@ locals {
   # If creating new RDS, get address from TF. IF using existing RDS, get address from user. 
   populate_external_db = var.flag_create_external_db == true || var.flag_use_existing_external_db == true ? "true" : "false"
 
-  ## tower_db_url = var.flag_create_external_db == true ? module.rds[0].db_instance_address : var.tower_db_url
-
-  # Build the connection string for both container DB and external DB, then merge into single `tower_db_url` to be fed into docker-compose tpl
-  # Terraform string operators don't let me do something like `var.tower_container_version >= "v24" so I need to extract number first
-  tower_container_version_numeric = "${substr(var.tower_container_version, 1, 3)}"
-
-  # mysql8_modifier = (var.flag_use_container_db == true )
-
-  # tower_connection_string_base = (var.flag_use_container_db == true ?
-  #   "${var.tower_db_url}/${var.db_database_name}" : "${module.rds[0].db_instance_address}/${var.db_database_name}"
-  # )
-
-  # tower_connecting_string_mysql8 = (var.flag_use_container_db == true && var.db_container_engine_version >= "8.0" ? 
-  #   "${tower_connection_string_base}?allowPublicKeyRetrieval=true&useSSL=false" : 
-  #   var.flag_use_container_db == true && var.db_container_engine_version >= "8.0" ?)
-
-
-
-  # tower_db_container_connectionstring_base = (var.db_container_engine_version >= "8.0" ? 
-  #   "${var.tower_db_url}/${var.db_database_name}?allowPublicKeyRetrieval=true&useSSL=false" : 
-  #   "${var.tower_db_url}/${var.db_database_name}"
-  # )
-
-  # tower_db_container_connectionstring_postv24 = (local.tower_container_version_numeric >= 24 ? 
-  #   "${local.tower_db_container_connectionstring_base}&permitMysqlScheme=true" :
-  #   "${local.tower_db_container_connectionstring_base}"
-  # )
-
-  # tower_db_external_connectionstring_base = (var.flag_use_container_db == false ? && var.db_engine_version >= "8.0" ? 
-  #   "${module.rds[0].db_instance_address}/${var.db_database_name}?allowPublicKeyRetrieval=true&useSSL=false" : 
-  #   "${module.rds[0].db_instance_address}/${var.db_database_name}"
-  # )
-
-  # tower_db_external_connectionstring_postv24 = (local.tower_container_version_numeric >= 24 ? 
-  #   "${local.tower_db_external_connectionstring_base}&permitMysqlScheme=true" :
-  #   "${local.tower_db_external_connectionstring_base}"
-  # )
-
-  # # Check for container db true since this can only be true/false, whereas external_db can be new or reuse.
-  # tower_db_url = (var.flag_use_container_db == true ? 
-  #   local.tower_db_container_connectionstring_postv24 : local.tower_db_external_connectionstring_postv24 
-  # )
-
-
+  # tower_db_url = var.flag_create_external_db == true ? module.rds[0].db_instance_address : var.tower_db_url
+  tower_db_url = (var.flag_use_container_db == true ? 
+    "${var.tower_db_url}/${var.db_database_name}${data.external.python_database_connection_string.result.value}" :
+    "${module.rds[0].db_instance_address}/${var.db_database_name}${data.external.python_database_connection_string.result.value}"
+  )
 
 
 
