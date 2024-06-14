@@ -384,6 +384,17 @@ db_database_name                        = "tower"
 
 /*
 ## ------------------------------------------------------------------------------------
+## Database (Container)
+## Specify the details of the external database to create (if applicable)
+## ------------------------------------------------------------------------------------
+This section added to handle new connection string requirements for Tower v24.1.0+
+*/
+db_container_engine                               = "mysql"
+db_container_engine_version                       = "8.0"
+
+
+/*
+## ------------------------------------------------------------------------------------
 ## Database (External)
 ## ------------------------------------------------------------------------------------
 The official Seqera reference architecture advises using an RDS instance as your Seqera 
