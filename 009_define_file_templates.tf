@@ -37,6 +37,8 @@ locals {
 
       flag_data_explorer_enabled        = var.flag_data_explorer_enabled,
       data_explorer_disabled_workspaces = var.data_explorer_disabled_workspaces
+
+      tower_container_version = var.tower_container_version
     }
   )
 

@@ -3,7 +3,7 @@ services:
 
 %{ if flag_use_container_db == true ~}
   db:
-    image: mysql:8.0  #mysql:5.7  #mysql:8.0
+    image: mysql:5.7  #mysql:8.0  #mysql:5.7
     networks:
       - backend
     expose:
