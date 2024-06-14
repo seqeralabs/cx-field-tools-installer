@@ -126,7 +126,10 @@ locals {
       flag_enable_groundswell = var.flag_enable_groundswell,
       swell_container_version = var.swell_container_version,
 
-      flag_new_enough_for_migrate_db = local.flag_new_enough_for_migrate_db
+      flag_new_enough_for_migrate_db = local.flag_new_enough_for_migrate_db,
+
+      db_container_engine = var.db_container_engine,
+      db_container_engine_version = var.db_container_engine_version
     }
   )
 }
