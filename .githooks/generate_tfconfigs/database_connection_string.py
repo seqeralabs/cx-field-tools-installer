@@ -59,10 +59,3 @@ else:
 
 return_tf_payload("0", connection_string)
 exit(0)
-
-
-# # Return payload (must be JSON object)
-# # cwd = os.getcwd()
-# payload = {'status': str(0), 'msg': str(data.flag_use_container_db)}
-# print(json.dumps(payload))
-# exit(0)

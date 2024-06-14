@@ -45,7 +45,7 @@ module "rds" {
 
   # Deletion protection
   deletion_protection = var.db_deletion_protection
-  skip_final_snapshot = false
+  skip_final_snapshot = var.skip_final_snapshot
 
   # Backups
   backup_retention_period = var.db_backup_retention_period

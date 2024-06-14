@@ -25,7 +25,7 @@ rm -rf $HOME_PATH/docker-compose.yml || true
   echo -e "export CACERT_EXISTING_CA_KEY=${existing_ca_key_file}"
 
   echo -e "export DB_POPULATE_EXTERNAL_INSTANCE=${populate_external_db}"
-  echo -e "export DB_URL='${tower_db_url}'"
+  echo -e "export DB_URL=\"${tower_db_url}\""
   echo -e "export DB_NAME=${db_database_name}"
 
   echo -e "export TOWER_BASE_URL=${tower_base_url}"
