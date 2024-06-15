@@ -13,3 +13,4 @@ output.json
 tmp.log
 **/venv
 **/.terraform.lock.hcl
+**/__pycache__
