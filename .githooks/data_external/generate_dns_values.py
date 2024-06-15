@@ -28,16 +28,19 @@ data = SimpleNamespace(**data_dictionary)
 
 # Much simpler way to get variable passed in (via Terraform sending to stdin)
 query = json.load(sys.stdin)
-query = SimpleNamespace(**query)
+# query = SimpleNamespace(**query)
 ## ------------------------------------------------------------------------------------
 
 
-# Get engine_version depending on whether container DB or RDS instance is in play
-engine_version = data.db_container_engine_version if data.flag_use_container_db else data.db_engine_version
+with open("query.json", "w") as file:
+    file.write(str(query))
 
-# Connection string modifiers
-mysql8_connstring = "allowPublicKeyRetrieval=true&useSSL=false"
-v24plus_connstring = "permitMysqlScheme=true"
+# Determine kinda of DNS record to create
+dns_create_alb_record = True if (data.flag_create_load_balancer and not data.flag_create_hosts_file_entry) else False
+dns_create_ec2_record = True if (not data.flag_create_load_balancer and not data.flag_create_hosts_file_entry) else False
+
+if data.flag_create_route53_private_zone == True:
+    dns_zone_id = query.aws_route53_zone
 
 
 def return_tf_payload(status: str, value: str):
@@ -45,29 +48,7 @@ def return_tf_payload(status: str, value: str):
     print(json.dumps(payload))
 
 
-def generate_connection_string(mysql8: str, v24plus: str):
-    connection_string = ""
-    add_mysql8 = False
-    add_v24plus = False
-
-    if mysql8.startswith("8."): 
-        add_mysql8 = True
-
-    if v24plus >= "v24":
-        add_v24plus = True
-
-    if add_mysql8 and add_v24plus:
-        connection_string = f"?{mysql8_connstring}&{v24plus_connstring}"
-    elif add_mysql8 and not add_v24plus:
-        connection_string = f"?{mysql8_connstring}"
-    elif not add_mysql8 and add_v24plus:
-        connection_string = f"?{v24plus_connstring}"
-
-    return connection_string
-
-
 if __name__ == '__main__':
-    connection_string = generate_connection_string(engine_version, data.tower_container_version)
-    return_tf_payload("0", connection_string)
+    return_tf_payload("0", "abc")
     
     exit(0)

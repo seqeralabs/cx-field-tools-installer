@@ -49,15 +49,36 @@ resource "random_pet" "stackname" {
 
 data "aws_caller_identity" "current" {}
 
+data "aws_vpc" "preexisting" { 
+  id = local.vpc_id 
+}
+
+# https://stackoverflow.com/questions/67562197/terraform-loop-through-ids-list-and-generate-data-blocks-from-it-and-access-it
+data "aws_subnet" "existing" {
+  # Creates a map with the keys being the CIDRs --  e.g. `data.aws_subnet.public["10.0.0.0/20"].id
+  for_each = toset(local.subnets_all)
+  vpc_id     = local.vpc_id
+  cidr_block = each.key
+}
 
 # https://medium.com/@leslie.alldridge/terraform-external-data-source-using-custom-python-script-with-example-cea5e618d83e
 data "external" "generate_db_connection_string" {
   program = ["python3", "${path.module}/.githooks/data_external/generate_db_connection_string.py"]
   query = {
-    tower_container_version = var.tower_container_version
-    flag_use_container_db = var.flag_use_container_db
-    db_container_engine_version = var.db_container_engine_version
-    db_engine_version = var.db_engine_version
+    # tower_container_version = var.tower_container_version
+    # flag_use_container_db = var.flag_use_container_db
+    # db_container_engine_version = var.db_container_engine_version
+    # db_engine_version = var.db_engine_version
+  }
+}
+
+data "external" "generate_dns_valeus" {
+  program = ["python3", "${path.module}/.githooks/data_external/generate_dns_values.py"]
+  query = {
+    r53_privatezone = jsonencode(aws_route53_zone.private) # [0])
+    r53_public =  jsonencode(data.aws_route53_zone.public) # [0])
+    subnets = jsonencode(data.aws_subnet.existing)       # Adding in these values wont be known til created.
+    # ec2 = jsonencode(aws_instance.ec2)                     # Adding in these values wont be known til created.
   }
 }
 
@@ -71,56 +92,27 @@ locals {
   # ---------------------------------------------------------------------------------------
   global_prefix = var.flag_use_custom_resource_naming_prefix == true ? var.custom_resource_naming_prefix : "tf-${var.app_name}-${random_pet.stackname.id}"
 
-
   # Networking
   # ---------------------------------------------------------------------------------------
   vpc_id = var.flag_create_new_vpc == true ? module.vpc[0].vpc_id : var.vpc_existing_id
-  vpc_private_route_table_ids = var.flag_create_new_vpc == true ? module.vpc[0].private_route_table_ids : data.aws_route_tables.preexisting.ids
 
-  # If creating VPC from scratch, map all subnet CIDRS to corresponding subnet ID
-  #  zipmap -- turn 2 lists into a dictionary. https://developer.hashicorp.com/terraform/language/functions/zipmap
-  #  merge  -- join  two dictionaries. https://developer.hashicorp.com/terraform/language/functions/merge
-  vpc_new_cidr_block_to_id_public  = var.flag_create_new_vpc == true ? zipmap(module.vpc[0].public_subnets_cidr_blocks, module.vpc[0].public_subnets) : {}
-  vpc_new_cidr_block_to_id_private = var.flag_create_new_vpc == true ? zipmap(module.vpc[0].private_subnets_cidr_blocks, module.vpc[0].private_subnets) : {}
-  vpc_new_cidr_block_to_id_unified = var.flag_create_new_vpc == true ? merge(local.vpc_new_cidr_block_to_id_public, local.vpc_new_cidr_block_to_id_private) : {}
+  vpc_private_route_table_ids = data.aws_route_tables.preexisting.ids
 
-  # Regardless of whether we build a new VPC or use existing, assign the subnet CIDRs to a common variable for subsequent subnet ID lookup. 
-  #  concat -- join lists of strings. https://developer.hashicorp.com/terraform/language/functions/concat
-  subnets_ec2   = var.flag_create_new_vpc == true ? var.vpc_new_ec2_subnets : var.vpc_existing_ec2_subnets
+  # Map CIDR blocks to subnet IDs (depending on tf resource, either/or needed). 
+  # Cant delegate this to Python due to need to make multiple data calls.
+  subnets_ec2   = var.flag_create_new_vpc == true ? var.vpc_new_ec2_subnets   : var.vpc_existing_ec2_subnets
   subnets_batch = var.flag_create_new_vpc == true ? var.vpc_new_batch_subnets : var.vpc_existing_batch_subnets
-  subnets_db    = var.flag_create_new_vpc == true ? var.vpc_new_db_subnets : var.vpc_existing_db_subnets
+  subnets_db    = var.flag_create_new_vpc == true ? var.vpc_new_db_subnets    : var.vpc_existing_db_subnets
   subnets_redis = var.flag_create_new_vpc == true ? var.vpc_new_redis_subnets : var.vpc_existing_redis_subnets
-  subnets_alb   = var.flag_create_new_vpc == true ? var.vpc_new_alb_subnets : var.vpc_existing_alb_subnets
+  subnets_alb   = var.flag_create_new_vpc == true ? var.vpc_new_alb_subnets   : var.vpc_existing_alb_subnets
+  subnets_all   = concat(local.subnets_ec2, local.subnets_batch, local.subnets_db, local.subnets_redis, local.subnets_alb)
 
-  subnets_all = concat(local.subnets_ec2, local.subnets_batch, local.subnets_db, local.subnets_redis, local.subnets_alb)
-
-  # If using existing VPC, get subnet IDs by querying datasources with subnet CIDR.
-  # If building new VPC, make dictionary from cidr_block and subnet id (two different list outputs from VPC module).
-  subnet_ids_ec2 = (var.flag_create_new_vpc == true ?
-    [for cidr in local.subnets_ec2 : lookup(local.vpc_new_cidr_block_to_id_unified, cidr)] :
-    [for cidr in local.subnets_ec2 : data.aws_subnet.existing[cidr].id]
-  )
-
-  subnet_ids_batch = (var.flag_create_new_vpc == true ?
-    [for cidr in local.subnets_batch : lookup(local.vpc_new_cidr_block_to_id_unified, cidr)] :
-    [for cidr in local.subnets_batch : data.aws_subnet.existing[cidr].id]
-  )
-
-  subnet_ids_db = (var.flag_create_new_vpc == true ?
-    [for cidr in local.subnets_db : lookup(local.vpc_new_cidr_block_to_id_unified, cidr)] :
-    [for cidr in local.subnets_db : data.aws_subnet.existing[cidr].id]
-  )
-
-  subnet_ids_redis = (var.flag_create_new_vpc == true ?
-    [for cidr in local.subnets_redis : lookup(local.vpc_new_cidr_block_to_id_unified, cidr)] :
-    [for cidr in local.subnets_redis : data.aws_subnet.existing[cidr].id]
-  )
-
-  subnet_ids_alb = (
-    var.flag_create_load_balancer == true && var.flag_create_new_vpc == true ?
-      [for cidr in var.vpc_new_alb_subnets : lookup(local.vpc_new_cidr_block_to_id_unified, cidr)] :
-      var.flag_create_load_balancer == true && var.flag_use_existing_vpc == true ?
-        [for cidr in var.vpc_existing_alb_subnets : data.aws_subnet.existing[cidr].id] : []
+  subnet_ids_ec2    = [for cidr in local.subnets_ec2 : data.aws_subnet.existing[cidr].id]
+  subnet_ids_batch  = [for cidr in local.subnets_batch : data.aws_subnet.existing[cidr].id]
+  subnet_ids_db     = [for cidr in local.subnets_db : data.aws_subnet.existing[cidr].id]
+  subnet_ids_redis  = [for cidr in local.subnets_redis : data.aws_subnet.existing[cidr].id]
+  subnet_ids_alb    = (var.flag_create_load_balancer == true ? 
+    [for cidr in local.subnets_alb : data.aws_subnet.existing[cidr].id] : []
   )
 
 
