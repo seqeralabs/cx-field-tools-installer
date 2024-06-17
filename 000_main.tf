@@ -165,11 +165,27 @@ locals {
   #   "No_Match_Found"
   # )
 
-  dns_create_alb_record = data.external.generate_dns_values.result.dns_create_alb_record
-  dns_create_ec2_record = data.external.generate_dns_values.result.dns_create_ec2_record
+  ## while calling jsondecode(str)
+  ##    │ data.external.generate_dns_values.result is map of string with 5 elements
+  # dns_vars = jsondecode(data.external.generate_dns_values.result)
+  # dns_create_alb_record = local.dns_vars["dns_create_alb_record"]
+  # dns_create_ec2_record = local.dns_vars["dns_create_ec2_record"]
+
+  # dns_zone_id = local.dns_vars["dns_zone_id"]
+  # dns_instance_ip = local.dns_vars["dns_instance_ip"]
+
+  # Need to jsondecode to handle true/false. Don't need to decode for the others.
+  dns_create_alb_record = jsondecode(data.external.generate_dns_values.result.dns_create_alb_record)
+  dns_create_ec2_record = jsondecode(data.external.generate_dns_values.result.dns_create_ec2_record)
 
   dns_zone_id = data.external.generate_dns_values.result.dns_zone_id
   dns_instance_ip = data.external.generate_dns_values.result.dns_instance_ip
+
+  # dns_create_alb_record = data.external.generate_dns_values.result.dns_create_alb_record
+  # dns_create_ec2_record = data.external.generate_dns_values.result.dns_create_ec2_record
+
+  # dns_zone_id = data.external.generate_dns_values.result.dns_zone_id
+  # dns_instance_ip = data.external.generate_dns_values.result.dns_instance_ip
 
 
   # If no HTTPS and no load-balancer, use `http` prefix and expose port in URL. Otherwise, use `https` prefix and no port.

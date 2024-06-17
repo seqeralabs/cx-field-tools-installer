@@ -30,7 +30,7 @@ data = SimpleNamespace(**data_dictionary)
 
 # Much simpler way to get variable passed in (via Terraform sending to stdin)
 query = json.load(sys.stdin)
-query = SimpleNamespace(**query)
+# query = SimpleNamespace(**query)
 ## ------------------------------------------------------------------------------------
 
 
@@ -50,9 +50,9 @@ dns_create_alb_record = True if (data.flag_create_load_balancer and not data.fla
 dns_create_ec2_record = True if (not data.flag_create_load_balancer and not data.flag_create_hosts_file_entry) else False
 
 dns_zone_mappings = {
-    "flag_create_route53_private_zone":             "zone_private_new",
-    "flag_use_existing_route53_private_zone":       "zone_private_existing",
-    "flag_use_existing_route53_public_zone":        "zone_public_existing"
+    "flag_create_route53_private_zone":             ("zone_private_new",        [0, 'id']),
+    "flag_use_existing_route53_private_zone":       ("zone_private_existing",   [0, 'id']),
+    "flag_use_existing_route53_public_zone":        ("zone_public_existing",    [0, 'id']),
 }
 
 # Transformed dictionary nested into flat dicionary so value can be passed around.
@@ -69,7 +69,12 @@ external_logger.debug(f"Query is: {query}")
 
 for k,v in dns_zone_mappings.items():
     external_logger.debug(f"k is : {k}; and v is: {v}")
-    dns_zone_id = json.loads(query[v])[0]["id"] if data_dictionary[k] else dns_zone_id
+    tf_obj, dpath = v
+    tf_obj_json = json.loads(query[tf_obj])
+    dns_zone_id = getDVal(tf_obj_json, dpath) if data_dictionary[k] else dns_instance_ip
+    # tf_obj_json = json.loads(query[v])
+    # dns_zone_id = getDVal(tf_obj_json, dpath) if data_dictionary[k] else dns_zone_id
+    # dns_zone_id = json.loads(query[v])[0]["id"] if data_dictionary[k] else dns_zone_id
 
 for k,v in dns_instance_ip_mappings.items():
     '''`aws_instance.ec2.private_ip` vs `aws_eip.towerhost[0].public_ip`'''
@@ -87,15 +92,23 @@ value = {
 }
 
 
+
 def return_tf_payload(status: str, value: dict):
     external_logger.debug(f"Payload is: {value}")
 
-    payload = {'status': status, 'value': value}
+    payload = {'status': status, **value} # 'value': 'a'}  #value}
+    payload["dns_create_alb_record"] = "true"
+    payload["dns_create_ec2_record"] = "false"
+    #payload = json.dumps(payload)
+    #external_logger.debug(f"Dumped payload is: {payload}")
+
     print(json.dumps(payload))
+    #print(payload)
+
+    external_logger.error("Flushing.")     #external_logger.flush()
+    exit(0)
 
 
 
 if __name__ == '__main__':
     return_tf_payload("0", value)
-    
-    exit(0)
