@@ -20,7 +20,7 @@ data_external_memory_handler = logging.handlers.MemoryHandler(
 # I have removed and attach formatting one-by-one. It's stupid, but it works.
 # handlers = [validation_file_handler, validation_stdout_handler]  # DONT UNCOMMENT
 logging.basicConfig(
-    level=logging.DEBUG, 
+    level=logging.INFO, 
     # https://stackoverflow.com/questions/57925917/python-logging-left-align-with-brackets
     format='%(asctime)s  %(filename)-15s:%(lineno)-4d %(levelname)-12s %(message)s',
     # handlers=handlers  # DONT UNCOMMENT
@@ -40,7 +40,7 @@ external_logger.addHandler(data_external_memory_handler)
 
 # data_external_memory_handler.setFormatter(formatter)  # No timestamp. Dunno why.
 formatter = logging.Formatter('%(asctime)s  %(filename)-15s:%(lineno)-4d %(levelname)-12s %(message)s')
-validation_file_handler.setFormatter(formatter)
-validation_stdout_handler.setFormatter(formatter)
+#validation_file_handler.setFormatter(formatter)
+# validation_stdout_handler.setFormatter(formatter)
 data_external_file_handler.setFormatter(formatter)
 

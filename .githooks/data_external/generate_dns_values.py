@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import ast
 import os
 import json
 import sys
@@ -42,13 +41,6 @@ def getDVal(d : dict, listPath : list) -> Any:
     return d
 
 # Vars
-dns_zone_id = ""
-dns_instance_ip = ""
-
-# Determine kinda of DNS record to create
-dns_create_alb_record = True if (data.flag_create_load_balancer and not data.flag_create_hosts_file_entry) else False
-dns_create_ec2_record = True if (not data.flag_create_load_balancer and not data.flag_create_hosts_file_entry) else False
-
 dns_zone_mappings = {
     "flag_create_route53_private_zone":             ("zone_private_new",        [0, 'id']),
     "flag_use_existing_route53_private_zone":       ("zone_private_existing",   [0, 'id']),
@@ -64,51 +56,62 @@ dns_instance_ip_mappings = {
     "flag_make_instance_public":                    ("tower_host_eip",      [0, 'public_ip'])
 }
 
-# Figure out DNS Zone Id
-external_logger.debug(f"Query is: {query}")
 
-for k,v in dns_zone_mappings.items():
-    external_logger.debug(f"k is : {k}; and v is: {v}")
-    tf_obj, dpath = v
-    tf_obj_json = json.loads(query[tf_obj])
-    dns_zone_id = getDVal(tf_obj_json, dpath) if data_dictionary[k] else dns_instance_ip
-    # tf_obj_json = json.loads(query[v])
-    # dns_zone_id = getDVal(tf_obj_json, dpath) if data_dictionary[k] else dns_zone_id
-    # dns_zone_id = json.loads(query[v])[0]["id"] if data_dictionary[k] else dns_zone_id
+def populate_values(query):
 
-for k,v in dns_instance_ip_mappings.items():
-    '''`aws_instance.ec2.private_ip` vs `aws_eip.towerhost[0].public_ip`'''
-    tf_obj, dpath = v
-    tf_obj_json = json.loads(query[tf_obj])
-    dns_instance_ip = getDVal(tf_obj_json, dpath) if data_dictionary[k] else dns_instance_ip
+    external_logger.debug(f"Query is: {query}")
 
+    # Baseline variables
+    dns_zone_id = ""
+    dns_instance_ip = ""
 
-value = {
-    "dns_create_alb_record": dns_create_alb_record,
-    "dns_create_ec2_record": dns_create_ec2_record,
+    # Determine kinda of DNS record to create
+    # dns_create_alb_record = True if (data.flag_create_load_balancer and not data.flag_create_hosts_file_entry) else False
+    # dns_create_ec2_record = True if (not data.flag_create_load_balancer and not data.flag_create_hosts_file_entry) else False
 
-    "dns_zone_id": dns_zone_id,
-    "dns_instance_ip": dns_instance_ip
-}
+    for k,v in dns_zone_mappings.items():
+        external_logger.debug(f"k is : {k}; and v is: {v}")
+        tf_obj, dpath = v
+        tf_obj_json = json.loads(query[tf_obj])
+        dns_zone_id = getDVal(tf_obj_json, dpath) if data_dictionary[k] else dns_instance_ip
 
 
+    for k,v in dns_instance_ip_mappings.items():
+        '''`aws_instance.ec2.private_ip` vs `aws_eip.towerhost[0].public_ip`'''
+        tf_obj, dpath = v
+        tf_obj_json = json.loads(query[tf_obj])
+        dns_instance_ip = getDVal(tf_obj_json, dpath) if data_dictionary[k] else dns_instance_ip
 
-def return_tf_payload(status: str, value: dict):
-    external_logger.debug(f"Payload is: {value}")
+    values = {
+        # "dns_create_alb_record": dns_create_alb_record,
+        # "dns_create_ec2_record": dns_create_ec2_record,
 
-    payload = {'status': status, **value} # 'value': 'a'}  #value}
-    payload["dns_create_alb_record"] = "true"
-    payload["dns_create_ec2_record"] = "false"
-    #payload = json.dumps(payload)
-    #external_logger.debug(f"Dumped payload is: {payload}")
+        "dns_zone_id": dns_zone_id,
+        "dns_instance_ip": dns_instance_ip
+    }
 
+    return values
+
+
+def convert_booleans_to_strings(payload: dict) -> dict: 
+    for k,v in payload.items():
+        external_logger.debug(f"k is {k} and v is {v}.")
+        if isinstance(v, bool):
+            payload[k] = "true" if v == True else "false"
+    return payload
+        
+
+def return_tf_payload(status: str, values: dict):
+    external_logger.debug(f"Payload is: {values}")
+
+    payload = {'status': status, **values}
+    payload = convert_booleans_to_strings(payload)
     print(json.dumps(payload))
-    #print(payload)
 
-    external_logger.error("Flushing.")     #external_logger.flush()
+    external_logger.error("Flushing.")
     exit(0)
 
 
-
 if __name__ == '__main__':
-    return_tf_payload("0", value)
+    values = populate_values(query)
+    return_tf_payload("0", values)

@@ -72,6 +72,11 @@ data "external" "generate_db_connection_string" {
   #}
 }
 
+data "external" "generate_flags" {
+  program = ["python3", "${path.module}/.githooks/data_external/generate_flags.py"]
+  query = {}
+}
+
 data "external" "generate_dns_values" {
   program = ["python3", "${path.module}/.githooks/data_external/generate_dns_values.py"]
   query = {
@@ -175,8 +180,10 @@ locals {
   # dns_instance_ip = local.dns_vars["dns_instance_ip"]
 
   # Need to jsondecode to handle true/false. Don't need to decode for the others.
-  dns_create_alb_record = jsondecode(data.external.generate_dns_values.result.dns_create_alb_record)
-  dns_create_ec2_record = jsondecode(data.external.generate_dns_values.result.dns_create_ec2_record)
+  # dns_create_alb_record = jsondecode(data.external.generate_dns_values.result.dns_create_alb_record)
+  # dns_create_ec2_record = jsondecode(data.external.generate_dns_values.result.dns_create_ec2_record)
+  dns_create_alb_record = jsondecode(data.external.generate_flags.result.dns_create_alb_record)
+  dns_create_ec2_record = jsondecode(data.external.generate_flags.result.dns_create_ec2_record)
 
   dns_zone_id = data.external.generate_dns_values.result.dns_zone_id
   dns_instance_ip = data.external.generate_dns_values.result.dns_instance_ip
