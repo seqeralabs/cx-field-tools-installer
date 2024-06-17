@@ -2,6 +2,7 @@
 # Generic Tower configuration values
 # ------------------------------------------------
 TOWER_ENABLE_AWS_SSM=true
+TOWER_ENABLE_ARM64=true
 
 LICENSE_SERVER_URL=https://licenses.seqera.io
 

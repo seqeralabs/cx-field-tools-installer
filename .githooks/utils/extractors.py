@@ -65,7 +65,8 @@ def convert_tfvars_to_dictionary(file):
             elif flag_skip_block_comment:
                 indices_to_pop.append(i)
 
-        logger.debug(f"Indices to pop: {indices_to_pop}")
+        # This breaks my `external.data` implementation when logging set to debug. Commenting out.
+        # logger.debug(f"Indices to pop: {indices_to_pop}")
         purge_indices_in_reverse(indices_to_pop)
 
 

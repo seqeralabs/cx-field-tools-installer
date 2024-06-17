@@ -20,7 +20,8 @@ project_root = os.getcwd()
 os.chdir(f"{project_root}/.githooks")
 sys.path.append(".")
 from utils.extractors import get_tfvars_as_json
-from utils.logger import logger
+#from utils.logger import logger
+from utils.logger import external_logger #as logger
 
 # Extract tfvars just like we do with the Python validation script
 os.chdir(project_root)
@@ -42,10 +43,14 @@ v24plus_connstring = "permitMysqlScheme=true"
 
 
 def return_tf_payload(status: str, value: str):
-    logger.debug(f"Value is: {value}")
+    external_logger.debug(f"Value is: {value}")
     payload = {'status': status, 'value': value}
-    logger.debug(f"Payload is: {payload}")
+    external_logger.debug(f"Payload is: {payload}")
+
     print(json.dumps(payload))
+    # MemoryHandler configured to flush on `logger.error`. Flush once after TF gets its payload (above).
+    external_logger.error("Flushing.")     #external_logger.flush()
+    exit(0)
 
 
 def generate_connection_string(mysql8: str, v24plus: str):
@@ -72,5 +77,3 @@ def generate_connection_string(mysql8: str, v24plus: str):
 if __name__ == '__main__':
     connection_string = generate_connection_string(engine_version, data.tower_container_version)
     return_tf_payload("0", connection_string)
-    
-    exit(0)

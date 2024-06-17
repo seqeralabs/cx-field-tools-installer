@@ -72,21 +72,21 @@ data "external" "generate_db_connection_string" {
   #}
 }
 
-# data "external" "generate_dns_values" {
-#   program = ["python3", "${path.module}/.githooks/data_external/generate_dns_values.py"]
-#   query = {
-#     # jsonencoding necessary for empty objects
-#     zone_private_new          = jsonencode(aws_route53_zone.private)
-#     zone_private_existing     = jsonencode(data.aws_route53_zone.private)
-#     zone_public_existing      = jsonencode(data.aws_route53_zone.public)
+data "external" "generate_dns_values" {
+  program = ["python3", "${path.module}/.githooks/data_external/generate_dns_values.py"]
+  query = {
+    # jsonencoding necessary for empty objects
+    zone_private_new          = jsonencode(aws_route53_zone.private)
+    zone_private_existing     = jsonencode(data.aws_route53_zone.private)
+    zone_public_existing      = jsonencode(data.aws_route53_zone.public)
 
-#     tower_host_instance       = jsonencode(aws_instance.ec2)
-#     tower_host_eip            = jsonencode(aws_eip.towerhost)
+    tower_host_instance       = jsonencode(aws_instance.ec2)
+    tower_host_eip            = jsonencode(aws_eip.towerhost)
 
-#     # subnets = data.aws_subnet.existing          # Adding in these values wont be known til created.
-#     # ec2 = jsonencode(aws_instance.ec2)                     # Adding in these values wont be known til created.
-#   }
-# }
+    # subnets = data.aws_subnet.existing          # Adding in these values wont be known til created.
+    # ec2 = jsonencode(aws_instance.ec2)                     # Adding in these values wont be known til created.
+  }
+}
 
 
 ## ------------------------------------------------------------------------------------
@@ -147,29 +147,29 @@ locals {
   # All values here refer to Route53 in same AWS account as Tower instance.
   # If R53 record not generated, will create entry in EC2 hosts file.
 
-  dns_create_alb_record = var.flag_create_load_balancer == true && var.flag_create_hosts_file_entry == false ? true : false
-  dns_create_ec2_record = var.flag_create_load_balancer == false && var.flag_create_hosts_file_entry == false ? true : false
+  # dns_create_alb_record = var.flag_create_load_balancer == true && var.flag_create_hosts_file_entry == false ? true : false
+  # dns_create_ec2_record = var.flag_create_load_balancer == false && var.flag_create_hosts_file_entry == false ? true : false
 
-  dns_zone_id = (
-    var.flag_create_route53_private_zone == true ? aws_route53_zone.private[0].id :
-    var.flag_use_existing_route53_public_zone == true ? data.aws_route53_zone.public[0].id :
-    var.flag_use_existing_route53_private_zone == true ? data.aws_route53_zone.private[0].id :
-    "No_Match_Found"
-  )
+  # dns_zone_id = (
+  #   var.flag_create_route53_private_zone == true ? aws_route53_zone.private[0].id :
+  #   var.flag_use_existing_route53_public_zone == true ? data.aws_route53_zone.public[0].id :
+  #   var.flag_use_existing_route53_private_zone == true ? data.aws_route53_zone.private[0].id :
+  #   "No_Match_Found"
+  # )
 
-  dns_instance_ip = (
-    var.flag_make_instance_private == true ? aws_instance.ec2.private_ip :
-    var.flag_make_instance_private_behind_public_alb == true ? aws_instance.ec2.private_ip :
-    var.flag_private_tower_without_eice == true ? aws_instance.ec2.private_ip :
-    var.flag_make_instance_public == true ? aws_eip.towerhost[0].public_ip :
-    "No_Match_Found"
-  )
+  # dns_instance_ip = (
+  #   var.flag_make_instance_private == true ? aws_instance.ec2.private_ip :
+  #   var.flag_make_instance_private_behind_public_alb == true ? aws_instance.ec2.private_ip :
+  #   var.flag_private_tower_without_eice == true ? aws_instance.ec2.private_ip :
+  #   var.flag_make_instance_public == true ? aws_eip.towerhost[0].public_ip :
+  #   "No_Match_Found"
+  # )
 
-  # dns_create_alb_record = data.external.generate_dns_values.result.dns_create_alb_record
-  # dns_create_ec2_record = data.external.generate_dns_values.result.dns_create_ec2_record
+  dns_create_alb_record = data.external.generate_dns_values.result.dns_create_alb_record
+  dns_create_ec2_record = data.external.generate_dns_values.result.dns_create_ec2_record
 
-  # dns_zone_id = data.external.generate_dns_values.result.dns_zone_id
-  # dns_instance_ip = data.external.generate_dns_values.result.dns_instance_ip
+  dns_zone_id = data.external.generate_dns_values.result.dns_zone_id
+  dns_instance_ip = data.external.generate_dns_values.result.dns_instance_ip
 
 
   # If no HTTPS and no load-balancer, use `http` prefix and expose port in URL. Otherwise, use `https` prefix and no port.

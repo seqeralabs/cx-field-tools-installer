@@ -21,7 +21,7 @@ project_root = os.getcwd()
 os.chdir(f"{project_root}/.githooks")
 sys.path.append(".")
 from utils.extractors import get_tfvars_as_json #convert_tfvars_to_dictionary
-from utils.logger import logger
+from utils.logger import external_logger
 
 # Extract tfvars just like we do with the Python validation script
 os.chdir(project_root)
@@ -30,12 +30,9 @@ data = SimpleNamespace(**data_dictionary)
 
 # Much simpler way to get variable passed in (via Terraform sending to stdin)
 query = json.load(sys.stdin)
-# query = SimpleNamespace(**query)
+query = SimpleNamespace(**query)
 ## ------------------------------------------------------------------------------------
 
-# For debugging purposes
-# with open("query.json", "w") as file:
-#     file.write(str(query))
 
 # https://www.reddit.com/r/learnpython/comments/y02net/is_there_a_better_way_to_store_full_dictionary/
 def getDVal(d : dict, listPath : list) -> Any:
@@ -68,10 +65,10 @@ dns_instance_ip_mappings = {
 }
 
 # Figure out DNS Zone Id
-logger.debug(f"Query is: {query}")
+external_logger.debug(f"Query is: {query}")
 
 for k,v in dns_zone_mappings.items():
-    logger.debug(f"k is : {k}; and v is: {v}")
+    external_logger.debug(f"k is : {k}; and v is: {v}")
     dns_zone_id = json.loads(query[v])[0]["id"] if data_dictionary[k] else dns_zone_id
 
 for k,v in dns_instance_ip_mappings.items():
@@ -91,14 +88,11 @@ value = {
 
 
 def return_tf_payload(status: str, value: dict):
-    logger.debug(f"Payload is: {value}")
+    external_logger.debug(f"Payload is: {value}")
 
     payload = {'status': status, 'value': value}
     print(json.dumps(payload))
 
-    #  Result Error: invalid character '-' after top-level value
-    # with open("payload.json", "w") as file:
-    #     file.write(str(query))
 
 
 if __name__ == '__main__':
