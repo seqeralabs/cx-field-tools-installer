@@ -64,23 +64,29 @@ data "aws_subnet" "existing" {
 # https://medium.com/@leslie.alldridge/terraform-external-data-source-using-custom-python-script-with-example-cea5e618d83e
 data "external" "generate_db_connection_string" {
   program = ["python3", "${path.module}/.githooks/data_external/generate_db_connection_string.py"]
-  query = {
+  #query = {
     # tower_container_version = var.tower_container_version
     # flag_use_container_db = var.flag_use_container_db
     # db_container_engine_version = var.db_container_engine_version
     # db_engine_version = var.db_engine_version
-  }
+  #}
 }
 
-data "external" "generate_dns_valeus" {
-  program = ["python3", "${path.module}/.githooks/data_external/generate_dns_values.py"]
-  query = {
-    r53_privatezone = jsonencode(aws_route53_zone.private) # [0])
-    r53_public =  jsonencode(data.aws_route53_zone.public) # [0])
-    subnets = jsonencode(data.aws_subnet.existing)       # Adding in these values wont be known til created.
-    # ec2 = jsonencode(aws_instance.ec2)                     # Adding in these values wont be known til created.
-  }
-}
+# data "external" "generate_dns_values" {
+#   program = ["python3", "${path.module}/.githooks/data_external/generate_dns_values.py"]
+#   query = {
+#     # jsonencoding necessary for empty objects
+#     zone_private_new          = jsonencode(aws_route53_zone.private)
+#     zone_private_existing     = jsonencode(data.aws_route53_zone.private)
+#     zone_public_existing      = jsonencode(data.aws_route53_zone.public)
+
+#     tower_host_instance       = jsonencode(aws_instance.ec2)
+#     tower_host_eip            = jsonencode(aws_eip.towerhost)
+
+#     # subnets = data.aws_subnet.existing          # Adding in these values wont be known til created.
+#     # ec2 = jsonencode(aws_instance.ec2)                     # Adding in these values wont be known til created.
+#   }
+# }
 
 
 ## ------------------------------------------------------------------------------------
@@ -140,6 +146,7 @@ locals {
   # ---------------------------------------------------------------------------------------
   # All values here refer to Route53 in same AWS account as Tower instance.
   # If R53 record not generated, will create entry in EC2 hosts file.
+
   dns_create_alb_record = var.flag_create_load_balancer == true && var.flag_create_hosts_file_entry == false ? true : false
   dns_create_ec2_record = var.flag_create_load_balancer == false && var.flag_create_hosts_file_entry == false ? true : false
 
@@ -157,6 +164,13 @@ locals {
     var.flag_make_instance_public == true ? aws_eip.towerhost[0].public_ip :
     "No_Match_Found"
   )
+
+  # dns_create_alb_record = data.external.generate_dns_values.result.dns_create_alb_record
+  # dns_create_ec2_record = data.external.generate_dns_values.result.dns_create_ec2_record
+
+  # dns_zone_id = data.external.generate_dns_values.result.dns_zone_id
+  # dns_instance_ip = data.external.generate_dns_values.result.dns_instance_ip
+
 
   # If no HTTPS and no load-balancer, use `http` prefix and expose port in URL. Otherwise, use `https` prefix and no port.
   tower_server_url = (

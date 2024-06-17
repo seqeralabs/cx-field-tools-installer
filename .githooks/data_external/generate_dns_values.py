@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
+import ast
 import os
 import json
 import sys
 from types import SimpleNamespace
-from typing import List
+from typing import Any, List
 
 sys.dont_write_bytecode = True
 
@@ -20,6 +21,7 @@ project_root = os.getcwd()
 os.chdir(f"{project_root}/.githooks")
 sys.path.append(".")
 from utils.extractors import get_tfvars_as_json #convert_tfvars_to_dictionary
+from utils.logger import logger
 
 # Extract tfvars just like we do with the Python validation script
 os.chdir(project_root)
@@ -31,24 +33,75 @@ query = json.load(sys.stdin)
 # query = SimpleNamespace(**query)
 ## ------------------------------------------------------------------------------------
 
+# For debugging purposes
+# with open("query.json", "w") as file:
+#     file.write(str(query))
 
-with open("query.json", "w") as file:
-    file.write(str(query))
+# https://www.reddit.com/r/learnpython/comments/y02net/is_there_a_better_way_to_store_full_dictionary/
+def getDVal(d : dict, listPath : list) -> Any:
+    '''Recursively loop through a dictionary object to get to the target nested key.'''
+    for key in listPath:
+        d = d[key]
+    return d
+
+# Vars
+dns_zone_id = ""
+dns_instance_ip = ""
 
 # Determine kinda of DNS record to create
 dns_create_alb_record = True if (data.flag_create_load_balancer and not data.flag_create_hosts_file_entry) else False
 dns_create_ec2_record = True if (not data.flag_create_load_balancer and not data.flag_create_hosts_file_entry) else False
 
-if data.flag_create_route53_private_zone == True:
-    dns_zone_id = query.aws_route53_zone
+dns_zone_mappings = {
+    "flag_create_route53_private_zone":             "zone_private_new",
+    "flag_use_existing_route53_private_zone":       "zone_private_existing",
+    "flag_use_existing_route53_public_zone":        "zone_public_existing"
+}
+
+# Transformed dictionary nested into flat dicionary so value can be passed around.
+# I don't love this approach but can't find a cleaner/simpler way right now.
+dns_instance_ip_mappings = {
+    "flag_make_instance_private":                   ("tower_host_instance", ['private_ip']),
+    "flag_make_instance_private_behind_public_alb": ("tower_host_instance", ['private_ip']),
+    "flag_private_tower_without_eice":              ("tower_host_instance", ['private_ip']),
+    "flag_make_instance_public":                    ("tower_host_eip",      [0, 'public_ip'])
+}
+
+# Figure out DNS Zone Id
+logger.debug(f"Query is: {query}")
+
+for k,v in dns_zone_mappings.items():
+    logger.debug(f"k is : {k}; and v is: {v}")
+    dns_zone_id = json.loads(query[v])[0]["id"] if data_dictionary[k] else dns_zone_id
+
+for k,v in dns_instance_ip_mappings.items():
+    '''`aws_instance.ec2.private_ip` vs `aws_eip.towerhost[0].public_ip`'''
+    tf_obj, dpath = v
+    tf_obj_json = json.loads(query[tf_obj])
+    dns_instance_ip = getDVal(tf_obj_json, dpath) if data_dictionary[k] else dns_instance_ip
 
 
-def return_tf_payload(status: str, value: str):
+value = {
+    "dns_create_alb_record": dns_create_alb_record,
+    "dns_create_ec2_record": dns_create_ec2_record,
+
+    "dns_zone_id": dns_zone_id,
+    "dns_instance_ip": dns_instance_ip
+}
+
+
+def return_tf_payload(status: str, value: dict):
+    logger.debug(f"Payload is: {value}")
+
     payload = {'status': status, 'value': value}
     print(json.dumps(payload))
 
+    #  Result Error: invalid character '-' after top-level value
+    # with open("payload.json", "w") as file:
+    #     file.write(str(query))
+
 
 if __name__ == '__main__':
-    return_tf_payload("0", "abc")
+    return_tf_payload("0", value)
     
     exit(0)

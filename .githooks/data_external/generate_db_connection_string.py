@@ -19,7 +19,8 @@ sys.dont_write_bytecode = True
 project_root = os.getcwd()
 os.chdir(f"{project_root}/.githooks")
 sys.path.append(".")
-from utils.extractors import get_tfvars_as_json #convert_tfvars_to_dictionary
+from utils.extractors import get_tfvars_as_json
+from utils.logger import logger
 
 # Extract tfvars just like we do with the Python validation script
 os.chdir(project_root)
@@ -41,7 +42,9 @@ v24plus_connstring = "permitMysqlScheme=true"
 
 
 def return_tf_payload(status: str, value: str):
+    logger.debug(f"Value is: {value}")
     payload = {'status': status, 'value': value}
+    logger.debug(f"Payload is: {payload}")
     print(json.dumps(payload))
 
 
