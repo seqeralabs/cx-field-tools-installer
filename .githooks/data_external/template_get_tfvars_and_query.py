@@ -3,7 +3,6 @@ import os
 import json
 import sys
 from types import SimpleNamespace
-from typing import List
 
 sys.dont_write_bytecode = True
 
@@ -19,22 +18,35 @@ sys.dont_write_bytecode = True
 project_root = os.getcwd()
 os.chdir(f"{project_root}/.githooks")
 sys.path.append(".")
-from utils.extractors import get_tfvars_as_json #convert_tfvars_to_dictionary
 
-# Extract tfvars just like we do with the Python validation script
+from utils.extractors import get_tfvars_as_json #convert_tfvars_to_dictionary
+from utils.logger import external_logger
+from utils.common_data_external_functions import getDVal, return_tf_payload
+
 os.chdir(project_root)
 data_dictionary = get_tfvars_as_json()
 data = SimpleNamespace(**data_dictionary)
 
 # Much simpler way to get variable passed in (via Terraform sending to stdin)
 query = json.load(sys.stdin)
-query = SimpleNamespace(**query)
+# query = SimpleNamespace(**query)
 ## ------------------------------------------------------------------------------------
 
 
-def return_tf_payload(status: str, value: str):
-    payload = {'status': status, 'value': value}
-    print(json.dumps(payload))
+def populate_values(query):
+
+    external_logger.debug(f"Query is: {query}")
+
+    # Add logic here
+
+    values = {
+        "key": "value"
+    }
+
+    return values
 
 
+if __name__ == '__main__':
+    values = populate_values(query)
+    return_tf_payload("0", values)
 
