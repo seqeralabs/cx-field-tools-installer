@@ -3,8 +3,38 @@ import logging
 import logging.handlers
 import sys
 
+
+# WARNING (June 17, 2024)
+#
+# Original logger configuration logic worked well for verification logic but broke when using TF `data.external` mechanism.
+# (broke due to how the `data.external` mechanism reads stdout/stderr ... which log events wrote to by defaul). This was resolved
+# by splitting the logger into two: one to handle verification via stdout/file, the other to handle TF external mechanism by
+# buffering all log events in memory until a proper payload is returned to TF (with the buffered logs emitted afterwards).
+# https://docs.python.org/3/library/logging.handlers.html
+#
+# Trial-and-error reworking logic finally got that working, but allowing logging.basicConfig to remain resulted in 
+# double-entry log events. Not sure why and don't care to spend more time right now investigating. 
+# 
+# Ultimately made things more granular and less DRY, but it works so .....
+
+
+formatter = logging.Formatter('%(asctime)s  %(filename)-15s:%(lineno)-4d %(levelname)-12s %(message)s')
+
+# Validation Logger
+logger = logging.getLogger('VALIDATION')
+logger.setLevel(logging.DEBUG)
+
 validation_file_handler = logging.FileHandler(filename='verify.log')
 validation_stdout_handler = logging.StreamHandler(stream=sys.stdout)
+validation_file_handler.setFormatter(formatter)
+validation_stdout_handler.setFormatter(formatter)
+logger.addHandler(validation_file_handler)
+logger.addHandler(validation_stdout_handler)
+
+
+# External Logger
+external_logger = logging.getLogger('EXTERNAL')
+external_logger.setLevel(logging.DEBUG)
 
 data_external_file_handler = logging.FileHandler(filename="data_external.log")
 data_external_memory_handler = logging.handlers.MemoryHandler(
@@ -14,33 +44,9 @@ data_external_memory_handler = logging.handlers.MemoryHandler(
     #target=logging.FileHandler(filename="data_external.log"),
     #flushOnClose=False,
 )
-
-# WARNING!! 
-# `handler[...]` population here works for `make verify` but breaks TF `data.external`
-# I have removed and attach formatting one-by-one. It's stupid, but it works.
-# handlers = [validation_file_handler, validation_stdout_handler]  # DONT UNCOMMENT
-logging.basicConfig(
-    level=logging.INFO, 
-    # https://stackoverflow.com/questions/57925917/python-logging-left-align-with-brackets
-    format='%(asctime)s  %(filename)-15s:%(lineno)-4d %(levelname)-12s %(message)s',
-    # handlers=handlers  # DONT UNCOMMENT
-)
-
-
-# https://docs.python.org/3/library/logging.handlers.html
-# MemoryHandler is needed due to how data flows to/from TF `data.external`. Using 2 loggers to keep 
-# better isolation between tfvars verification logic and content-generating scripts.
-
-logger = logging.getLogger('VALIDATION')
-logger.addHandler(validation_file_handler)
-logger.addHandler(validation_stdout_handler)
-
-external_logger = logging.getLogger('EXTERNAL')
+data_external_file_handler.setFormatter(formatter)
 external_logger.addHandler(data_external_memory_handler)
 
-# data_external_memory_handler.setFormatter(formatter)  # No timestamp. Dunno why.
-formatter = logging.Formatter('%(asctime)s  %(filename)-15s:%(lineno)-4d %(levelname)-12s %(message)s')
-#validation_file_handler.setFormatter(formatter)
-# validation_stdout_handler.setFormatter(formatter)
-data_external_file_handler.setFormatter(formatter)
+
+
 
