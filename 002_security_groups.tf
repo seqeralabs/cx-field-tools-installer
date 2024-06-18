@@ -74,6 +74,38 @@ module "tower_ec2_direct_sg" {
   ingress_rules       = ["https-443-tcp", "http-80-tcp", "splunk-web-tcp"]
 }
 
+module "tower_ec2_direct_connect_sg" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.1.0"
+
+  count = var.flag_enable_data_studio == true ? 1 : 0
+
+  name        = "${local.global_prefix}_ec2_direct_connect_sg"
+  description = "Direct HTTP to Tower EC2 host when Connect active."
+
+  vpc_id              = local.vpc_id
+  ingress_with_cidr_blocks = [ 
+    [ for cidr_block in var.sg_ingress_cidrs :
+      { 
+        from_port   = 7070
+        to_port     = 7070
+        protocol    = "tcp"
+        description = "Connect-Server"
+        cidr_blocks = cidr_block
+      }
+    ],
+    [ for cidr_block in var.sg_ingress_cidrs : 
+      { 
+        from_port   = 9090
+        to_port     = 9090
+        protocol    = "tcp"
+        description = "Connect-Proxy"
+        cidr_blocks = cidr_block
+      }
+    ]
+  ]
+}
+
 
 module "tower_ec2_alb_sg" {
   source  = "terraform-aws-modules/security-group/aws"
@@ -90,6 +122,38 @@ module "tower_ec2_alb_sg" {
     }
   ]
   number_of_computed_ingress_with_source_security_group_id = 1
+}
+
+module "tower_ec2_alb_connect_sg" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.1.0"
+
+  count = var.flag_enable_data_studio == true ? 1 : 0
+
+  name        = "${local.global_prefix}_ec2_direct_connect_sg"
+  description = "Direct HTTP to Tower EC2 host when Connect active."
+
+  vpc_id              = local.vpc_id
+  ingress_with_cidr_blocks = [
+    [ for cidr_block in var.sg_ingress_cidrs :
+      { 
+        from_port   = 7070
+        to_port     = 7070
+        protocol    = "tcp"
+        description = "Connect-Server"
+        source_security_group_id = module.tower_alb_sg.security_group_id
+      }
+    ],
+    [ for cidr_block in var.sg_ingress_cidrs : 
+      { 
+        from_port   = 9090
+        to_port     = 9090
+        protocol    = "tcp"
+        description = "Connect-Proxy"
+        source_security_group_id = module.tower_alb_sg.security_group_id
+      }
+    ]
+  ]
 }
 
 
