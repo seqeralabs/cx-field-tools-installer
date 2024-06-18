@@ -182,6 +182,13 @@ variable "data_explorer_disabled_workspaces" { type = string }
 
 
 ## ------------------------------------------------------------------------------------
+## Data Studio - Feature Gated (24.1.0+)
+## ------------------------------------------------------------------------------------
+variable "flag_enable_data_studio" { type = bool }
+variable "data_studio_container_version" { type = string }
+
+
+## ------------------------------------------------------------------------------------
 ## Database (Generic)
 ## ------------------------------------------------------------------------------------
 variable "db_database_name" { type = string }

@@ -100,8 +100,15 @@ locals {
       db_engine_version     = var.db_engine_version
     }
   )
-}
 
+  data_studios_env = templatefile("assets/src/tower_config/data-studios.env.tpl",
+    {
+      tower_server_url          = local.tower_server_url,
+      tower_redis_url           = local.tower_redis_url,
+      tower_connect_server_url  = local.tower_connect_server_url, 
+    }
+  )
+}
 
 
 
@@ -129,7 +136,10 @@ locals {
       flag_new_enough_for_migrate_db = local.flag_new_enough_for_migrate_db,
 
       db_container_engine = var.db_container_engine,
-      db_container_engine_version = var.db_container_engine_version
+      db_container_engine_version = var.db_container_engine_version,
+
+      flag_enable_data_studio = var.flag_enable_data_studio,
+      data_studio_container_version = var.data_studio_container_version,
     }
   )
 }

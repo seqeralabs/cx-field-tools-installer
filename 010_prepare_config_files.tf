@@ -22,6 +22,7 @@ resource "null_resource" "regenerate_config_files_from_data" {
       echo '${local.tower_env}' > ${path.module}/assets/target/tower_config/tower.env
       echo '${local.tower_yml}' > ${path.module}/assets/target/tower_config/tower.yml
       echo '${local.tower_sql}' > ${path.module}/assets/target/tower_config/tower.sql
+      echo '${local.data_studios_env}' > ${path.module}/assets/target/tower_config/data-studios.env
 
       # Generate Groundswell config files
       echo '${local.groundswell_env}' > ${path.module}/assets/target/groundswell_config/groundswell.env

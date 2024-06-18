@@ -176,6 +176,12 @@ locals {
   tower_base_url     = var.tower_server_url
   tower_api_endpoint = "${local.tower_server_url}/api"
 
+  tower_connect_server_url = (
+    var.flag_create_load_balancer == false && var.flag_do_not_use_https == true ?
+    "http://connect.${var.tower_server_url}:${var.tower_server_port}" :
+    "https://connect.${var.tower_server_url}"
+  )
+
 
   # Security Groups
   # ---------------------------------------------------------------------------------------

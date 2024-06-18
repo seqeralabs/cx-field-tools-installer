@@ -366,6 +366,18 @@ data_explorer_disabled_workspaces         = ""
 
 /*
 ## ------------------------------------------------------------------------------------
+## Data Studio - Feature Gated (24.1.0+)
+## ------------------------------------------------------------------------------------
+Enable to allow Data Studio functionality. Note, this requires several modifications to your instance.
+Please check Release Notes and documentation to ensure this its your regulatory compliance needs.
+*/
+flag_enable_data_studio                   = true
+
+data_studio_container_version             = "0.6.14"
+
+
+/*
+## ------------------------------------------------------------------------------------
 ## Database (Generic)
 ## Values that apply to both the containerized and RDS DBs
 ## ------------------------------------------------------------------------------------
