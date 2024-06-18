@@ -22,7 +22,6 @@ resource "null_resource" "regenerate_config_files_from_data" {
       echo '${local.tower_env}' > ${path.module}/assets/target/tower_config/tower.env
       echo '${local.tower_yml}' > ${path.module}/assets/target/tower_config/tower.yml
       echo '${local.tower_sql}' > ${path.module}/assets/target/tower_config/tower.sql
-      echo '${local.data_studios_env}' > ${path.module}/assets/target/tower_config/data-studios.env
 
       # Generate Groundswell config files
       echo '${local.groundswell_env}' > ${path.module}/assets/target/groundswell_config/groundswell.env
@@ -50,6 +49,10 @@ resource "null_resource" "regenerate_config_files_from_data" {
 
       # Generate Docker Logging Configuration
       echo '${local.docker_logging}' > ${path.module}/assets/target/docker_logging/daemon.json
+
+      # Generate Tower Connect files
+      echo '${local.data_studios_env}' > ${path.module}/assets/target/tower_config/data-studios.env
+      echo `${tls_private_key.connect_pem.private_key_pem}' > ${path.module}/assets/target/tower_config/data-studios.pem
 
     EOT
     interpreter = ["/bin/bash", "-c"]

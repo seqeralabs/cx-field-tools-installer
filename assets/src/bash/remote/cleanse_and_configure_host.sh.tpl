@@ -11,6 +11,7 @@ rm -rf $HOME_PATH/tower.env || true
 rm -rf $HOME_PATH/tower.yml || true
 rm -rf $HOME_PATH/docker-compose.yml || true
 rm -rf $HOME_PATH/data-studios.env || true
+rm -rf $HOME_PATH/data-studios-rsa.pem || true
 
 
 # Populate the ~/.bashrc with values the Ansible scripts will need for their logic.

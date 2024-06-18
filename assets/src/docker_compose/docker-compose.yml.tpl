@@ -151,6 +151,9 @@ services:
       - 8080
     volumes:
       - $HOME/tower.yml:/tower.yml
+%{ if flag_enable_data_studio == true ~}
+      - $HOME/data-studios-rsa.pem:/data-studios-rsa.pem
+%{ endif ~}
     env_file:
       - tower.env
     environment:
@@ -178,7 +181,7 @@ services:
 
 %{ if flag_enable_data_studio == true ~}
  connect-proxy:
-   image: cr.seqera.io/private/nf-tower-enterprise/data-studio/tower-connect-proxy:${data_studio_container_version}
+   image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-proxy:${data_studio_container_version}
    platform: linux/amd64
    env_file:
      - data-studios.env
@@ -194,7 +197,7 @@ services:
 %{endif ~}
 
  connect-server:
-   image: cr.seqera.io/private/nf-tower-enterprise/data-studio/tower-connect-server:${data_studio_container_version}
+   image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-server:${data_studio_container_version}
    platform: linux/amd64
    env_file:
      - data-studios.env
