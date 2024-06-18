@@ -50,6 +50,18 @@ resource "random_pet" "stackname" {
 data "aws_caller_identity" "current" {}
 
 
+# https://medium.com/@leslie.alldridge/terraform-external-data-source-using-custom-python-script-with-example-cea5e618d83e
+data "external" "generate_db_connection_string" {
+  program = ["python3", "${path.module}/.githooks/data_external/generate_db_connection_string.py"]
+  query = {
+    tower_container_version = var.tower_container_version
+    flag_use_container_db = var.flag_use_container_db
+    db_container_engine_version = var.db_container_engine_version
+    db_engine_version = var.db_engine_version
+  }
+}
+
+
 ## ------------------------------------------------------------------------------------
 ## Omnibus Locals
 ## ------------------------------------------------------------------------------------
@@ -57,10 +69,7 @@ locals {
 
   # Housekeeping 
   # ---------------------------------------------------------------------------------------
-  tf_prefix = "tf-${var.app_name}-${random_pet.stackname.id}"
-  global_prefix = (var.flag_use_custom_resource_naming_prefix == true ?
-    var.custom_resource_naming_prefix :
-  local.tf_prefix)
+  global_prefix = var.flag_use_custom_resource_naming_prefix == true ? var.custom_resource_naming_prefix : "tf-${var.app_name}-${random_pet.stackname.id}"
 
 
   # Networking
@@ -201,7 +210,9 @@ locals {
   # If creating new RDS, get address from TF. IF using existing RDS, get address from user. 
   populate_external_db = var.flag_create_external_db == true || var.flag_use_existing_external_db == true ? "true" : "false"
 
-  tower_db_url = var.flag_create_external_db == true ? module.rds[0].db_instance_address : var.tower_db_url
+  # tower_db_url = var.flag_create_external_db == true ? module.rds[0].db_instance_address : var.tower_db_url
+  tower_db_root = ( var.flag_use_container_db == true? var.tower_db_url : module.rds[0].db_instance_address )
+  tower_db_url = "${local.tower_db_root}/${var.db_database_name}${data.external.generate_db_connection_string.result.value}"
 
 
   # Redis

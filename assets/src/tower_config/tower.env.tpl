@@ -19,12 +19,7 @@ TOWER_ROOT_USERS=${tower_root_users}
 # ------------------------------------------------
 # DB settings
 # ------------------------------------------------
-# MySQL8 needs extra connection modifiers for most clients.
-%{ if flag_use_container_db == false && startswith(db_engine_version, "8") == false ~}
-TOWER_DB_URL=jdbc:mysql://${tower_db_url}/tower
-%{ else ~}
-TOWER_DB_URL=jdbc:mysql://${tower_db_url}/tower?allowPublicKeyRetrieval=true&useSSL=false
-%{ endif ~}
+TOWER_DB_URL=jdbc:mysql://${tower_db_url}
 
 TOWER_DB_DRIVER=${tower_db_driver}
 TOWER_DB_DIALECT=${tower_db_dialect}

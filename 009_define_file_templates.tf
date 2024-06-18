@@ -37,6 +37,8 @@ locals {
 
       flag_data_explorer_enabled        = var.flag_data_explorer_enabled,
       data_explorer_disabled_workspaces = var.data_explorer_disabled_workspaces
+
+      tower_container_version = var.tower_container_version
     }
   )
 
@@ -124,7 +126,10 @@ locals {
       flag_enable_groundswell = var.flag_enable_groundswell,
       swell_container_version = var.swell_container_version,
 
-      flag_new_enough_for_migrate_db = local.flag_new_enough_for_migrate_db
+      flag_new_enough_for_migrate_db = local.flag_new_enough_for_migrate_db,
+
+      db_container_engine = var.db_container_engine,
+      db_container_engine_version = var.db_container_engine_version
     }
   )
 }
@@ -221,25 +226,25 @@ locals {
   cleanse_and_configure_host = templatefile(
     "assets/src/bash/remote/cleanse_and_configure_host.sh.tpl",
     {
-      app_name = var.app_name
+      app_name = var.app_name,
 
-      flag_generate_private_cacert     = tostring(var.flag_generate_private_cacert)
-      flag_use_existing_private_cacert = tostring(var.flag_use_existing_private_cacert)
-      flag_do_not_use_https            = tostring(var.flag_do_not_use_https)
+      flag_generate_private_cacert     = tostring(var.flag_generate_private_cacert),
+      flag_use_existing_private_cacert = tostring(var.flag_use_existing_private_cacert),
+      flag_do_not_use_https            = tostring(var.flag_do_not_use_https),
 
-      bucket_prefix_for_new_private_ca_cert = var.bucket_prefix_for_new_private_ca_cert
-      existing_ca_cert_file                 = var.existing_ca_cert_file
-      existing_ca_key_file                  = var.existing_ca_key_file
+      bucket_prefix_for_new_private_ca_cert = var.bucket_prefix_for_new_private_ca_cert,
+      existing_ca_cert_file                 = var.existing_ca_cert_file,
+      existing_ca_key_file                  = var.existing_ca_key_file,
 
-      populate_external_db = local.populate_external_db
-      tower_db_url         = local.tower_db_url
-      db_database_name     = var.db_database_name
+      populate_external_db = local.populate_external_db,
+      tower_db_url         = local.tower_db_root,
+      db_database_name     = var.db_database_name,
 
-      docker_compose_file = local.docker_compose_file
+      docker_compose_file = local.docker_compose_file,
 
-      tower_base_url     = local.tower_base_url
-      tower_server_url   = local.tower_server_url
-      tower_api_endpoint = local.tower_api_endpoint
+      tower_base_url     = local.tower_base_url,
+      tower_server_url   = local.tower_server_url,
+      tower_api_endpoint = local.tower_api_endpoint,
 
       flag_create_hosts_file_entry = var.flag_create_hosts_file_entry
 

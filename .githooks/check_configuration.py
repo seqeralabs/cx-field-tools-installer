@@ -10,7 +10,7 @@ sys.dont_write_bytecode = True
 # written and returned without cluttering up the evaluation logic.
 sys.tracebacklimit = 0
 
-import re
+import yaml
 from types import SimpleNamespace
 from typing import List
 
@@ -289,6 +289,23 @@ def verify_database_configuration(data: SimpleNamespace):
         logger.warning("You have enabled a final snapshot on your external DB. This will affect easy teardwon during testing.")
 
 
+def verify_docker_version(data: SimpleNamespace):
+    """Make sure MySQL 5.6 is not present"""
+    yaml.sort_base_mapping_type_on_output = False
+
+    with open('assets/src/docker_compose/docker-compose.yml.tpl') as file:
+        # PYYAML fails with `yaml.scanner.ScannerError` due to Terraform templating. Switching to less elegant alternative.
+        # dcfile = yaml.safe_load(file)
+        # image = dcfile['services']['db']['image']
+        lines = file.readlines()
+
+        for line in lines:
+            if 'mysql:5.6' in line:
+                log_error_and_exit("MySQL 5.6 is obsolete. Please chooses MySQL 5.7 or higher in your docker-compose file.")
+
+    if "5.6" in data.db_engine_version:
+        log_error_and_exit("MySQL 5.6 is obsolete. Please chooses MySQL 5.7 in `db_engine_version`.")
+
 ## ------------------------------------------------------------------------------------
 ## MAIN
 ## ------------------------------------------------------------------------------------
@@ -310,6 +327,7 @@ if __name__ == '__main__':
     verify_only_one_true_set(data)
     verify_sensitive_keys(data, data_dictionary)
     verify_tfvars_config_dependencies(data)
+    verify_docker_version(data)
 
     # Verify Tower application configurations
     logger.info("----- Verifying Tower configurations -----")

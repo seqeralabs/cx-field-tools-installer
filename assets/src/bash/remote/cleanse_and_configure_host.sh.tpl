@@ -13,6 +13,7 @@ rm -rf $HOME_PATH/docker-compose.yml || true
 
 
 # Populate the ~/.bashrc with values the Ansible scripts will need for their logic.
+# Added single-quotes around DB_URL to handle connection string with `&` in it (which was pushing keys to bg) 
 {
   echo -e "\n\n# CONFIG ADDED BY TERRAFORM INSTALLER ON: $(date)"
   echo -e "export APP_NAME=${app_name}"
@@ -24,7 +25,7 @@ rm -rf $HOME_PATH/docker-compose.yml || true
   echo -e "export CACERT_EXISTING_CA_KEY=${existing_ca_key_file}"
 
   echo -e "export DB_POPULATE_EXTERNAL_INSTANCE=${populate_external_db}"
-  echo -e "export DB_URL=${tower_db_url}"
+  echo -e "export DB_URL=\"${tower_db_url}\""
   echo -e "export DB_NAME=${db_database_name}"
 
   echo -e "export TOWER_BASE_URL=${tower_base_url}"
