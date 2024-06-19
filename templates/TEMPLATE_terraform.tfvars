@@ -373,7 +373,7 @@ Please check Release Notes and documentation to ensure this its your regulatory 
 */
 flag_enable_data_studio                   = true
 
-data_studio_container_version             = "0.6.14"
+data_studio_container_version             = "0.6.12"
 
 
 /*

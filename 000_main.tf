@@ -176,6 +176,7 @@ locals {
   tower_base_url     = var.tower_server_url
   tower_api_endpoint = "${local.tower_server_url}/api"
 
+  tower_connect_dns = "connect.${var.tower_server_url}"
   tower_connect_server_url = (
     var.flag_create_load_balancer == false && var.flag_do_not_use_https == true ?
     "http://connect.${var.tower_server_url}:${var.tower_server_port}" :
@@ -245,14 +246,17 @@ locals {
     local.tower_ec2_direct_connect_sg_7070, local.tower_ec2_direct_connect_sg_9090
   )
 
-  
+  # Using module directly in for loop hangs. Trying with local.
+  tower_alb_sg_security_group_id = module.tower_alb_sg.security_group_id
+
   tower_ec2_alb_connect_sg_7070 = [ for cidr_block in var.sg_ingress_cidrs :
     { 
       from_port   = 7070
       to_port     = 7070
       protocol    = "tcp"
       description = "Connect-Server"
-      source_security_group_id = module.tower_alb_sg.security_group_id
+      # source_security_group_id = module.tower_alb_sg.security_group_id
+      source_security_group_id = local.tower_alb_sg_security_group_id
     }
   ]
 
@@ -262,7 +266,8 @@ locals {
       to_port     = 9090
       protocol    = "tcp"
       description = "Connect-Server"
-      source_security_group_id = module.tower_alb_sg.security_group_id
+      # source_security_group_id = module.tower_alb_sg.security_group_id
+      source_security_group_id = local.tower_alb_sg_security_group_id
     }
   ]
 

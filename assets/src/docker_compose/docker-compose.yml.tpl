@@ -180,32 +180,32 @@ services:
       - backend
 
 %{ if flag_enable_data_studio == true ~}
- connect-proxy:
-   image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-proxy:${data_studio_container_version}
-   platform: linux/amd64
-   env_file:
-     - data-studios.env
-   networks:
-     - frontend
-     - backend
-   ports:
-     - 9090:9090
-   restart: always
+  connect-proxy:
+    image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-proxy:${data_studio_container_version}
+    platform: linux/amd64
+    env_file:
+      - data-studios.env
+    networks:
+      - frontend
+      - backend
+    ports:
+      - 9090:9090
+    restart: always
 %{ if flag_use_container_redis == true ~}
-   depends_on:
-     - redis
+    depends_on:
+      - redis
 %{endif ~}
 
- connect-server:
-   image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-server:${data_studio_container_version}
-   platform: linux/amd64
-   env_file:
-     - data-studios.env
-   networks:
-     - backend
-   ports:
-     - 7070:7070
-   restart: always
+  connect-server:
+    image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-server:${data_studio_container_version}
+    platform: linux/amd64
+    env_file:
+      - data-studios.env
+    networks:
+      - backend
+    ports:
+      - 7070:7070
+    restart: always
 %{ endif ~}
 
 %{ if flag_use_custom_docker_compose_file == true ~}

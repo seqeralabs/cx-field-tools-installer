@@ -52,7 +52,7 @@ resource "null_resource" "regenerate_config_files_from_data" {
 
       # Generate Tower Connect files
       echo '${local.data_studios_env}' > ${path.module}/assets/target/tower_config/data-studios.env
-      echo `${tls_private_key.connect_pem.private_key_pem}' > ${path.module}/assets/target/tower_config/data-studios.pem
+      echo '${tls_private_key.connect_pem.private_key_pem}' > ${path.module}/assets/target/tower_config/data-studios-rsa.pem
 
     EOT
     interpreter = ["/bin/bash", "-c"]

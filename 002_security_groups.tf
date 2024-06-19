@@ -121,6 +121,23 @@ module "tower_ec2_alb_sg" {
   number_of_computed_ingress_with_source_security_group_id = 1
 }
 
+
+## ------------------------------------------------------------------------------------
+## ALB Controls
+## ------------------------------------------------------------------------------------
+module "tower_alb_sg" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.1.0"
+
+  name        = "${local.global_prefix}_alb_sg"
+  description = "HTTP to Tower ALB instance."
+
+  vpc_id              = local.vpc_id
+  ingress_cidr_blocks = local.alb_ingress_cidrs #var.sg_ingress_cidrs
+  ingress_rules       = ["https-443-tcp", "http-80-tcp"]
+  egress_rules        = var.sg_egress_tower_alb
+}
+
 module "tower_ec2_alb_connect_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "5.1.0"
@@ -131,7 +148,7 @@ module "tower_ec2_alb_connect_sg" {
   description = "Direct HTTP to Tower EC2 host when Connect active."
 
   vpc_id              = local.vpc_id
-  ingress_with_cidr_blocks = local.tower_ec2_alb_connect_sg_final
+  computed_ingress_with_cidr_blocks = local.tower_ec2_alb_connect_sg_final
   # ingress_with_cidr_blocks = [
   #   [ for cidr_block in var.sg_ingress_cidrs :
   #     { 
@@ -153,24 +170,6 @@ module "tower_ec2_alb_connect_sg" {
   #   ]
   # ]
 }
-
-
-## ------------------------------------------------------------------------------------
-## ALB Controls
-## ------------------------------------------------------------------------------------
-module "tower_alb_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
-
-  name        = "${local.global_prefix}_alb_sg"
-  description = "HTTP to Tower ALB instance."
-
-  vpc_id              = local.vpc_id
-  ingress_cidr_blocks = local.alb_ingress_cidrs #var.sg_ingress_cidrs
-  ingress_rules       = ["https-443-tcp", "http-80-tcp"]
-  egress_rules        = var.sg_egress_tower_alb
-}
-
 
 ## ------------------------------------------------------------------------------------
 ## DB Controls

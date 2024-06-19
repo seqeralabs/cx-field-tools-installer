@@ -65,7 +65,7 @@ resource "aws_route53_record" "alb_connect" {
   count = local.dns_create_alb_record == true ? 1 : 0
 
   zone_id = local.dns_zone_id
-  name    = local.tower_connect_server_url
+  name    = local.tower_connect_dns
   type    = "A"
 
   alias {
@@ -80,7 +80,7 @@ resource "aws_route53_record" "ec2_connect" {
   count = local.dns_create_ec2_record == true ? 1 : 0
 
   zone_id = local.dns_zone_id
-  name    = local.tower_connect_server_url
+  name    = local.tower_connect_dns
   type    = "A"
 
   ttl     = "5"
