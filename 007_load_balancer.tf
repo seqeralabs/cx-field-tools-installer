@@ -55,18 +55,59 @@ module "alb" {
 
   target_groups = [
     {
-      name_prefix      = "pref-"
+      name_prefix      = "p8000"
       backend_protocol = "HTTP"
       backend_port     = 8000
       target_type      = "instance"
 
       targets = {
-
         my_target = {
           target_id = aws_instance.ec2.id
           port      = 8000
         }
       }
+    },
+    {
+      name_prefix      = "p7070"
+      backend_protocol = "HTTP"
+      backend_port     = 7070
+      target_type      = "instance"
+
+      targets = {
+        my_target = {
+          target_id = aws_instance.ec2.id
+          port      = 7070
+        }
+      }
+    },
+  ]
+
+  https_listener_rules = [
+    {
+      https_listener_index = 0
+      priority = 5000
+
+      actions = [{
+        type = "forward"
+        target_group_index = 0
+      }]
+
+      conditions = [{
+        host_headers = [var.tower_server_url]
+      }]
+    },
+    {
+      https_listener_index = 0
+      priority = 5001
+
+      actions = [{
+        type = "forward"
+        target_group_index = 1
+      }]
+
+      conditions = [{
+        host_headers = [local.tower_connect_dns]
+      }]
     }
   ]
 

@@ -296,6 +296,13 @@ locals {
     "redis://redis:6379"
   )
 
+    #  Connect logic seems to append `redis://` as prefix. Breaks if we reuse `tower_redis_url`.
+    tower_connect_redis_url = (
+    var.flag_create_external_redis == true ?
+    "${aws_elasticache_cluster.redis[0].cache_nodes[0].address}:${aws_elasticache_cluster.redis[0].cache_nodes[0].port}" :
+    "redis:6379"
+  )
+
   # Docker-Compose
   # ---------------------------------------------------------------------------------------
   docker_compose_file = (

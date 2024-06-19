@@ -107,6 +107,14 @@ TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES="${data_explorer_disabled_workspac
 # OIDC configuration activated via docker-compose.yml MICRONAUT_ENVIRONMENTS variable.
 
 
+#-------------------------------------------------
+# OIDC
+# ------------------------------------------------
+TOWER_DATA_STUDIO_ALLOWED_WORKSPACES=""
+TOWER_DATA_STUDIO_CONNECT_URL=${tower_connect_server_url}
+CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN="ipsemlorem"
+TOWER_OIDC_PEM_PATH=/data-studios-rsa.pem
+
 # ------------------------------------------------
 # TEMPORARY WORKAROUND FOR MIGRATION SCRIPT
 #  - Need to add database creds here due to migration script limitation (Dec 2023)

@@ -118,6 +118,9 @@ services:
       - backend
     volumes:
       - $HOME/tower.yml:/tower.yml
+%{ if flag_enable_data_studio == true ~}
+      - $HOME/data-studios-rsa.pem:/data-studios-rsa.pem
+%{ endif ~}
     env_file:
       # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
       - tower.env

@@ -36,9 +36,11 @@ locals {
       flag_enable_groundswell = var.flag_enable_groundswell,
 
       flag_data_explorer_enabled        = var.flag_data_explorer_enabled,
-      data_explorer_disabled_workspaces = var.data_explorer_disabled_workspaces
+      data_explorer_disabled_workspaces = var.data_explorer_disabled_workspaces,
 
-      tower_container_version = var.tower_container_version
+      tower_container_version = var.tower_container_version,
+      
+      tower_connect_server_url = local.tower_connect_server_url,
     }
   )
 
@@ -104,7 +106,8 @@ locals {
   data_studios_env = templatefile("assets/src/tower_config/data-studios.env.tpl",
     {
       tower_server_url          = local.tower_server_url,
-      tower_redis_url           = local.tower_redis_url,
+      # tower_redis_url           = local.tower_redis_url,
+      tower_redis_url           = local.tower_connect_redis_url,
       tower_connect_server_url  = local.tower_connect_server_url, 
     }
   )
