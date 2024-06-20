@@ -108,12 +108,17 @@ TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES="${data_explorer_disabled_workspac
 
 
 #-------------------------------------------------
-# OIDC
+# DATA STUDIO
 # ------------------------------------------------
-TOWER_DATA_STUDIO_ALLOWED_WORKSPACES=""
+%{ if flag_enable_data_studio == true ~}
+%{ if flag_limit_data_studio_to_some_workspaces == true ~}
+TOWER_DATA_STUDIO_ALLOWED_WORKSPACES="${data_studio_eligible_workspaces}"
+%{ endif }
 TOWER_DATA_STUDIO_CONNECT_URL=${tower_connect_server_url}
 CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN="ipsemlorem"
 TOWER_OIDC_PEM_PATH=/data-studios-rsa.pem
+%{ endif }
+
 
 # ------------------------------------------------
 # TEMPORARY WORKAROUND FOR MIGRATION SCRIPT

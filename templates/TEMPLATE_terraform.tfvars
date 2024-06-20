@@ -370,10 +370,14 @@ data_explorer_disabled_workspaces         = ""
 ## ------------------------------------------------------------------------------------
 Enable to allow Data Studio functionality. Note, this requires several modifications to your instance.
 Please check Release Notes and documentation to ensure this its your regulatory compliance needs.
+
+Must use numeric id of target workspaces when populating `data_studio_eligible_workspaces`.
 */
 flag_enable_data_studio                   = true
-
 data_studio_container_version             = "0.6.12"
+
+flag_limit_data_studio_to_some_workspaces = false
+data_studio_eligible_workspaces           = ""
 
 
 /*

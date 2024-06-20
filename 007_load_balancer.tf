@@ -68,15 +68,15 @@ module "alb" {
       }
     },
     {
-      name_prefix      = "p7070"
+      name_prefix      = "p9090"
       backend_protocol = "HTTP"
-      backend_port     = 7070
+      backend_port     = 9090
       target_type      = "instance"
 
       targets = {
         my_target = {
           target_id = aws_instance.ec2.id
-          port      = 7070
+          port      = 9090
         }
       }
     },
@@ -106,7 +106,8 @@ module "alb" {
       }]
 
       conditions = [{
-        host_headers = [local.tower_connect_dns]
+        # host_headers = [local.tower_connect_dns]
+        host_headers = [local.tower_connect_wildcard_dns]
       }]
     }
   ]

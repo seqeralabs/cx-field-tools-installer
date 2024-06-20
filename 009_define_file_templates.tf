@@ -40,6 +40,9 @@ locals {
 
       tower_container_version = var.tower_container_version,
       
+      flag_enable_data_studio = var.flag_enable_data_studio,
+      flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces,
+      data_studio_eligible_workspaces = var.data_studio_eligible_workspaces,
       tower_connect_server_url = local.tower_connect_server_url,
     }
   )
@@ -63,6 +66,9 @@ locals {
       tower_smtp_ssl_protocols      = var.tower_smtp_ssl_protocols,
 
       flag_disable_email_login = var.flag_disable_email_login,
+
+      flag_enable_data_studio = var.flag_enable_data_studio,
+      flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces
 
     }
   )

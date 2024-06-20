@@ -187,6 +187,9 @@ variable "data_explorer_disabled_workspaces" { type = string }
 variable "flag_enable_data_studio" { type = bool }
 variable "data_studio_container_version" { type = string }
 
+variable "flag_limit_data_studio_to_some_workspaces" { type = bool }
+variable "data_studio_eligible_workspaces" { type = string }
+
 
 ## ------------------------------------------------------------------------------------
 ## Database (Generic)

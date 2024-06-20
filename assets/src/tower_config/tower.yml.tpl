@@ -92,6 +92,12 @@ tower:
       - text/csv
       - text/tab-separated-values
 
+%{ if flag_enable_data_studio == true && flag_limit_data_studio_to_some_workspaces == false ~}
+  # Allow all Workspaces to have Data Studio by default
+  data-studio:
+    allowed-workspaces: null
+%{ endif }
+
   navbar:
     menus:
       - label: "Docs"
