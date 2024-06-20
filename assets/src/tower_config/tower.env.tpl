@@ -119,7 +119,7 @@ CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN="ipsemlorem"
 TOWER_OIDC_PEM_PATH=/data-studios-rsa.pem
 %{ endif }
 
-
+TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN="ipsemlorem"
 # ------------------------------------------------
 # TEMPORARY WORKAROUND FOR MIGRATION SCRIPT
 #  - Need to add database creds here due to migration script limitation (Dec 2023)
