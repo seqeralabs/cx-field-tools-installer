@@ -176,22 +176,15 @@ locals {
   tower_base_url     = var.tower_server_url
   tower_api_endpoint = "${local.tower_server_url}/api"
 
-  tower_connect_dns = "studio.${var.tower_server_url}"
+  tower_connect_dns = "connect.${var.tower_server_url}"
   # This is meant to handle host-matching in the ALB (e.g.):
   # studio.TOWER_DOMAIN, 123.TOWER_DOMAIN, 456.TOWER_DOMAIN
   tower_connect_wildcard_dns = "*.${var.tower_server_url}"
 
-  #  The webpage at https://a835d851b.studio.autodc.dev-seqera.net/ might be temporarily down or it may have moved permanently to a new web address.
-  # tower_connect_server_url = (
-  #   var.flag_create_load_balancer == false && var.flag_do_not_use_https == true ?
-  #   "http://studio.${var.tower_server_url}:${var.tower_server_port}" :
-  #   "https://studio.${var.tower_server_url}"
-  # )
-
-    tower_connect_server_url = (
+  tower_connect_server_url = (
     var.flag_create_load_balancer == false && var.flag_do_not_use_https == true ?
-    "http://${var.tower_server_url}:${var.tower_server_port}" :
-    "https://${var.tower_server_url}"
+    "http://connect.${var.tower_server_url}:9090" :
+    "https://connect.${var.tower_server_url}"
   )
   
 
