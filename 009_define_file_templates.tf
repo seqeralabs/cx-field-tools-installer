@@ -44,6 +44,10 @@ locals {
       flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces,
       data_studio_eligible_workspaces = var.data_studio_eligible_workspaces,
       tower_connect_server_url = local.tower_connect_server_url,
+
+      data_studio_template_container_version_jupyter = var.data_studio_template_container_version_jupyter,
+      data_studio_template_container_version_rstudio = var.data_studio_template_container_version_rstudio,
+      data_studio_template_container_version_vscode = var.data_studio_template_container_version_vscode,
     }
   )
 

@@ -379,6 +379,11 @@ data_studio_container_version             = "0.6.12"
 flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""
 
+data_studio_template_container_version_jupyter = "0.7.0"
+data_studio_template_container_version_rstudio = "0.7.0"
+data_studio_template_container_version_vscode = "0.7.0"
+
+
 
 /*
 ## ------------------------------------------------------------------------------------
