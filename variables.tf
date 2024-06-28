@@ -29,6 +29,16 @@ variable "tower_container_version" {
 
 
 ## ------------------------------------------------------------------------------------
+## SSM 
+## ------------------------------------------------------------------------------------
+variable "flag_overwrite_ssm_keys" {
+  type        = bool
+  description = "Not to be used in PROD but helpful when sharing same instance in DEV."
+  default     = false
+}
+
+
+## ------------------------------------------------------------------------------------
 ## Tags -- Default
 ## ------------------------------------------------------------------------------------
 variable "default_tags" { type = map(string) }
@@ -333,13 +343,3 @@ variable "seqerakit_flag_credential_create_docker" { type = bool }
 variable "seqerakit_flag_credential_create_codecommit" { type = bool }
 
 variable "seqerakit_flag_credential_use_aws_role" { type = bool }
-
-
-## ------------------------------------------------------------------------------------
-## Testing helpers
-## ------------------------------------------------------------------------------------
-variable "flag_overwrite_ssm_keys" {
-  type        = bool
-  description = "Not to be used in PROD but helpful when sharing same instance in DEV."
-  default     = false
-}
