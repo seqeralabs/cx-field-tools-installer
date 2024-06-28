@@ -75,6 +75,17 @@ This page lists to-be-built-in-future functionality and various oddities you may
 
         - We mooted whether to make the `data.aws_ami` filtering object more specific but decided to leave as is for reverse compatibility. Implementators seeking greater control over the application can choose to modify the resource directly. [Reference Issue](https://github.com/seqeralabs/cx-field-tools-installer/issues/73)
 
+- Data Studio Certificate
+
+    If activating the Data Studio feature available in v24.1, you may need to acquire a new certificate which supports to SANs. For example, if your Tower instance was available at `https://mytower.com`, the two SANs your new certificate must support at:
+
+    - `mytower.com`
+    - `*.mytower.com`
+
+- Private Certificate Option does not support Data Studio
+
+    Current as of June 28/24, the custom `nginx` container in the custom `docker-compose.yml` file supplied in the project is not configured to support Data Studio traffic.
+
 
 ## Deficiencies
 

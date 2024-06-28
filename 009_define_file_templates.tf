@@ -36,9 +36,18 @@ locals {
       flag_enable_groundswell = var.flag_enable_groundswell,
 
       flag_data_explorer_enabled        = var.flag_data_explorer_enabled,
-      data_explorer_disabled_workspaces = var.data_explorer_disabled_workspaces
+      data_explorer_disabled_workspaces = var.data_explorer_disabled_workspaces,
 
-      tower_container_version = var.tower_container_version
+      tower_container_version = var.tower_container_version,
+      
+      flag_enable_data_studio = var.flag_enable_data_studio,
+      flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces,
+      data_studio_eligible_workspaces = var.data_studio_eligible_workspaces,
+      tower_connect_server_url = local.tower_connect_server_url,
+
+      data_studio_template_container_version_jupyter = var.data_studio_template_container_version_jupyter,
+      data_studio_template_container_version_rstudio = var.data_studio_template_container_version_rstudio,
+      data_studio_template_container_version_vscode = var.data_studio_template_container_version_vscode,
     }
   )
 
@@ -61,6 +70,9 @@ locals {
       tower_smtp_ssl_protocols      = var.tower_smtp_ssl_protocols,
 
       flag_disable_email_login = var.flag_disable_email_login,
+
+      flag_enable_data_studio = var.flag_enable_data_studio,
+      flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces
 
     }
   )
@@ -100,8 +112,16 @@ locals {
       db_engine_version     = var.db_engine_version
     }
   )
-}
 
+  data_studios_env = templatefile("assets/src/tower_config/data-studios.env.tpl",
+    {
+      tower_server_url          = local.tower_server_url,
+      # tower_redis_url           = local.tower_redis_url,
+      tower_redis_url           = local.tower_connect_redis_url,
+      tower_connect_server_url  = local.tower_connect_server_url, 
+    }
+  )
+}
 
 
 
@@ -129,7 +149,10 @@ locals {
       flag_new_enough_for_migrate_db = local.flag_new_enough_for_migrate_db,
 
       db_container_engine = var.db_container_engine,
-      db_container_engine_version = var.db_container_engine_version
+      db_container_engine_version = var.db_container_engine_version,
+
+      flag_enable_data_studio = var.flag_enable_data_studio,
+      data_studio_container_version = var.data_studio_container_version,
     }
   )
 }
@@ -328,4 +351,13 @@ locals {
       flag_docker_logging_jsonfile = var.flag_docker_logging_jsonfile
     }
   )
+}
+
+
+## ------------------------------------------------------------------------------------
+## Tower Connect
+## ------------------------------------------------------------------------------------
+resource "tls_private_key" "connect_pem" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
 }

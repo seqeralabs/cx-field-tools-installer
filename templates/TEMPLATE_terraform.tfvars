@@ -366,6 +366,30 @@ data_explorer_disabled_workspaces         = ""
 
 /*
 ## ------------------------------------------------------------------------------------
+## Data Studio - Feature Gated (24.1.0+)
+## ------------------------------------------------------------------------------------
+Enable to allow Data Studio functionality. Note, this requires several modifications to your instance.
+Please check Release Notes and documentation to ensure this its your regulatory compliance needs.
+
+Must use numeric id of target workspaces when populating `data_studio_eligible_workspaces`.
+
+NOTE: If upgrading from a pre-24.1 installation, it is likely the existing certificate arn 
+provided to the `alb_certificate_arn` entry needs to be replaced with a new cert with more entries. 
+*/
+flag_enable_data_studio                   = true
+data_studio_container_version             = "0.7.0"
+
+flag_limit_data_studio_to_some_workspaces = false
+data_studio_eligible_workspaces           = ""
+
+data_studio_template_container_version_jupyter = "0.7.0"
+data_studio_template_container_version_rstudio = "0.7.0"
+data_studio_template_container_version_vscode = "0.7.0"
+
+
+
+/*
+## ------------------------------------------------------------------------------------
 ## Database (Generic)
 ## Values that apply to both the containerized and RDS DBs
 ## ------------------------------------------------------------------------------------
@@ -486,7 +510,11 @@ This must be a TLS certificate stored in the Amazon Certificate Manager.
 
 If you have an already-issued cert from a public CA, consider storing it in ACM and using 
 an ALB to serve or else you will need to use the custom docker-compose file option with
-a local nginx container acting as the TLS termination point. 
+a local nginx container acting as the TLS termination point.
+
+NOTE: If upgrading from a pre-24.1 installation, it is likely the existing certificate arn 
+provided must be replaced with a new cert with more entries. 
+Please see https://docs.seqera.io for specific Data Studio cert guidance. 
 */
 
 alb_certificate_arn                     = "REPLACE_ME_IF_NEEDED"

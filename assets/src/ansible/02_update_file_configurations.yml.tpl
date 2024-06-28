@@ -18,10 +18,16 @@
       rm tower.env || true
       rm groundswell.env || true
       rm docker-compose.yml || true
+      rm data-studios.env || true
+      rm data-studios-rsa.pem || true
 
       # Generate fresh tower config files from upload package.
       cp target/tower_config/tower.yml tower.yml
       cp target/tower_config/tower.env tower.env
+
+      # Move data-studios file (if applicable)
+      cp target/tower_config/data-studios.env data-studios.env
+      cp target/tower_config/data-studios-rsa.pem data-studios-rsa.pem
 
       # Generate fresh groundswell config files from upload package.
       cp target/groundswell_config/groundswell.env groundswell.env
@@ -34,6 +40,8 @@
       chown ec2-user:ec2-user tower.yml
       chown ec2-user:ec2-user groundswell.env
       chown ec2-user:ec2-user docker-compose.yml
+      chown ec2-user:ec2-user data-studios.env
+      chown ec2-user:ec2-user data-studios-rsa.pem
 
 
   - name: Purge old files

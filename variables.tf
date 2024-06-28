@@ -182,6 +182,20 @@ variable "data_explorer_disabled_workspaces" { type = string }
 
 
 ## ------------------------------------------------------------------------------------
+## Data Studio - Feature Gated (24.1.0+)
+## ------------------------------------------------------------------------------------
+variable "flag_enable_data_studio" { type = bool }
+variable "data_studio_container_version" { type = string }
+
+variable "flag_limit_data_studio_to_some_workspaces" { type = bool }
+variable "data_studio_eligible_workspaces" { type = string }
+
+variable "data_studio_template_container_version_jupyter" { type = string }
+variable "data_studio_template_container_version_rstudio" { type = string }
+variable "data_studio_template_container_version_vscode" { type = string }
+
+
+## ------------------------------------------------------------------------------------
 ## Database (Generic)
 ## ------------------------------------------------------------------------------------
 variable "db_database_name" { type = string }

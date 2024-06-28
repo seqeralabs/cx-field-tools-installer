@@ -107,6 +107,26 @@ TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES="${data_explorer_disabled_workspac
 # OIDC configuration activated via docker-compose.yml MICRONAUT_ENVIRONMENTS variable.
 
 
+#-------------------------------------------------
+# DATA STUDIO
+# ------------------------------------------------
+%{ if flag_enable_data_studio == true ~}
+%{ if flag_limit_data_studio_to_some_workspaces == true ~}
+TOWER_DATA_STUDIO_ALLOWED_WORKSPACES="${data_studio_eligible_workspaces}"
+%{ endif }
+TOWER_DATA_STUDIO_CONNECT_URL=${tower_connect_server_url}
+TOWER_OIDC_PEM_PATH=/data-studios-rsa.pem
+TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN="ipsemlorem"
+
+TOWER_DATA_STUDIO_TEMPLATES_JUPYTER_REPOSITORY: 'cr.seqera.io/public/data-studio-jupyter:${data_studio_template_container_version_jupyter}'
+TOWER_DATA_STUDIO_TEMPLATES_JUPYTER_ICON: 'jupyter'
+TOWER_DATA_STUDIO_TEMPLATES_RSTUDIO_REPOSITORY: 'cr.seqera.io/public/data-studio-rstudio:${data_studio_template_container_version_rstudio}'
+TOWER_DATA_STUDIO_TEMPLATES_RSTUDIO_ICON: 'rstudio'
+TOWER_DATA_STUDIO_TEMPLATES_VSCODE_REPOSITORY: 'cr.seqera.io/public/data-studio-vscode:${data_studio_template_container_version_vscode}'
+TOWER_DATA_STUDIO_TEMPLATES_VSCODE_ICON: 'vscode'
+%{ endif }
+
+
 # ------------------------------------------------
 # TEMPORARY WORKAROUND FOR MIGRATION SCRIPT
 #  - Need to add database creds here due to migration script limitation (Dec 2023)

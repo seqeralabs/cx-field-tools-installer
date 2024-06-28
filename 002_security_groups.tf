@@ -74,6 +74,19 @@ module "tower_ec2_direct_sg" {
   ingress_rules       = ["https-443-tcp", "http-80-tcp", "splunk-web-tcp"]
 }
 
+module "tower_ec2_direct_connect_sg" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.1.0"
+
+  count = var.flag_enable_data_studio == true ? 1 : 0
+
+  name        = "${local.global_prefix}_ec2_direct_connect_sg"
+  description = "Direct HTTP to Tower EC2 host when Connect active."
+
+  vpc_id              = local.vpc_id
+  ingress_with_cidr_blocks = local.tower_ec2_direct_connect_sg_final
+}
+
 
 module "tower_ec2_alb_sg" {
   source  = "terraform-aws-modules/security-group/aws"
@@ -109,6 +122,21 @@ module "tower_alb_sg" {
   egress_rules        = var.sg_egress_tower_alb
 }
 
+module "tower_ec2_alb_connect_sg" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.1.0"
+
+  count = var.flag_enable_data_studio == true ? 1 : 0
+
+  name        = "${local.global_prefix}_ec2_alb_connect_sg"
+  description = "Direct HTTP to Tower EC2 host when Connect active."
+
+  vpc_id              = local.vpc_id
+  # computed_ingress_with_cidr_blocks = local.tower_ec2_alb_connect_sg_final
+  # computed_ingress_with_cidr_blocks = local.tower_ec2_alb_connect_sg_final
+  computed_ingress_with_source_security_group_id= local.tower_ec2_alb_connect_sg_final
+  number_of_computed_ingress_with_source_security_group_id = 1
+}
 
 ## ------------------------------------------------------------------------------------
 ## DB Controls
