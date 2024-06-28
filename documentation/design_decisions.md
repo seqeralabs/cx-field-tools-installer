@@ -116,4 +116,12 @@ In addition to the general design decisions noted above, there are a few decisio
 8. **Solution will not manage database backups.**<br />
     There is too much variability in client operational procedures to implement a one-size-fits-all solution for database backup. This is left to each client to implement in a manner appropriate to their business needs.
 
+9. **Solution is HIGHLY opinionated re: your Data Studio implementation.**
+    The Data Studio feature made available in v24.1 requires nested subdomains to function. While the feature itself supports the data studio URL being several layers below your Tower domain, this results in more complex configurations of your DNS and related TLS certificates. 
+
+    As a result, this tool has a highly opinionated implementation of the Data Studio feature, which is not adjustable without directly modifying non-`terraform.tfvars` settings.
+    
+    1. The Subdomain is one layer below your Tower URL.
+    2. The Subdomain is called `connect`. (_example:_ `https://connnect.mytower.com`).
+
 

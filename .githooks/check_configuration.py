@@ -11,6 +11,7 @@ sys.dont_write_bytecode = True
 sys.tracebacklimit = 0
 
 import yaml
+import re
 from types import SimpleNamespace
 from typing import List
 
@@ -190,6 +191,9 @@ def verify_subnet_privacy(data: SimpleNamespace):
         else:
             subnet_privacy(data.vpc_existing_alb_subnets, public_subnets, "`vpc_existing_alb_subnets` must contain public subnets.")
 
+    if data.flag_make_instance_private:
+        logger.warning("`flag_make_instance_private` is active; please note that assets in other VPCs will be unlikely to access your Tower instance.")
+
 
 def verify_ses_integration(data: SimpleNamespace):
     """Check SES integration settings."""
@@ -203,7 +207,7 @@ def verify_ses_integration(data: SimpleNamespace):
             log_error_and_exit("SES integration requires SES SMTP endpoint.")
         
         if data.tower_smtp_port != "587": 
-            log_error_and_exit("SES integration requires port 587. Plese fix.")
+            log_error_and_exit("SES integration requires port 587. Please fix.")
 
 
 def verify_route53_integration(data: SimpleNamespace):
@@ -306,6 +310,33 @@ def verify_docker_version(data: SimpleNamespace):
     if "5.6" in data.db_engine_version:
         log_error_and_exit("MySQL 5.6 is obsolete. Please chooses MySQL 5.7 in `db_engine_version`.")
 
+
+def verify_data_studio(data: SimpleNamespace):
+    """Verify fields related to Data Studio."""
+
+    if data.flag_enable_data_studio:
+
+        if data.tower_container_version < "v24.1.0":
+            log_error_and_exit("`tower_container_version` must bv24.1.0 or higher to set `flag_enable_data_studio` to true.")
+
+        if data.flag_limit_data_studio_to_some_workspaces:
+
+            # https://www.geeksforgeeks.org/python-check-whether-string-contains-only-numbers-or-not/
+            # if re.match('[0-9]*$', data.data_studio_eligible_workspaces):
+            if not re.findall(r'[0-9]+,[0-9]+', data.data_studio_eligible_workspaces):
+                log_error_and_exit("`data_studio_eligible_workspaces may only be populated by digits and commas.")
+
+        if data.flag_generate_private_cacert:
+            log_error_and_exit("The custom Private CA option has not been configured to support Data Studio. Please set `flag_enable_data_studio` to false or find another way to serve your TLS certificate.")
+
+        # Deferred until better solution comes along to get TF locals
+        # - Add check that CONNECT_PROXY_URL and TOWER_DATA_STUDIO_CONNECT_URL are the same.
+        # - Add check that CONNECT_PROXY_URL and TOWER_DATA_STUDIO_CONNECT_URL are only one subdomain deeper than Tower server URL
+
+
+
+
+
 ## ------------------------------------------------------------------------------------
 ## MAIN
 ## ------------------------------------------------------------------------------------
@@ -345,6 +376,10 @@ if __name__ == '__main__':
     verify_route53_integration(data)
     verify_ingress_and_egress(data, data_dictionary)
     verify_flow_logs(data)
+
+    # Verify data studio settings
+    logger.info("----- Verifying Data Studio settings -----")
+    verify_data_studio(data)
 
     # Verify database settings (last since this is the most critical component and most likely to be seen)
     logger.info("----- Verifying Database settings -----")
