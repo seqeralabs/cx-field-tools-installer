@@ -348,7 +348,9 @@ locals {
     {
       flag_docker_logging_local = var.flag_docker_logging_local,
       flag_docker_logging_journald = var.flag_docker_logging_journald,
-      flag_docker_logging_jsonfile = var.flag_docker_logging_jsonfile
+      flag_docker_logging_jsonfile = var.flag_docker_logging_jsonfile,
+
+      docker_cidr_range = var.docker_cidr_range
     }
   )
 }

@@ -298,11 +298,13 @@ variable "flag_disable_email_login" { type = bool }
 
 
 # ------------------------------------------------------------------------------------
-## EC2 - Docker Driver Logging
+## EC2 - Docker Configuration
 ## ------------------------------------------------------------------------------------
 variable "flag_docker_logging_local" { type = bool }
 variable "flag_docker_logging_journald" { type = bool }
 variable "flag_docker_logging_jsonfile" { type = bool }
+
+variable "docker_cidr_range" { type = string }
 
 
 

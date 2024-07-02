@@ -606,13 +606,15 @@ flag_disable_email_login               = false
 
 /*
 ## ------------------------------------------------------------------------------------
-## EC2 - Docker Driver Logging
+## EC2 - Docker Configuration
 ## ------------------------------------------------------------------------------------
 # https://docs.docker.com/config/containers/logging/local/
 */
 flag_docker_logging_local              = false
 flag_docker_logging_journald           = true
 flag_docker_logging_jsonfile           = false
+
+docker_cidr_range                      = "172.80.0.0/16"
 
 
 /*
