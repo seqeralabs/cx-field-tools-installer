@@ -72,7 +72,9 @@ locals {
       flag_disable_email_login = var.flag_disable_email_login,
 
       flag_enable_data_studio = var.flag_enable_data_studio,
-      flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces
+      flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces,
+
+      tower_audit_retention_days = var.tower_audit_retention_days,
 
     }
   )
