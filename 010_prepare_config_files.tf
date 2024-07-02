@@ -54,6 +54,10 @@ resource "null_resource" "regenerate_config_files_from_data" {
       echo '${local.data_studios_env}' > ${path.module}/assets/target/tower_config/data-studios.env
       echo '${tls_private_key.connect_pem.private_key_pem}' > ${path.module}/assets/target/tower_config/data-studios-rsa.pem
 
+      # Generate EC2 PEM
+      echo "${tls_private_key.ec2_ssh_key.private_key_pem}" > ${path.module}/${local.ssh_key_name}
+      chmod 400 ${path.module}/${local.ssh_key_name}
+
     EOT
     interpreter = ["/bin/bash", "-c"]
   }

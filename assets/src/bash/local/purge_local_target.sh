@@ -6,6 +6,9 @@ TARGET=assets/target
 rm -rf $TARGET/* && sleep 5
 mkdir -p $TARGET
 
+# Delete EC2 key
+rm ssh_key_for_* || true
+
 # Copy some source folders to target
 cp -R $SRC/ansible $TARGET
 cp -R $SRC/customcerts $TARGET
