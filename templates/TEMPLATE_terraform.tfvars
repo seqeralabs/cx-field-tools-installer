@@ -606,13 +606,22 @@ flag_disable_email_login               = false
 
 /*
 ## ------------------------------------------------------------------------------------
-## EC2 - Docker Driver Logging
+## EC2 - Docker Configuration
 ## ------------------------------------------------------------------------------------
 # https://docs.docker.com/config/containers/logging/local/
+
+CIDR Range -- docker's default CIDR ranges can often collide with CIDRs allocated to VPNs.
+The generation of docker networks via docker-compose and cause VPN-based SSH access to 
+fail due to the sudden introduction of conflicting CIDR ranges. Please see 
+https://www.heuristic42.com/blog/59/on-docker-stealing-routes-and-breaking-the-internet for
+more details.
 */
+
 flag_docker_logging_local              = false
 flag_docker_logging_journald           = true
 flag_docker_logging_jsonfile           = false
+
+docker_cidr_range                      = "172.80.0.0/16"
 
 
 /*
