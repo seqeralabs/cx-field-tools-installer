@@ -586,6 +586,8 @@ tower_root_users                        = "REPLACE_ME"
 tower_email_trusted_orgs                = "REPLACE_ME"
 tower_email_trusted_users               = "REPLACE_ME"
 
+tower_audit_retention_days              = 1095      # 3 years (value in days)
+
 
 /*
 ## ------------------------------------------------------------------------------------

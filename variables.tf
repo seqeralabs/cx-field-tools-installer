@@ -287,6 +287,8 @@ variable "tower_root_users" { type = string }
 variable "tower_email_trusted_orgs" { type = string }
 variable "tower_email_trusted_users" { type = string }
 
+variable "tower_audit_retention_days" { type = number }
+
 # ------------------------------------------------------------------------------------
 ## TOWER CONFIGURATION - OIDC
 ## ------------------------------------------------------------------------------------

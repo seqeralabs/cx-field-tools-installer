@@ -77,6 +77,11 @@ tower:
     # Control user access to personal (i.e. non-Org-based) Workspace.
     user-workspace-enabled: true
 
+  cron:
+    audit-log:
+      clean-up:
+        time-offset: ${tower_audit_retention_days}d
+
   # Tower exposes a unique 1-time-calleable API endpoint at the start of a pipeline run.
   # Nextflow calls this endpoint to retrieve sensitive values / overly-large content that cant/shouldnt be added to a Job request API call. 
   # Linked to `micronaut.token.jwt.generator` token values (api token duration & api endpoint duration).
