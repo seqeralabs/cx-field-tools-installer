@@ -23,6 +23,16 @@
 		"ssm_key": 	"/config/tower-dev/micronaut/security/token/jwt/generator/refresh-token/secret",
 		"value": 	"CHANGE_ME_SEE_SEQERA_DOCS (must be same value as JWT_SECRET_1)"
 	},
+	"TOWER_SMTP_USER": { 
+		"ssm_key": 	"/config/tower-dev/mail/smtp/user",
+		"value": 	"REPLACE_ME_IF_NECESSARY",
+		"description": "The SMTP user."
+	},
+        "TOWER_SMTP_PASSWORD": { 
+		"ssm_key": 	"/config/tower-dev/mail/smtp/password",
+		"value": 	"REPLACE_ME_IF_NECESSARY",
+		"description": "The SMTP password."
+	},
 	"TOWER_DB_USER": { 
 		"ssm_key": 	"/config/tower-dev/datasources/default/username",
 		"value": 	"CHANGE_ME_SEE_SEQERA_DOCS"
