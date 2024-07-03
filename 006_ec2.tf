@@ -28,7 +28,7 @@ data "aws_ami" "amazon_linux_2023" {
 
 
 ## ------------------------------------------------------------------------------------
-## SSH Key
+## EC2 SSH Key
 ## ------------------------------------------------------------------------------------
 resource "tls_private_key" "ec2_ssh_key" {
   algorithm = "RSA"
@@ -39,19 +39,6 @@ resource "tls_private_key" "ec2_ssh_key" {
 resource "aws_key_pair" "generated_key" {
   key_name   = local.global_prefix
   public_key = tls_private_key.ec2_ssh_key.public_key_openssh
-
-  # Generate "terraform-key-pair.pem" in current directory. Delete old key before generating new one.
-  provisioner "local-exec" {
-    command     = <<-EOT
-      # Purge local copy of ssh key (would be for old tf project instance)
-      rm -f ./ssh_key_for_* || true
-
-      # Copy the newly-created key to local file (~/.ssh.config points to this file)
-      echo "${tls_private_key.ec2_ssh_key.private_key_pem}" > ./"${local.ssh_key_name}"
-      chmod 400 ./"${local.ssh_key_name}"
-    EOT
-    interpreter = ["/bin/bash", "-c"]
-  }
 }
 
 
