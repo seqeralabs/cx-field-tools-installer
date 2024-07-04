@@ -6,7 +6,9 @@ import json
 import os
 import subprocess
 
+
 SEQERAKIT_USE_HOSTS_FILE = os.getenv('SEQERAKIT_USE_HOSTS_FILE')
+
 if SEQERAKIT_USE_HOSTS_FILE == "true":
     TOWER_API_ENDPOINT = f"http:/localhost:8000/api"
 else:
@@ -18,17 +20,19 @@ EMAIL_ADDRESS = ''
 
 
 # Grab first TOWER_ROOT_USERS entry for login purposes
-key = "TOWER_ROOT_USERS="
-#  Hardcoding path bad, but this is hardcoded lots of other places so ok for now.
+# Hardcoding path bad, but this is hardcoded lots of other places so ok for now.
 with open('/home/ec2-user/tower.env', 'r') as file:
     '''Find the TOWER_ROOT_USER entry, split on comma if multiple value, and grab first entry'''
     lines = file.readlines()
     
     for line in lines:
-        if line.startswith(key):
+        if line.startswith("TOWER_ROOT_USERS="):
             values = line.split('=')[1]
             try:
                 EMAIL_ADDRESS = values.split(',')[0]
+                EMAIL_ADRRESS = EMAIL_ADDRESS.strip()
+                break
+
             except Exception as e:
                 EMAIL_ADDRESS = values
 
@@ -37,13 +41,14 @@ with open('/home/ec2-user/tower.env', 'r') as file:
 
 
 # Need to properly escape doublequotes for json payload. Strip \n off constant since that breaks curl.
-login_payload =  {"email": EMAIL_ADDRESS.strip()}
+login_payload =  {"email": EMAIL_ADDRESS}
+# login_payload =  {"email": EMAIL_ADDRESS.strip()}
 login_payload = json.dumps(login_payload)
 print(login_payload)
 
 login_command = f"curl -Ss '{TOWER_API_ENDPOINT}/gate/access' -H 'Content-Type: application/json' -d '" + login_payload + "' -o /dev/null"
 login = subprocess.run( login_command, shell=True, text=True, capture_output=False )
-print(login_payload)
+print(login)
 
 # Get auth token from database
 is_external_db_in_use = os.getenv("DB_POPULATE_EXTERNAL_INSTANCE")
