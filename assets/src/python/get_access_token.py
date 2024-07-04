@@ -15,7 +15,6 @@ else:
 
 SEQERAKIT_TEST_TOKEN = f"SEQERAKIT_TEST_TOKEN_{datetime.datetime.now().timestamp()}"
 EMAIL_ADDRESS = ''
-UID = 1
 
 
 # Grab first TOWER_ROOT_USERS entry for login purposes
@@ -66,20 +65,11 @@ if str(is_external_db_in_use) == "true":
     )
     tower_db_password = tower_db_password.stdout.replace('\n', '')
 
+    rds_query = f"""docker run --rm -t -e MYSQL_PWD={tower_db_password} mysql:8.0 mysql --host {os.getenv('DB_URL')} --port=3306 -u{tower_db_user} --silent --skip-column-names --execute 'select auth_token FROM tower.tw_user WHERE email="{EMAIL_ADDRESS}";' """
 
-    # docker_run = f"docker run --rm -t -e MYSQL_PWD={tower_db_password} --entrypoint /bin/bash mysql:8.0 --name=token_helper"
-    # mysql_conn = fr"""mysql --host {os.getenv('DB_URL')} --port=3306 --user={tower_db_user} <<< 'use tower; select auth_token FROM tw_user WHERE email="{EMAIL_ADDRESS}";'"""
-    # full_conn = f"""{docker_run} -c "{mysql_conn}" """      #f"| sed -n '2p'"""
-
-    rds_query = f"""docker run --rm -t -e MYSQL_PWD={tower_db_password} mysql:8.0 mysql --host {os.getenv('DB_URL')} --port=3306 -utower --silent --skip-column-names --execute 'select auth_token FROM tower.tw_user WHERE email="{EMAIL_ADDRESS}";' """
-
-    auth_token = subprocess.run(
-        # Old call was too brittle -- assumed the first root user would be the first DB entry. Only true for first time greenfield deployments.
-        # Modified SQL to search the db table for the same email that we grabbed above for initial login
-
-        [rds_query],
-        shell=True, text=True, capture_output=True
-    )
+    # Old call was too brittle -- assumed the first root user would be the first DB entry. Only true for first time greenfield deployments.
+    # Modified SQL to search the db table for the same email that we grabbed above for initial login
+    auth_token = subprocess.run( [rds_query], shell=True, text=True, capture_output=True )
 
 else:
     auth_token = subprocess.run(
@@ -90,9 +80,14 @@ else:
 auth_token = auth_token.stdout.replace('\n', '')
 print("Auth token is: ", auth_token)
 
+# UID is not always guaranteed to be 1. Run extra query to get UID associated with the email address we are using.
+uid_query = f"""docker run --rm -t -e MYSQL_PWD={tower_db_password} mysql:8.0 mysql --host {os.getenv('DB_URL')} --port=3306 -u{tower_db_user} --silent --skip-column-names --execute 'select id FROM tower.tw_user WHERE email="{EMAIL_ADDRESS}";' """
+uid_value = subprocess.run(uid_query, shell=True, text=True, capture_output=True )
+uid_value = uid_value.stdout.replace('\n', '')
 
 # Log in to Tower with auth code.
-jwt_command = f"curl -Ss -d 'username={UID}' -d 'password={auth_token}' -c - '{TOWER_API_ENDPOINT}/login' | grep -w JWT | rev | cut -f 1 | rev"
+jwt_command = f"curl -Ss -d 'username={uid_value}' -d 'password={auth_token}' -c - '{TOWER_API_ENDPOINT}/login' | grep -w JWT | rev | cut -f 1 | rev"
+# jwt_command = f"curl -Ss -d 'username={UID}' -d 'password={auth_token}' -c - '{TOWER_API_ENDPOINT}/login' | grep -w JWT | rev | cut -f 1 | rev"
 jwt_token = subprocess.run( jwt_command, shell=True, text=True, capture_output=True )
 print('jwt_stdout is: ', jwt_token.stdout)
 
