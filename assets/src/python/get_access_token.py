@@ -66,14 +66,19 @@ if str(is_external_db_in_use) == "true":
     )
     tower_db_password = tower_db_password.stdout.replace('\n', '')
 
-    mysql_connection = f"mysql --host {os.getenv('DB_URL')} --port=3306 --user={tower_db_user} --password={tower_db_password}" 
+    
+    
+    docker_run = f"docker run --rm -t -e MYSQL_PWD={tower_db_password} --entrypoint /bin/bash mysql:8.0"
+    mysql_conn = f"mysql --host {os.getenv('DB_URL')} --port=3306 --user={tower_db_user}"
+    query      = f"use tower; select auth_token FROM tw_user WHERE email=\"{EMAIL_ADDRESS}\";"
+
+    full_conn = f"{docker_run} -c \"{mysql_conn} <<< '{query}' \" "     #f"| sed -n '2p'"
+
     auth_token = subprocess.run(
         # Old call was too brittle -- assumed the first root user would be the first DB entry. Only true for first time greenfield deployments.
         # Modified SQL to search the db table for the same email that we grabbed above for initial login
 
-        # [f"mysql --host {os.getenv('DB_URL')} --port=3306 --user={tower_db_user} --password={tower_db_password} <<< 'use tower; select auth_token FROM tw_user WHERE id=1;' | sed -n '2p'"], 
-        # shell=True, text=True, capture_output=True
-        [f"{mysql_connection} <<< \"use tower; select auth_token FROM tw_user WHERE email='{EMAIL_ADDRESS}';\" | sed -n '2p'"],
+        [full_conn],
         shell=True, text=True, capture_output=True
     )
 

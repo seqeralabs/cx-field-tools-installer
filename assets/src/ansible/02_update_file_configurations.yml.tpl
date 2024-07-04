@@ -71,7 +71,11 @@
         export db_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
         export db_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
 
-        mysql --host $DB_URL --port=3306 --user=$db_master_user --password=$db_master_password < target/tower_config/tower.sql  || true
+        # https://unix.stackexchange.com/questions/205180/how-to-pass-password-to-mysql-command-line
+        docker run --rm -t -v $(pwd)/target/tower_config/tower.sql:/tower.sql -e \
+        MYSQL_PWD=$db_master_password --entrypoint /bin/bash mysql:8.0 \
+        -c "mysql --host $DB_URL --port=3306 --user=$db_master_user < tower.sql" || true
+
       fi
 
   - name: Populate Groundswell
@@ -87,7 +91,12 @@
         export db_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
         export db_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
 
-        mysql --host $DB_URL --port=3306 --user=$db_master_user --password=$db_master_password < target/groundswell_config/groundswell.sql  || true
+        # mysql --host $DB_URL --port=3306 --user=$db_master_user --password=$db_master_password < target/groundswell_config/groundswell.sql  || true
+        
+        docker run --rm -t -v $(pwd)/target/groundswell_config/groundswell.sql:/groundswell.sql -e \
+        MYSQL_PWD=$db_master_password --entrypoint /bin/bash mysql:8.0 \
+        -c "mysql --host $DB_URL --port=3306 --user=$db_master_user < groundswell.sql" || true
+
       fi
 
   - name: Generate PrivateCA artefacts if necessary
