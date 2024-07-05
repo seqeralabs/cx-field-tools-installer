@@ -1,7 +1,5 @@
 # Permission
 
-The superset of AWS permissions which the installer requires to generate requisite infrastructure can be found [here](../templates/permissions.json).
-
 Permissions were identified via:
 1) [iamlive](https://github.com/iann0036/iamlive) transaction observation.
 2) **Update** - Active testing in AWS on April 13, 2024.

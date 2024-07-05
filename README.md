@@ -168,15 +168,17 @@ The tool relies on four core configuration files, all stored within the `templat
 
 ### 04 - Create an AWS IAM Role with the necessary permissions
 
-1. Modify the [`permissions.json`](templates/permissions.json) in the `templates` folder:
+1. Modify the [JSON block](documentation/permissions.md) in the `documentation` folder:
 
-    1. Perform a find-and-replace on `tower-dev` if you select a different application name.
-    
-    2. Replace every `AWS_ACCOUNT_REPLACE_ME` instance with the id of the AWS Account which the Terraform installer will interact with.
-    
-    3. Create an AWS IAM Role / User and attach these permissions.
+    1. Perform a find-and-replace on `APP_NAME_REPLACE_ME` (_suggested default is `tower-dev`_).
 
-    4. Configure this identity into your AWS CLI and ensure it is active when executing the installer (specified  in `var.aws_profile`).
+    2. Replace every `AWS_REGION_REPLACE_ME` with your desired AWS region.
+    
+    3. Replace every `AWS_ACCOUNT_REPLACE_ME` instance with the id of the AWS Account which the Terraform installer will interact with.
+    
+2. Create an AWS IAM Role / User and attach these permissions.
+
+3. Configure this identity into your AWS CLI and ensure it is active when executing the installer (specified  in `var.aws_profile`).
 
 
 ### 05 - Modify your OpenSSH config
