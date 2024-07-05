@@ -28,15 +28,15 @@ with open('/home/ec2-user/tower.env', 'r') as file:
         if line.startswith("TOWER_ROOT_USERS="):
             values = line.split('=')[1]
             try:
-                EMAIL_ADDRESS = values.split(',')[0]
-                EMAIL_ADRRESS = EMAIL_ADDRESS.strip()
+                EMAIL_ADDRESS = values.split(',')[0].strip()
+                # EMAIL_ADRRESS = EMAIL_ADDRESS.strip().rstrip(os.linesep)
                 break
 
             except Exception as e:
-                EMAIL_ADDRESS = values
+                raise Exception(f"Sorry, your `tower.env` has an unusable TOWER_ROOT_USERS value. Error: {e}")
 
     if EMAIL_ADDRESS == '':
-        raise Exception("Sorry, your `tower.env` does not have a usable TOWER_ROOT_USERS value. Please fix and try again.")
+        raise Exception("Sorry, your `tower.env` has an empty TOWER_ROOT_USERS value. Please populate and try again.")
 
 APP_NAME = os.getenv('APP_NAME')
 SSM_TOWER_DB_USER = f"/config/{APP_NAME}/datasources/default/username"
@@ -55,7 +55,6 @@ tower_db_password = tower_db_password.stdout.replace('\n', '')
 
 # Need to properly escape doublequotes for json payload. Strip \n off constant since that breaks curl.
 login_payload =  {"email": EMAIL_ADDRESS}
-# login_payload =  {"email": EMAIL_ADDRESS.strip()}
 login_payload = json.dumps(login_payload)
 print(login_payload)
 
@@ -91,17 +90,10 @@ else:
 auth_token = auth_token.stdout.replace('\n', '')
 print("Auth token is: ", auth_token)
 
-# # UID is not always guaranteed to be 1. Run extra query to get UID associated with the email address we are using.
-# uid_query = f"""docker run --rm -t -e MYSQL_PWD={tower_db_password} mysql:8.0 mysql --host {os.getenv('DB_URL')} --port=3306 -u{tower_db_user} --silent --skip-column-names --execute 'select id FROM tower.tw_user WHERE email="{EMAIL_ADDRESS}";' """
-# uid_value = subprocess.run(uid_query, shell=True, text=True, capture_output=True )
-# uid_value = uid_value.stdout.replace('\n', '')
-
 # Log in to Tower with auth code.
 jwt_command = f"curl -Ss -d 'username={uid_value}' -d 'password={auth_token}' -c - '{TOWER_API_ENDPOINT}/login' | grep -w JWT | rev | cut -f 1 | rev"
-# jwt_command = f"curl -Ss -d 'username={UID}' -d 'password={auth_token}' -c - '{TOWER_API_ENDPOINT}/login' | grep -w JWT | rev | cut -f 1 | rev"
 jwt_token = subprocess.run( jwt_command, shell=True, text=True, capture_output=True )
 print('jwt_stdout is: ', jwt_token.stdout)
-
 
 # Generate PAT
 pat_payload = { "name": SEQERAKIT_TEST_TOKEN.strip() }
@@ -110,7 +102,6 @@ pat_payload = json.dumps(pat_payload)
 pat_command = f"curl -Ss '{TOWER_API_ENDPOINT}/tokens' -H 'Content-Type: application/json' -H 'Authorization: Bearer {jwt_token.stdout.strip()}' -d '{pat_payload}' | jq -r '.accessKey'",
 pat_token = subprocess.run( pat_command, shell=True, text=True, capture_output=True )
 print("Token Value is: ", pat_token.stdout)
-
 
 # Write Token to bashrc
 subprocess.run( ["echo 'export TOWER_ACCESS_TOKEN=" + pat_token.stdout + "' >> /home/ec2-user/.bashrc"], shell=True )
