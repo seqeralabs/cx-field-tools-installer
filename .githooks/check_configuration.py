@@ -334,6 +334,10 @@ def verify_data_studio(data: SimpleNamespace):
         # - Add check that CONNECT_PROXY_URL and TOWER_DATA_STUDIO_CONNECT_URL are only one subdomain deeper than Tower server URL
 
 
+def verify_not_v24_1_0(data: SimpleNamespace):
+    """Verify that user has not selected Tower v24.1.0 (due to serialization bug)."""
+    if data.tower_container_version == "v24.1.0":
+        log_error_and_exit("Tower version 24.1.0 has a fatal serialization flaw. Plus use v24.1.1 or higher.")
 
 
 
@@ -352,6 +356,9 @@ if __name__ == '__main__':
     # Check minimum container version
     if not ((data.tower_container_version).startswith('v')) or (data.tower_container_version < "v23.1.0"):
         log_error_and_exit("Tower version minimum is 23.1.0 (for Parameter Store integration).")
+
+    # Check known problem Tower versions
+    verify_not_v24_1_0(data)
 
     # Verify tfvars fields
     logger.info("----- Verifying TFVARS file -----")
