@@ -294,6 +294,8 @@ locals {
   tower_db_root = ( var.flag_use_container_db == true? var.tower_db_url : module.rds[0].db_instance_address )
   tower_db_url = "${local.tower_db_root}/${var.db_database_name}${data.external.generate_db_connection_string.result.value}"
 
+  swell_db_url = "${local.tower_db_root}/${var.swell_database_name}${data.external.generate_db_connection_string.result.value}"
+
 
   # Redis
   # ---------------------------------------------------------------------------------------
