@@ -17,7 +17,7 @@
 
       python3 get_access_token.py
 
-
+# In the event of any future instances of not-yet-natively-supported Seqera Platform objects (not supported by tw cli), a secondary task can be created as a workaround. An example supporting creation of codecommit credentials before native tw cli support can be found in commit [9c3f961] (https://github.com/seqeralabs/cx-field-tools-installer/pull/117/commits/9c3f961fd989e083bdafde3df25d6087ae486a98)
   - name: Standard deployment
     become: true
     become_user: ec2-user
