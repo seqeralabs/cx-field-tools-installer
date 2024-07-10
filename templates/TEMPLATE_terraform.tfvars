@@ -689,3 +689,4 @@ seqerakit_flag_credential_create_docker     = true
 seqerakit_flag_credential_create_codecommit = false
 
 seqerakit_flag_credential_use_aws_role      = true
+seqerakit_flag_credential_use_codecommit_baseurl = true

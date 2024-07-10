@@ -139,7 +139,7 @@
     become_user: ec2-user
     ansible.builtin.shell: |
       cd /home/ec2-user
-      wget https://github.com/seqeralabs/tower-cli/releases/download/v0.9.2/tw-linux-x86_64
+      wget https://github.com/seqeralabs/tower-cli/releases/download/v0.9.3/tw-linux-x86_64
 
       mv tw-* tw
       chmod +x ./tw

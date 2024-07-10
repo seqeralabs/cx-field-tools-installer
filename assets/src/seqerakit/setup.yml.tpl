@@ -64,8 +64,11 @@ credentials:
   - type: 'codecommit'
     name: 'codecommit_credentials'
     workspace: "${seqerakit_org_name}/${seqerakit_workspace_name}"
-    username: $TOWER_CODECOMMIT_USER
-    password: $TOWER_CODECOMMIT_PASSWORD
+    access-key: $TOWER_CODECOMMIT_USER
+    secret-key: $TOWER_CODECOMMIT_PASSWORD
+    %{~ if seqerakit_flag_credential_use_codecommit_baseurl == true ~}
+    base-url: $TOWER_CODECOMMIT_REGION
+    %{~ endif ~}
     overwrite: False
 %{ endif ~}
 

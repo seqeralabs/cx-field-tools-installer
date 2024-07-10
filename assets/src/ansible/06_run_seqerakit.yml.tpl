@@ -53,6 +53,3 @@
       else
         seqerakit setup.yml --cli="-Djavax.net.ssl.trustStore=/usr/lib/jvm/java-17-amazon-corretto/lib/security/cacerts" || true
       fi
-
-  
-

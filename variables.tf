@@ -347,3 +347,4 @@ variable "seqerakit_flag_credential_create_docker" { type = bool }
 variable "seqerakit_flag_credential_create_codecommit" { type = bool }
 
 variable "seqerakit_flag_credential_use_aws_role" { type = bool }
+variable "seqerakit_flag_credential_use_codecommit_baseurl" { type = bool }

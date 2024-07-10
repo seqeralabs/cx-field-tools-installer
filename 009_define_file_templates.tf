@@ -186,6 +186,7 @@ locals {
       seqerakit_flag_credential_create_codecommit = var.seqerakit_flag_credential_create_codecommit,
 
       seqerakit_flag_credential_use_aws_role = var.seqerakit_flag_credential_use_aws_role
+      seqerakit_flag_credential_use_codecommit_baseurl = var.seqerakit_flag_credential_use_codecommit_baseurl
     }
   )
 }
