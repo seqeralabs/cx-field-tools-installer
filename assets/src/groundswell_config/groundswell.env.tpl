@@ -17,11 +17,7 @@ SWELL_API_TRAIN_BATCH_SIZE=1000
 SWELL_API_PREDICT_FRACTIONAL_CPUS=false
 
 # Database settings
-%{ if flag_use_container_db == false && startswith(db_engine_version, "8") == false ~}
-SWELL_DB_URL=jdbc:mysql://${tower_db_url}/${swell_database_name}
-%{~ else ~}
-SWELL_DB_URL=jdbc:mysql://${tower_db_url}/${swell_database_name}?allowPublicKeyRetrieval=true&useSSL=false
-%{ endif }
+SWELL_DB_URL=jdbc:mysql://${swell_db_url}
 SWELL_DB_USER=${swell_db_user}
 SWELL_DB_PASSWORD=${swell_db_password}
 SWELL_DB_DIALECT=mysql
