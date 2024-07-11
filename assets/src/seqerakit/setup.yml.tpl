@@ -67,7 +67,7 @@ credentials:
     access-key: $TOWER_CODECOMMIT_USER
     secret-key: $TOWER_CODECOMMIT_PASSWORD
     %{~ if seqerakit_flag_credential_use_codecommit_baseurl == true ~}
-    base-url: $TOWER_CODECOMMIT_REGION
+    base-url: $TOWER_CODECOMMIT_BASEURL
     %{~ endif ~}
     overwrite: False
 %{ endif ~}
