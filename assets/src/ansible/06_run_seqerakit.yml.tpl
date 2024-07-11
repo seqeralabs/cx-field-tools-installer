@@ -39,7 +39,7 @@
       export SEQERAKIT_AWS_ASSUME_ROLE_ARN=$(aws ssm get-parameters --name "/seqera/${app_name}/seqerakit/aws-role" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
       export TOWER_CODECOMMIT_USER=$(aws ssm get-parameters --name "/seqera/${app_name}/seqerakit/codecommit-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
       export TOWER_CODECOMMIT_PASSWORD=$(aws ssm get-parameters --name "/seqera/${app_name}/seqerakit/codecommit-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
-      export TOWER_CODECOMMIT_BASEURL=$(aws ssm get-parameters --name "/seqera/${app_name}/seqerakit/codecommit-region" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
+      export TOWER_CODECOMMIT_BASEURL=$(aws ssm get-parameters --name "/seqera/${app_name}/seqerakit/codecommit-baseurl" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
 
 
       # Using true in both ifs because we do not want TF to fail if seqerakit fails.

@@ -36,7 +36,7 @@
 		"value": 	"CHANGE_ME_IF_NECESSARY"
 	},
     "TOWER_CODECOMMIT_BASEURL": { 
-		"ssm_key": 	"/seqera/tower-dev/seqerakit/codecommit-region",
+		"ssm_key": 	"/seqera/tower-dev/seqerakit/codecommit-baseurl",
 		"value": 	"CHANGE_ME_IF_NECESSARY"
 	}
 }
