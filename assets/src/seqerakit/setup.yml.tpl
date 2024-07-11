@@ -60,6 +60,18 @@ credentials:
     overwrite: False
 %{ endif ~}
 
+%{~ if seqerakit_flag_credential_create_codecommit == true }
+  - type: 'codecommit'
+    name: 'codecommit_credentials'
+    workspace: "${seqerakit_org_name}/${seqerakit_workspace_name}"
+    access-key: $TOWER_CODECOMMIT_USER
+    secret-key: $TOWER_CODECOMMIT_PASSWORD
+    %{~ if seqerakit_flag_credential_use_codecommit_baseurl == true ~}
+    base-url: $TOWER_CODECOMMIT_BASEURL
+    %{~ endif ~}
+    overwrite: False
+%{ endif ~}
+
 # Compute env to be injected post-rendering
 
 pipelines:
