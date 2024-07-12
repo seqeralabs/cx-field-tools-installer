@@ -35,22 +35,6 @@ module "vpc" {
 }
 
 
-# https://stackoverflow.com/questions/67562197/terraform-loop-through-ids-list-and-generate-data-blocks-from-it-and-access-it
-data "aws_subnet" "existing" {
-  # Creates a map with the keys being the CIDRs --  e.g. `data.aws_subnet.public["10.0.0.0/20"].id
-  # Only make a data query if we are using an existing VPC
-  for_each = var.flag_use_existing_vpc == true ? toset(local.subnets_all) : []
-
-  vpc_id     = local.vpc_id
-  cidr_block = each.key
-}
-
-
-# Needed to add this to get existing CIDR range to limit ALB listeners
-data "aws_vpc" "preexisting" {
-  id = local.vpc_id
-}
-
 # Needed to grab route tables from pre-existing VPC to create VPC endpoints.
 data "aws_route_tables" "preexisting" {
   vpc_id = local.vpc_id

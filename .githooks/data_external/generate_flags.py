@@ -33,34 +33,22 @@ query = json.load(sys.stdin)
 ## ------------------------------------------------------------------------------------
 
 
-# Get engine_version depending on whether container DB or RDS instance is in play
-engine_version = data.db_container_engine_version if data.flag_use_container_db else data.db_engine_version
+def populate_values(query):
 
-# Connection string modifiers
-mysql8_connstring = "allowPublicKeyRetrieval=true&useSSL=false"
-v24plus_connstring = "permitMysqlScheme=true"
+    external_logger.debug(f"Query is: {query}")
 
-
-def generate_connection_string(mysql8: str, v24plus: str):
-    connection_string = ""
-
-    add_mysql8 = True if mysql8.startswith("8.") else False
-    add_v24plus = True if v24plus >= "v24" else False
-
-    if add_mysql8 and add_v24plus:
-        connection_string = f"?{mysql8_connstring}&{v24plus_connstring}"
-    elif add_mysql8 and not add_v24plus:
-        connection_string = f"?{mysql8_connstring}"
-    elif not add_mysql8 and add_v24plus:
-        connection_string = f"?{v24plus_connstring}"
+    # Determine kinda of DNS record to create
+    dns_create_alb_record = True if (data.flag_create_load_balancer and not data.flag_create_hosts_file_entry) else False
+    dns_create_ec2_record = True if (not data.flag_create_load_balancer and not data.flag_create_hosts_file_entry) else False
 
     values = {
-        "connection_string": connection_string
+        "dns_create_alb_record": dns_create_alb_record,
+        "dns_create_ec2_record": dns_create_ec2_record,
     }
 
     return values
 
 
 if __name__ == '__main__':
-    values = generate_connection_string(engine_version, data.tower_container_version)
+    values = populate_values(query)
     return_tf_payload("0", values)
