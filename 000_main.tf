@@ -175,6 +175,7 @@ locals {
 
   tower_base_url     = var.tower_server_url
   tower_api_endpoint = "${local.tower_server_url}/api"
+  tower_admin_server_url = "admin.${var.tower_server_url}"
 
   tower_connect_dns = "connect.${var.tower_server_url}"
   # This is meant to handle host-matching in the ALB (e.g.):

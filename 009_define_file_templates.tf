@@ -273,6 +273,7 @@ locals {
       tower_base_url     = local.tower_base_url,
       tower_server_url   = local.tower_server_url,
       tower_api_endpoint = local.tower_api_endpoint,
+      tower_admin_server_url = local.tower_admin_server_url,
 
       flag_create_hosts_file_entry = var.flag_create_hosts_file_entry
 

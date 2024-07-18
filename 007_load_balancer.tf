@@ -85,6 +85,19 @@ module "alb" {
   https_listener_rules = [
     {
       https_listener_index = 0
+      priority             = 3000
+
+      actions = [{
+        type               = "forward"
+        target_group_index = 0
+      }]
+
+      conditions = [{
+        host_headers = [local.tower_admin_server_url]
+      }]
+    },
+    {
+      https_listener_index = 0
       priority = 5000
 
       actions = [{
