@@ -1,15 +1,12 @@
 .PHONY: verify plan apply
 
-verify-full:
-	@export PYTHONDONTWRITEBYTECODE=1
-	@echo "Verifying 'terraform.tfvars'."
-	@python3 .githooks/check_configuration.py
-	@tfsec
-
 verify:
-	@export PYTHONDONTWRITEBYTECODE=1
 	@echo "Verifying 'terraform.tfvars'."
-	@python3 .githooks/check_configuration.py
+	@python3 scripts/installer/validation/check_configuration.py
+
+verify-full: verify
+	@echo "Verifying with tfsec."
+	@tfsec
 
 plan: verify
 	@echo "Invoking 'terraform plan'"

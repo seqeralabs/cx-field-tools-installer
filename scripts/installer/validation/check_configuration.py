@@ -1,25 +1,37 @@
 #!/usr/bin/env python3
 
+import re
 import sys
 from pathlib import Path
+from types import SimpleNamespace
+from typing import List
+
+import yaml
+
+# import imp
+
+# # filepath = os.path.dirname(os.path.realpath(__file__))
+# # print(filepath)
+# # imp.load_source("__main__", f"{filepath}/../../append_scripts_to_sys_path.py")
+# from pathlib import Path
+
+# # import os
+
+# imp.load_source("__main__", f"{Path(__file__).resolve().parents[2]}/__init__.py")
+
+# # sys.dont_write_bytecode = True
+
 
 # https://stackoverflow.com/questions/27844088/python-get-directory-two-levels-up
 # Assumes following path: .. > installer > validation > check_configuration.py
 grandparent_dir = Path(__file__).resolve().parents[2]
 sys.path.append(str(grandparent_dir))
 
-sys.dont_write_bytecode = True
-sys.tracebacklimit = 0
-
-import re
-from types import SimpleNamespace
-from typing import List
-
-import yaml
 from installer.utils.extractors import get_tfvars_as_json
 from installer.utils.logger import logger
 from installer.utils.subnets import get_all_subnets
 
+sys.tracebacklimit = 0
 # ------------------------------------------------------------------------------------
 # NOTES:
 # ------------------------------------------------------------------------------------

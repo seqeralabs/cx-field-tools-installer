@@ -3,13 +3,8 @@ import json
 import sys
 from types import SimpleNamespace
 
-sys.dont_write_bytecode = True
+# sys.dont_write_bytecode = True
 
-from installer.utils.extractors import get_tfvars_as_json
-
-# Extract tfvars just like we do with the Python validation script
-data_dictionary = get_tfvars_as_json()
-data = SimpleNamespace(**data_dictionary)
 
 # Connection string modifiers
 mysql8_connstring = "allowPublicKeyRetrieval=true&useSSL=false"
@@ -44,14 +39,19 @@ def generate_connection_string(mysql8: str, v24plus: str):
 
 if __name__ == "__main__":
 
-    if data.flag_use_container_db:
-        connection_string = generate_connection_string(
-            data.db_container_engine_version, data.tower_container_version
-        )
-    else:
-        connection_string = generate_connection_string(
-            data.db_engine_version, data.tower_container_version
-        )
+    # Much simpler way to get variable passed in (via Terraform sending to stdin)
+    query = json.load(sys.stdin)
+    data = SimpleNamespace(**query)
 
+    # Get engine_version depending on whether container DB or RDS instance is in play
+    if data.flag_use_container_db:
+        engine_version = data.db_container_engine_version
+    else:
+        engine_version = data.db_engine_version
+
+    connection_string = generate_connection_string(
+        engine_version, data.tower_container_version
+    )
     return_tf_payload("0", connection_string)
+
     exit(0)
