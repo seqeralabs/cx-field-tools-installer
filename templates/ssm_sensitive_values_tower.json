@@ -28,7 +28,7 @@
 		"value": 	"REPLACE_ME_IF_NECESSARY",
 		"description": "The SMTP user."
 	},
-        "TOWER_SMTP_PASSWORD": { 
+    "TOWER_SMTP_PASSWORD": { 
 		"ssm_key": 	"/config/tower-dev/mail/smtp/password",
 		"value": 	"REPLACE_ME_IF_NECESSARY",
 		"description": "The SMTP password."
