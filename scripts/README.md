@@ -33,7 +33,7 @@
 
 2. IMO there's minimal opportunity to make the directly-called Python files more DRY. Importing another function to execute this code won't work, since we have the same import problem the code is supposed to solve.
 
-3. `imp` and `importlib` modules might be way to do this but the implementation is not super clear to me.
+3. `imp` and [`importlib`](https://docs.python.org/3/library/importlib.html) modules might be way to do this but the implementation is not super clear to me.
 
     ```python
     

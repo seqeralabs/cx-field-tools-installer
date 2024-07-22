@@ -15,6 +15,7 @@ def test_input():
     INPUT = '{"a": "b"}'
 
     # Must encode to avoid: `TypeError: memoryview: a bytes-like object is required, not 'str'` error
+    # Source: https://stackoverflow.com/questions/38723140/i-want-to-use-stdin-in-a-pytest-test
     res = subprocess.run(
         [target_script],
         input=INPUT.encode(),
