@@ -8,8 +8,9 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
 
+    // E402 - module level import not at top of file (done because need to mess with filepaths).
     "flake8.args": [
         "--max-line-length=120",
-        "--ignore=E202"
+        "--ignore=E202,E402"
     ],
 }

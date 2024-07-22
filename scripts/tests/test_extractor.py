@@ -1,7 +1,4 @@
-import sys
 from types import SimpleNamespace
-
-sys.dont_write_bytecode = True
 
 from installer.utils.extractors import get_tfvars_as_json
 

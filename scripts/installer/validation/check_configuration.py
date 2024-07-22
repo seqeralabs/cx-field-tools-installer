@@ -8,24 +8,9 @@ from typing import List
 
 import yaml
 
-# import imp
-
-# # filepath = os.path.dirname(os.path.realpath(__file__))
-# # print(filepath)
-# # imp.load_source("__main__", f"{filepath}/../../append_scripts_to_sys_path.py")
-# from pathlib import Path
-
-# # import os
-
-# imp.load_source("__main__", f"{Path(__file__).resolve().parents[2]}/__init__.py")
-
-# # sys.dont_write_bytecode = True
-
-
-# https://stackoverflow.com/questions/27844088/python-get-directory-two-levels-up
-# Assumes following path: .. > installer > validation > check_configuration.py
-grandparent_dir = Path(__file__).resolve().parents[2]
-sys.path.append(str(grandparent_dir))
+base_import_dir = Path(__file__).resolve().parents[2]
+if base_import_dir not in sys.path:
+    sys.path.append(str(base_import_dir))
 
 from installer.utils.extractors import get_tfvars_as_json
 from installer.utils.logger import logger
@@ -47,7 +32,7 @@ def log_error_and_exit(message: str):
 
 
 def only_one_true_set(flags: List) -> None:
-    """Check flag groupings to only ensure 1 per group is set as `true`. Aggregate values of all specified values and then count."""
+    """Ensure only 1 entry per flag grouping is `true`. Aggregate values of all specified values and then count."""
     values = [flag for flag in flags]
     if values.count(True) != 1:
         log_error_and_exit(f"Only one of these flags may be true: {str(flags)}.")
@@ -166,7 +151,7 @@ def verify_tower_server_url(data: SimpleNamespace):
 
     if data.tower_server_port != "8000":
         logger.warning(
-            "Your Tower instance is using a non-default port (8000). Ensure your Docker-Compose file is updated accordingly."
+            "Tower instance not using default port (8000). Ensure Docker-Compose file is updated accordingly."
         )
 
 
