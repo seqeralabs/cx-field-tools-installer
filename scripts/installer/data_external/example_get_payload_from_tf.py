@@ -43,15 +43,16 @@ if __name__ == "__main__":
     query = json.load(sys.stdin)
     data = SimpleNamespace(**query)
 
-    # Get engine_version depending on whether container DB or RDS instance is in play
-    if data.flag_use_container_db:
-        engine_version = data.db_container_engine_version
-    else:
-        engine_version = data.db_engine_version
+    # # Get engine_version depending on whether container DB or RDS instance is in play
+    # if data.flag_use_container_db:
+    #     engine_version = data.db_container_engine_version
+    # else:
+    #     engine_version = data.db_engine_version
 
-    connection_string = generate_connection_string(
-        engine_version, data.tower_container_version
-    )
-    return_tf_payload("0", connection_string)
+    # connection_string = generate_connection_string(
+    #     engine_version, data.tower_container_version
+    # )
+    # return_tf_payload("0", connection_string)
+    return_tf_payload("0", json.dumps(query))
 
     exit(0)
