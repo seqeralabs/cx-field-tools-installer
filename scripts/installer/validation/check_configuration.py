@@ -478,6 +478,17 @@ def verify_not_v24_1_1(data: SimpleNamespace):
         )
 
 
+def verify_alb_settings(data: SimpleNamespace):
+    """Verify that user does not have contradictory settings in case of ALB vs. no ALB."""
+    if (
+        data.flag_use_custom_docker_compose_file
+        and data.flag_make_instance_private_behind_public_alb
+    ):
+        log_error_and_exit(
+            "Use of a reverse proxy (`flag_use_custom_docker_compose_file = true`, cannot be combined with `flag_make_instance_private_behind_alb = true`. Please set only one of the options to true."
+        )
+
+
 # ------------------------------------------------------------------------------------
 # MAIN
 # ------------------------------------------------------------------------------------
@@ -525,6 +536,7 @@ if __name__ == "__main__":
     verify_route53_integration(data)
     verify_ingress_and_egress(data, data_dictionary)
     verify_flow_logs(data)
+    verify_alb_settings(data)
 
     # Verify data studio settings
     logger.info("----- Verifying Data Studio settings -----")
