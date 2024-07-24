@@ -88,7 +88,6 @@ tower:
   ephemeral:
     duration: 8h                                            # Example values: 1m, 8h, 1d. Default: 8h
 
-tower:
   content:
     max-file-size: 25MB
     # Note: Preview window is hard-coded at 10MB and cannot be changed (current as of July 15/24)
