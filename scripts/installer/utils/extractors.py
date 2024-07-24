@@ -1,8 +1,7 @@
-import json
 import ast
+import json
 
-from utils.logger import logger
-
+from installer.utils.logger import logger
 
 ## ------------------------------------------------------------------------------------
 ## Convert terraform.tfvars to JSON
@@ -41,7 +40,7 @@ def convert_tfvars_to_dictionary(file):
 
     global lines_array
 
-    with open(file, 'r') as file:
+    with open(file, "r") as file:
         lines = file.readlines()
         lines_array = [line.strip() for line in lines]
 
@@ -50,7 +49,7 @@ def convert_tfvars_to_dictionary(file):
         indices_to_pop = []
 
         for i, line in enumerate(lines_array):
-            if (line.strip() == "") or (line.startswith('#')):
+            if (line.strip() == "") or (line.startswith("#")):
                 indices_to_pop.append(i)
 
             # Once '/*' detected, flag every line for deletion until '*/' encountered.
@@ -68,12 +67,10 @@ def convert_tfvars_to_dictionary(file):
         logger.debug(f"Indices to pop: {indices_to_pop}")
         purge_indices_in_reverse(indices_to_pop)
 
-
         # 2) Purge inline comments from rationalized kv pairs
         for i, line in enumerate(lines_array):
-            line = line.rsplit('#')[0]
+            line = line.rsplit("#")[0]
             lines_array[i] = line
-
 
         # 3) Handle `default tags` edge case: extract this value specifically into a dict and pop lines.
         start_handling_tags = False
@@ -84,7 +81,7 @@ def convert_tfvars_to_dictionary(file):
                 start_handling_tags = True
                 indices_to_pop.append(i)
             elif (start_handling_tags) and ("=" in line):
-                key, value = [x.strip() for x in line.split('=', 1)]
+                key, value = [x.strip() for x in line.split("=", 1)]
                 default_tags[key] = value.strip('"')
                 indices_to_pop.append(i)
             elif (start_handling_tags) and (line == "}"):
@@ -92,8 +89,7 @@ def convert_tfvars_to_dictionary(file):
                 break
 
         purge_indices_in_reverse(indices_to_pop)
-        data['default_tags'] = default_tags
-
+        data["default_tags"] = default_tags
 
         # 4) Handle multiline arrays. Find opening line with '=' and ending in '['
         target_index = None
@@ -103,23 +99,22 @@ def convert_tfvars_to_dictionary(file):
                 target_index = i
                 continue
 
-            if (target_index is not None):
+            if target_index is not None:
                 lines_array[target_index] += line.strip()
                 indices_to_pop.append(i)
 
-            if (line.strip()[-1] == "]"):
+            if line.strip()[-1] == "]":
                 target_index = None
 
         purge_indices_in_reverse(indices_to_pop)
 
-
         # 5) Convert items to proper python types.
         for line in lines_array:
             if "=" in line:
-                key, value = [x.strip() for x in line.split('=', 1)]
-                if value.lower() == 'true':
+                key, value = [x.strip() for x in line.split("=", 1)]
+                if value.lower() == "true":
                     data[key] = True
-                elif value.lower() == 'false':
+                elif value.lower() == "false":
                     data[key] = False
                 else:
                     data[key] = ast.literal_eval(value)
@@ -131,4 +126,4 @@ def convert_tfvars_to_dictionary(file):
 
 
 def get_tfvars_as_json():
-    return convert_tfvars_to_dictionary('terraform.tfvars')
+    return convert_tfvars_to_dictionary("terraform.tfvars")

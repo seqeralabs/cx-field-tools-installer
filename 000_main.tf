@@ -51,14 +51,18 @@ data "aws_caller_identity" "current" {}
 
 
 # https://medium.com/@leslie.alldridge/terraform-external-data-source-using-custom-python-script-with-example-cea5e618d83e
+# data "external" "generate_db_connection_string" {
+#   program = ["python3", "${path.module}/.githooks/data_external/generate_db_connection_string.py"]
+#   query = {
+#     tower_container_version = var.tower_container_version
+#     flag_use_container_db = var.flag_use_container_db
+#     db_container_engine_version = var.db_container_engine_version
+#     db_engine_version = var.db_engine_version
+#   }
+# }
 data "external" "generate_db_connection_string" {
-  program = ["python3", "${path.module}/.githooks/data_external/generate_db_connection_string.py"]
-  query = {
-    tower_container_version = var.tower_container_version
-    flag_use_container_db = var.flag_use_container_db
-    db_container_engine_version = var.db_container_engine_version
-    db_engine_version = var.db_engine_version
-  }
+  program = ["python3", "${path.module}/scripts/installer/data_external/generate_db_connection_string.py"]
+  query = {}
 }
 
 
