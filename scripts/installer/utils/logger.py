@@ -1,11 +1,15 @@
 import logging
+import os
 import sys
 from logging import handlers
 from pathlib import Path
 
 # Assumes structure: .. > scripts > installer > utils > logger.py; with logs folder peer to installer
 top_dir = Path(__file__).resolve().parents[2]
-log_path = Path(f"{top_dir}/logs/logger.log")
+logging_dir = f"{top_dir}/logs"
+if not os.path.exists(logging_dir):
+    os.makedirs(logging_dir)
+log_path = Path(f"{logging_dir}/logger.log")
 
 # Channge to RotatingFilehandler to not have infinite growth.
 # file_handler = logging.FileHandler(filename=log_path)
