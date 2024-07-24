@@ -82,11 +82,9 @@ tower:
       clean-up:
         time-offset: ${tower_audit_retention_days}d
 
-  # Tower exposes a unique 1-time-calleable API endpoint at the start of a pipeline run.
-  # Nextflow calls this endpoint to retrieve sensitive values / overly-large content that cant/shouldnt be added to a Job request API call. 
-  # Linked to `micronaut.token.jwt.generator` token values (api token duration & api endpoint duration).
-  ephemeral:
-    duration: 8h                                            # Example values: 1m, 8h, 1d. Default: 8h
+  content:
+    max-file-size: 25MB
+    # Note: Preview window is hard-coded at 10MB and cannot be changed (current as of July 15/24)
 
   dataset:
     max-file-size: 10MB
@@ -102,6 +100,12 @@ tower:
   data-studio:
     allowed-workspaces: null
 %{ endif }
+
+  # Tower exposes a unique 1-time-calleable API endpoint at the start of a pipeline run.
+  # Nextflow calls this endpoint to retrieve sensitive values / overly-large content that cant/shouldnt be added to a Job request API call. 
+  # Linked to `micronaut.token.jwt.generator` token values (api token duration & api endpoint duration).
+  ephemeral:
+    duration: 8h                                            # Example values: 1m, 8h, 1d. Default: 8h
 
   navbar:
     menus:
