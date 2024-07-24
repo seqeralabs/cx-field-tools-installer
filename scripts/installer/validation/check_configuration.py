@@ -467,7 +467,14 @@ def verify_not_v24_1_0(data: SimpleNamespace):
     """Verify that user has not selected Tower v24.1.0 (due to serialization bug)."""
     if data.tower_container_version == "v24.1.0":
         log_error_and_exit(
-            "Tower version 24.1.0 has a fatal serialization flaw. Plus use v24.1.1 or higher."
+            "Tower version 24.1.0 has a fatal serialization flaw. Please use v24.1.2 or higher."
+        )
+
+def verify_not_v24_1_1(data: SimpleNamespace):
+    """Verify that user has not selected Tower v24.1.0 (due to serialization bug)."""
+    if data.tower_container_version == "v24.1.1":
+        log_error_and_exit(
+            "Tower version 24.1.1 has Micronaut framework flaw. Please use v24.1.2 or higher."
         )
 
 
@@ -493,6 +500,7 @@ if __name__ == "__main__":
 
     # Check known problem Tower versions
     verify_not_v24_1_0(data)
+    verify_not_v24_1_1(data)
 
     # Verify tfvars fields
     logger.info("----- Verifying TFVARS file -----")
