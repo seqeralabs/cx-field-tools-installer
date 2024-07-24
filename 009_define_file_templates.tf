@@ -76,6 +76,8 @@ locals {
 
       tower_audit_retention_days = var.tower_audit_retention_days,
 
+      flag_using_micronaut_4 = local.flag_using_micronaut_4 ,
+
     }
   )
 
