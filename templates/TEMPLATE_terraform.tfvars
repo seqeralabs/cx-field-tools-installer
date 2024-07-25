@@ -186,10 +186,12 @@ decisions:
 */
 
 # Only one of these can true.
+# flag_make_instance_private or flag_private_tower_without_eice = true makes ALB internal-facing
+# flag_make_instance_private_behind_public_alb = true makes ALB internet-facing
 flag_make_instance_public                       = false
-flag_make_instance_private                      = false
-flag_make_instance_private_behind_public_alb    = true
-flag_private_tower_without_eice                 = false
+flag_make_instance_private                      = false # makes ALB internal-facing
+flag_make_instance_private_behind_public_alb    = true # makes ALB internet-facing
+flag_private_tower_without_eice                 = false # makes ALB internal-facing
 
 # Manage how to talk to VM for config file transfer.
 flag_vm_copy_files_to_instance                  = true
@@ -559,7 +561,7 @@ tower_enable_platforms                  = "awsbatch-platform,k8s-platform,slurm-
 ## tower_crypto_secretkey                = "DO_NOT_UNCOMMENT_ME"
 ## tower_license                         = "DO_NOT_UNCOMMENT_ME"
 
-# Do not include 'jdbc:mysql://`. Include database if using existing external db (i.e. `/tower`). 
+# Do not include 'jdbc:mysql://`. Include database if using existing external db (i.e. `/tower`) - use full endpoint.
 tower_db_url                            = "db:3306"
 tower_db_driver                         = "org.mariadb.jdbc.Driver"
 tower_db_dialect                        = "io.seqera.util.MySQL55DialectCollateBin"
