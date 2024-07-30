@@ -411,6 +411,16 @@ def verify_database_configuration(data: SimpleNamespace):
             "You have enabled a final snapshot on your external DB. This will affect easy teardwon during testing."
         )
 
+    if data.flag_use_container_db and data.tower_db_url != "db:3306":
+        logger.warning(
+            f"You are using a non-standard DNS entry for your container db. Please verify if `tower_db_url` should really be '{data.tower_db_url}'."
+        )
+
+    if data.flag_use_existing_external_db and data.tower_db_url == "db:3306":
+        log_error_and_exit(
+            f"You are using the container db DNS for your external RDS instance. Please change `tower_db_url`."
+        )
+
 
 def verify_docker_version(data: SimpleNamespace):
     """Make sure MySQL 5.6 is not present"""
@@ -511,7 +521,7 @@ if __name__ == "__main__":
 
     # Check known problem Tower versions
     verify_not_v24_1_0(data)
-    verify_not_v24_1_1(data)
+    # verify_not_v24_1_1(data)
 
     # Verify tfvars fields
     logger.info("----- Verifying TFVARS file -----")

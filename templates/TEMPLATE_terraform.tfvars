@@ -121,6 +121,7 @@ flag_create_new_vpc                     = true
 flag_use_existing_vpc                   = false
 
 # Only one of these can be true.
+# NOTE: If using pre-existing RDS instance, ensure it accepts traffic from whole VPC on 3306.
 flag_create_external_db                 = false
 flag_use_existing_external_db           = false
 flag_use_container_db                   = true
@@ -186,6 +187,8 @@ decisions:
 */
 
 # Only one of these can true.
+# flag_make_instance_private or flag_private_tower_without_eice = true makes ALB internal-facing
+# flag_make_instance_private_behind_public_alb = true makes ALB internet-facing
 flag_make_instance_public                       = false
 flag_make_instance_private                      = false
 flag_make_instance_private_behind_public_alb    = true
@@ -559,7 +562,9 @@ tower_enable_platforms                  = "awsbatch-platform,k8s-platform,slurm-
 ## tower_crypto_secretkey                = "DO_NOT_UNCOMMENT_ME"
 ## tower_license                         = "DO_NOT_UNCOMMENT_ME"
 
-# Do not include 'jdbc:mysql://`. Include database if using existing external db (i.e. `/tower`). 
+# Do not include 'jdbc:mysql://`. 
+# If using container db: use `db:3306`
+# If using pre-existing external RDS instance, include the RDS Endpoint string only (no port or /xxx... URI modifier)
 tower_db_url                            = "db:3306"
 tower_db_driver                         = "org.mariadb.jdbc.Driver"
 tower_db_dialect                        = "io.seqera.util.MySQL55DialectCollateBin"
