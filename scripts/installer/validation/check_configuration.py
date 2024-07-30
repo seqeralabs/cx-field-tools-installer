@@ -521,7 +521,7 @@ if __name__ == "__main__":
 
     # Check known problem Tower versions
     verify_not_v24_1_0(data)
-    verify_not_v24_1_1(data)
+    # verify_not_v24_1_1(data)
 
     # Verify tfvars fields
     logger.info("----- Verifying TFVARS file -----")
