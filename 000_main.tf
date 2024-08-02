@@ -223,11 +223,9 @@ locals {
 
   alb_ingress_cidrs = (
     var.flag_make_instance_public == true || var.flag_make_instance_private_behind_public_alb == true ? var.sg_ingress_cidrs :
-    var.flag_make_instance_private == true && var.flag_create_new_vpc == true ? [var.vpc_new_cidr_range] :
-    var.flag_make_instance_private == true && var.flag_use_existing_vpc == true ? [data.aws_vpc.preexisting.cidr_block] :
-    var.flag_private_tower_without_eice == true && var.flag_use_existing_vpc == true ? [data.aws_vpc.preexisting.cidr_block] :
-    # DELETE THIS
-    var.flag_private_tower_without_eice == true && var.flag_create_new_vpc == true ? [data.aws_vpc.preexisting.cidr_block] :
+    var.flag_make_instance_private == true && var.flag_create_new_vpc == true ? concat([var.vpc_new_cidr_range], var.sg_ingress_cidrs):
+    var.flag_make_instance_private == true && var.flag_use_existing_vpc == true ? concat([data.aws_vpc.preexisting.cidr_block], var.sg_ingress_cidrs) :
+    var.flag_private_tower_without_eice == true && var.flag_use_existing_vpc == true ? concat([data.aws_vpc.preexisting.cidr_block], var.sg_ingress_cidrs) :
     ["No CIDR block found"]
   )
 

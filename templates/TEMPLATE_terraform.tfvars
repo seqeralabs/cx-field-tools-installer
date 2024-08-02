@@ -342,7 +342,9 @@ vpc_interface_endpoints_batch             = []
 ## Security Group - Transaction Sources
 ## ------------------------------------------------------------------------------------
 These settings control which IPs are allowed to call the VM / ALB. For ease of initial setup
-these are *very* loose. Consider tightening if your deployment model allows it. 
+these are *very* loose. Consider tightening if your deployment model allows it. The arrays can 
+contain multiple entries if necessary (e.g. you might wish to both your VPN CIDR and home IP to
+be able to make HTTPS calls / SSH connections).
 
 If using EICE, please note that individuals must have IAM rights to interact with the endpoint 
 prior to any SSH transaction being allowed against the VM. 
