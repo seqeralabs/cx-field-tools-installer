@@ -1,6 +1,13 @@
 # https://medium.com/marionete/using-github-actions-to-help-review-pull-requests-using-unit-tests-and-code-coverage-72bde49ed3a2
 name: Run Test Suite
 
+# NOTE: As per Aug 7/24 (Graham & Sushma), decision made to put initial focus into a fulsome LOCAL e2e test.
+# We will keep the GHA running, but limit it to basic self-contained unit tests for the the Python functions, 
+# but forgo further design for now re: acquiring AWS credentials / figuring out how to get a tfvars into the 
+# GHA runner / making sure SSM secrets stay safe in the pytest log.
+#
+# We will revisit in future once the local e2e is proven and mature.
+
 on: [push]
 
 env: 
@@ -26,17 +33,17 @@ jobs:
         #pip install -r requirements.txt
         pip install pytest     # <-- replace this with requirements.txt at some point.
 
-    - name: Set up Terraform 1.6.4
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: "1.6.4"
+    # - name: Set up Terraform 1.6.4
+    #   uses: hashicorp/setup-terraform@v3
+    #   with:
+    #     terraform_version: "1.6.4"
 
-    - name: Initialize Terrafrom
-      run: terraform init
+    # - name: Initialize Terrafrom
+    #   run: terraform init
 
     - name: Run Pytest unit tests (remote)
       # run: pytest -rA
       # run: pytest -rA scripts/tests/remote   # this works
       run: |
         make test-unit-remote
-        make test-plan-local
+        # make test-plan-local
