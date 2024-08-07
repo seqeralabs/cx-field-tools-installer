@@ -29,4 +29,6 @@ jobs:
     - name: Run Pytest unit tests (remote)
       # run: pytest -rA
       # run: pytest -rA scripts/tests/remote   # this works
-      run: make test-unit-remote
+      run: |
+        make test-unit-remote
+        make test-plan-local

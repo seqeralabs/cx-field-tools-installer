@@ -80,6 +80,27 @@ def test_example_check_kvs1(plan, key, value):
     assert variables[key]["value"] == value
 
 
+# This leaks if you test the secret directly.
+def test_secret_stack_trace(plan):
+    resources = plan["planned_values"]["root_module"]["resources"]
+
+    secret = [
+        resource
+        for resource in resources
+        if resource.get("index") == "SWELL_DB_PASSWORD"
+    ]
+
+    secret = secret[0]
+    # assert secret["values"]["value"] != ""
+    assert secret["values"]["value"] == ""
+
+
+def test_secrets_stack_trace(plan):
+    resources = plan["planned_values"]["root_module"]["resources"]
+
+    assert resources == []
+
+
 # Unnecessary complexity. Handled by cleaner function above.
 # # @pytest.mark.parametrize("plan", test_plan2)
 # @pytest.mark.parametrize("kv", kvs)
