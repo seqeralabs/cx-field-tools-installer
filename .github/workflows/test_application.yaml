@@ -8,8 +8,9 @@ env:
 
 jobs:
   run-test-suite:
-    runs-on: ubuntu-latest
-
+    # runs-on: ubuntu-latest  # Too new for Python 3.8.10  (see: https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json)
+    runs-on: ubuntu-20.04
+    
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -17,7 +18,7 @@ jobs:
     - name: Set up Python 3.8.10
       uses: actions/setup-python@v5
       with:
-        python-version: 3.8.10
+        python-version: "3.8.10"
 
     - name: Install dependencies
       run: |
