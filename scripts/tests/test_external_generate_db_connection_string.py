@@ -1,15 +1,16 @@
 from types import SimpleNamespace
 
-from installer.utils.extractors import get_tfvars_as_json
-
 from scripts.installer.data_external.generate_db_connection_string import (
     MYSQL8_CONNSTRING,
     V24PLUS_CONNSTRING,
     generate_connection_string,
 )
 
-data_dictionary = get_tfvars_as_json()
-data = SimpleNamespace(**data_dictionary)
+# Not required - with testing we are faking things out. Testing in remote repo won't have access to
+# a tfvars file.
+# from installer.utils.extractors import get_tfvars_as_json
+# data_dictionary = get_tfvars_as_json()
+# data = SimpleNamespace(**data_dictionary)
 
 BLANK_CONNSTRING = ""
 
