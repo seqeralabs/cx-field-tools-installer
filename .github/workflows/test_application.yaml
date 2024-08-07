@@ -26,6 +26,14 @@ jobs:
         #pip install -r requirements.txt
         pip install pytest     # <-- replace this with requirements.txt at some point.
 
+    - name: Set up Terraform 1.6.4
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: "1.6.4"
+
+    - name: Initialize Terrafrom
+      run: terraform init
+
     - name: Run Pytest unit tests (remote)
       # run: pytest -rA
       # run: pytest -rA scripts/tests/remote   # this works
