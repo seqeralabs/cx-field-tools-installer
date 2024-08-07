@@ -1,0 +1,29 @@
+# https://medium.com/marionete/using-github-actions-to-help-review-pull-requests-using-unit-tests-and-code-coverage-72bde49ed3a2
+name: Run Test Suite
+
+on: [push]
+
+env: 
+  MIN_COVERAGE_REQUIRED: 75
+
+jobs:
+  run-test-suite:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.8.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.8.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        #pip install -r requirements.txt
+        pip install pytest
+
+    - name: Run Pytest tests
+      run: pytest -rA
