@@ -19,3 +19,21 @@ apply: verify
 destroy: 
 	@python3 .githooks/check_destroy.py
 	@terraform destroy
+
+
+# test-sensitive:
+# 	@generate sensitive file
+# 	@run scripts
+# 	@destroy file
+
+test-unit-local:
+	pytest -rA scripts/tests/local
+
+test-unit-remote:
+	pytest -rA scripts/tests/remote
+
+test-unit-all: test-unit-local test-unit-remote
+	@echo pass > /dev/null
+
+test-all:
+	pytest -rA

@@ -8,9 +8,7 @@ def test_input():
 
     # Get current POSIX path and calculate POSIX location of target script.
     current_filepath = os.path.dirname(os.path.realpath(__file__))
-    target_script = (
-        f"{current_filepath}/../installer/data_external/example_get_payload_from_tf.py"
-    )
+    target_script = f"{current_filepath}/../../installer/data_external/example_get_payload_from_tf.py"
 
     INPUT = '{"a": "b"}'
 

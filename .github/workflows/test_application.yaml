@@ -26,5 +26,6 @@ jobs:
         #pip install -r requirements.txt
         pip install pytest
 
-    - name: Run Pytest tests
-      run: pytest -rA
+    - name: Run Pytest unit tests (remote)
+      # run: pytest -rA
+      run: pytest -rA scripts/tests/remote
