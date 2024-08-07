@@ -2,7 +2,8 @@ import configparser
 
 import pytest
 
-from tests.data_util.data_resolver import inject_test_data
+# from tests.data_util.data_resolver import inject_test_data
+from data_util.data_resolver import inject_test_data
 
 # https://betterprogramming.pub/terraform-resource-testing-101-c9da424faaf3
 

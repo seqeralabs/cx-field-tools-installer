@@ -35,5 +35,27 @@ test-unit-remote:
 test-unit-all: test-unit-local test-unit-remote
 	@echo pass > /dev/null
 
+test-plan-generateplan:
+	@if [ ! -f tests/resources/tf_plan/myplan.plan ]; then\
+	  terraform plan -out=tests/resources/tf_plan/myplan.plan;\
+	fi
+	
+	@if [ ! -f tests/resources/tf_plan/plan.json ]; then\
+	  terraform show -json tests/resources/tf_plan/myplan.plan > tests/resources/tf_plan/plan.json;\
+	fi
+
+# BE CAREFUL WHEN TESTING THIS -- START WITH GARBAGE SECRETS TO MAKE SURE NOTHING LEAKS PRIOR TO USING 
+# REAL VALUES.
+test-plan-local: test-plan-generateplan
+	# @terraform plan -out=tests/resources/tf_plan/myplan.plan
+	# @terraform show -json tests/resources/tf_plan/myplan.plan > tests/resources/tf_plan/plan.json
+	@pytest -rA tests/pytesttest/
+	# @rm tests/resources/tf_plan/myplan.plan || true
+	# @rm tests/resources/tf_plan/plan.json || true
+
+test-plan-purge: test-plan-local
+	@rm tests/resources/tf_plan/myplan.plan || true
+	@rm tests/resources/tf_plan/plan.json || true
+
 test-all:
 	pytest -rA
