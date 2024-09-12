@@ -404,7 +404,8 @@ flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""
 
 # For full list of images Seqera makes available, please see: https://public.cr.seqera.io/
-# TO DO: Add link from Product when provided.
+# NOTE: Current as of v24.1.x, only images from publicly-available repositories can be used.
+#       Private repositories will be supported in a future iteration.
 data_studio_options = {
       vscode1_83_0 = {
             qualifier = "VSCODE-1-83-0"
