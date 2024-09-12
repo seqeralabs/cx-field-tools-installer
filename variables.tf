@@ -200,9 +200,17 @@ variable "data_studio_container_version" { type = string }
 variable "flag_limit_data_studio_to_some_workspaces" { type = bool }
 variable "data_studio_eligible_workspaces" { type = string }
 
-variable "data_studio_template_container_version_jupyter" { type = string }
-variable "data_studio_template_container_version_rstudio" { type = string }
-variable "data_studio_template_container_version_vscode" { type = string }
+# variable "data_studio_template_container_version_jupyter" { type = string }
+# variable "data_studio_template_container_version_rstudio" { type = string }
+# variable "data_studio_template_container_version_vscode" { type = string }
+
+variable "data_studio_options" {
+  type = map(object({
+    qualifier = string
+    icon = string
+    container = string
+  }))
+}
 
 
 ## ------------------------------------------------------------------------------------

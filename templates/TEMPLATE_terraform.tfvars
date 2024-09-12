@@ -403,9 +403,35 @@ data_studio_container_version             = "0.7.0"
 flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""
 
-data_studio_template_container_version_jupyter = "0.7.0"
-data_studio_template_container_version_rstudio = "0.7.0"
-data_studio_template_container_version_vscode = "0.7.0"
+# For full list of images Seqera makes available, please see: https://public.cr.seqera.io/
+# TO DO: Add link from Product when provided.
+data_studio_options = {
+      vscode1_83_0 = {
+            qualifier = "VSCODE-1-83-0"
+            icon = "vscode"
+            container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.7"
+      },
+      jupyter4_1_5 = {
+            qualifier = "JUPYTER-4-1-5"
+            icon = "jupyter"
+            container = "public.cr.seqera.io/platform/data-studio-jupyter:4.1.5-0.7"
+      },
+      rstudio4_0_0 = {
+            qualifier = "RSTUDIO-4-0-0"
+            icon = "rstudio"
+            container = "public.cr.seqera.io/platform/data-studio-rstudio:4.0.0-0.7"
+      },
+      rstudio4_4_1 = {
+            qualifier = "RSTUDIO-4-4-1"
+            icon = "rstudio"
+            container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.7.1"
+      },
+      xpra6_0_r0 = {
+            qualifier = "XPRA-6-0-R0"
+            icon = "xpra"
+            container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.7"
+      },
+}
 
 
 
