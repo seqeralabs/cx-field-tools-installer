@@ -477,14 +477,39 @@ def verify_not_v24_1_0(data: SimpleNamespace):
     """Verify that user has not selected Tower v24.1.0 (due to serialization bug)."""
     if data.tower_container_version == "v24.1.0":
         log_error_and_exit(
-            "Tower version 24.1.0 has a fatal serialization flaw. Please use v24.1.2 or higher."
+            "Tower version 24.1.0 has a fatal serialization flaw. Please use v24.1.3 or higher."
         )
 
+
 def verify_not_v24_1_1(data: SimpleNamespace):
-    """Verify that user has not selected Tower v24.1.0 (due to serialization bug)."""
+    """Verify that user has not selected Tower v24.1.1 (memory leak)."""
     if data.tower_container_version == "v24.1.1":
         log_error_and_exit(
-            "Tower version 24.1.1 has Micronaut framework flaw. Please use v24.1.2 or higher."
+            "Tower version 24.1.1 has Micronaut framework flaw. Please use v24.1.3 or higher."
+        )
+
+
+def verify_not_v24_1_2(data: SimpleNamespace):
+    """Verify that user has not selected Tower v24.1.2 (Redis TLS issue)."""
+    if data.tower_container_version == "v24.1.2":
+        log_error_and_exit(
+            "Tower version 24.1.2 has a TLS flaw. Please use v24.1.3 or higher."
+        )
+
+
+def verify_if_v24_1_3(data: SimpleNamespace):
+    """Warn that Tower v24.1.3 cannot connect to Redis securely."""
+    if data.tower_container_version == "v24.1.3":
+        logger.warning(
+            "Tower version 24.1.3 cannot connect to Redis via TLS (i.e. `rediss://`). Please use v24.1.4 or higher if necessary."
+        )
+
+
+def verify_connect_version_tls(data: SimpleNamespace):
+    """Warn that Tower v24.1.4 cannot connect to Redis securely."""
+    if data.data_studio_container_version == "0.7.0":
+        logger.warning(
+            "Connect v0.7.0 cannot connect to Redis via TLS (i.e. `rediss://`). Please use v0.7.3 or higher if necessary."
         )
 
 
@@ -520,8 +545,12 @@ if __name__ == "__main__":
         )
 
     # Check known problem Tower versions
+    logger.info("----- Verifying Seqera Platform Enterprise versions -----")
     verify_not_v24_1_0(data)
-    # verify_not_v24_1_1(data)
+    verify_not_v24_1_1(data)
+    verify_not_v24_1_2(data)
+    verify_if_v24_1_3(data)
+    verify_connect_version_tls(data)
 
     # Verify tfvars fields
     logger.info("----- Verifying TFVARS file -----")
