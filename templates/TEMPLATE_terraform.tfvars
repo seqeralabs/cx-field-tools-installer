@@ -404,23 +404,25 @@ flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""
 
 # For full list of images Seqera makes available, please see: https://public.cr.seqera.io/
-# NOTE: Current as of v24.1.x, only images from publicly-available repositories can be used.
-#       Private repositories will be supported in a future iteration.
+# NOTE!! 
+#  1. Current as of v24.1.x, only images from publicly-available repositories can be used.
+#     Private repositories will be supported in a future iteration.
+#  2. `qualifier` values MUST use hyphens (`-`), NOT underscores (`_`).
 data_studio_options = {
       vscode1_83_0 = {
             qualifier = "VSCODE-1-83-0"
             icon = "vscode"
-            container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.7"
+            container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.7.1"
       },
       jupyter4_1_5 = {
             qualifier = "JUPYTER-4-1-5"
             icon = "jupyter"
-            container = "public.cr.seqera.io/platform/data-studio-jupyter:4.1.5-0.7"
+            container = "public.cr.seqera.io/platform/data-studio-jupyter:4.1.5-0.7.1"
       },
       rstudio4_0_0 = {
             qualifier = "RSTUDIO-4-0-0"
             icon = "rstudio"
-            container = "public.cr.seqera.io/platform/data-studio-rstudio:4.0.0-0.7"
+            container = "public.cr.seqera.io/platform/data-studio-rstudio:4.0.0-0.7.1"
       },
       rstudio4_4_1 = {
             qualifier = "RSTUDIO-4-4-1"
@@ -430,7 +432,7 @@ data_studio_options = {
       xpra6_0_r0 = {
             qualifier = "XPRA-6-0-R0"
             icon = "xpra"
-            container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.7"
+            container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.7.1"
       },
 }
 
