@@ -29,6 +29,7 @@ from installer.utils.logger import logger
 lines_array = []
 data = {}
 default_tags = {}
+data_studio_options = {}
 
 
 def purge_indices_in_reverse(indices_to_pop):
@@ -90,6 +91,37 @@ def convert_tfvars_to_dictionary(file):
 
         purge_indices_in_reverse(indices_to_pop)
         data["default_tags"] = default_tags
+
+        # Handle data_studio_options.This feels a little crazy. Find something better (Sept 11/24)
+        start_handling_ds_options = False
+        extract_ds_object = False
+        current_key = None
+        indices_to_pop = []
+
+        for i, line in enumerate(lines_array):
+            if "data_studio_options" in line:
+                start_handling_ds_options = True
+                indices_to_pop.append(i)
+            elif (start_handling_ds_options) and ("= {" in line):
+                extract_ds_object = True
+                key = [x.strip() for x in line.split("=", 1)][0]
+                data_studio_options[key] = {}
+                indices_to_pop.append(i)
+                current_key = key
+            # Each value of a DS object
+            elif (extract_ds_object) and ("=" in line):
+                key, value = [x.strip() for x in line.split("=", 1)]
+                data_studio_options[current_key][key] = value.strip('"')
+                indices_to_pop.append(i)
+            elif (extract_ds_object) and ("}," in line):
+                extract_ds_object = False
+                current_key = None
+            elif (start_handling_ds_options) and (line == "}"):
+                indices_to_pop.append(i)
+                break
+
+        purge_indices_in_reverse(indices_to_pop)
+        data["data_studio_options"] = data_studio_options
 
         # 4) Handle multiline arrays. Find opening line with '=' and ending in '['
         target_index = None

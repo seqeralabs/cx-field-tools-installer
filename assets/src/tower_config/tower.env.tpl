@@ -118,12 +118,11 @@ TOWER_DATA_STUDIO_CONNECT_URL=${tower_connect_server_url}
 TOWER_OIDC_PEM_PATH=/data-studios-rsa.pem
 TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN="ipsemlorem"
 
-TOWER_DATA_STUDIO_TEMPLATES_JUPYTER_REPOSITORY: 'cr.seqera.io/public/data-studio-jupyter:${data_studio_template_container_version_jupyter}'
-TOWER_DATA_STUDIO_TEMPLATES_JUPYTER_ICON: 'jupyter'
-TOWER_DATA_STUDIO_TEMPLATES_RSTUDIO_REPOSITORY: 'cr.seqera.io/public/data-studio-rstudio:${data_studio_template_container_version_rstudio}'
-TOWER_DATA_STUDIO_TEMPLATES_RSTUDIO_ICON: 'rstudio'
-TOWER_DATA_STUDIO_TEMPLATES_VSCODE_REPOSITORY: 'cr.seqera.io/public/data-studio-vscode:${data_studio_template_container_version_vscode}'
-TOWER_DATA_STUDIO_TEMPLATES_VSCODE_ICON: 'vscode'
+%{ for ds in data_studio_options ~}
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_ICON: "${ds.icon}"
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_REPOSITORY: "${ds.container}"
+%{ endfor ~}
+
 %{ endif }
 
 
