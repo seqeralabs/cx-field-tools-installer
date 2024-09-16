@@ -16,7 +16,7 @@ module "tower_eice_ingress_sg" {
   description = "Allowed ingress CIDRS EC2 Instance Connect endpoint."
 
   vpc_id              = local.vpc_id
-  ingress_cidr_blocks = var.sg_ingress_cidrs
+  ingress_cidr_blocks = var.sg_ssh_cidrs
   ingress_rules       = ["ssh-tcp"]
 }
 
@@ -44,7 +44,7 @@ module "tower_ec2_ssh_sg" {
   description = "Allowed SSH ingress to EC2 instance (EICE only)."
 
   vpc_id              = local.vpc_id
-  ingress_cidr_blocks = var.sg_ingress_cidrs
+  ingress_cidr_blocks = var.sg_ssh_cidrs
   ingress_rules       = ["ssh-tcp"]
 }
 
@@ -121,6 +121,7 @@ module "tower_alb_sg" {
   ingress_rules       = ["https-443-tcp", "http-80-tcp"]
   egress_rules        = var.sg_egress_tower_alb
 }
+
 
 module "tower_ec2_alb_connect_sg" {
   source  = "terraform-aws-modules/security-group/aws"
