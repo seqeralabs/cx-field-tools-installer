@@ -223,21 +223,11 @@ locals {
 
   alb_ingress_cidrs = (
     var.flag_make_instance_public == true || var.flag_make_instance_private_behind_public_alb == true ? var.sg_ingress_cidrs :
-    var.flag_make_instance_private == true && var.flag_create_new_vpc == true ? concat([var.vpc_new_cidr_range], var.sg_ingress_cidrs):
-    var.flag_make_instance_private == true && var.flag_use_existing_vpc == true ? concat([data.aws_vpc.preexisting.cidr_block], var.sg_ingress_cidrs) :
-    var.flag_private_tower_without_eice == true && var.flag_use_existing_vpc == true ? concat([data.aws_vpc.preexisting.cidr_block], var.sg_ingress_cidrs) :
+    var.flag_make_instance_private == true && var.flag_create_new_vpc == true ? distinct(concat([var.vpc_new_cidr_range], var.sg_ingress_cidrs)):
+    var.flag_make_instance_private == true && var.flag_use_existing_vpc == true ? distinct(concat([data.aws_vpc.preexisting.cidr_block], var.sg_ingress_cidrs)) :
+    var.flag_private_tower_without_eice == true && var.flag_use_existing_vpc == true ? distinct(concat([data.aws_vpc.preexisting.cidr_block], var.sg_ingress_cidrs)) :
     ["No CIDR block found"]
   )
-
-  # tower_ec2_direct_connect_sg_7070 = [ for cidr_block in var.sg_ingress_cidrs :
-  #   { 
-  #     from_port   = 7070
-  #     to_port     = 7070
-  #     protocol    = "tcp"
-  #     description = "Connect-Server"
-  #     cidr_blocks = cidr_block
-  #   }
-  # ]
 
   tower_ec2_direct_connect_sg_9090 = [ for cidr_block in var.sg_ingress_cidrs :
     { 
@@ -249,24 +239,10 @@ locals {
     }
   ]
 
-  # tower_ec2_direct_connect_sg_final = concat(
-  #   local.tower_ec2_direct_connect_sg_7070, local.tower_ec2_direct_connect_sg_9090
-  # )
   tower_ec2_direct_connect_sg_final = local.tower_ec2_direct_connect_sg_9090
 
   # Using module directly in for loop hangs. Trying with local.
   tower_alb_sg_security_group_id = module.tower_alb_sg.security_group_id
-
-  # tower_ec2_alb_connect_sg_7070 = [ for cidr_block in var.sg_ingress_cidrs :
-  #   { 
-  #     from_port   = 7070
-  #     to_port     = 7070
-  #     protocol    = "tcp"
-  #     description = "Connect-Server"
-  #     # source_security_group_id = module.tower_alb_sg.security_group_id
-  #     source_security_group_id = local.tower_alb_sg_security_group_id
-  #   }
-  # ]
 
   tower_ec2_alb_connect_sg_9090 = [ for cidr_block in var.sg_ingress_cidrs :
     { 
@@ -279,9 +255,6 @@ locals {
     }
   ]
 
-  # tower_ec2_alb_connect_sg_final = concat(
-  #   local.tower_ec2_alb_connect_sg_7070, local.tower_ec2_alb_connect_sg_9090
-  # )
   tower_ec2_alb_connect_sg_final = local.tower_ec2_alb_connect_sg_9090
 
 
