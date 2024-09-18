@@ -505,6 +505,24 @@ def verify_if_v24_1_3(data: SimpleNamespace):
         )
 
 
+def verify_if_v24_1_4(data: SimpleNamespace):
+    """Warn that Tower v24.1.4 has email problem."""
+    if data.tower_container_version == "v24.1.4":
+        oidc_flags = [
+            data.flag_oidc_use_generic,
+            data.flag_oidc_use_google,
+            data.flag_oidc_use_github,
+        ]
+        if any(oidc_flags):
+            logger.warning(
+                "Tower version 24.1.4 cannot send emails. You will only be able to use your OIDC option."
+            )
+        else:
+            log_error_and_exit(
+                "Tower version 24.1.4 cannot send emails. Please use v24.1.5 or higher."
+            )
+
+
 def verify_connect_version_tls(data: SimpleNamespace):
     """Warn that Tower v24.1.4 cannot connect to Redis securely."""
     if data.data_studio_container_version == "0.7.0":
@@ -550,6 +568,7 @@ if __name__ == "__main__":
     verify_not_v24_1_1(data)
     verify_not_v24_1_2(data)
     verify_if_v24_1_3(data)
+    verify_if_v24_1_4(data)
     verify_connect_version_tls(data)
 
     # Verify tfvars fields
