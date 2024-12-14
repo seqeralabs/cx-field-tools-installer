@@ -115,6 +115,7 @@ resource "aws_instance" "ec2" {
   root_block_device {
     encrypted  = var.flag_encrypt_ebs
     kms_key_id = var.flag_use_kms_key == true ? var.ec2_ebs_kms_key : ""
+    volume_size = var.ec2_root_volume_size
   }
 
   # This is here to stop the EC2 from being updated in place due to perception user data has changed

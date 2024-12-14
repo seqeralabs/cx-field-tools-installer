@@ -541,6 +541,9 @@ flag_use_existing_smtp                  = false
 ## ------------------------------------------------------------------------------------
 We generally advise implementing EBS encryption at an AWS Account level, but provide options
 for a target encryption of the Seqera Platform VM only.
+
+Some Amazon Linux 2023 AMIs (e.g. minimal) changed default boot size in late 2024. Starting
+disk size can now be explicitly specified (in GiB).
 */
 
 ec2_host_instance_type                  = "c5.2xlarge"
@@ -548,6 +551,7 @@ ec2_host_instance_type                  = "c5.2xlarge"
 flag_encrypt_ebs                        = true
 flag_use_kms_key                        = true
 ec2_ebs_kms_key                         = "REPLACE_ME_IF_NEEDED"
+ec2_root_volume_size                    = 8
 
 ec2_require_imds_token                  = true
 

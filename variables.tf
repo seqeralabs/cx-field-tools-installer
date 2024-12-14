@@ -252,6 +252,7 @@ variable "ec2_host_instance_type" { type = string }
 variable "flag_encrypt_ebs" { type = bool }
 variable "flag_use_kms_key" { type = bool }
 variable "ec2_ebs_kms_key" { type = string }
+variable "ec2_root_volume_size" { type = number }
 
 variable "ec2_require_imds_token"  { type = bool }
 
