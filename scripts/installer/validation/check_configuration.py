@@ -541,7 +541,15 @@ def verify_alb_settings(data: SimpleNamespace):
             "Use of a reverse proxy (`flag_use_custom_docker_compose_file = true`, cannot be combined with `flag_make_instance_private_behind_alb = true`. Please set only one of the options to true."
         )
 
+def verify_redis_version(data: SimpleNamespace):
+    """Warn that versions of Seqera Platform >= 24.2 will default to Redis v7.0 container image."""
 
+    if (
+        data.tower_container_version >= "v24.2.0"
+    ):
+        logger.warning(
+            "Seqera Platform version >= 24.2.0 will use the required Redis v7.0 (previously Redis v6.0)."
+        )
 # ------------------------------------------------------------------------------------
 # MAIN
 # ------------------------------------------------------------------------------------
@@ -570,6 +578,7 @@ if __name__ == "__main__":
     verify_if_v24_1_3(data)
     verify_if_v24_1_4(data)
     verify_connect_version_tls(data)
+    verify_redis_version(data)
 
     # Verify tfvars fields
     logger.info("----- Verifying TFVARS file -----")

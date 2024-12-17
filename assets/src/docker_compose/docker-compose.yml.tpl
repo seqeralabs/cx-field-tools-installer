@@ -29,7 +29,12 @@ services:
 
 %{ if flag_use_container_redis == true ~}
   redis:
-    image: cr.seqera.io/public/redis:6.0
+    image: 
+%{ if updated_redis_version ~}
+      cr.seqera.io/public/redis:7
+%{ else ~}
+      cr.seqera.io/public/redis:6.0
+%{ endif ~}
     networks:
       - backend
     expose:
