@@ -8,7 +8,7 @@ data "aws_ami" "amazon_linux_2023" {
   # https://docs.aws.amazon.com/linux/al2023/ug/ec2.html#launch-from-ec2-console
   filter {
     name   = "name"
-    values = ["al2023-ami-*"]
+    values = ["al2023-ami-minimal-*"]
     # values = ["al2023-ami-ecs-hvm-2023.0.20230509-kernel-6.1-x86_64"]
     # values = ["al2023-ami-ecs-hvm-2023*"]
   }
