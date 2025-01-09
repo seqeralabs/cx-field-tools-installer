@@ -127,6 +127,8 @@ flag_use_existing_external_db           = false
 flag_use_container_db                   = true
 
 # Only one of these can be true.
+# NOTE: Redis versions and ports are hard-coded in their respective files (docker-compose.yaml &
+#  003-database.tf)
 flag_create_external_redis              = false
 flag_use_container_redis                = true
 

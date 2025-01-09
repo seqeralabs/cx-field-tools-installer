@@ -541,15 +541,34 @@ def verify_alb_settings(data: SimpleNamespace):
             "Use of a reverse proxy (`flag_use_custom_docker_compose_file = true`, cannot be combined with `flag_make_instance_private_behind_alb = true`. Please set only one of the options to true."
         )
 
+
 def verify_redis_version(data: SimpleNamespace):
     """Warn that versions of Seqera Platform >= 24.2 will default to Redis v7.0 container image."""
 
-    if (
-        data.tower_container_version >= "v24.2.0"
-    ):
+    if data.tower_container_version >= "v24.2.0":
+
+        if data.flag_use_container_redis:
+
+            logger.warning(
+                "Seqera Platform version >= 24.2.0 uses a Redis v7.0 container (previously Redis v6.0)."
+            )
+
+        if data.flag_create_external_redis:
+            # TO DO
+            # As of Jan 9/25, the external redis are hardcoded into the `003-database.tf` file.
+            # This uses a redis 7.0 as baseline and thus is compliant to the needs of 24.2.2.
+            # In future this may need to change if Tower demands require a version > Redis 7.0 OR we
+            # choose to make the external redis values configurable.
+            logger.warning(
+                "The external Elasticache instance is hardcoded to use Redis 7.0."
+            )
+
+    else:
         logger.warning(
-            "Seqera Platform version >= 24.2.0 will use the required Redis v7.0 (previously Redis v6.0)."
+            "When you upgrade to Seqera Platform >= v24.2, a Redis version >= 6.2 will be required."
         )
+
+
 # ------------------------------------------------------------------------------------
 # MAIN
 # ------------------------------------------------------------------------------------
