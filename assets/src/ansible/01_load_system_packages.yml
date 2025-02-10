@@ -24,7 +24,7 @@
   - name: Install docker.
   # https://docs.docker.com/engine/install/ubuntu/
     ansible.builtin.dnf:
-      name: docker-24.0.5
+      name: docker-25.0.6
       state: present
 
   - name: Ensure docker is running
