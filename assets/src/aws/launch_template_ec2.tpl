@@ -35,7 +35,7 @@ write_files:
       fi
 
       python3 get-pip.py 
-      python3 -m pip install ansible
+      python3 -m pip install ansible-core
       echo "$(ansible --version)"
       rm get-pip.py
 
