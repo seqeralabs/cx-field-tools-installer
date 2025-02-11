@@ -24,7 +24,7 @@
   - name: Install docker.
   # https://docs.docker.com/engine/install/ubuntu/
     ansible.builtin.dnf:
-      name: docker-24.0.5
+      name: docker-25.0.6
       state: present
 
   - name: Ensure docker is running
@@ -86,7 +86,7 @@
   - name: Install Java Corretto 17
     # tw relies on Java Corretto
     ansible.builtin.yum:
-      name: java-17-amazon-corretto-devel-1:17.0.9+8-1.amzn2023.1 
+      name: java-17-amazon-corretto-devel-1:17.0.14+7-1.amzn2023.1
       state: present
 
 
