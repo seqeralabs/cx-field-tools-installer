@@ -59,10 +59,11 @@
                 "ssm:GetParametersByPath"
             ],
             "Resource": [
-                "arn:aws:ssm:${aws_region}:${aws_account}:parameter${secrets_bootstrap_tower}*",
-                "arn:aws:ssm:${aws_region}:${aws_account}:parameter${secrets_bootstrap_seqerakit}*",
-                "arn:aws:ssm:${aws_region}:${aws_account}:parameter/seqera*",
-                "arn:aws:ssm:${aws_region}:${aws_account}:parameter/config*"
+                "arn:aws:ssm:${aws_region}:${aws_account}:parameter/config/${app_name}",
+                "arn:aws:ssm:${aws_region}:${aws_account}:parameter/config/${app_name}*",
+                "arn:aws:ssm:${aws_region}:${aws_account}:parameter/seqera/${app_name}/*",
+                "arn:aws:ssm:${aws_region}:${aws_account}:parameter/config/application",
+                "arn:aws:ssm:${aws_region}:${aws_account}:parameter/config/application_*"
             ]
         },
         {
@@ -73,7 +74,7 @@
                 "kms:GenerateDataKey"
             ],
             "Effect": "Allow",
-			"Resource": [ "*" ]
+			"Resource": [ "${ssm_key_arn}" ]
         }
     ]
 }
