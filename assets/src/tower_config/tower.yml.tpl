@@ -125,10 +125,9 @@ tower:
   # Current as of v24.3, default size is 20480. This can result in errors for some particularly
   # verbose pipelines: `{"message":"ParamsText field too big - Max allowed size 20480 characters"}`
   #
-  # Corresponding database field can accommodate max ~4GB payload, but we recommend this value
-  # not exceed 11MB (to align with HTTP request size, controlled by `max-requests-size` -- a 
-  # non-configurable value). Seqera Engineering further recommends staying below 100KB for 
-  # performance efficiency.
+  # Seqera Engineering recommends staying below 100KB for performance efficiency. If a larger
+  # payload is required, do not exceed 10MB (limited by HTTP request size; `max-requests-size` -- a 
+  # non-configurable value).
   launch:
     params:
       maxSize: 50000
