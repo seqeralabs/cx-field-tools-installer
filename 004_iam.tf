@@ -13,12 +13,18 @@ locals {
       secrets_bootstrap_seqerakit = var.secrets_bootstrap_seqerakit,
       tag_key                     = local.global_prefix,
       aws_region                  = var.aws_region,
-      aws_account                 = var.aws_account
+      aws_account                 = var.aws_account,
+      app_name                    = var.app_name,
+      ssm_key_arn                 = data.aws_kms_alias.default_ssm.arn
     }
   )
 
   instance_role_policy_ses = templatefile("assets/src/aws/iam_role_policy_ses.json.tpl", {})
   lt_content_raw           = templatefile("assets/src/aws/launch_template_ec2.tpl", {})
+}
+
+data "aws_kms_alias" "default_ssm" {
+  name = "alias/aws/ssm"
 }
 
 
