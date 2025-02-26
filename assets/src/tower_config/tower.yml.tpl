@@ -129,10 +129,9 @@ tower:
   # not exceed 11MB (to align with HTTP request size, controlled by `max-requests-size` -- a 
   # non-configurable value). Seqera Engineering further recommends staying below 100KB for 
   # performance efficiency.
-  tower:
-    launch:
-      params:
-        maxSize: 50000
+  launch:
+    params:
+      maxSize: 50000
 
   navbar:
     menus:
