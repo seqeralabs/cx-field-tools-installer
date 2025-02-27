@@ -17,15 +17,15 @@ from installer.utils.logger import logger
 from installer.utils.subnets import get_all_subnets
 
 sys.tracebacklimit = 0
-# ------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # NOTES:
-# ------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 #  1. See comments in utils/helpers.py for reasons why we created our own hacky tfvars parser.
 
 
-# ------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # HELPER FUNCTIONS
-# ------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 def log_error_and_exit(message: str):
     logger.error(message)
     exit(1)
@@ -59,9 +59,9 @@ def ensure_dependency_populated(flag: bool, child: str, qualifier: str) -> None:
         logger.debug(f"[SKIP]: {qualifier}")
 
 
-# ------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # GROUPING FUNCTIONS
-# ------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 def verify_only_one_true_set(data: SimpleNamespace):
     """Check that related config blocks only have 1 true and * false."""
     only_one_true_set([data.flag_create_new_vpc, data.flag_use_existing_vpc])
@@ -577,12 +577,13 @@ def verify_redis_version(data: SimpleNamespace):
         )
 
 
-# ------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # MAIN
-# ------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    logger.info("Beginning tfvars configuration check.")
+    print("\n")
+    logger.info("Beginning tfvars configuration check.".upper())
 
     # Generate dictionary from tfvars then convert to SimpleNamespace for cleaner dot-notation access.
     # Kept the two objects different for convenience when .keys() method is required.
@@ -598,7 +599,10 @@ if __name__ == "__main__":
         )
 
     # Check known problem Tower versions
-    logger.info("----- Verifying Seqera Platform Enterprise versions -----")
+    print("\n")
+    # logger.info("Verifying Seqera Platform Enterprise versions")
+    logger.info("Verifying Seqera Platform Enterprise versions")
+    logger.info("-" * 50)
     verify_not_v24_1_0(data)
     verify_not_v24_1_1(data)
     verify_not_v24_1_2(data)
@@ -608,14 +612,18 @@ if __name__ == "__main__":
     verify_redis_version(data)
 
     # Verify tfvars fields
-    logger.info("----- Verifying TFVARS file -----")
+    print("\n")
+    logger.info("Verifying TFVARS file")
+    logger.info("-" * 50)
     verify_only_one_true_set(data)
     verify_sensitive_keys(data, data_dictionary)
     verify_tfvars_config_dependencies(data)
     verify_docker_version(data)
 
     # Verify Tower application configurations
-    logger.info("----- Verifying Tower configurations -----")
+    print("\n")
+    logger.info("Verifying Tower configurations")
+    logger.info("-" * 50)
     verify_tower_root_users(data)
     verify_tower_self_signed_certs(data)
     verify_tower_server_url(data)
@@ -624,7 +632,9 @@ if __name__ == "__main__":
     verify_email_login_disablement(data)
 
     # Verify AWS integrations
-    logger.info("----- Verifying AWS Integrations -----")
+    print("\n")
+    logger.info("Verifying AWS Integrations")
+    logger.info("-" * 50)
     verify_subnet_privacy(data)
     verify_ses_integration(data)
     verify_route53_integration(data)
@@ -633,11 +643,15 @@ if __name__ == "__main__":
     verify_alb_settings(data)
 
     # Verify data studio settings
-    logger.info("----- Verifying Data Studio settings -----")
+    print("\n")
+    logger.info("Verifying Data Studio settings")
+    logger.info("-" * 50)
     verify_data_studio(data)
 
     # Verify database settings (last since this is the most critical component and most likely to be seen)
-    logger.info("----- Verifying Database settings -----")
+    print("\n")
+    logger.info("Verifying Database settings")
+    logger.info("-" * 50)
     verify_ami_update_behaviour(data)
     verify_database_configuration(data)
 
