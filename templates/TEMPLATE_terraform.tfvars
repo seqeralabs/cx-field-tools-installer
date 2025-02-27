@@ -402,7 +402,7 @@ NOTE: If upgrading from a pre-24.1 installation, it is likely the existing certi
 provided to the `alb_certificate_arn` entry needs to be replaced with a new cert with more entries. 
 */
 flag_enable_data_studio                   = true
-data_studio_container_version             = "0.7.1"
+data_studio_container_version             = "0.7.8"
 
 flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""
