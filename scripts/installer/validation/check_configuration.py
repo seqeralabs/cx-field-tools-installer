@@ -454,6 +454,14 @@ def verify_data_studio(data: SimpleNamespace):
                 "`tower_container_version` must bv24.1.0 or higher to set `flag_enable_data_studio` to true."
             )
 
+        if (
+            data.tower_container_version < "v24.3.0"
+            and data.data_studio_container_version >= "0.7.8"
+        ):
+            log_error_and_exit(
+                "`data_studio_container_version` cannot be 0.7.8+ when `tower_container_version` is less than v24.3.0."
+            )
+
         if data.flag_limit_data_studio_to_some_workspaces:
 
             # https://www.geeksforgeeks.org/python-check-whether-string-contains-only-numbers-or-not/
