@@ -124,23 +124,25 @@ In addition to the general design decisions noted above, there are a few decisio
     1. The Subdomain is one layer below your Tower URL.
     2. The Subdomain is called `connect`. (_example:_ `https://connnect.mytower.com`).
 
-10. **Solution is explicit with Data Studios versioning and containers.**
+10. **Solution is explicit with Data Studios versioning.**
     The solution explicitly pins to the major and minor versions for the connect-client (e.g., `1.83.0-0.7.1` and `1.83.0-0.7.6`). This allows for easier tracing and troubleshooting in the event of any errors. Anyone that wishes to use a sliding patch can switch to using the connect-client v0.7 ("0.7") to retrieve latest patch.
 
-    The solution explicity lists a single entry for each client (rstudio, vscode, xpra, jupyter) that pertain to a specific container version. However, multiple container versions of the same client can be used with the following example. The example demonstrates adding 2 entries for different versions of rstudio. NOTE: the `qualifier` values are required to be unique.:
+    The solution explicity lists a single entry for each client (rstudio, vscode, xpra, jupyter) that pertain to a specific container version. However, multiple container versions of the same client can be used with the example below 
     
+    The example demonstrates adding 2 entries for different versions of rstudio. **NOTE**: the `qualifier` values are required to be unique and MUST use hyphens (`-`), NOT underscores (`_`).:
+
     ```
-        data_studio_options = {
-            rstudio4_0_0-0_7_6 = {
-                qualifier = "RSTUDIO-4-0-0-0-7-6"
-                icon = "rstudio"
-                container = "public.cr.seqera.io/platform/data-studio-rstudio:4.0.0-0.7.6"
-            },
-            rstudio4_4_1-0_7_6 = {
-                qualifier = "RSTUDIO-4-4-1-0-7-6"
-                icon = "rstudio"
-                container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.7.6"
-            }
+    data_studio_options = {
+        rstudio4_0_0-0_7_6 = {
+            qualifier = "RSTUDIO-4-0-0-0-7-6"
+            icon = "rstudio"
+            container = "public.cr.seqera.io/platform/data-studio-rstudio:4.0.0-0.7.6"
+        },
+        rstudio4_4_1-0_7_6 = {
+            qualifier = "RSTUDIO-4-4-1-0-7-6"
+            icon = "rstudio"
+            container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.7.6"
         }
+    }
     ```
 
