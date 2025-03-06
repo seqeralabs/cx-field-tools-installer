@@ -123,6 +123,7 @@ locals {
       # tower_redis_url           = local.tower_redis_url,
       tower_redis_url           = local.tower_connect_redis_url,
       tower_connect_server_url  = local.tower_connect_server_url, 
+      studio_uses_distroless = local.studio_uses_distroless
     }
   )
 }
