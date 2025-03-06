@@ -303,6 +303,15 @@ locals {
   oidc_github = var.flag_oidc_use_github == true ? ",auth-github" : ""
 
 
+  # Studios
+  # ---------------------------------------------------------------------------------------
+  # Note: This is an ugly way to check but aligns to how I already check for migrate_db.
+  # TODO: Refactor in v2.
+  studio_uses_distroless = (
+    tonumber(length(regexall("^0.7.[8-9]", var.data_studio_container_version ))) >= 1 || 
+      tonumber(length(regexall("1.[0-9]", var.data_studio_container_version ))) >= 1 ? true : false
+  )
+
   # Miscellaneous
   # ---------------------------------------------------------------------------------------
   # These are needed to handle templatefile rendering to Bash echoing to file craziness.
@@ -313,8 +322,8 @@ locals {
   # ---------------------------------------------------------------------------------------
   # Migrate-db only available for 23.4.1+ or higher. Check to ensure we don't include for 23.3.x or below. 
   flag_new_enough_for_migrate_db = (
-    tonumber(length(regexall("^v23.4.[1-9]", var.tower_container_version))) >= 1 || 
-      tonumber(length(regexall("^v2[4-9]", var.tower_container_version))) >= 1 ? true : false
+    tonumber(length(regexall("^v23.4.[1-9][*]", var.tower_container_version))) >= 1 || 
+      tonumber(length(regexall("^v2[4-9][*]", var.tower_container_version))) >= 1 ? true : false
   )
 
   # Account for changes in tower.yml due to Micronaut 4
