@@ -308,7 +308,8 @@ locals {
   # Note: This is an ugly way to check but aligns to how I already check for migrate_db.
   # TODO: Refactor in v2.
   studio_uses_distroless = (
-    tonumber(length(regexall("^0.7.[8-9]", var.data_studio_container_version ))) >= 1 ? true : false
+    tonumber(length(regexall("^0.7.[8-9]", var.data_studio_container_version))) >= 1 ||
+    tonumber(length(regexall("^0.8.[0-9]", var.data_studio_container_version))) >= 1 ? true : false
   )
 
   # Miscellaneous

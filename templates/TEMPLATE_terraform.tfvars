@@ -402,7 +402,7 @@ NOTE: If upgrading from a pre-24.1 installation, it is likely the existing certi
 provided to the `alb_certificate_arn` entry needs to be replaced with a new cert with more entries. 
 */
 flag_enable_data_studio                   = true
-data_studio_container_version             = "0.7.8"
+data_studio_container_version             = "0.8.0"
 
 flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""
@@ -413,11 +413,11 @@ data_studio_eligible_workspaces           = ""
 #     Private repositories will be supported in a future iteration.
 #  2. `qualifier` values MUST use hyphens (`-`), NOT underscores (`_`).
 #  3. Versioning Strategy (See Design Decisions for more details.)
-#     - Major and minor versions are pinned explicitly (e.g., `1.83.0-0.7.1` and `1.83.0-0.7.6`).  
+#     - Major and minor versions are pinned explicitly (e.g., `1.83.0-0.7.1` and `1.83.0-0.8.0`).  
 #     - Preference for client v0.7 with a sliding patch version can be achieved by omitting the patch (e.g., use "0.7" instead of "0.7.6") to always get the latest patch update. 
 
 data_studio_options = {
-      # DEPRECATION NOTICE: Future versions of the installer will no longer include entries for connect-client v0.7.1. Please update entries accordingly ahead of the a future version where the commented content will be removed. The most up-to-date version of connect-client is v0.7.6.
+      # DEPRECATION NOTICE: Future versions of the installer will no longer include entries for connect-client v0.7.1. Please update entries accordingly ahead of the a future version where the commented content will be removed. The most up-to-date version of connect-client is v0.8.0.
 
       # vscode1_83_0 = {
       #       qualifier = "VSCODE-1-83-0"
@@ -448,29 +448,29 @@ data_studio_options = {
             qualifier = "VSCODE-1-83-0-0-7-6"
             icon = "vscode"
             tool = "vscode"
-            # status = "recommended"
-            container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.7.6"
+            status = "recommended"
+            container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.8.0"
       },
       jupyter4_2_5-0_7_6 = {
             qualifier = "JUPYTER-4-2-5-0-7-6"
             icon = "jupyter"
             tool = "jupyter"
-            # status = "recommended"
-            container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.7.6"
+            status = "recommended"
+            container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.0"
       },
       rstudio4_4_1-0_7_6 = {
             qualifier = "RSTUDIO-4-4-1-0-7-6"
             icon = "rstudio"
             tool = "rstudio"
-            # status = "recommended"
-            container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.7.6"
+            status = "recommended"
+            container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.8.0"
       },
       xpra6_0_r0-0_7_6 = {
             qualifier = "XPRA-6-0-R0-0-7-6"
             icon = "xpra"
             tool = "xpra"
-            # status = "recommended"
-            container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.7.6"
+            status = "recommended"
+            container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.8.0"
       }
 }
 
