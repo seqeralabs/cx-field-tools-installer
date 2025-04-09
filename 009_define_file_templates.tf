@@ -164,9 +164,6 @@ locals {
   )
 }
 
-# ||
-#   #   tonumber(length(regexall("^0.8.[0-9]", var.data_studio_container_version))) >= 1 ? true : false
-
 ## ------------------------------------------------------------------------------------
 ## Seqerakit - Everything But Compute Environments
 ## ------------------------------------------------------------------------------------
