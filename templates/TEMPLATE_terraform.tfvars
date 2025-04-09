@@ -414,7 +414,7 @@ data_studio_eligible_workspaces           = ""
 #  2. `qualifier` values MUST use hyphens (`-`), NOT underscores (`_`).
 #  3. Versioning Strategy (See Design Decisions for more details.)
 #     - Major and minor versions are pinned explicitly (e.g., `1.83.0-0.7.1` and `1.83.0-0.8.0`).  
-#     - Preference for client v0.7 with a sliding patch version can be achieved by omitting the patch (e.g., use "0.7" instead of "0.7.6") to always get the latest patch update. 
+#     - Preference for client v0.7 with a sliding patch version can be achieved by omitting the patch (e.g., use "0.7" instead of "0.7.1") to always get the latest patch update. 
 
 data_studio_options = {
       # DEPRECATION NOTICE: Future versions of the installer will no longer include entries for connect-client v0.7.1. Please update entries accordingly ahead of the a future version where the commented content will be removed. The most up-to-date version of connect-client is v0.8.0.
