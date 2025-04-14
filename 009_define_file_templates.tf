@@ -123,6 +123,7 @@ locals {
       # tower_redis_url           = local.tower_redis_url,
       tower_redis_url           = local.tower_connect_redis_url,
       tower_connect_server_url  = local.tower_connect_server_url, 
+      studio_uses_distroless = local.studio_uses_distroless
     }
   )
 }
@@ -157,12 +158,11 @@ locals {
 
       flag_enable_data_studio = var.flag_enable_data_studio,
       data_studio_container_version = var.data_studio_container_version,
-      updated_redis_version = tonumber(length(regexall("^v24.2.[0-9]", var.tower_container_version))) >= 1 ? true : false
+      updated_redis_version = tonumber(length(regexall("^v24.2.[0-9]", var.tower_container_version))) >= 1 || tonumber(length(regexall("^v25.1.[0-9]", var.tower_container_version))) >= 1 ? true : false,
+      studio_uses_distroless = local.studio_uses_distroless
     }
   )
 }
-
-
 
 ## ------------------------------------------------------------------------------------
 ## Seqerakit - Everything But Compute Environments

@@ -204,6 +204,8 @@ variable "data_studio_options" {
   type = map(object({
     qualifier = string
     icon = string
+    tool = optional(string)
+    status = optional(string)
     container = string
   }))
 }

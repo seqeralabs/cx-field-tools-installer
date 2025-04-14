@@ -194,6 +194,9 @@ services:
   connect-proxy:
     image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-proxy:${data_studio_container_version}
     platform: linux/amd64
+%{ if studio_uses_distroless == true ~}
+    user: 65532:65532
+%{ endif ~}
     env_file:
       - data-studios.env
     networks:
@@ -210,6 +213,13 @@ services:
   connect-server:
     image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-server:${data_studio_container_version}
     platform: linux/amd64
+%{ if studio_uses_distroless == true ~}
+    user: 65532:65532
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+%{ endif ~}
     env_file:
       - data-studios.env
     networks:

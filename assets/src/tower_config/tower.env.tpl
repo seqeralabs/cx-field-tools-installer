@@ -121,6 +121,8 @@ TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN="ipsemlorem"
 %{ for ds in data_studio_options ~}
 TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_ICON: "${ds.icon}"
 TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_REPOSITORY: "${ds.container}"
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_TOOL: "${ds.tool != null ? ds.tool : ""}"
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_STATUS: "${ds.status != null ? ds.status : ""}"
 %{ endfor ~}
 
 %{ endif }

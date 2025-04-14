@@ -13,6 +13,10 @@ CONNECT_REDIS_DB=1
 
 CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN="ipsemlorem"
 
+%{ if studio_uses_distroless == true ~}
+CONNECT_LOG_LEVEL=debug
+%{ else}
 CONNECT_SERVER_LOG_LEVEL=debug
+%{ endif ~}
 
 
