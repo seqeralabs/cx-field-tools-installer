@@ -321,6 +321,7 @@ variable "docker_cidr_range" { type = string }
 ## seqerakit
 ## ------------------------------------------------------------------------------------
 variable "flag_run_seqerakit" { type = bool }
+variable "flag_seqerakit_dispose_on_destroy" { type = bool } 
 
 variable "seqerakit_org_name" { type = string }
 variable "seqerakit_org_fullname" { type = string }
