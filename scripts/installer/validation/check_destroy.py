@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, sys
+import os, sys, subprocess
 #sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 sys.dont_write_bytecode = True
 # This suppresses the stacktrace emitted when assertion errors are thrown. Users will still see the
@@ -11,12 +11,17 @@ sys.dont_write_bytecode = True
 sys.tracebacklimit = 0
 
 import re
+from pathlib import Path
 from types import SimpleNamespace
 from typing import List
 
-from utils.extractors import get_tfvars_as_json #convert_tfvars_to_dictionary
-from utils.logger import logger
-from utils.subnets import get_all_subnets
+base_import_dir = Path(__file__).resolve().parents[2]
+if base_import_dir not in sys.path:
+    sys.path.append(str(base_import_dir))
+
+from installer.utils.extractors import get_tfvars_as_json
+from installer.utils.logger import logger
+from installer.utils.subnets import get_all_subnets
 
 
 ## ------------------------------------------------------------------------------------
@@ -27,7 +32,34 @@ from utils.subnets import get_all_subnets
 ## ------------------------------------------------------------------------------------
 ## HELPER FUNCTIONS
 ## ------------------------------------------------------------------------------------
+def run_seqerakit_destroy_resources(data: SimpleNamespace):
+    # Build the remote command
+    if data.flag_create_hosts_file_entry:
+        cli_args = "--insecure -t 'http://localhost:8000/api'"
+    elif data.flag_do_not_use_https:
+        cli_args = "--insecure"
+    else:
+        cli_args = "-Djavax.net.ssl.trustStore=/usr/lib/jvm/java-17-amazon-corretto/lib/security/cacerts"
 
+    main_command  = f"seqerakit --delete target/seqerakit/setup.yml --cli={cli_args}"
+    prep_commands = "source ~/.bashrc && python3 target/python/get_access_token.py"
+    ssh_cmd: list[str] = [
+        "ssh",
+        "-o", "StrictHostKeyChecking=no",
+    ]
+    remote_commands = f"{prep_commands} && {main_command}"
+    ssh_cmd += [f"{data.app_name}", remote_commands]
+
+    result = subprocess.run(ssh_cmd, capture_output=True, text=True)
+
+    if result.returncode != 0:
+        logger.error(result.stderr.strip())
+        raise RuntimeError(
+            f"{main_command} failed on {data.app_name} (exit {result.returncode}): {result}"
+        )
+
+    logger.info(result.stdout.strip())
+    logger.info(f"[seqerakit] Destroy completed successfully on {data.app_name}.")
 
 ## ------------------------------------------------------------------------------------
 ## MAIN
@@ -42,7 +74,6 @@ if __name__ == '__main__':
     data_dictionary = get_tfvars_as_json()
     data = SimpleNamespace(**data_dictionary)
 
-
     # Check minimum container version
     if data.flag_create_external_db:
 
@@ -53,3 +84,7 @@ if __name__ == '__main__':
         
         if data.skip_final_snapshot == False:
             raise AssertionError(" You will create a final snapshot of your RDS instance. Please disable snapshotting before running `terraform destroy`.")
+   
+    # Check seqerakit dispose flag
+    if data.flag_seqerakit_dispose_on_destroy:
+        run_seqerakit_destroy_resources(data)
