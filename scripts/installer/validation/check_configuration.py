@@ -223,6 +223,14 @@ def verify_email_login_disablement(data: SimpleNamespace):
                 "Seqerakit step cannot execute if email login is not active."
             )
 
+def verify_workflow_cleanup_enabled(data: SimpleNamespace):
+    """Check workflow cleanup enablement scenarios."""
+    if data.tower_workflow_cleanup_enabled:
+
+        if data.tower_container_version < "v25.1.0":
+            log_error_and_exit(
+                "Workflow cleanup can only be enabled on Platform v25.1.0+"
+            )
 
 def verify_subnet_privacy(data: SimpleNamespace):
     """Check that the assigned subnets in tfvars match the intended privacy of the Tower instance."""
@@ -630,6 +638,7 @@ if __name__ == "__main__":
     verify_tower_groundswell(data)
     verify_docker_daemon_loggin(data)
     verify_email_login_disablement(data)
+    verify_workflow_cleanup_enabled(data)
 
     # Verify AWS integrations
     print("\n")
