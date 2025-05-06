@@ -200,7 +200,7 @@ def verify_docker_daemon_loggin(data: SimpleNamespace):
 
 
 def verify_email_login_disablement(data: SimpleNamespace):
-    """Check workflow cleanup enablement scenarios."""
+    """Check email login disablement scenarios."""
     if data.flag_disable_email_login:
 
         if data.tower_container_version < "v23.4.5":
@@ -224,7 +224,7 @@ def verify_email_login_disablement(data: SimpleNamespace):
             )
 
 def verify_workflow_cleanup_enabled(data: SimpleNamespace):
-    """Check email login disablement scenarios."""
+    """Check workflow cleanup enablement scenarios."""
     if data.tower_workflow_cleanup_enabled:
 
         if data.tower_container_version < "v25.1.0":
