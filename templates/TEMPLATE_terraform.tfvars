@@ -210,6 +210,7 @@ flag_use_custom_docker_compose_file             = false
 */
 # Enable Tower to connect to the Wave service hosted by Seqera
 flag_use_wave                      = false
+flag_use_wave_lite                 = false
 wave_server_url                    = "https://wave.seqera.io"
 
 /*

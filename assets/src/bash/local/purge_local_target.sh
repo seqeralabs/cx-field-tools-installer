@@ -19,6 +19,7 @@ cp -R $SRC/docker_compose $TARGET
 # Create necessary folders which weren't copied over (because templated data will be put here)
 mkdir -p $TARGET/bash/remote
 mkdir -p $TARGET/tower_config
+mkdir -p $TARGET/wave_lite_config
 mkdir -p $TARGET/groundswell_config
 mkdir -p $TARGET/docker_logging
 

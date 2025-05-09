@@ -23,6 +23,10 @@ resource "null_resource" "regenerate_config_files_from_data" {
       echo '${local.tower_yml}' > ${path.module}/assets/target/tower_config/tower.yml
       echo '${local.tower_sql}' > ${path.module}/assets/target/tower_config/tower.sql
 
+      # Generate Wave config files
+      echo '${local.wave_lite_yml}' > ${path.module}/assets/target/wave_lite_config/wave-lite.yml
+      echo '${local.wave_lite_sql}' > ${path.module}/assets/target/wave_lite_config/wave-lite.sql
+
       # Generate Groundswell config files
       echo '${local.groundswell_env}' > ${path.module}/assets/target/groundswell_config/groundswell.env
       echo '${local.groundswell_sql}' > ${path.module}/assets/target/groundswell_config/groundswell.sql

@@ -577,6 +577,19 @@ def verify_redis_version(data: SimpleNamespace):
         )
 
 
+def verify_wave(data: SimpleNamespace):
+    if (data.flag_use_wave == True) and (data.flag_use_wave_lite == True):
+        log_error_and_exit(
+            "`flag_use_wave` and `flag_use_wave_lite` cannot both be set to true."
+        )
+
+    if (data.flag_use_wave_lite == True):
+        if data.wave_server_url in ['https://wave.seqera.io']:
+            log_error_and_exit(
+            "`Your Wave Lite URL is pointing to the Seqera-hosted Wave service. Please modify `wave_server_url`."
+        )
+
+
 # -------------------------------------------------------------------------------
 # MAIN
 # -------------------------------------------------------------------------------
@@ -654,6 +667,12 @@ if __name__ == "__main__":
     logger.info("-" * 50)
     verify_ami_update_behaviour(data)
     verify_database_configuration(data)
+
+    # Verify Wave settings
+    print("\n")
+    logger.info("Verifying Wave settings")
+    logger.info("-" * 50)
+    verify_wave(data)
 
     logger.info("Finished tfvars configuration check.")
 

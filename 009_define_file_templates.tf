@@ -31,7 +31,7 @@ locals {
 
       flag_do_not_use_https = var.flag_do_not_use_https,
 
-      flag_use_wave           = var.flag_use_wave,
+      flag_use_wave           = local.wave_enabled,
       wave_server_url         = var.wave_server_url,
       flag_enable_groundswell = var.flag_enable_groundswell,
 
@@ -129,6 +129,28 @@ locals {
 }
 
 
+## ------------------------------------------------------------------------------------
+## Wave Lite config files
+## ------------------------------------------------------------------------------------
+locals {
+  wave_lite_yml = templatefile("assets/src/wave_lite_config/wave-lite.yml.tpl",
+    {
+      tower_server_url              = local.tower_server_url,
+      wave_server_url               = var.wave_server_url,
+      wave_lite_db_url              = local.wave_lite_db_url,
+      wave_lite_redis_url           = local.wave_lite_redis_url,
+      tower_contact_email           = var.tower_contact_email,
+    }
+  )
+
+    wave_lite_sql = templatefile("assets/src/wave_lite_config/wave-lite.sql.tpl",
+    {
+        # TODO Add USERNAME & PASSWORD SECRET
+    }
+  )
+}
+       
+
 
 ## ------------------------------------------------------------------------------------
 ## Update Docker-Compose with Docker version
@@ -159,7 +181,11 @@ locals {
       flag_enable_data_studio = var.flag_enable_data_studio,
       data_studio_container_version = var.data_studio_container_version,
       updated_redis_version = tonumber(length(regexall("^v24.2.[0-9]", var.tower_container_version))) >= 1 || tonumber(length(regexall("^v25.1.[0-9]", var.tower_container_version))) >= 1 ? true : false,
-      studio_uses_distroless = local.studio_uses_distroless
+      studio_uses_distroless = local.studio_uses_distroless,
+
+      flag_use_wave_lite = var.flag_use_wave_lite,
+      wave_lite_redis_container = local.wave_lite_redis_container,
+      wave_lite_db_container = local.wave_lite_db_container,
     }
   )
 }

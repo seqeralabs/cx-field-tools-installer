@@ -248,6 +248,67 @@ services:
     restart: always
 %{ endif ~}
 
+%{ if flag_use_wave_lite == true ~}
+  wave-lite:
+    image: hrma017/app:1.20.0-B0   # swap with real image later.
+    ports:
+      - 9099:9090
+    volumes:
+      # - $PWD:/work
+      - $HOME/target/wave_lite_config/wave-lite.yml:/work/config.yml
+    #env_file:
+    #  - wave-lite.env
+    environment:
+      - MICRONAUT_ENVIRONMENTS=lite,rate-limit,redis,prometheus,postgres
+      - WAVE_JVM_OPTS=-Djdk.traceVirtualThreadInThreadDump=full -XX:InitialRAMPercentage=65 -XX:MaxRAMPercentage=65 -XX:+HeapDumpOnOutOfMemoryError -XX:MaxDirectMemorySize=200m -Dio.netty.maxDirectMemory=0 -Djdk.httpclient.keepalive.timeout=10 -Djdk.tracePinnedThreads=short
+      - WAVE_BUILD_WORKSPACE=/work/build-workspace   # Remove later (not now)
+    networks:
+      - frontend
+      - backend
+    working_dir: /work   # keep this
+    # Mount yml in at /work/config.yml  -- yes
+    # No mail
+    restart: always
+%{ endif ~}
+
+%{ if wave_lite_db_container == true ~}
+  wave-db:
+    image: postgres:latest
+    platform: linux/amd64
+    expose:
+      - 5432:5432
+    volumes:
+      - $HOME/.wave/db/postgresql:/var/lib/postgresql/data
+      - $HOME/target/wave_lite_config/wave-lite.sql:/docker-entrypoint-initdb.d/01-init.sql
+    # env_file:
+    #   - wave-lite.env
+    environment:
+      - POSTGRES_USER=postgresMaster
+      - POSTGRES_PASSWORD=postgresMaster
+      - POSTGRES_DB=wave
+    networks:
+      - backend
+    restart: always
+%{ endif ~}
+
+%{ if wave_lite_redis_container == true ~}
+  wave-redis:
+    image: cr.seqera.io/public/redis:7.0.10
+    platform: linux/amd64
+    # expose:
+    #   - 6379
+    expose:
+      - 6380:6379
+    command: --appendonly yes
+    restart: always
+    volumes:
+      - $HOME/.wave/db/wave-lite-redis:/data
+    networks:
+      - backend
+%{ endif ~}
+
+
+
 networks:
   frontend: {}
   backend: {}

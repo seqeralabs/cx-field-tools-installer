@@ -312,6 +312,18 @@ locals {
     tonumber(length(regexall("^0.8.[0-9]", var.data_studio_container_version))) >= 1 ? true : false
   )
 
+
+  # Wave
+  # ---------------------------------------------------------------------------------------
+  wave_enabled = (var.flag_use_wave != false && var.flag_use_wave_lite != false ? true : false)
+  wave_lite_redis_container = var.flag_create_external_redis == true ? false : true
+  wave_lite_db_container = var.flag_create_external_db == true ? false : true
+
+  # Modify this to handle container paths and TF paths.
+  wave_lite_redis_url = "localhost:6380"
+  wave_lite_db_url = "localhost:5432"
+
+
   # Miscellaneous
   # ---------------------------------------------------------------------------------------
   # These are needed to handle templatefile rendering to Bash echoing to file craziness.
