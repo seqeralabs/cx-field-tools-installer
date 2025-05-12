@@ -26,6 +26,9 @@ resource "null_resource" "regenerate_config_files_from_data" {
       # Generate Wave config files
       echo '${local.wave_lite_yml}' > ${path.module}/assets/target/wave_lite_config/wave-lite.yml
       echo '${local.wave_lite_sql}' > ${path.module}/assets/target/wave_lite_config/wave-lite.sql
+      echo '${local.wave_lite_sql2}' > ${path.module}/assets/target/wave_lite_config/wave-lite2.sql
+      # THIS IS A TOTAL HACK. Postgres demands singlequotes in .sql but .tpl refuses them.
+      sed -i "s/SINGLEQUOTEREPLACEME/'/g" ${path.module}/assets/target/wave_lite_config/wave-lite.sql
 
       # Generate Groundswell config files
       echo '${local.groundswell_env}' > ${path.module}/assets/target/groundswell_config/groundswell.env

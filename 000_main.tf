@@ -320,8 +320,9 @@ locals {
   wave_lite_db_container = var.flag_create_external_db == true ? false : true
 
   # Modify this to handle container paths and TF paths.
-  wave_lite_redis_url = "localhost:6380"
-  wave_lite_db_url = "localhost:5432"
+  wave_lite_db_url = "wave-db:5432"
+  wave_lite_redis_url = "wave-redis:6380"
+  
 
 
   # Miscellaneous

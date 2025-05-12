@@ -10,7 +10,7 @@ wave:
   db:
     uri : "jdbc:postgresql://${wave_lite_db_url}/wave"
     user : "postgres"
-    password : "postgres"
+    password : "mypass"
 redis:
   uri: "redis://${wave_lite_redis_url}"    # rediss://
   # password: "abc" #AUTH equivalent  # figure out what to do with container

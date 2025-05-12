@@ -145,6 +145,12 @@ locals {
 
     wave_lite_sql = templatefile("assets/src/wave_lite_config/wave-lite.sql.tpl",
     {
+        username = "postgres" # "$${{'}}postgres$${{'}}" # TODO Add USERNAME & PASSWORD SECRET
+    }
+  )
+
+    wave_lite_sql2 = templatefile("assets/src/wave_lite_config/wave-lite2.sql.tpl",
+    {
         # TODO Add USERNAME & PASSWORD SECRET
     }
   )
