@@ -88,3 +88,16 @@ resource "aws_route53_record" "ec2_connect" {
   ttl     = "5"
   records = [local.dns_instance_ip]
 }
+
+
+resource "aws_route53_record" "ec2_wave" {
+  count = local.dns_create_ec2_record == true ? 1 : 0
+
+  zone_id = local.dns_zone_id
+  # name    = local.tower_connect_dns
+  name    = local.tower_wave_dns
+  type    = "A"
+
+  ttl     = "5"
+  records = [local.dns_instance_ip]
+}

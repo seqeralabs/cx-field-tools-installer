@@ -80,6 +80,19 @@ module "alb" {
         }
       }
     },
+    {
+      name_prefix      = "p9099"
+      backend_protocol = "HTTP"
+      backend_port     = 9099
+      target_type      = "instance"
+
+      targets = {
+        my_target = {
+          target_id = aws_instance.ec2.id
+          port      = 9099
+        }
+      }
+    },
   ]
 
   https_listener_rules = [

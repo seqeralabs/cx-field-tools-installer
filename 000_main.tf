@@ -184,6 +184,7 @@ locals {
   # This is meant to handle host-matching in the ALB (e.g.):
   # studio.TOWER_DOMAIN, 123.TOWER_DOMAIN, 456.TOWER_DOMAIN
   tower_connect_wildcard_dns = "*.${var.tower_server_url}"
+  tower_wave_dns = "wave.${var.tower_server_url}"
 
   tower_connect_server_url = (
     var.flag_create_load_balancer == false && var.flag_do_not_use_https == true ?
