@@ -17,15 +17,20 @@ data "aws_ssm_parameter" "groundswell_secrets" {
 }
 
 
+data "aws_ssm_parameter" "wave_lite_secrets" {
+  name = var.secrets_bootstrap_wave_lite
+}
+
+
 # ------------------------------------------------
 # Generate individual SSM Parameters
 # ------------------------------------------------
 resource "aws_ssm_parameter" "client_supplied_secrets_tower" {
-  for_each = local.tower_secret_keys
-  name     = nonsensitive(local.tower_secrets[each.key]["ssm_key"])
-  value    = local.tower_secrets[each.key]["value"]
-  type     = "SecureString"
-  overwrite           = var.flag_overwrite_ssm_keys
+  for_each      = local.tower_secret_keys
+  name          = nonsensitive(local.tower_secrets[each.key]["ssm_key"])
+  value         = local.tower_secrets[each.key]["value"]
+  type          = "SecureString"
+  overwrite     = var.flag_overwrite_ssm_keys
 }
 
 
@@ -33,10 +38,10 @@ resource "aws_ssm_parameter" "client_supplied_secrets_seqerakit" {
   # for_each            = local.seqerakit_secret_keys
 
   for_each = var.flag_run_seqerakit == true ? local.seqerakit_secret_keys : []
-  name     = nonsensitive(local.seqerakit_secrets[each.key]["ssm_key"])
-  value    = local.seqerakit_secrets[each.key]["value"]
-  type     = "SecureString"
-  overwrite           = var.flag_overwrite_ssm_keys
+  name          = nonsensitive(local.seqerakit_secrets[each.key]["ssm_key"])
+  value         = local.seqerakit_secrets[each.key]["value"]
+  type          = "SecureString"
+  overwrite     = var.flag_overwrite_ssm_keys
 }
 
 
@@ -45,9 +50,19 @@ resource "aws_ssm_parameter" "client_supplied_secrets_groundswell" {
   # count               = var.flag_enable_groundswell == true ? 1 : 0
   # for_each            = local.groundswell_secret_keys
 
-  for_each = var.flag_enable_groundswell == true ? local.groundswell_secret_keys : []
-  name     = nonsensitive(local.groundswell_secrets[each.key]["ssm_key"])
-  value    = local.groundswell_secrets[each.key]["value"]
-  type     = "SecureString"
-  overwrite           = var.flag_overwrite_ssm_keys
+  for_each      = var.flag_enable_groundswell == true ? local.groundswell_secret_keys : []
+  name          = nonsensitive(local.groundswell_secrets[each.key]["ssm_key"])
+  value         = local.groundswell_secrets[each.key]["value"]
+  type          = "SecureString"
+  overwrite     = var.flag_overwrite_ssm_keys
+}
+
+
+resource "aws_ssm_parameter" "client_supplied_secrets_wave_lite" {
+
+  for_each      = var.flag_use_wave_lite == true ? local.wave_lite_secret_keys : []
+  name          = nonsensitive(local.wave_lite_secrets[each.key]["ssm_key"])
+  value         = local.wave_lite_secrets[each.key]["value"]
+  type          = "SecureString"
+  overwrite     = var.flag_overwrite_ssm_keys
 }

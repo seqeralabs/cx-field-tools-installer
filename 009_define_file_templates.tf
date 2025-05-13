@@ -137,6 +137,13 @@ locals {
     {
       tower_server_url              = local.tower_server_url,
       wave_server_url               = var.wave_server_url,
+
+      wave_lite_db_master_user      = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_USER"]["value"]
+      wave_lite_db_master_password  = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_PASSWORD"]["value"]
+      wave_lite_db_limited_user     = local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_USER"]["value"]
+      wave_lite_db_limited_password = local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]
+      wave_lite_redis_auth          = local.wave_lite_secrets["WAVE_LITE_REDIS_AUTH"]["value"]
+
       wave_lite_db_url              = local.wave_lite_db_url,
       wave_lite_redis_url           = local.wave_lite_redis_url,
       tower_contact_email           = var.tower_contact_email,
@@ -146,12 +153,17 @@ locals {
     wave_lite_sql = templatefile("assets/src/wave_lite_config/wave-lite.sql.tpl",
     {
         username = "postgres" # "$${{'}}postgres$${{'}}" # TODO Add USERNAME & PASSWORD SECRET
+        
+        wave_lite_db_limited_user     = local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_USER"]["value"]
+        wave_lite_db_limited_password = local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]
+
     }
   )
 
     wave_lite_sql2 = templatefile("assets/src/wave_lite_config/wave-lite2.sql.tpl",
     {
-        # TODO Add USERNAME & PASSWORD SECRET
+        wave_lite_db_limited_user     = local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_USER"]["value"]
+
     }
   )
 }
@@ -192,6 +204,9 @@ locals {
       flag_use_wave_lite = var.flag_use_wave_lite,
       wave_lite_redis_container = local.wave_lite_redis_container,
       wave_lite_db_container = local.wave_lite_db_container,
+
+      wave_lite_db_master_user      = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_USER"]["value"]
+      wave_lite_db_master_password  = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_PASSWORD"]["value"]
     }
   )
 }

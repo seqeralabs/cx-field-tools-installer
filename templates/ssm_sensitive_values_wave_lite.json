@@ -1,0 +1,22 @@
+{
+    "WAVE_LITE_DB_MASTER_USER": { 
+		"ssm_key": 	"/seqera/tower-dev/wave-lite/db-master-user",
+		"value": 	"CHANGE_ME_SEE_SEQERA_DOCS"
+	},
+    "WAVE_LITE_DB_MASTER_PASSWORD": { 
+		"ssm_key": 	"/seqera/tower-dev/wave-lite/db-master-password",
+		"value": 	"CHANGE_ME_SEE_SEQERA_DOCS"
+	},
+    "WAVE_LITE_DB_LIMITED_USER": { 
+	    "ssm_key": 	"/config/tower-dev/wave-lite/db-limited-user",
+		"value": 	"CHANGE_ME_SEE_SEQERA_DOCS"
+	},
+	"WAVE_LITE_DB_LIMITED_PASSWORD": { 
+		"ssm_key": 	"/config/tower-dev/wave-lite/db-limited-password",
+		"value": 	"CHANGE_ME_SEE_SEQERA_DOCS"
+	},
+    "WAVE_LITE_REDIS_AUTH": {
+        "ssm_key": 	"/config/tower-dev/wave-lite/redis-auth",
+		"value": 	"CHANGE_ME_SEE_SEQERA_DOCS"
+    }
+}

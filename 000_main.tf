@@ -142,6 +142,9 @@ locals {
   groundswell_secrets     = jsondecode(data.aws_ssm_parameter.groundswell_secrets.value)
   groundswell_secret_keys = nonsensitive(toset([for k, v in local.groundswell_secrets : k]))
 
+  wave_lite_secrets     = jsondecode(data.aws_ssm_parameter.wave_lite_secrets.value)
+  wave_lite_secret_keys = nonsensitive(toset([for k, v in local.wave_lite_secrets : k]))
+
 
   # SSH
   # ---------------------------------------------------------------------------------------

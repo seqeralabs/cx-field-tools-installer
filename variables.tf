@@ -18,6 +18,11 @@ variable "secrets_bootstrap_groundswell" {
   description = "SSM SecureString for Groundswell secrets."
 }
 
+variable "secrets_bootstrap_wave_lite" {
+  type        = string
+  description = "SSM SecureString for Wave Lite secrets."
+}
+
 variable "aws_account" { type = string }
 variable "aws_region" { type = string }
 variable "aws_profile" { type = string }

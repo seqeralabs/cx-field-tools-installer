@@ -284,8 +284,8 @@ services:
     # env_file:
     #   - wave-lite.env
     environment:
-      - POSTGRES_USER=postgresMaster
-      - POSTGRES_PASSWORD=postgresMaster
+      - POSTGRES_USER=${wave_lite_db_master_user}  # postgresMaster
+      - POSTGRES_PASSWORD=${wave_lite_db_master_password}  # postgresMaster
       - POSTGRES_DB=wave
     networks:
       - backend
