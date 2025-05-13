@@ -109,9 +109,10 @@ module "alb" {
         host_headers = [var.tower_server_url]
       }]
     },
+    # May 12/2025 had to lower priority so wave.<TOWER_SERVER_URL> could match first.
     {
       https_listener_index = 0
-      priority = 5001
+      priority = 5010
 
       actions = [{
         type = "forward"
@@ -121,6 +122,22 @@ module "alb" {
       conditions = [{
         # host_headers = [local.tower_connect_dns]
         host_headers = [local.tower_connect_wildcard_dns]
+      }]
+    },
+
+    # Forward wave.<TOWER_SERVER_URL> to Wave Lite container
+    {
+      https_listener_index = 0
+      priority = 5001
+
+      actions = [{
+        type = "forward"
+        target_group_index =2
+      }]
+
+      conditions = [{
+        # host_headers = [local.tower_connect_dns]
+        host_headers = [local.tower_wave_dns]
       }]
     }
   ]

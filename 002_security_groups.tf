@@ -139,6 +139,23 @@ module "tower_ec2_alb_connect_sg" {
   number_of_computed_ingress_with_source_security_group_id = 1
 }
 
+
+module "tower_ec2_alb_wave_sg" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.1.0"
+
+  count = var.flag_use_wave_lite == true ? 1 : 0
+
+  name        = "${local.global_prefix}_ec2_alb_wave_sg"
+  description = "Wave Lite via ALB."
+
+  vpc_id              = local.vpc_id
+  # computed_ingress_with_cidr_blocks = local.tower_ec2_alb_connect_sg_final
+  # computed_ingress_with_cidr_blocks = local.tower_ec2_alb_connect_sg_final
+  computed_ingress_with_source_security_group_id= local.tower_ec2_alb_wave_sg_final
+  number_of_computed_ingress_with_source_security_group_id = 1
+}
+
 ## ------------------------------------------------------------------------------------
 ## DB Controls
 ## ------------------------------------------------------------------------------------
@@ -219,3 +236,7 @@ module "tower_interface_endpoint_sg" {
   ingress_rules       = ["all-all"]
   egress_rules        = var.sg_egress_interface_endpoint
 }
+
+
+
+

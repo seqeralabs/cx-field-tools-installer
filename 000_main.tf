@@ -212,11 +212,19 @@ locals {
         local.ec2_sg_start
   )
 
+  # Have I used concat stupidly here? Maybe I should have just kept everything as its own array / blank and concatted at the end?
+  # TODO: Build out non-ALB flow.
+  ec2_sg_wave_lite = (
+    var.flag_use_wave_lite == true && var.flag_create_load_balancer == true ?
+      [module.tower_ec2_alb_wave_sg[0].security_group_id] : []
+  )
+
+  # TODO: Build out non-ALB Wave flow.
   ec2_sg_final = (
     var.flag_create_load_balancer == true ?
     # concat(local.ec2_sg_start, [module.tower_ec2_alb_sg.security_group_id]) :
     # concat(local.ec2_sg_start, [module.tower_ec2_direct_sg.security_group_id])
-    concat(local.ec2_sg_data_studio, [module.tower_ec2_alb_sg.security_group_id]) :
+    concat(local.ec2_sg_data_studio, local.ec2_sg_wave_lite, [module.tower_ec2_alb_sg.security_group_id]) :
     concat(local.ec2_sg_data_studio, [module.tower_ec2_direct_sg.security_group_id])
   )
 
@@ -257,6 +265,19 @@ locals {
   ]
 
   tower_ec2_alb_connect_sg_final = local.tower_ec2_alb_connect_sg_9090
+
+  tower_ec2_alb_wave_sg_9099 = [ for cidr_block in var.sg_ingress_cidrs :
+    { 
+      from_port   = 9099
+      to_port     = 9099
+      protocol    = "tcp"
+      description = "ALB_Wave_Lite"
+      # source_security_group_id = module.tower_alb_sg.security_group_id
+      source_security_group_id = local.tower_alb_sg_security_group_id
+    }
+  ]
+
+  tower_ec2_alb_wave_sg_final = local.tower_ec2_alb_wave_sg_9099
 
 
 
@@ -316,13 +337,13 @@ locals {
 
   # Wave
   # ---------------------------------------------------------------------------------------
-  wave_enabled = (var.flag_use_wave != false && var.flag_use_wave_lite != false ? true : false)
+  wave_enabled = (var.flag_use_wave == true || var.flag_use_wave_lite == true ? true : false)
   wave_lite_redis_container = var.flag_create_external_redis == true ? false : true
   wave_lite_db_container = var.flag_create_external_db == true ? false : true
 
   # Modify this to handle container paths and TF paths.
   wave_lite_db_url = "wave-db:5432"
-  wave_lite_redis_url = "wave-redis:6380"
+  wave_lite_redis_url = "wave-redis:6379"
   
 
 

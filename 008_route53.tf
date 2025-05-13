@@ -90,14 +90,17 @@ resource "aws_route53_record" "ec2_connect" {
 }
 
 
-resource "aws_route53_record" "ec2_wave" {
-  count = local.dns_create_ec2_record == true ? 1 : 0
+resource "aws_route53_record" "alb_wave" {
+  count = local.dns_create_alb_record == true ? 1 : 0
 
   zone_id = local.dns_zone_id
   # name    = local.tower_connect_dns
   name    = local.tower_wave_dns
   type    = "A"
 
-  ttl     = "5"
-  records = [local.dns_instance_ip]
+  alias {
+    name                   = module.alb[0].lb_dns_name
+    zone_id                = module.alb[0].lb_zone_id
+    evaluate_target_health = true
+  }
 }
