@@ -245,6 +245,12 @@ variable "db_backup_retention_period"  { type = number }
 variable "db_enable_storage_encrypted" { type = bool }
 
 
+variable "wave_lite_db_engine" { type = string }
+variable "wave_lite_db_engine_version" { type = string }
+variable "wave_lite_db_instance_class" { type = string }
+variable "wave_lite_db_allocated_storage" { type = number }
+
+
 ## ------------------------------------------------------------------------------------
 ## IAM
 ## ------------------------------------------------------------------------------------
