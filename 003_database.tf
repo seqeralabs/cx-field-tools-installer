@@ -52,8 +52,13 @@ module "rds" {
   publicly_accessible = false
 
   # Don't understand why I have to do this but the RDS module screams if I don't
-  family               = "${var.db_engine}${var.db_engine_version}" # DB parameter group
-  major_engine_version = var.db_engine_version                      # DB option group
+  # family               = "${var.db_engine}${var.db_engine_version}" # DB parameter group
+  family               = "${var.db_param_group}" # DB parameter group
+  # May 14/25 - Getting Option Group errors when db_engine_version includes patch:
+  #  creating DB Option Group: InvalidParameterValue: Only the major engine version may be specified (e.g. 8.0), not the full engine version.
+  # Using regex to chop patch (e.g. `.42` from `8.0.42`) so as to not require new variable in tfvars.
+  # major_engine_version = var.db_engine_version                      # DB option grou
+  major_engine_version = regex("^\\d+\\.\\d+", var.db_engine_version)                      # DB option group
 
   # Deletion protection
   deletion_protection = var.db_deletion_protection
@@ -96,16 +101,17 @@ module "rds-wave-lite" {
   publicly_accessible = false
 
   # Don't understand why I have to do this but the RDS module screams if I don't
-  family               = "${var.wave_lite_db_engine}${var.wave_lite_db_engine_version}" # DB parameter group
-  major_engine_version = var.wave_lite_db_engine_version                      # DB option group
+  # family                  = "${var.wave_lite_db_engine}${var.wave_lite_db_engine_version}" # DB parameter group
+  family                    = "${var.wave_lite_db_param_group}" # DB parameter group
+  major_engine_version      = var.wave_lite_db_engine_version                      # DB option group
 
   # Deletion protection
-  deletion_protection = false  # var.db_deletion_protection
-  skip_final_snapshot = true  # var.skip_final_snapshot
+  deletion_protection = var.wave_lite_db_deletion_protection
+  skip_final_snapshot = var.wave_lite_skip_final_snapshot
 
   # Backups
-  # backup_retention_period = var.db_backup_retention_period
-  storage_encrypted = true  # var.db_enable_storage_encrypted
+  backup_retention_period = var.wave_lite_db_backup_retention_period
+  storage_encrypted = var.wave_lite_db_enable_storage_encrypted
 
   # Performance Insights enablement
   # Fixes tfsec warning. As per AWS documentation, 7 day retention has no cost implication for customer.

@@ -78,6 +78,26 @@
 
       fi
 
+
+  - name: Populate Wave Lite Postgres
+    become: true
+    become_user: ec2-user
+    ansible.builtin.shell: |
+      cd /home/ec2-user && source ~/.bashrc
+
+      if [[ $WAVE_LITE_POPULATE_EXTERNAL_INSTANCE == true ]]; then
+        echo "Populating Wave Lite Postgres"
+
+        export wave_lite_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/wave-lite/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
+        export wave_lite_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/wave-lite/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
+
+        # https://unix.stackexchange.com/questions/205180/how-to-pass-password-to-mysql-command-line
+        docker run --rm -t -v $(pwd)/target/wave_lite_config/wave-lite.sql:/wave.sql -e \
+        POSTGRES_PASSWORD=$db_master_password --entrypoint /bin/bash postgres:latest \
+        -c "mysql --host $DB_URL --port=3306 --user=$db_master_user < tower.sql" || true
+
+      fi
+
   - name: Populate Groundswell
     become: true
     become_user: ec2-user

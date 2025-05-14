@@ -12,7 +12,7 @@ wave:
     user : "${wave_lite_db_limited_user}"  # "postgres"
     password : "${wave_lite_db_limited_password}"  # "mypass"
 redis:
-  uri: "redis://${wave_lite_redis_url}"    # rediss://
+  uri: "${wave_lite_redis_url}"    # Protocol (redis vs rediss) will come from var. Local container cant support SSL.
   password: "${wave_lite_redis_auth}"
 mail:
   from: "${tower_contact_email}"    # not required since no build opttion

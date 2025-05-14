@@ -318,6 +318,8 @@ locals {
       tower_db_url         = local.tower_db_root,
       db_database_name     = var.db_database_name,
 
+      populate_wave_lite   = var.flag_use_wave_lite,
+
       docker_compose_file = local.docker_compose_file,
 
       tower_base_url     = local.tower_base_url,

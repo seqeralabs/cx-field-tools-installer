@@ -171,9 +171,14 @@ module "tower_db_sg" {
     {
       rule                     = "mysql-tcp"
       source_security_group_id = module.tower_ec2_egress_sg.security_group_id
+    },
+    {
+      rule                     = "postgresql-tcp"
+      source_security_group_id = module.tower_ec2_egress_sg.security_group_id
     }
   ]
-  number_of_computed_ingress_with_source_security_group_id = 1
+  # TODO: Decide whether 
+  number_of_computed_ingress_with_source_security_group_id = 2
 }
 
 

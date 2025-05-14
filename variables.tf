@@ -235,6 +235,7 @@ variable "db_container_engine_version" { type = string }
 ## ------------------------------------------------------------------------------------
 variable "db_engine" { type = string }
 variable "db_engine_version" { type = string }
+variable "db_param_group" { type = string }
 variable "db_instance_class" { type = string }
 variable "db_allocated_storage" { type = number }
 
@@ -247,8 +248,14 @@ variable "db_enable_storage_encrypted" { type = bool }
 
 variable "wave_lite_db_engine" { type = string }
 variable "wave_lite_db_engine_version" { type = string }
+variable "wave_lite_db_param_group" { type = string }
 variable "wave_lite_db_instance_class" { type = string }
 variable "wave_lite_db_allocated_storage" { type = number }
+
+variable "wave_lite_db_deletion_protection" { type = bool }
+variable "wave_lite_skip_final_snapshot"    { type = bool }
+variable "wave_lite_db_backup_retention_period"  { type = number }
+variable "wave_lite_db_enable_storage_encrypted" { type = bool }
 
 
 ## ------------------------------------------------------------------------------------
