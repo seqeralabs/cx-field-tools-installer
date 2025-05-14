@@ -206,7 +206,8 @@ locals {
       wave_lite_db_container = local.wave_lite_db_container,
 
       wave_lite_db_master_user      = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_USER"]["value"]
-      wave_lite_db_master_password  = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_PASSWORD"]["value"]
+      wave_lite_db_master_password  = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_PASSWORD"]["value"],
+      wave_lite_redis_auth          = local.wave_lite_secrets["WAVE_LITE_REDIS_AUTH"]["value"]
     }
   )
 }

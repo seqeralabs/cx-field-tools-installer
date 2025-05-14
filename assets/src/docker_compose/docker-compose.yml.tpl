@@ -296,11 +296,10 @@ services:
   wave-redis:
     image: cr.seqera.io/public/redis:7.0.10
     platform: linux/amd64
-    # expose:
-    #   - 6379
     expose:
       - 6380:6379
-    command: --appendonly yes
+    # command: --appendonly yes
+    command: ["redis-server", "--requirepass", "${wave_lite_redis_auth}"]
     restart: always
     volumes:
       - $HOME/.wave/db/wave-lite-redis:/data

@@ -13,7 +13,7 @@ wave:
     password : "${wave_lite_db_limited_password}"  # "mypass"
 redis:
   uri: "redis://${wave_lite_redis_url}"    # rediss://
-  # password: "abc" #AUTH equivalent  # figure out what to do with container
+  password: "${wave_lite_redis_auth}"
 mail:
   from: "${tower_contact_email}"    # not required since no build opttion
 tower:
