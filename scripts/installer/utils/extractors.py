@@ -45,11 +45,22 @@ def convert_tfvars_to_dictionary(file):
         lines = file.readlines()
         lines_array = [line.strip() for line in lines]
 
+
+        # Hack for Wave lite
+        elasticache_wave_instance_index = 0
+        for i, line in enumerate(lines_array):
+            if "elasticache_wave_instance" in line:
+                elasticache_wave_instance_index = i
+                break
+        if elasticache_wave_instance_index > 0:
+            lines_array = lines_array[:elasticache_wave_instance_index]
+
         # 1) Remove any blank link in file
         flag_skip_block_comment = False
         indices_to_pop = []
 
         for i, line in enumerate(lines_array):
+
             if (line.strip() == "") or (line.startswith("#")):
                 indices_to_pop.append(i)
 

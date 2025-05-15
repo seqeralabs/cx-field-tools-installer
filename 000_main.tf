@@ -353,7 +353,7 @@ locals {
 
   wave_lite_redis_url = (
     var.flag_create_external_redis == true && var.flag_use_wave_lite == true ?
-    "rediss://${aws_elasticache_cluster.redis[0].cache_nodes[0].address}:${aws_elasticache_cluster.redis[0].cache_nodes[0].port}" :
+    "rediss://${module.elasticache_wave_lite[0].url}" :
     "redis://wave-redis:6379"
   )
   

@@ -132,12 +132,12 @@ resource "aws_elasticache_subnet_group" "redis" {
   subnet_ids = local.subnet_ids_db
 }
 
-resource "aws_elasticache_subnet_group" "wave-lite-redis" {
-  count = (var.flag_create_external_redis == true && var.flag_use_wave_lite == true) ? 1 : 0
+# resource "aws_elasticache_subnet_group" "wave-lite-redis" {
+#   count = (var.flag_create_external_redis == true && var.flag_use_wave_lite == true) ? 1 : 0
 
-  name       = "${local.global_prefix}-wave-lite-redis"
-  subnet_ids = local.subnet_ids_db
-}
+#   name       = "${local.global_prefix}-wave-lite-redis"
+#   subnet_ids = local.subnet_ids_db
+# }
 
 #tfsec:ignore:aws-elasticache-enable-backup-retention
 resource "aws_elasticache_cluster" "redis" {
@@ -157,19 +157,38 @@ resource "aws_elasticache_cluster" "redis" {
   apply_immediately = true
 }
 
-resource "aws_elasticache_cluster" "wave-lite-redis" {
+# resource "aws_elasticache_cluster" "wave-lite-redis" {
+#   count = (var.flag_create_external_redis == true && var.flag_use_wave_lite == true) ? 1 : 0
+
+#   cluster_id      = "${local.global_prefix}-wave-lite-redis"
+#   engine          = "redis"
+#   node_type       = "cache.m4.xlarge"
+#   num_cache_nodes = 1
+#   # parameter_group_name = "default.redis7.0.4"
+#   engine_version = "7.0"
+#   port           = 6379
+
+#   subnet_group_name  = aws_elasticache_subnet_group.wave-lite-redis[0].name
+#   security_group_ids = [module.tower_redis_sg.security_group_id]
+
+#   apply_immediately = true
+# }
+
+
+# Wave Elasticache instance
+module "elasticache_wave_lite" {
+  source = "./modules/elasticache"
+
   count = (var.flag_create_external_redis == true && var.flag_use_wave_lite == true) ? 1 : 0
 
-  cluster_id      = "${local.global_prefix}-wave-lite-redis"
-  engine          = "redis"
-  node_type       = "cache.m4.xlarge"
-  num_cache_nodes = 1
-  # parameter_group_name = "default.redis7.0.4"
-  engine_version = "7.0"
-  port           = 6379
+  resource_prefix = "${local.global_prefix}-elasticache-wave-lite"
 
-  subnet_group_name  = aws_elasticache_subnet_group.wave-lite-redis[0].name
-  security_group_ids = [module.tower_redis_sg.security_group_id]
+  # Network configuration
+  default_vpc_subnets        = local.subnet_ids_db
+  # default_security_group_ids = [module.elasticache_wave_sg.sg_id]
+  default_security_group_ids = [module.tower_redis_sg.security_group_id]
 
-  apply_immediately = true
+  elasticache_instance = var.elasticache_wave_instance
+
+  redis_password = local.wave_lite_secrets["WAVE_LITE_REDIS_AUTH"]["value"]
 }
