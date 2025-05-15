@@ -202,8 +202,7 @@ locals {
   # Always grant egress anywhere & SSH ingress to EC2 instance. 
   # Add additional ingress restrictions depending on whether ALB is created or not.
   ec2_sg_start = [
-    module.tower_ec2_egress_sg.security_group_id,
-    module.tower_ec2_ssh_sg.security_group_id
+    module.tower_ec2_core_sg.security_group_id,
   ]
 
   # Egads this is ugly. Refactor ASAP

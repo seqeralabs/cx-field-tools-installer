@@ -1,34 +1,26 @@
 ## ------------------------------------------------------------------------------------
 ## NOTE!
 ## ------------------------------------------------------------------------------------
-# This is less elegant than using a for-each construct but I think it's easier to maintain.
-# YMMV - A rewrite could make things cleaner.
+# Modules rewritten May 15/2025 (combined ingress & egress).
 
 
 ## ------------------------------------------------------------------------------------
 ## Instance Connect Endpoint Controls
 ## ------------------------------------------------------------------------------------
-module "tower_eice_ingress_sg" {
+module "tower_eice_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "5.1.0"
 
-  name        = "${local.global_prefix}_eice_sg"
-  description = "Allowed ingress CIDRS EC2 Instance Connect endpoint."
+  name              = "${local.global_prefix}_eice_sg"
+  description       = "EICE Security Group."
 
-  vpc_id              = local.vpc_id
-  ingress_cidr_blocks = var.sg_ssh_cidrs
-  ingress_rules       = ["ssh-tcp"]
-}
-
-
-module "tower_eice_egress_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
-
-  name        = "${local.global_prefix}_ec2_egress_sg"
-  description = "Allowed egress CIDRS EC2 Instance Connect endpoint."
-
-  vpc_id       = local.vpc_id
+  vpc_id            = local.vpc_id
+  ingress_with_cidr_blocks = [
+    {
+      rule          = "ssh-tcp"
+      cidr_blocks   = join(",", var.sg_ssh_cidrs)
+    }
+  ]
   egress_rules = var.sg_egress_eice
 }
 
@@ -36,29 +28,22 @@ module "tower_eice_egress_sg" {
 ## ------------------------------------------------------------------------------------
 ## EC2 Controls
 ## ------------------------------------------------------------------------------------
-module "tower_ec2_ssh_sg" {
+module "tower_ec2_core_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "5.1.0"
 
-  name        = "${local.global_prefix}_ec2_ssh_sg"
-  description = "Allowed SSH ingress to EC2 instance (EICE only)."
+  name        = "${local.global_prefix}_ec2_core_sg"
+  description = "Core EC2 Security Group."
 
   vpc_id              = local.vpc_id
-  ingress_cidr_blocks = var.sg_ssh_cidrs
-  ingress_rules       = ["ssh-tcp"]
-}
-
-
-module "tower_ec2_egress_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
-
-  name        = "${local.global_prefix}_ec2_egress_sg"
-  description = "Tower EC2 host egress."
-
-  vpc_id              = local.vpc_id
-  ingress_cidr_blocks = var.sg_ingress_cidrs
+  ingress_with_cidr_blocks = [
+    {
+      rule          = "ssh-tcp"
+      cidr_blocks   = join(",", var.sg_ssh_cidrs)
+    }
+  ]
   egress_rules        = var.sg_egress_tower_ec2
+
 }
 
 
@@ -170,11 +155,11 @@ module "tower_db_sg" {
   computed_ingress_with_source_security_group_id = [
     {
       rule                     = "mysql-tcp"
-      source_security_group_id = module.tower_ec2_egress_sg.security_group_id
+      source_security_group_id = module.tower_ec2_core_sg.security_group_id
     },
     {
       rule                     = "postgresql-tcp"
-      source_security_group_id = module.tower_ec2_egress_sg.security_group_id
+      source_security_group_id = module.tower_ec2_core_sg.security_group_id
     }
   ]
   # TODO: Decide whether 
@@ -198,7 +183,7 @@ module "tower_batch_sg" {
   computed_ingress_with_source_security_group_id = [
     {
       rule                     = "ssh-tcp"
-      source_security_group_id = module.tower_ec2_egress_sg.security_group_id
+      source_security_group_id = module.tower_ec2_core_sg.security_group_id
     }
   ]
   number_of_computed_ingress_with_source_security_group_id = 1
@@ -219,7 +204,7 @@ module "tower_redis_sg" {
   computed_ingress_with_source_security_group_id = [
     {
       rule                     = "redis-tcp"
-      source_security_group_id = module.tower_ec2_egress_sg.security_group_id
+      source_security_group_id = module.tower_ec2_core_sg.security_group_id
     }
   ]
   number_of_computed_ingress_with_source_security_group_id = 1
