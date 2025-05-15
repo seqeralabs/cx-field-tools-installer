@@ -96,14 +96,11 @@ module "rds-wave-lite" {
 
   db_subnet_group_name   = aws_db_subnet_group.wave_lite_db[0].name
   vpc_security_group_ids = [module.tower_db_sg.security_group_id]
-  #parameter_group_name         = aws_db_parameter_group.tower_db.name
 
   publicly_accessible = false
 
-  # Don't understand why I have to do this but the RDS module screams if I don't
-  # family                  = "${var.wave_lite_db_engine}${var.wave_lite_db_engine_version}" # DB parameter group
-  family                    = "${var.wave_lite_db_param_group}" # DB parameter group
-  major_engine_version      = var.wave_lite_db_engine_version                      # DB option group
+  family                    = "${var.wave_lite_db_param_group}"     # DB parameter group
+  major_engine_version      = var.wave_lite_db_engine_version       # DB option group
 
   # Deletion protection
   deletion_protection = var.wave_lite_db_deletion_protection
@@ -132,12 +129,6 @@ resource "aws_elasticache_subnet_group" "redis" {
   subnet_ids = local.subnet_ids_db
 }
 
-# resource "aws_elasticache_subnet_group" "wave-lite-redis" {
-#   count = (var.flag_create_external_redis == true && var.flag_use_wave_lite == true) ? 1 : 0
-
-#   name       = "${local.global_prefix}-wave-lite-redis"
-#   subnet_ids = local.subnet_ids_db
-# }
 
 #tfsec:ignore:aws-elasticache-enable-backup-retention
 resource "aws_elasticache_cluster" "redis" {
@@ -157,25 +148,8 @@ resource "aws_elasticache_cluster" "redis" {
   apply_immediately = true
 }
 
-# resource "aws_elasticache_cluster" "wave-lite-redis" {
-#   count = (var.flag_create_external_redis == true && var.flag_use_wave_lite == true) ? 1 : 0
 
-#   cluster_id      = "${local.global_prefix}-wave-lite-redis"
-#   engine          = "redis"
-#   node_type       = "cache.m4.xlarge"
-#   num_cache_nodes = 1
-#   # parameter_group_name = "default.redis7.0.4"
-#   engine_version = "7.0"
-#   port           = 6379
-
-#   subnet_group_name  = aws_elasticache_subnet_group.wave-lite-redis[0].name
-#   security_group_ids = [module.tower_redis_sg.security_group_id]
-
-#   apply_immediately = true
-# }
-
-
-# Wave Elasticache instance
+# Module generates its subnet group so no need to build it here.
 module "elasticache_wave_lite" {
   source = "./modules/elasticache"
 
@@ -185,10 +159,10 @@ module "elasticache_wave_lite" {
 
   # Network configuration
   default_vpc_subnets        = local.subnet_ids_db
-  # default_security_group_ids = [module.elasticache_wave_sg.sg_id]
   default_security_group_ids = [module.tower_redis_sg.security_group_id]
 
+  # Composite object from TFVars
   elasticache_instance = var.elasticache_wave_instance
-
+  # Bespoke secrets that cant be put in TFVars object
   redis_password = local.wave_lite_secrets["WAVE_LITE_REDIS_AUTH"]["value"]
 }
