@@ -10,7 +10,7 @@ module "alb" {
 
   vpc_id          = local.vpc_id
   subnets         = local.subnet_ids_alb
-  security_groups = [module.tower_alb_sg.security_group_id]
+  security_groups = [module.tower_alb_sg[0].security_group_id]
   internal        = var.flag_make_instance_private == true || var.flag_private_tower_without_eice == true ? true : false
 
   # Do not keep or breaks Tower audit logging.

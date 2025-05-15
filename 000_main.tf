@@ -208,7 +208,7 @@ locals {
   # Egads this is ugly. Refactor ASAP
   ec2_sg_data_studio = (
     var.flag_enable_data_studio == true  && var.flag_create_load_balancer == true ? 
-    concat(local.ec2_sg_start, [module.tower_ec2_alb_connect_sg[0].security_group_id]) :
+    concat(local.ec2_sg_start, [module.tower_alb_connect_sg[0].security_group_id]) :
     var.flag_enable_data_studio == true && var.flag_create_load_balancer == false ?
         concat(local.ec2_sg_start, [module.tower_ec2_direct_connect_sg[0].security_group_id]) :
         local.ec2_sg_start
@@ -218,16 +218,16 @@ locals {
   # TODO: Build out non-ALB flow.
   ec2_sg_wave_lite = (
     var.flag_use_wave_lite == true && var.flag_create_load_balancer == true ?
-      [module.tower_ec2_alb_wave_sg[0].security_group_id] : []
+      [module.tower_alb_wave_sg[0].security_group_id] : []
   )
 
   # TODO: Build out non-ALB Wave flow.
   ec2_sg_final = (
     var.flag_create_load_balancer == true ?
-    # concat(local.ec2_sg_start, [module.tower_ec2_alb_sg.security_group_id]) :
-    # concat(local.ec2_sg_start, [module.tower_ec2_direct_sg.security_group_id])
-    concat(local.ec2_sg_data_studio, local.ec2_sg_wave_lite, [module.tower_ec2_alb_sg.security_group_id]) :
-    concat(local.ec2_sg_data_studio, [module.tower_ec2_direct_sg.security_group_id])
+    # concat(local.ec2_sg_start, [module.tower_ec2_alb_sg[0].security_group_id]) :
+    # concat(local.ec2_sg_start, [module.tower_ec2_direct_sg[0].security_group_id])
+    concat(local.ec2_sg_data_studio, local.ec2_sg_wave_lite, [module.tower_ec2_alb_sg[0].security_group_id]) :
+    concat(local.ec2_sg_data_studio, [module.tower_ec2_direct_sg[0].security_group_id])
   )
 
   ec2_sg_final_raw = join(",", [for sg in local.ec2_sg_final : jsonencode(sg)])
@@ -253,9 +253,9 @@ locals {
   tower_ec2_direct_connect_sg_final = local.tower_ec2_direct_connect_sg_9090
 
   # Using module directly in for loop hangs. Trying with local.
-  tower_alb_sg_security_group_id = module.tower_alb_sg.security_group_id
+  tower_alb_sg_security_group_id = module.tower_alb_sg[0].security_group_id
 
-  tower_ec2_alb_connect_sg_9090 = [ for cidr_block in var.sg_ingress_cidrs :
+  tower_alb_connect_sg_9090 = [ for cidr_block in var.sg_ingress_cidrs :
     { 
       from_port   = 9090
       to_port     = 9090
@@ -266,9 +266,9 @@ locals {
     }
   ]
 
-  tower_ec2_alb_connect_sg_final = local.tower_ec2_alb_connect_sg_9090
+  tower_alb_connect_sg_final = local.tower_alb_connect_sg_9090
 
-  tower_ec2_alb_wave_sg_9099 = [ for cidr_block in var.sg_ingress_cidrs :
+  tower_alb_wave_sg_9099 = [ for cidr_block in var.sg_ingress_cidrs :
     { 
       from_port   = 9099
       to_port     = 9099
@@ -279,7 +279,7 @@ locals {
     }
   ]
 
-  tower_ec2_alb_wave_sg_final = local.tower_ec2_alb_wave_sg_9099
+  tower_alb_wave_sg_final = local.tower_alb_wave_sg_9099
 
 
 
