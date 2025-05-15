@@ -1,0 +1,265 @@
+{
+  "alb_certificate_arn": "arn:aws:acm:us-east-1:128997144437:certificate/fd71a9a1-6e4b-449e-b246-5194df3090b1",
+  "app_name": "sc-tower-dev",
+  "aws_account": "128997144437",
+  "aws_profile": "development",
+  "aws_region": "us-east-1",
+  "bucket_prefix_for_new_private_ca_cert": "REPLACE_ME_IF_NEEDED",
+  "custom_resource_naming_prefix": "sc-tf-dev",
+  "data_explorer_disabled_workspaces": "",
+  "data_studio_container_version": "0.8.0",
+  "data_studio_eligible_workspaces": "",
+  "data_studio_options": {
+    "jupyter4_2_5-0_8_0": {
+      "container": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.0",
+      "icon": "jupyter",
+      "qualifier": "JUPYTER-4-2-5-0-8-0",
+      "status": "recommended",
+      "tool": "jupyter"
+    },
+    "rstudio4_4_1-0_8_0": {
+      "container": "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.8.0",
+      "icon": "rstudio",
+      "qualifier": "RSTUDIO-4-4-1-0-8-0",
+      "status": "recommended",
+      "tool": "rstudio"
+    },
+    "vscode1_83_0-0_8_0": {
+      "container": "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.8.0",
+      "icon": "vscode",
+      "qualifier": "VSCODE-1-83-0-0-8-0",
+      "status": "recommended",
+      "tool": "vscode"
+    },
+    "xpra6_0_r0-0_8_0": {
+      "container": "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.8.0",
+      "icon": "xpra",
+      "qualifier": "XPRA-6-0-R0-0-8-0",
+      "status": "recommended",
+      "tool": "xpra"
+    }
+  },
+  "db_allocated_storage": 30,
+  "db_backup_retention_period": 7,
+  "db_container_engine": "mysql",
+  "db_container_engine_version": "8.0",
+  "db_database_name": "tower",
+  "db_deletion_protection": false,
+  "db_enable_storage_encrypted": true,
+  "db_engine": "mysql",
+  "db_engine_version": "8.0",
+  "db_instance_class": "db.m5.large",
+  "default_tags": {
+    "Environment": "dev",
+    "Terraform": "true"
+  },
+  "docker_cidr_range": "172.80.0.0/16",
+  "ec2_ebs_kms_key": "REPLACE_ME_IF_NEEDED",
+  "ec2_host_instance_type": "m4.large",
+  "ec2_require_imds_token": true,
+  "ec2_root_volume_size": 8,
+  "ec2_update_ami_if_available": true,
+  "elasticache_wave_instance": {
+    "apply_immediately": true,
+    "clustered": {
+      "automatic_failover_enabled": false,
+      "multi_az_enabled": false,
+      "num_node_groups": null,
+      "parameter_group_name": "default.redis7",
+      "replicas_per_node_group": null
+    },
+    "encryption": {
+      "at_rest_encryption_enabled": true,
+      "transit_encryption_enabled": true
+    },
+    "engine": "redis",
+    "engine_version": "7.1",
+    "node_type": "cache.t4g.micro",
+    "port": 6379,
+    "security_group_ids": [],
+    "subnet_ids": [],
+    "unclustered": {
+      "num_cache_nodes": 1
+    }
+  },
+  "enable_vpc_flow_logs": false,
+  "existing_ca_cert_file": "REPLACE_ME_IF_NEEDED",
+  "existing_ca_key_file": "REPLACE_ME_IF_NEEDED",
+  "existing_route53_private_zone_name": "REPLACE_ME_IF_NEEDED",
+  "existing_route53_public_zone_name": "dev-seqera.net",
+  "flag_create_external_db": false,
+  "flag_create_external_redis": false,
+  "flag_create_hosts_file_entry": false,
+  "flag_create_load_balancer": true,
+  "flag_create_new_vpc": true,
+  "flag_create_route53_private_zone": false,
+  "flag_data_explorer_enabled": true,
+  "flag_disable_email_login": false,
+  "flag_do_not_use_https": false,
+  "flag_docker_logging_journald": true,
+  "flag_docker_logging_jsonfile": false,
+  "flag_docker_logging_local": false,
+  "flag_enable_data_studio": true,
+  "flag_enable_groundswell": false,
+  "flag_encrypt_ebs": true,
+  "flag_generate_private_cacert": false,
+  "flag_iam_use_prexisting_role_arn": false,
+  "flag_limit_data_studio_to_some_workspaces": false,
+  "flag_make_instance_private": false,
+  "flag_make_instance_private_behind_public_alb": false,
+  "flag_make_instance_public": true,
+  "flag_oidc_use_generic": true,
+  "flag_oidc_use_github": false,
+  "flag_oidc_use_google": false,
+  "flag_overwrite_ssm_keys": true,
+  "flag_private_tower_without_eice": false,
+  "flag_run_seqerakit": true,
+  "flag_use_aws_ses_iam_integration": false,
+  "flag_use_container_db": true,
+  "flag_use_container_redis": true,
+  "flag_use_custom_docker_compose_file": false,
+  "flag_use_custom_resource_naming_prefix": false,
+  "flag_use_existing_external_db": false,
+  "flag_use_existing_private_cacert": false,
+  "flag_use_existing_route53_private_zone": false,
+  "flag_use_existing_route53_public_zone": true,
+  "flag_use_existing_smtp": true,
+  "flag_use_existing_vpc": false,
+  "flag_use_kms_key": false,
+  "flag_use_wave": false,
+  "flag_vm_copy_files_to_instance": true,
+  "flyway_locations": "classpath:db-schema/mysql",
+  "iam_prexisting_instance_role_arn": "REPLACE_ME_IF_NEEDED",
+  "new_route53_private_zone_name": "REPLACE_ME_IF_NEEDED",
+  "secrets_bootstrap_groundswell": "/seqera/sensitive-values/sc-tower-dev/groundswell",
+  "secrets_bootstrap_seqerakit": "/seqera/sensitive-values/sc-tower-dev/seqerakit",
+  "secrets_bootstrap_tower": "/seqera/sensitive-values/sc-tower-dev/tower",
+  "seqerakit_aws_fusion_instances": "c6id,r6id,m6id",
+  "seqerakit_aws_manual_compute_queue": "REPLACE_ME_IF_NEEDED",
+  "seqerakit_aws_manual_head_queue": "REPLACE_ME_IF_NEEDED",
+  "seqerakit_aws_normal_instances": "optimal",
+  "seqerakit_aws_use_batch": true,
+  "seqerakit_aws_use_forge": true,
+  "seqerakit_aws_use_fusion_v2": true,
+  "seqerakit_compute_env_name": "MyComputeEnvironment_schaluva",
+  "seqerakit_compute_env_region": "us-east-1",
+  "seqerakit_flag_credential_create_aws": true,
+  "seqerakit_flag_credential_create_codecommit": true,
+  "seqerakit_flag_credential_create_docker": true,
+  "seqerakit_flag_credential_create_github": true,
+  "seqerakit_flag_credential_use_aws_role": true,
+  "seqerakit_flag_credential_use_codecommit_baseurl": true,
+  "seqerakit_org_fullname": "SampleOrgFullName",
+  "seqerakit_org_name": "SampleOrg",
+  "seqerakit_org_url": "https://www.example.com",
+  "seqerakit_outdir": "s3://sandbox-schaluva/seqerakit-outdir",
+  "seqerakit_root_bucket": "s3://sandbox-schaluva",
+  "seqerakit_team_members": "sushma.chaluvadi@seqera.io, esha.joshi@seqera.io",
+  "seqerakit_team_name": "SampleTeam_schaluva",
+  "seqerakit_workdir": "s3://sandbox-schaluva/seqerakit-dev",
+  "seqerakit_workspace_fullname": "SampleWorkspaceFullName_schaluva",
+  "seqerakit_workspace_name": "SampleWorkspace_schaluva",
+  "sg_egress_batch_ec2": [
+    "all-all"
+  ],
+  "sg_egress_eice": [
+    "all-all"
+  ],
+  "sg_egress_interface_endpoint": [
+    "all-all"
+  ],
+  "sg_egress_tower_alb": [
+    "all-all"
+  ],
+  "sg_egress_tower_ec2": [
+    "all-all"
+  ],
+  "sg_ingress_cidrs": [
+    "0.0.0.0/0"
+  ],
+  "sg_ssh_cidrs": [
+    "0.0.0.0/0"
+  ],
+  "skip_final_snapshot": true,
+  "swell_container_version": "0.4.0",
+  "swell_database_name": "swell",
+  "tower_audit_retention_days": 1095,
+  "tower_contact_email": "mark.panganiban@seqera.io",
+  "tower_container_version": "v25.1.0",
+  "tower_db_dialect": "io.seqera.util.MySQL55DialectCollateBin",
+  "tower_db_driver": "org.mariadb.jdbc.Driver",
+  "tower_db_max_lifetime": 18000000,
+  "tower_db_max_pool_size": 10,
+  "tower_db_min_pool_size": 5,
+  "tower_db_url": "db:3306",
+  "tower_email_trusted_orgs": "*@seqera.io, *@abc.com, *@gmail.com",
+  "tower_email_trusted_users": "sushma.chaluvadi@seqera.io, *@seqera.io",
+  "tower_enable_platforms": "awsbatch-platform,k8s-platform,eks-platform,slurm-platform,gke-platform,googlebatch-platform,azbatch-platform",
+  "tower_root_users": "sushma.chaluvadi@seqera.io, esha.joshi@seqera.io",
+  "tower_server_port": "8000",
+  "tower_server_url": "sc-autodc.dev-seqera.net",
+  "tower_smtp_auth": true,
+  "tower_smtp_host": "smtp.sendgrid.net",
+  "tower_smtp_port": "587",
+  "tower_smtp_ssl_protocols": "TLSv1.2",
+  "tower_smtp_starttls_enable": true,
+  "tower_smtp_starttls_required": true,
+  "vpc_existing_alb_subnets": [
+    "10.0.1.0/24",
+    "10.0.2.0/24"
+  ],
+  "vpc_existing_batch_subnets": [
+    "10.0.2.0/24",
+    "10.0.3.0/24"
+  ],
+  "vpc_existing_db_subnets": [
+    "10.0.4.0/24",
+    "10.0.5.0/24"
+  ],
+  "vpc_existing_ec2_subnets": [
+    "10.0.1.0/24"
+  ],
+  "vpc_existing_id": "REPLACE_ME_IF_NEEDED",
+  "vpc_existing_redis_subnets": [
+    "10.0.6.0/24"
+  ],
+  "vpc_gateway_endpoints_all": [
+    "s3"
+  ],
+  "vpc_interface_endpoints_batch": [],
+  "vpc_interface_endpoints_tower": [],
+  "vpc_new_alb_subnets": [
+    "10.0.1.0/24",
+    "10.0.2.0/24"
+  ],
+  "vpc_new_azs": [
+    "us-east-1a",
+    "us-east-1b",
+    "us-east-1c"
+  ],
+  "vpc_new_batch_subnets": [
+    "10.0.3.0/24"
+  ],
+  "vpc_new_cidr_range": "10.0.0.0/16",
+  "vpc_new_db_subnets": [
+    "10.0.3.0/24",
+    "10.0.4.0/24"
+  ],
+  "vpc_new_ec2_subnets": [
+    "10.0.1.0/24"
+  ],
+  "vpc_new_private_subnets": [
+    "10.0.3.0/24",
+    "10.0.4.0/24",
+    "10.0.5.0/24",
+    "10.0.6.0/24"
+  ],
+  "vpc_new_public_subnets": [
+    "10.0.1.0/24",
+    "10.0.2.0/24"
+  ],
+  "vpc_new_redis_subnets": [
+    "10.0.5.0/24"
+  ],
+  "wave_server_url": "https://wave.seqera.io"
+}
