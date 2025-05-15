@@ -150,7 +150,7 @@ locals {
     }
   )
 
-    wave_lite_sql = templatefile("assets/src/wave_lite_config/wave-lite.sql.tpl",
+  wave_lite_sql = templatefile("assets/src/wave_lite_config/wave-lite.sql.tpl",
     {
         username = "postgres" # "$${{'}}postgres$${{'}}" # TODO Add USERNAME & PASSWORD SECRET
         
@@ -160,7 +160,7 @@ locals {
     }
   )
 
-    wave_lite_sql2 = templatefile("assets/src/wave_lite_config/wave-lite2.sql.tpl",
+  wave_lite_sql2 = templatefile("assets/src/wave_lite_config/wave-lite2.sql.tpl",
     {
         wave_lite_db_limited_user     = local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_USER"]["value"]
 
@@ -319,6 +319,7 @@ locals {
       db_database_name     = var.db_database_name,
 
       populate_wave_lite   = var.flag_use_wave_lite,
+      wave_lite_db_url     = local.wave_lite_db_url,
 
       docker_compose_file = local.docker_compose_file,
 

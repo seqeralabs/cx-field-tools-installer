@@ -1,4 +1,12 @@
 
+# Terraform templatefile refuses to keep singlequotes in it. Unfortunately, commands to feed into postgres via
+# docker CLI need the single quotes (and double single quotes for escaping).
+# My old technique of a placeholder value for `'` replaced by sed wont work -- to verbose.
+# Ive inverted the approach: Ditched the .tpl file, put in placeholders for the username/password, kept 
+# the `'` and then sed username/password instead.
+# This has `code smell` written all over it, but I need to get e2e working now and will figure out clean
+# implementation afterwards.
+
 # docker run --rm -t -v /home/ec2-user/target/wave_lite_config/wave-lite.sql:/tmp/wave.sql -e POSTGRES_PASSWORD=masterpassword --entrypoint /bin/bash postgres:latest -c "PGPASSWORD='masterpassword' psql -h tf-tower-dev-native-mutt-db-wave-lite.cushz2sgcalb.us-east-1.rds.amazonaws.com -p 5432 -U masteruser -d postgres < /tmp/wave.sql"
 
 #SQL1

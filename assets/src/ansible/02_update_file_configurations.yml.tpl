@@ -91,10 +91,11 @@
         export wave_lite_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/wave-lite/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
         export wave_lite_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/wave-lite/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
 
-        # https://unix.stackexchange.com/questions/205180/how-to-pass-password-to-mysql-command-line
-        docker run --rm -t -v $(pwd)/target/wave_lite_config/wave-lite.sql:/wave.sql -e \
-        POSTGRES_PASSWORD=$db_master_password --entrypoint /bin/bash postgres:latest \
-        -c "mysql --host $DB_URL --port=3306 --user=$db_master_user < tower.sql" || true
+        # Modified command used to populate mysql
+        # Using `postgres` since this is the default database created when Postgres RDS first spun up.
+        docker run --rm -t -v $(pwd)/target/wave_lite_config/wave-lite-rds.sql:/tmp/wave.sql -e \
+        POSTGRES_PASSWORD=$wave_lite_master_password --entrypoint /bin/bash postgres:latest \
+        -c "PGPASSWORD=$wave_lite_master_password psql -h $WAVE_LITE_DB_URL -p 5432 -U $wave_lite_master_user -d postgres < /tmp/wave.sql"
 
       fi
 

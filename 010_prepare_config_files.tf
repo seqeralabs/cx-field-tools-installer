@@ -27,8 +27,13 @@ resource "null_resource" "regenerate_config_files_from_data" {
       echo '${local.wave_lite_yml}' > ${path.module}/assets/target/wave_lite_config/wave-lite.yml
       echo '${local.wave_lite_sql}' > ${path.module}/assets/target/wave_lite_config/wave-lite.sql
       echo '${local.wave_lite_sql2}' > ${path.module}/assets/target/wave_lite_config/wave-lite2.sql
+      
       # THIS IS A TOTAL HACK. Postgres demands singlequotes in .sql but .tpl refuses them.
       sed -i "s/SINGLEQUOTEREPLACEME/'/g" ${path.module}/assets/target/wave_lite_config/wave-lite.sql
+      # MORE HACKING
+      cp ${path.module}/assets/src/wave_lite_config/wave-lite-rds.sql ${path.module}/assets/target/wave_lite_config/wave-lite-rds.sql
+      sed -i "s/WAVEUSERREPLACEME/${local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_USER"]["value"]}/g" ${path.module}/assets/target/wave_lite_config/wave-lite-rds.sql
+      sed -i "s/WAVEPASSWORDREPLACEME/${local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]}/g" ${path.module}/assets/target/wave_lite_config/wave-lite-rds.sql
 
       # Generate Groundswell config files
       echo '${local.groundswell_env}' > ${path.module}/assets/target/groundswell_config/groundswell.env
