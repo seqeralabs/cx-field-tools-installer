@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import re
+import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -16,6 +17,9 @@ from installer.utils.extractors import get_tfvars_as_json
 from installer.utils.logger import logger
 from installer.utils.subnets import get_all_subnets
 
+import subprocess
+import json
+
 sys.tracebacklimit = 0
 # -------------------------------------------------------------------------------
 # NOTES:
@@ -26,6 +30,33 @@ sys.tracebacklimit = 0
 # -------------------------------------------------------------------------------
 # HELPER FUNCTIONS
 # -------------------------------------------------------------------------------
+def get_tfvars_as_json_from_go():
+    # Absolute path to the Go script
+    hcl_parser_dir = "/Users/schaluva/cx-field-tools-installer/scripts/installer/utils/hcl_parser"
+    go_script_path = os.path.join(hcl_parser_dir, "tfvars2json")
+    output_json_path = os.path.join(hcl_parser_dir, "terraform_hclparser.json")
+
+    # Run the Go script
+    result = subprocess.run(
+        [go_script_path],
+        cwd=hcl_parser_dir,
+        capture_output=True,
+        text=True
+    )
+
+    if result.returncode != 0:
+        print("Error running Go parser:")
+        print(result.stderr)
+        exit(1)
+
+    # Read the output JSON from file
+    if not os.path.exists(output_json_path):
+        print("Go script did not produce output.json as expected.")
+        exit(1)
+
+    with open(output_json_path, "r") as f:
+        return json.load(f)
+
 def log_error_and_exit(message: str):
     logger.error(message)
     exit(1)
@@ -587,7 +618,8 @@ if __name__ == "__main__":
 
     # Generate dictionary from tfvars then convert to SimpleNamespace for cleaner dot-notation access.
     # Kept the two objects different for convenience when .keys() method is required.
-    data_dictionary = get_tfvars_as_json()
+    # data_dictionary = get_tfvars_as_json()
+    data_dictionary = get_tfvars_as_json_from_go()
     data = SimpleNamespace(**data_dictionary)
 
     # Check minimum container version
