@@ -280,7 +280,7 @@ locals {
 
       vpc_id         = local.vpc_id,
       subnets        = local.subnet_ids_ec2,
-      securityGroups = [module.tower_batch_sg.security_group_id], # local.ec2_sg_final,
+      securityGroups = [module.sg_batch.security_group_id], # local.ec2_sg_final,
       ec2KeyPair     = aws_key_pair.generated_key.key_name,
 
       use_fusion_v2    = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",

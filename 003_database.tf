@@ -46,7 +46,7 @@ module "rds" {
   password                    = local.tower_secrets["TOWER_DB_MASTER_PASSWORD"]["value"]
 
   db_subnet_group_name   = aws_db_subnet_group.tower_db[0].name
-  vpc_security_group_ids = [module.tower_db_sg[0].security_group_id]
+  vpc_security_group_ids = [module.sg_db[0].security_group_id]
   #parameter_group_name         = aws_db_parameter_group.tower_db.name
 
   publicly_accessible = false
@@ -95,7 +95,7 @@ module "rds-wave-lite" {
   password                    = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_PASSWORD"]["value"]
 
   db_subnet_group_name   = aws_db_subnet_group.wave_lite_db[0].name
-  vpc_security_group_ids = [module.tower_db_sg[0].security_group_id]
+  vpc_security_group_ids = [module.sg_db[0].security_group_id]
 
   publicly_accessible = false
 
@@ -143,7 +143,7 @@ resource "aws_elasticache_cluster" "redis" {
   port           = 6379
 
   subnet_group_name  = aws_elasticache_subnet_group.redis[0].name
-  security_group_ids = [module.tower_redis_sg[0].security_group_id]
+  security_group_ids = [module.sg_redis[0].security_group_id]
 
   apply_immediately = true
 }
@@ -159,7 +159,7 @@ module "elasticache_wave_lite" {
 
   # Network configuration
   default_vpc_subnets        = local.subnet_ids_db
-  default_security_group_ids = [module.tower_redis_sg[0].security_group_id]
+  default_security_group_ids = [module.sg_redis[0].security_group_id]
 
   # Composite object from TFVars
   elasticache_instance = var.elasticache_wave_instance

@@ -167,7 +167,7 @@ resource "aws_ec2_instance_connect_endpoint" "example" {
   count = var.flag_make_instance_private == true || var.flag_make_instance_private_behind_public_alb == true ? 1 : 0
 
   subnet_id          = local.subnet_ids_ec2[0]
-  security_group_ids = [module.tower_eice_sg.security_group_id]
+  security_group_ids = [module.sg_eice.security_group_id]
 
   tags = {
     Name = local.global_prefix

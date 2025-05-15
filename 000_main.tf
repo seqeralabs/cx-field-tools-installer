@@ -202,15 +202,15 @@ locals {
   # Always grant egress anywhere & SSH ingress to EC2 instance. 
   # Add additional ingress restrictions depending on whether ALB is created or not.
   ec2_sg_start = [
-    module.tower_ec2_core_sg.security_group_id,
+    module.sg_ec2_core.security_group_id,
   ]
 
   # Egads this is ugly. Refactor ASAP
   ec2_sg_data_studio = (
     var.flag_enable_data_studio == true  && var.flag_create_load_balancer == true ? 
-    concat(local.ec2_sg_start, [module.tower_alb_connect_sg[0].security_group_id]) :
+    concat(local.ec2_sg_start, [module.sg_alb_connect[0].security_group_id]) :
     var.flag_enable_data_studio == true && var.flag_create_load_balancer == false ?
-        concat(local.ec2_sg_start, [module.tower_ec2_direct_connect_sg[0].security_group_id]) :
+        concat(local.ec2_sg_start, [module.sg_ec2_direct_connect[0].security_group_id]) :
         local.ec2_sg_start
   )
 
@@ -218,16 +218,16 @@ locals {
   # TODO: Build out non-ALB flow.
   ec2_sg_wave_lite = (
     var.flag_use_wave_lite == true && var.flag_create_load_balancer == true ?
-      [module.tower_alb_wave_sg[0].security_group_id] : []
+      [module.sg_alb_wave[0].security_group_id] : []
   )
 
   # TODO: Build out non-ALB Wave flow.
   ec2_sg_final = (
     var.flag_create_load_balancer == true ?
-    # concat(local.ec2_sg_start, [module.tower_ec2_alb_sg[0].security_group_id]) :
-    # concat(local.ec2_sg_start, [module.tower_ec2_direct_sg[0].security_group_id])
-    concat(local.ec2_sg_data_studio, local.ec2_sg_wave_lite, [module.tower_ec2_alb_sg[0].security_group_id]) :
-    concat(local.ec2_sg_data_studio, [module.tower_ec2_direct_sg[0].security_group_id])
+    # concat(local.ec2_sg_start, [module.sg_ec2_alb[0].security_group_id]) :
+    # concat(local.ec2_sg_start, [module.sg_ec2_direct[0].security_group_id])
+    concat(local.ec2_sg_data_studio, local.ec2_sg_wave_lite, [module.sg_ec2_alb[0].security_group_id]) :
+    concat(local.ec2_sg_data_studio, [module.sg_ec2_direct[0].security_group_id])
   )
 
   ec2_sg_final_raw = join(",", [for sg in local.ec2_sg_final : jsonencode(sg)])
@@ -240,7 +240,7 @@ locals {
     ["No CIDR block found"]
   )
 
-  tower_ec2_direct_connect_sg_9090 = [ for cidr_block in var.sg_ingress_cidrs :
+  sg_ec2_direct_connect_9090 = [ for cidr_block in var.sg_ingress_cidrs :
     { 
       from_port   = 9090
       to_port     = 9090
@@ -250,36 +250,36 @@ locals {
     }
   ]
 
-  tower_ec2_direct_connect_sg_final = local.tower_ec2_direct_connect_sg_9090
+  sg_ec2_direct_connect_final = local.sg_ec2_direct_connect_9090
 
   # Using module directly in for loop hangs. Trying with local.
-  tower_alb_sg_security_group_id = module.tower_alb_sg[0].security_group_id
+  sg_alb_security_group_id = module.sg_alb_core[0].security_group_id
 
-  tower_alb_connect_sg_9090 = [ for cidr_block in var.sg_ingress_cidrs :
+  sg_alb_connect_9090 = [ for cidr_block in var.sg_ingress_cidrs :
     { 
       from_port   = 9090
       to_port     = 9090
       protocol    = "tcp"
       description = "Connect-Proxy"
-      # source_security_group_id = module.tower_alb_sg.security_group_id
-      source_security_group_id = local.tower_alb_sg_security_group_id
+      # source_security_group_id = module.sg_alb.security_group_id
+      source_security_group_id = local.sg_alb_security_group_id
     }
   ]
 
-  tower_alb_connect_sg_final = local.tower_alb_connect_sg_9090
+  sg_alb_connect_final = local.sg_alb_connect_9090
 
-  tower_alb_wave_sg_9099 = [ for cidr_block in var.sg_ingress_cidrs :
+  sg_alb_wave_9099 = [ for cidr_block in var.sg_ingress_cidrs :
     { 
       from_port   = 9099
       to_port     = 9099
       protocol    = "tcp"
       description = "ALB_Wave_Lite"
-      # source_security_group_id = module.tower_alb_sg.security_group_id
-      source_security_group_id = local.tower_alb_sg_security_group_id
+      # source_security_group_id = module.sg_alb.security_group_id
+      source_security_group_id = local.sg_alb_security_group_id
     }
   ]
 
-  tower_alb_wave_sg_final = local.tower_alb_wave_sg_9099
+  sg_alb_wave_final = local.sg_alb_wave_9099
 
 
 
