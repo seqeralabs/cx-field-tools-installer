@@ -9,7 +9,12 @@
       To be reverse-compatible with existing installations, I've left tfvars keys as lists
       and process as required within each module call.
 
-    3. For good config examples, see: https://github.com/terraform-aws-modules/terraform-aws-security-group/blob/master/examples/complete/main.tf
+      For good config examples, see: https://github.com/terraform-aws-modules/terraform-aws-security-group/blob/master/examples/complete/main.tf
+
+   3. Nuanced distinction between `sg_ec2_core` vs `sg_ec2_noalb` vs `sg_from_alb_`:
+        - sg_ec2_core     :  Rules that need to be present regardless of how traffic gets to it (inbound SSH & egress)
+        - sg_ec2_noalb_*  :  Rules that allow inbound traffic directly to the EC2 instance when an ALB has not been deployed.
+        - sg_from_alb_*   :  Rules that allow inbound traffic from the ALB when the ALB is deployed.
 */
 
 
@@ -59,7 +64,7 @@ module "sg_ec2_core" {
 # May 15/2025
 # Keeping these three rules separate so that we dont unnecessarily open Ports if they aren't needed.
 # This means the code is a bit more complicated than I would like, but seems worth it for security.
-module "sg_ec2_direct" {
+module "sg_ec2_noalb" {
   source              = "terraform-aws-modules/security-group/aws"
   version             = "5.1.0"
 
@@ -74,7 +79,7 @@ module "sg_ec2_direct" {
 }
 
 
-module "sg_ec2_direct_connect" {
+module "sg_ec2_noalb_connect" {
   source                    = "terraform-aws-modules/security-group/aws"
   version                   = "5.1.0"
 

@@ -180,14 +180,13 @@ locals {
     "https://${var.tower_server_url}"
   )
 
-  tower_base_url     = var.tower_server_url
-  tower_api_endpoint = "${local.tower_server_url}/api"
+  tower_base_url              = var.tower_server_url
+  tower_api_endpoint          = "${local.tower_server_url}/api"
 
-  tower_connect_dns = "connect.${var.tower_server_url}"
-  # This is meant to handle host-matching in the ALB (e.g.):
-  # studio.TOWER_DOMAIN, 123.TOWER_DOMAIN, 456.TOWER_DOMAIN
-  tower_connect_wildcard_dns = "*.${var.tower_server_url}"
-  tower_wave_dns = "wave.${var.tower_server_url}"
+  tower_connect_dns           = "connect.${var.tower_server_url}"
+  # Handle host-matching in the ALB (e.g.): studio.TOWER_DOMAIN, 123.TOWER_DOMAIN, 456.TOWER_DOMAIN
+  tower_connect_wildcard_dns  = "*.${var.tower_server_url}"
+  tower_wave_dns              = "wave.${var.tower_server_url}"
 
   tower_connect_server_url = (
     var.flag_create_load_balancer == false && var.flag_do_not_use_https == true ?
@@ -200,17 +199,18 @@ locals {
   # Security Groups
   # ---------------------------------------------------------------------------------------
   # All module values wrapped in [] to make concat work.
+  # NOTE: If you add a new entry, dont forget to add it to the concat block too!
   sg_ec2_core             = [module.sg_ec2_core.security_group_id]
-  sg_ec2_direct           = try([module.sg_ec2_direct[0].security_group_id], [])
-  sg_ec2_direct_connect   = try([module.sg_ec2_direct_connect[0].security_group_id], [])
+  sg_ec2_noalb            = try([module.sg_ec2_noalb[0].security_group_id], [])
+  sg_ec2_noalb_connect    = try([module.sg_ec2_noalb_connect[0].security_group_id], [])
   sg_from_alb_core        = try([module.sg_from_alb_core[0].security_group_id], [])
   sg_from_alb_connect     = try([module.sg_from_alb_connect[0].security_group_id], [])
   sg_from_alb_wave        = try([module.sg_from_alb_wave[0].security_group_id], [])
 
   sg_ec2_final            = concat(
                               local.sg_ec2_core,
-                              local.sg_ec2_direct,
-                              local.sg_ec2_direct_connect,
+                              local.sg_ec2_noalb,
+                              local.sg_ec2_noalb_connect,
                               local.sg_from_alb_core,
                               local.sg_from_alb_connect,
                               local.sg_from_alb_wave,
@@ -219,29 +219,44 @@ locals {
   ec2_sg_final_raw        = join(",", [for sg in local.sg_ec2_final : jsonencode(sg)])  # Needed?
 
 
-  alb_ingress_cidrs = (
-    var.flag_make_instance_public == true || var.flag_make_instance_private_behind_public_alb == true ? var.sg_ingress_cidrs :
-    var.flag_make_instance_private == true && var.flag_create_new_vpc == true ? distinct(concat([var.vpc_new_cidr_range], var.sg_ingress_cidrs)):
-    var.flag_make_instance_private == true && var.flag_use_existing_vpc == true ? distinct(concat([data.aws_vpc.preexisting.cidr_block], var.sg_ingress_cidrs)) :
-    var.flag_private_tower_without_eice == true && var.flag_use_existing_vpc == true ? distinct(concat([data.aws_vpc.preexisting.cidr_block], var.sg_ingress_cidrs)) :
-    ["No CIDR block found"]
-  )
+  # ALB - Determine which CIDR Blocks to attach to allowed ports
+  # `var.sg_ingress_cidrs` is added to `alb_ingress_cidrs` no matter what because it's possible other IP ranges need to have access to the network.
+  alb_public_access       = var.flag_make_instance_public == true || var.flag_make_instance_private_behind_public_alb == true ? var.sg_ingress_cidrs : []
+  alb_private_new         = var.flag_make_instance_private == true && var.flag_create_new_vpc == true ? [var.vpc_new_cidr_range] : []
+  alb_private_existing    = var.flag_make_instance_private == true && var.flag_use_existing_vpc == true ? [data.aws_vpc.preexisting.cidr_block] : []
+  alb_private_no_eice     = var.flag_private_tower_without_eice == true && var.flag_use_existing_vpc == true ? [data.aws_vpc.preexisting.cidr_block] : []
+
+  alb_ingress_cidrs       = distinct(concat(
+                              var.sg_ingress_cidrs,
+                              local.alb_public_access,
+                              local.alb_private_new,
+                              local.alb_private_existing,
+                              local.alb_private_no_eice
+  ))
+
+  # MAY 16/2025 -- KEEP THIS UNTIL REWRITTEN LOGIC IS CONFIRMED
+  # alb_ingress_cidrs = (
+  #   var.flag_make_instance_public == true || var.flag_make_instance_private_behind_public_alb == true ? var.sg_ingress_cidrs :
+  #   var.flag_make_instance_private == true && var.flag_create_new_vpc == true ? distinct(concat([var.vpc_new_cidr_range], var.sg_ingress_cidrs)):
+  #   var.flag_make_instance_private == true && var.flag_use_existing_vpc == true ? distinct(concat([data.aws_vpc.preexisting.cidr_block], var.sg_ingress_cidrs)) :
+  #   var.flag_private_tower_without_eice == true && var.flag_use_existing_vpc == true ? distinct(concat([data.aws_vpc.preexisting.cidr_block], var.sg_ingress_cidrs)) :
+  #   ["No CIDR block found"]
+  # )
 
 
   # Database
   # ---------------------------------------------------------------------------------------
   # If creating new RDS, get address from TF. IF using existing RDS, get address from user. 
-  populate_external_db = var.flag_create_external_db == true || var.flag_use_existing_external_db == true ? "true" : "false"
+  populate_external_db  = var.flag_create_external_db == true || var.flag_use_existing_external_db == true ? "true" : "false"
 
-  tower_db_root = ( var.flag_use_container_db == true || var.flag_use_existing_external_db == true ? var.tower_db_url : module.rds[0].db_instance_address )
-
-  tower_db_url = "${local.tower_db_root}/${var.db_database_name}${data.external.generate_db_connection_string.result.value}"
-
-  swell_db_url = "${local.tower_db_root}/${var.swell_database_name}${data.external.generate_db_connection_string.result.value}"
+  tower_db_url          = "${local.tower_db_root}/${var.db_database_name}${data.external.generate_db_connection_string.result.value}"
+  swell_db_url          = "${local.tower_db_root}/${var.swell_database_name}${data.external.generate_db_connection_string.result.value}"
+  tower_db_root         = var.flag_use_container_db == true || var.flag_use_existing_external_db == true ? var.tower_db_url : module.rds[0].db_instance_address
 
 
   # Redis
   # ---------------------------------------------------------------------------------------
+  # TODO: May 16/2025 -- This Redis is unsecured (unlike Wave). To be fixed in post-Wave-Lite Feature Release.
   tower_redis_url = (
     var.flag_create_external_redis == true ?
     "redis://${aws_elasticache_cluster.redis[0].cache_nodes[0].address}:${aws_elasticache_cluster.redis[0].cache_nodes[0].port}" :
@@ -249,6 +264,7 @@ locals {
   )
 
   #  Connect logic seems to append `redis://` as prefix. Breaks if we reuse `tower_redis_url`.
+  # TODO: May 16/2025 -- post-Wave-Lite Feature Release, check if auto-appending behaviour still happening.
   tower_connect_redis_url = (
     var.flag_create_external_redis == true ?
     "${aws_elasticache_cluster.redis[0].cache_nodes[0].address}:${aws_elasticache_cluster.redis[0].cache_nodes[0].port}" :

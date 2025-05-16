@@ -286,7 +286,7 @@ With that said, for design purposes, this tool assumes that multiple project ins
 | <a name="tower_eice_egress_sg"></a> [tower_eice_egress_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
 | <a name="sg_ec2_core"></a> [sg_ec2_core](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
 | <a name="sg_ec2_core"></a> [sg_ec2_core](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
-| <a name="sg_ec2_direct"></a> [sg_ec2_direct](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
+| <a name="sg_ec2_noalb"></a> [sg_ec2_noalb](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
 | <a name="sg_alb_core"></a> [sg_alb_core](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
 | <a name="sg_db"></a> [sg_db](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
 | <a name="sg_batch"></a> [sg_batch](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
