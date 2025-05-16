@@ -203,16 +203,20 @@ locals {
   sg_ec2_core             = [module.sg_ec2_core.security_group_id]
   sg_ec2_direct           = try([module.sg_ec2_direct[0].security_group_id], [])
   sg_ec2_direct_connect   = try([module.sg_ec2_direct_connect[0].security_group_id], [])
-  sg_ec2_wave             = try([module.sg_ec2_wave[0].security_group_id], [])
-  sg_ec2_alb              = try([module.sg_ec2_alb[0].security_group_id], [])
+  sg_from_alb_core        = try([module.sg_from_alb_core[0].security_group_id], [])
+  sg_from_alb_connect     = try([module.sg_from_alb_connect[0].security_group_id], [])
+  sg_from_alb_wave        = try([module.sg_from_alb_wave[0].security_group_id], [])
+
   sg_ec2_final            = concat(
                               local.sg_ec2_core,
                               local.sg_ec2_direct,
                               local.sg_ec2_direct_connect,
-                              local.sg_ec2_wave,
-                              local.sg_ec2_alb
+                              local.sg_from_alb_core,
+                              local.sg_from_alb_connect,
+                              local.sg_from_alb_wave,
+                              
   )
-  ec2_sg_final_raw        = join(",", [for sg in local.sg_ec2_final : jsonencode(sg)])
+  ec2_sg_final_raw        = join(",", [for sg in local.sg_ec2_final : jsonencode(sg)])  # Needed?
 
 
   alb_ingress_cidrs = (
@@ -222,49 +226,6 @@ locals {
     var.flag_private_tower_without_eice == true && var.flag_use_existing_vpc == true ? distinct(concat([data.aws_vpc.preexisting.cidr_block], var.sg_ingress_cidrs)) :
     ["No CIDR block found"]
   )
-
-  sg_ec2_direct_connect_9090 = [ for cidr_block in var.sg_ingress_cidrs :
-    { 
-      from_port   = 9090
-      to_port     = 9090
-      protocol    = "tcp"
-      description = "Connect-Proxy"
-      cidr_blocks = cidr_block
-    }
-  ]
-
-  sg_ec2_direct_connect_final = local.sg_ec2_direct_connect_9090
-
-  # Using module directly in for loop hangs. Trying with local.
-  sg_alb_security_group_id = module.sg_alb_core[0].security_group_id
-
-  sg_alb_connect_9090 = [ for cidr_block in var.sg_ingress_cidrs :
-    { 
-      from_port   = 9090
-      to_port     = 9090
-      protocol    = "tcp"
-      description = "Connect-Proxy"
-      # source_security_group_id = module.sg_alb.security_group_id
-      source_security_group_id = local.sg_alb_security_group_id
-    }
-  ]
-
-  sg_alb_connect_final = local.sg_alb_connect_9090
-
-  sg_ec2_wave_9099 = [ for cidr_block in var.sg_ingress_cidrs :
-    { 
-      from_port   = 9099
-      to_port     = 9099
-      protocol    = "tcp"
-      description = "ALB_Wave_Lite"
-      # source_security_group_id = module.sg_alb.security_group_id
-      source_security_group_id = local.sg_alb_security_group_id
-    }
-  ]
-
-  sg_ec2_wave_final = local.sg_ec2_wave_9099
-
-
 
 
   # Database

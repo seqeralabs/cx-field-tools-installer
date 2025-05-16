@@ -8,6 +8,8 @@
 
       To be reverse-compatible with existing installations, I've left tfvars keys as lists
       and process as required within each module call.
+
+    3. For good config examples, see: https://github.com/terraform-aws-modules/terraform-aws-security-group/blob/master/examples/complete/main.tf
 */
 
 
@@ -76,29 +78,62 @@ module "sg_ec2_direct_connect" {
   source                    = "terraform-aws-modules/security-group/aws"
   version                   = "5.1.0"
 
-  count                     = var.flag_enable_data_studio == true ? 1 : 0
+  count                     = var.flag_create_load_balancer == false && var.flag_enable_data_studio == true ? 1 : 0
 
   name                      = "${local.global_prefix}_ec2_direct_connect"
-  description               = "Direct HTTP to Tower EC2 host when Connect active."
+  description               = "Direct HTTP (9090) traffic to EC2."
 
   vpc_id                    = local.vpc_id
-  ingress_with_cidr_blocks  = local.sg_ec2_direct_connect_final
+  computed_ingress_with_cidr_blocks = [
+    {
+      from_port     = 9090
+      to_port       = 9090
+      protocol      = "tcp"
+      description   = "Connect-Proxy"
+      cidr_blocks   = "${join(",", var.sg_ingress_cidrs)}"
+    }
+  ]
+  number_of_computed_ingress_with_source_security_group_id = 1
 }
 
 
-module "sg_ec2_alb" {
+module "sg_from_alb_core" {
   source                    = "terraform-aws-modules/security-group/aws"
   version                   = "5.1.0"
 
   count                     = var.flag_create_load_balancer == true ? 1 : 0
 
-  name                      = "${local.global_prefix}_ec2_alb"
-  description               = "ALB HTTP (8000) traffic to EC2."
+  name                      = "${local.global_prefix}_from_alb_core"
+  description               = "Allow HTTP (8000) traffic via ALB."
 
   vpc_id                    = local.vpc_id
   computed_ingress_with_source_security_group_id = [
     {
-      rule                     = "splunk-web-tcp"     # splunk is port 8000
+      rule                     = "splunk-web-tcp"
+      source_security_group_id = module.sg_alb_core[0].security_group_id
+    }
+  ]
+  number_of_computed_ingress_with_source_security_group_id = 1
+}
+
+
+
+module "sg_from_alb_connect" {
+  source                    = "terraform-aws-modules/security-group/aws"
+  version                   = "5.1.0"
+
+  count                     = var.flag_create_load_balancer == true && var.flag_enable_data_studio == true ? 1 : 0
+
+  name                      = "${local.global_prefix}_from_alb_connect"
+  description               = "Allow Studio traffic via ALB."
+
+  vpc_id                    = local.vpc_id
+  computed_ingress_with_source_security_group_id = [
+    {
+      from_port   = 9090
+      to_port     = 9090
+      protocol    = "tcp"
+      description = "Studio"
       source_security_group_id = module.sg_alb_core[0].security_group_id
     }
   ]
@@ -107,17 +142,25 @@ module "sg_ec2_alb" {
 
 
 # Wave Lite only currently supported via ALB
-module "sg_ec2_wave" {
+module "sg_from_alb_wave" {
   source                    = "terraform-aws-modules/security-group/aws"
   version                   = "5.1.0"
 
   count                     = var.flag_create_load_balancer == true && var.flag_use_wave_lite == true ? 1 : 0
 
-  name                      = "${local.global_prefix}_alb_wave"
-  description               = "Allow Wave Lite traffic to EC2."
+  name                      = "${local.global_prefix}_from_alb_wave"
+  description               = "Allow Wave Lite traffic via ALB."
 
   vpc_id                    = local.vpc_id
-  computed_ingress_with_source_security_group_id= local.sg_ec2_wave_final
+  computed_ingress_with_source_security_group_id = [
+    {
+      from_port   = 9099
+      to_port     = 9099
+      protocol    = "tcp"
+      description = "Wave_Lite"
+      source_security_group_id = module.sg_alb_core[0].security_group_id
+    }
+  ]
   number_of_computed_ingress_with_source_security_group_id = 1
 }
 
@@ -131,28 +174,13 @@ module "sg_alb_core" {
 
   count                     = var.flag_create_load_balancer == true ? 1 : 0
 
-  name                      = "${local.global_prefix}_alb"
-  description               = "Allow HTTP & HTTPS to ALB."
+  name                      = "${local.global_prefix}_alb_core"
+  description               = "Allow HTTP (80, 443) to ALB."
 
   vpc_id                    = local.vpc_id
   ingress_cidr_blocks       = local.alb_ingress_cidrs
   ingress_rules             = ["https-443-tcp", "http-80-tcp"]
   egress_rules              = var.sg_egress_tower_alb
-}
-
-
-module "sg_alb_connect" {
-  source                    = "terraform-aws-modules/security-group/aws"
-  version                   = "5.1.0"
-
-  count                     = var.flag_create_load_balancer == true && var.flag_enable_data_studio == true ? 1 : 0
-
-  name                      = "${local.global_prefix}_alb_connect"
-  description               = "Allow Connect Proxy traffic to ALB."
-
-  vpc_id                    = local.vpc_id
-  computed_ingress_with_source_security_group_id= local.sg_alb_connect_final
-  number_of_computed_ingress_with_source_security_group_id = 1
 }
 
 

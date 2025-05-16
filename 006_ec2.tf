@@ -72,11 +72,11 @@ resource "aws_launch_template" "lt_with_ami_lifecycle" {
 
   count = var.ec2_update_ami_if_available == false ? 1 : 0
 
-  image_id      = data.aws_ami.amazon_linux_2023.id
-  instance_type = var.ec2_host_instance_type
+  image_id                = data.aws_ami.amazon_linux_2023.id
+  instance_type           = var.ec2_host_instance_type
 
-  vpc_security_group_ids = local.sg_ec2_final
-  key_name               = aws_key_pair.generated_key.key_name
+  vpc_security_group_ids  = local.sg_ec2_final
+  key_name                = aws_key_pair.generated_key.key_name
 
   iam_instance_profile {
     name = data.aws_iam_instance_profile.tower_vm.name
