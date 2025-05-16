@@ -52,7 +52,7 @@ resource "aws_launch_template" "lt_with_no_ami_lifecycle" {
   image_id      = data.aws_ami.amazon_linux_2023.id
   instance_type = var.ec2_host_instance_type
 
-  vpc_security_group_ids = local.ec2_sg_final
+  vpc_security_group_ids = local.sg_ec2_final
   key_name               = aws_key_pair.generated_key.key_name
 
   iam_instance_profile {
@@ -75,7 +75,7 @@ resource "aws_launch_template" "lt_with_ami_lifecycle" {
   image_id      = data.aws_ami.amazon_linux_2023.id
   instance_type = var.ec2_host_instance_type
 
-  vpc_security_group_ids = local.ec2_sg_final
+  vpc_security_group_ids = local.sg_ec2_final
   key_name               = aws_key_pair.generated_key.key_name
 
   iam_instance_profile {

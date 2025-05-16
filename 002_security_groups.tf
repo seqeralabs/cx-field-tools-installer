@@ -64,7 +64,7 @@ module "sg_ec2_direct" {
   count               = var.flag_create_load_balancer == false ? 1 : 0
 
   name                = "${local.global_prefix}_ec2_direct"
-  description         = "Direct HTTP traffic to EC2."
+  description         = "Direct HTTP (80, 443, and 8000) traffic to EC2."
 
   vpc_id              = local.vpc_id
   ingress_cidr_blocks = var.sg_ingress_cidrs
@@ -93,15 +93,31 @@ module "sg_ec2_alb" {
   count                     = var.flag_create_load_balancer == true ? 1 : 0
 
   name                      = "${local.global_prefix}_ec2_alb"
-  description               = "ALB HTTP traffic to EC2."
+  description               = "ALB HTTP (8000) traffic to EC2."
 
   vpc_id                    = local.vpc_id
   computed_ingress_with_source_security_group_id = [
     {
-      rule                     = "splunk-web-tcp"
+      rule                     = "splunk-web-tcp"     # splunk is port 8000
       source_security_group_id = module.sg_alb_core[0].security_group_id
     }
   ]
+  number_of_computed_ingress_with_source_security_group_id = 1
+}
+
+
+# Wave Lite only currently supported via ALB
+module "sg_ec2_wave" {
+  source                    = "terraform-aws-modules/security-group/aws"
+  version                   = "5.1.0"
+
+  count                     = var.flag_create_load_balancer == true && var.flag_use_wave_lite == true ? 1 : 0
+
+  name                      = "${local.global_prefix}_alb_wave"
+  description               = "Allow Wave Lite traffic to EC2."
+
+  vpc_id                    = local.vpc_id
+  computed_ingress_with_source_security_group_id= local.sg_ec2_wave_final
   number_of_computed_ingress_with_source_security_group_id = 1
 }
 
@@ -136,22 +152,6 @@ module "sg_alb_connect" {
 
   vpc_id                    = local.vpc_id
   computed_ingress_with_source_security_group_id= local.sg_alb_connect_final
-  number_of_computed_ingress_with_source_security_group_id = 1
-}
-
-
-# Wave Lite only currently supported via ALB
-module "sg_alb_wave" {
-  source                    = "terraform-aws-modules/security-group/aws"
-  version                   = "5.1.0"
-
-  count                     = var.flag_create_load_balancer == true && var.flag_use_wave_lite == true ? 1 : 0
-
-  name                      = "${local.global_prefix}_alb_wave"
-  description               = "Allow Wave Lite traffic to ALB."
-
-  vpc_id                    = local.vpc_id
-  computed_ingress_with_source_security_group_id= local.sg_alb_wave_final
   number_of_computed_ingress_with_source_security_group_id = 1
 }
 

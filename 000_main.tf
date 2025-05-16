@@ -78,8 +78,8 @@ locals {
 
   # Networking
   # ---------------------------------------------------------------------------------------
-  vpc_id = var.flag_create_new_vpc == true ? module.vpc[0].vpc_id : var.vpc_existing_id
-  vpc_private_route_table_ids = var.flag_create_new_vpc == true ? module.vpc[0].private_route_table_ids : data.aws_route_tables.preexisting.ids
+  vpc_id                        = var.flag_create_new_vpc == true ? module.vpc[0].vpc_id : var.vpc_existing_id
+  vpc_private_route_table_ids   = var.flag_create_new_vpc == true ? module.vpc[0].private_route_table_ids : data.aws_route_tables.preexisting.ids
 
   # If creating VPC from scratch, map all subnet CIDRS to corresponding subnet ID
   #  zipmap -- turn 2 lists into a dictionary. https://developer.hashicorp.com/terraform/language/functions/zipmap
@@ -199,38 +199,21 @@ locals {
 
   # Security Groups
   # ---------------------------------------------------------------------------------------
-  # Always grant egress anywhere & SSH ingress to EC2 instance. 
-  # Add additional ingress restrictions depending on whether ALB is created or not.
-  ec2_sg_start = [
-    module.sg_ec2_core.security_group_id,
-  ]
-
-  # Egads this is ugly. Refactor ASAP
-  ec2_sg_data_studio = (
-    var.flag_enable_data_studio == true  && var.flag_create_load_balancer == true ? 
-    concat(local.ec2_sg_start, [module.sg_alb_connect[0].security_group_id]) :
-    var.flag_enable_data_studio == true && var.flag_create_load_balancer == false ?
-        concat(local.ec2_sg_start, [module.sg_ec2_direct_connect[0].security_group_id]) :
-        local.ec2_sg_start
+  # All module values wrapped in [] to make concat work.
+  sg_ec2_core             = [module.sg_ec2_core.security_group_id]
+  sg_ec2_direct           = try([module.sg_ec2_direct[0].security_group_id], [])
+  sg_ec2_direct_connect   = try([module.sg_ec2_direct_connect[0].security_group_id], [])
+  sg_ec2_wave             = try([module.sg_ec2_wave[0].security_group_id], [])
+  sg_ec2_alb              = try([module.sg_ec2_alb[0].security_group_id], [])
+  sg_ec2_final            = concat(
+                              local.sg_ec2_core,
+                              local.sg_ec2_direct,
+                              local.sg_ec2_direct_connect,
+                              local.sg_ec2_wave,
+                              local.sg_ec2_alb
   )
+  ec2_sg_final_raw        = join(",", [for sg in local.sg_ec2_final : jsonencode(sg)])
 
-  # Have I used concat stupidly here? Maybe I should have just kept everything as its own array / blank and concatted at the end?
-  # TODO: Build out non-ALB flow.
-  ec2_sg_wave_lite = (
-    var.flag_use_wave_lite == true && var.flag_create_load_balancer == true ?
-      [module.sg_alb_wave[0].security_group_id] : []
-  )
-
-  # TODO: Build out non-ALB Wave flow.
-  ec2_sg_final = (
-    var.flag_create_load_balancer == true ?
-    # concat(local.ec2_sg_start, [module.sg_ec2_alb[0].security_group_id]) :
-    # concat(local.ec2_sg_start, [module.sg_ec2_direct[0].security_group_id])
-    concat(local.ec2_sg_data_studio, local.ec2_sg_wave_lite, [module.sg_ec2_alb[0].security_group_id]) :
-    concat(local.ec2_sg_data_studio, [module.sg_ec2_direct[0].security_group_id])
-  )
-
-  ec2_sg_final_raw = join(",", [for sg in local.ec2_sg_final : jsonencode(sg)])
 
   alb_ingress_cidrs = (
     var.flag_make_instance_public == true || var.flag_make_instance_private_behind_public_alb == true ? var.sg_ingress_cidrs :
@@ -268,7 +251,7 @@ locals {
 
   sg_alb_connect_final = local.sg_alb_connect_9090
 
-  sg_alb_wave_9099 = [ for cidr_block in var.sg_ingress_cidrs :
+  sg_ec2_wave_9099 = [ for cidr_block in var.sg_ingress_cidrs :
     { 
       from_port   = 9099
       to_port     = 9099
@@ -279,7 +262,7 @@ locals {
     }
   ]
 
-  sg_alb_wave_final = local.sg_alb_wave_9099
+  sg_ec2_wave_final = local.sg_ec2_wave_9099
 
 
 
@@ -304,8 +287,8 @@ locals {
     "redis://redis:6379"
   )
 
-    #  Connect logic seems to append `redis://` as prefix. Breaks if we reuse `tower_redis_url`.
-    tower_connect_redis_url = (
+  #  Connect logic seems to append `redis://` as prefix. Breaks if we reuse `tower_redis_url`.
+  tower_connect_redis_url = (
     var.flag_create_external_redis == true ?
     "${aws_elasticache_cluster.redis[0].cache_nodes[0].address}:${aws_elasticache_cluster.redis[0].cache_nodes[0].port}" :
     "redis:6379"
