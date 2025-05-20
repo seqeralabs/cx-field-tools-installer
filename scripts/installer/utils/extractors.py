@@ -22,6 +22,7 @@ def get_tfvars_as_json():
 
     try:
         # Create a temporary file for Docker output
+        # delete=True would delete the tmp file as soon as the `with` block exits but we need the file further down
         with tempfile.NamedTemporaryFile(delete=False, prefix=f"terraform_tfvars_{timestamp}_", suffix=".json", dir="/tmp") as temp_output:
             output_path = temp_output.name
 
@@ -32,7 +33,7 @@ def get_tfvars_as_json():
                 "-v", f"{os.getcwd()}:/tmp:ro",            # read-only mount
                 "--user", "1000:1000",                     # non-root user (adjust UID/GID if needed or user current user)
                 "--network", "none",                       # disable network
-                "tmccombs/hcl2json",
+                "tmccombs/hcl2json@sha256:312ac54d3418b87b2ad64f82027483cb8b7750db6458b7b9ebe42ec278696e96",
                 "/tmp/terraform.tfvars"
             ]
 
@@ -47,5 +48,5 @@ def get_tfvars_as_json():
     with open(output_path, "r") as json_file:
         return json.load(json_file)
     
-    # TODO: clean up after using the json?
+    # TODO: Should script clean up after using the json
     # os.remove(output_path)
