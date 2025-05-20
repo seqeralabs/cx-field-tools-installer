@@ -85,7 +85,7 @@
     ansible.builtin.shell: |
       cd /home/ec2-user && source ~/.bashrc
 
-      if [[ $WAVE_LITE_ACIVATED == true && $DB_POPULATE_EXTERNAL_INSTANCE == true ]]; then
+      if [[ $WAVE_LITE_ACTIVATED == true && $DB_POPULATE_EXTERNAL_INSTANCE == true ]]; then
         echo "Populating Wave Lite Postgres"
 
         export wave_lite_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/wave-lite/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
