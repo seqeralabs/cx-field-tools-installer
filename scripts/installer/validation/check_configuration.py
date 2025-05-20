@@ -578,6 +578,11 @@ def verify_redis_version(data: SimpleNamespace):
 
 
 def verify_wave(data: SimpleNamespace):
+    if (data.flag_use_wave == True) and ((data.flag_create_external_db == False) or (data.flag_create_external_redis == False)):
+        logger.warning(
+            "WARNING: You are running Wave Lite without a managed DB/Redis. Seqera will not troubleshoot Wave Lite deployments not using managed services."
+        )
+        
     if (data.flag_use_wave == True) and (data.flag_use_wave_lite == True):
         log_error_and_exit(
             "`flag_use_wave` and `flag_use_wave_lite` cannot both be set to true."
@@ -587,7 +592,28 @@ def verify_wave(data: SimpleNamespace):
         if data.wave_server_url in ['https://wave.seqera.io']:
             log_error_and_exit(
             "`Your Wave Lite URL is pointing to the Seqera-hosted Wave service. Please modify `wave_server_url`."
+            )
+
+    if (data.flag_use_wave_lite == True) and (data.flag_create_load_balancer == False):
+        log_error_and_exit(
+            "Wave Lite is only supported by deployments fronted by an ALB. Please set `flag_create_load_balancer = true`."
         )
+
+
+def verify_ssh_access(data: SimpleNamespace):
+    # VM needs to be sitting in public subnet in order to connect to it by SSH directly (instead of EICE). 
+    # I often try this with VM in private subnet and it takes awhile to figure out why. Adding check.
+    if (data.flag_make_instance_public == True):
+        if (data.flag_create_new_vpc == True):
+            if data.vpc_new_ec2_subnets[0] not in data.vpc_new_public_subnets:
+                log_error_and_exit(
+                    "You have set `flag_make_instance_public = true` but your EC2 is in a private subnet. SSH will fail. Please fix."
+                )
+
+        if (data.flag_use_existing_vpc == True):
+            logger.warning(
+                "You have set `flag_make_instance_public = true`. Please ensure `vpc_existing_ec2_subnets` is populated by a public subnet CIDR."
+            )
 
 
 # -------------------------------------------------------------------------------
@@ -674,6 +700,13 @@ if __name__ == "__main__":
     logger.info("-" * 50)
     verify_wave(data)
 
+    # Verify Public/Private Subnet settings
+    print("\n")
+    logger.info("Verifying Subnet settings")
+    logger.info("-" * 50)
+    verify_ssh_access(data)
+
+    print("\n")
     logger.info("Finished tfvars configuration check.")
 
     exit()

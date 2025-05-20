@@ -280,7 +280,7 @@ locals {
 
       vpc_id         = local.vpc_id,
       subnets        = local.subnet_ids_ec2,
-      securityGroups = [module.tower_batch_sg.security_group_id], # local.ec2_sg_final,
+      securityGroups = [module.sg_batch.security_group_id], # local.sg_ec2_final,
       ec2KeyPair     = aws_key_pair.generated_key.key_name,
 
       use_fusion_v2    = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",
@@ -306,28 +306,28 @@ locals {
     {
       app_name = var.app_name,
 
-      flag_generate_private_cacert     = tostring(var.flag_generate_private_cacert),
-      flag_use_existing_private_cacert = tostring(var.flag_use_existing_private_cacert),
-      flag_do_not_use_https            = tostring(var.flag_do_not_use_https),
+      flag_generate_private_cacert          = tostring(var.flag_generate_private_cacert),
+      flag_use_existing_private_cacert      = tostring(var.flag_use_existing_private_cacert),
+      flag_do_not_use_https                 = tostring(var.flag_do_not_use_https),
 
       bucket_prefix_for_new_private_ca_cert = var.bucket_prefix_for_new_private_ca_cert,
       existing_ca_cert_file                 = var.existing_ca_cert_file,
       existing_ca_key_file                  = var.existing_ca_key_file,
 
-      populate_external_db = local.populate_external_db,
-      tower_db_url         = local.tower_db_root,
-      db_database_name     = var.db_database_name,
+      populate_external_db                  = local.populate_external_db,
+      tower_db_url                          = local.tower_db_root,
+      db_database_name                      = var.db_database_name,
 
-      populate_wave_lite   = var.flag_use_wave_lite,
-      wave_lite_db_url     = local.wave_lite_db_url,
+      use_wave_lite                         = var.flag_use_wave_lite,
+      wave_lite_db_url                      = local.wave_lite_db_url,
 
-      docker_compose_file = local.docker_compose_file,
+      docker_compose_file                   = local.docker_compose_file,
 
-      tower_base_url     = local.tower_base_url,
-      tower_server_url   = local.tower_server_url,
-      tower_api_endpoint = local.tower_api_endpoint,
+      tower_base_url                        = local.tower_base_url,
+      tower_server_url                      = local.tower_server_url,
+      tower_api_endpoint                    = local.tower_api_endpoint,
 
-      flag_create_hosts_file_entry = var.flag_create_hosts_file_entry
+      flag_create_hosts_file_entry          = var.flag_create_hosts_file_entry
 
     }
   )

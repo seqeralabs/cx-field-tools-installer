@@ -52,7 +52,7 @@ resource "aws_launch_template" "lt_with_no_ami_lifecycle" {
   image_id      = data.aws_ami.amazon_linux_2023.id
   instance_type = var.ec2_host_instance_type
 
-  vpc_security_group_ids = local.ec2_sg_final
+  vpc_security_group_ids = local.sg_ec2_final
   key_name               = aws_key_pair.generated_key.key_name
 
   iam_instance_profile {
@@ -72,11 +72,11 @@ resource "aws_launch_template" "lt_with_ami_lifecycle" {
 
   count = var.ec2_update_ami_if_available == false ? 1 : 0
 
-  image_id      = data.aws_ami.amazon_linux_2023.id
-  instance_type = var.ec2_host_instance_type
+  image_id                = data.aws_ami.amazon_linux_2023.id
+  instance_type           = var.ec2_host_instance_type
 
-  vpc_security_group_ids = local.ec2_sg_final
-  key_name               = aws_key_pair.generated_key.key_name
+  vpc_security_group_ids  = local.sg_ec2_final
+  key_name                = aws_key_pair.generated_key.key_name
 
   iam_instance_profile {
     name = data.aws_iam_instance_profile.tower_vm.name
@@ -167,7 +167,7 @@ resource "aws_ec2_instance_connect_endpoint" "example" {
   count = var.flag_make_instance_private == true || var.flag_make_instance_private_behind_public_alb == true ? 1 : 0
 
   subnet_id          = local.subnet_ids_ec2[0]
-  security_group_ids = [module.tower_eice_egress_sg.security_group_id]
+  security_group_ids = [module.sg_eice.security_group_id]
 
   tags = {
     Name = local.global_prefix

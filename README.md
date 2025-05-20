@@ -284,12 +284,12 @@ With that said, for design purposes, this tool assumes that multiple project ins
 | <a name="vpc"></a> [vpc](001_vpc.tf) | [terraform-aws-modules/s3-bucket/aws](https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/5.1.2) | 5.1.2 |
 | <a name="tower_eice_ingress_sg"></a> [tower_eice_ingress_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
 | <a name="tower_eice_egress_sg"></a> [tower_eice_egress_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
-| <a name="tower_ec2_ssh_sg"></a> [tower_ec2_ssh_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
-| <a name="tower_ec2_egress_sg"></a> [tower_ec2_egress_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
-| <a name="tower_ec2_direct_sg"></a> [tower_ec2_direct_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
-| <a name="tower_alb_sg"></a> [tower_alb_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
-| <a name="tower_db_sg"></a> [tower_db_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
-| <a name="tower_batch_sg"></a> [tower_batch_sg](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
+| <a name="sg_ec2_core"></a> [sg_ec2_core](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
+| <a name="sg_ec2_core"></a> [sg_ec2_core](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
+| <a name="sg_ec2_noalb"></a> [sg_ec2_noalb](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
+| <a name="sg_alb_core"></a> [sg_alb_core](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
+| <a name="sg_db"></a> [sg_db](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
+| <a name="sg_batch"></a> [sg_batch](002_security_groups.tf) | [terraform-aws-modules/security-group/aws](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/5.1.0) | 5.1.0 |
 | <a name="rds"></a> [rds](003_database.tf) | [terraform-aws-modules/rds/aws](https://registry.terraform.io/modules/terraform-aws-modules/rds/aws/6.1.1) | 6.1.1 |
 | <a name="alb"></a> [alb](007_load_balancer.tf) | [terraform-aws-modules/alb/aws](https://registry.terraform.io/modules/terraform-aws-modules/alb/aws/8.7.0) | 8.7.0 |
 
