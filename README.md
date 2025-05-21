@@ -1,6 +1,6 @@
 # Terraform Installer For Seqera Platform Enterprise (Docker-Compose)
 
-A successful Seqera Platforn deployment requires many decisions about networking, security posture, container orchestration, permissions, etc. which can sometimes be overwhelming to a client administrator who just wants to get their users onboarded and using the features offered by the Platform. 
+A successful Seqera Platform deployment requires making decisions about networking, security posture, container orchestration, permissions, etc. which can sometimes be overwhelming to a client administrator who just wants to get their users onboarded and using the features offered by the Platform. 
 
 The Seqera CX team has developed a field tool to simplify deployment in two ways:
 
@@ -17,16 +17,13 @@ The solution is delivered on a best-effort basis, but provides no guarantees of 
 
 For further information on how the project is managed, please see:
 
-- [Design Decisions](documentation/design_decisions.md)
-
+- [Design Decisions](documentation/design_decisions.md)<br />
     Information about project structure, design decisions, and assumptions made.
 
-- [Security Scanning](documentation/security.md)
-
+- [Security Scanning](documentation/security.md)<br />
     How we scan for / mitigate security vulnerabilities found within the solution.
 
-- [Deficiencies & Gotchas](documentation/deficiencies_and_gotchas.md)
-
+- [Deficiencies & Gotchas](documentation/deficiencies_and_gotchas.md)<br />
     Information on existing deficiencies and gotchas.
 
 
@@ -39,152 +36,107 @@ You must meet the following criteria to use this solution successfully.
 4. You have access to a local **Linux**-based terminal (_Mac supported, with caveats_).
 5. You can use [Terraform](https://www.terraform.io/) to provision infrastructure.
 6. You use OpenSSH and can maintain a `~/.ssh/config` file. 
-7. **(New as of May 21, 2025)** You have access to a local container runtime (_e.g. [Docker](https://www.docker.com/ _).
+7. **(New as of May 21, 2025)** You have access to a local container runtime (_e.g. [Docker](https://www.docker.com/_).
 
 
-## Pre-Requisites
-### Tool Dependencies
-See [Tool Dependencies](./documentation/setup/install_tools.md) for pre-requisite installation instructions.
+## <br />Prerequisites
+#### Tool Dependencies
+See [Tool Dependencies](./documentation/setup/install_tools.md) for tooling requirements. 
 
 
-### AWS IAM Permissions
-See [Permissions](./documentation/setup/permissions.md) for the necessary AWS IAM permissions required.
+#### AWS IAM Permissions
+See [Permissions](./documentation/setup/permissions.md) for the required AWS IAM permissions.
 
 
-## Configuration Steps
-See [Configuration Files](./documentation/setup/configuration_files.md) for details on the files you'll interact with.
+## <br />Configuration Steps (Mandatory)
+See [Configuration Files](./documentation/setup/configuration_files.md) for file details.
 
 
-### 01 - Clone the repository
-
+#### 01: Clone the repository
 1. Download a copy of the repository to your local workstation:
 
     ```bash
     git clone <path_to_offical_repo> && cd <name_of_local_directory>
     ```
 
-### 02 - Prepare Configuration Files
 
-1. Select a name for your Seqera Platform application (default: `tower-dev`).
+#### 02: Prepare Configuration Files
+1. Select a name for your Seqera Platform application (_default: `tower-dev`_).
     
-    This is a namespace isolator which prevents concurrent instances (_e.g., `dev` and `prod`_) from accidentally sharing configurations. 
+    _This is a namespace isolator which prevents concurrent instances (e.g., `dev` and `prod`) from accidentally sharing configurations._
 
-    Remember this value because you will need it to modify the templated configuration files in the next step.
 
-#### 02A - Prepare secrets 
-
+#### 02A: Prepare secrets 
 1. Follow the instructions in [Prepare Secrets](./documentation/setup/prepare_secrets.md) and then return here.
 
+2. Follow the instructions in [Prepare SSM Secrets](./documentation/setup/prepare_ssm.md) and then return here.
 
-2. Decide on the [AWS Parameter Store prefixes](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-su-create.html) to store the payloads of your now-populated `ssm_*` files.
-
-    Default values in `terraform.tfvars` are:
-    - `/seqera/sensitive_values/tower_dev/tower`
-    - `/seqera/sensitive_values/tower_dev/seqerakit`
-    - `/seqera/sensitive_values/tower_dev/groundswell`
-    - `/seqera/sensitive_values/tower_dev/wave-lite`
+    _Remember your application name and SSM prefixes, as these are required for later configuration steps._
 
 
-3. Create the entries and paste the appropriate JSON payload for each. Ensure that:
-
-    1. **Type** is set to `SecureString`.
-    2. **Data type** is `text`.
+#### 02B: Prepare the `terraform.tfvars` file
+1. Follow the instructions in [Prepare TFvars](./documentation/setup/prepare_tfvars.md).
 
 
-Remember your application name and SSM prefixes, as these need to be supplied during the configuration of the `terrform.tfvars` file.
+#### 03: Create an AWS IAM Role with the necessary permissions
+1. Follow the instructions in [Prepare AWS IAM Permissions](/documentation/setup/prepare_aws_iam.md).
 
 
-### 03 - Prepare the `terraform.tfvars` file
+#### 04: Modify OpenSSH config
 
-1. Follow the instructions in [Prepare TFvars](./documentation/setup/prepare_tfvars.md) and then return here.
-
-
+1. Follow the instructions in [Prepare OpenSSH](/documentation/setup/prepare_openssh.md).
 
 
-### 04 - Create an AWS IAM Role with the necessary permissions
+## <br />Configuration Steps (Optional)
+The following configuration actions are encouraged but not mandatory.
 
-1. Modify the [JSON block](documentation/setup/permissions.md) in the `documentation` folder:
+#### 01: Review your Terraform state storage strategy
+1. Follow the instructions in [Review Terraform State Strategy](./documentation/setup/optional_tfstate.md).
 
-    1. Perform a find-and-replace on `APP_NAME_REPLACE_ME` (_suggested default is `tower-dev`_).
-
-    2. Replace every `AWS_REGION_REPLACE_ME` with your desired AWS region.
-    
-    3. Replace every `AWS_ACCOUNT_REPLACE_ME` instance with the id of the AWS Account which the Terraform installer will interact with.
-    
-2. Create an AWS IAM Role / User and attach these permissions.
-
-3. Configure this identity into your AWS CLI and ensure it is active when executing the installer (specified  in `var.aws_profile`).
+#### 02: Update your Git repo settings
+1. Follow the instructions in [Update Githooks Settings](./documentation/setup/optional_githook.md).
 
 
-### 05 - Modify your OpenSSH config
 
-During the installation process, a [SSH config file](https://man.openbsd.org/ssh_config) is created and used to connect to the EC2 instance hosting the Seqera Platform instance. To use the SSH config file successfully, you need a minor modification to your `openssh` configuration:
+## <br />Execution Steps
 
-```bash
-# Add the following entry AT THE TOP of your ~/.ssh/config file
-Include /ABSOLUTE_PATH_TO_INSTALLER_PROJECT_ROOT/ssh_config
+#### Deployment
 
-# NOTE: IF you intend to run multiple instances on the same host (e.g. dev and staging), add an Include to each project folder.
-Include /ABSOLUTE_PATH_TO_INSTALLER_PROJECT_ROOT_DEV/ssh_config
-Include /ABSOLUTE_PATH_TO_INSTALLER_PROJECT_ROOT_STAGING/ssh_config
-```
-
-
-### 06 - Update your Git repo settings
-
-The project ships with a `.githooks` folder, which contains a Python script that wil scan your `terraform.tfvars` file for configuration mismatches which cause your deployment to fail.
-
-To automatically invoke the script prior to a commit to your git repository, execute the following in the root of your project: `git config core.hooksPath .githooks`.
-
-
-### 07 - Review your Terraform state storage strategy
-
-By default, the installer writes the Terraform state to a local folder (`<PROJECT_ROOT>/DONTDELETE`). This is convenient for initial testing but likely not a good long-term solution for most clients. 
-
-You can change the state management strategy at the top of the `000-main.tf` file. We have provided a commented-out example that demonstrates how to write state to an S3 bucket.
-
-**Note:** Bulletproof state management can become complex and is beyond the scope of this initiative. Consult Terraform's official docs on [Remote State](https://developer.hashicorp.com/terraform/language/state/remote) and modify your project as necessary to meet your organization's needs.
-
-
-## Execution steps
-
-### Deployment
-
-1. Within your terminal, navigate to the project root and initialize the project:
+1. Via terminal, navigate to the project root and initialize the project:
     ```bash
-    terraform init
+    $ terraform init
     ```
 
-10. Create and review an execution plan:
+2. Create and review an execution plan:
     ```bash
-    # Recommended approach. Execute the Seqera-supplied Python script to check your `terraform.tfvars` file for known configuration conflicts prior to terraform binary invocation.
-    make plan
+    # Recommended approach. 
+    # Execute the Seqera-supplied Python script to check your `terraform.tfvars` file for known configuration conflicts prior to terraform binary invocation.
+    $ make plan
 
-    # Alternative approach to execute plan without Python script verification execution.
-    terraform plan
+    # Alternative approach.
+    # Execute plan without Python script verification execution.
+    $ terraform plan
     ```
 
-11. Execute the actions reviewed in the Terraform plan:
+2. Execute the actions reviewed in the Terraform plan:
     ```bash
-    # Recommended approach. Execute the Seqera-supplied Python script to check your  `terraform.tfvars` file for known configuration conflicts prior to terraform binary invocation.
-    make apply
+    # Recommended approach. 
+    # Execute the Seqera-supplied Python script to check your  `terraform.tfvars` file for known configuration conflicts prior to terraform binary invocation.
+    $ make apply
 
-    # Alternative approach to execute plan without Python script verification execution.
-    # Note: You can append `--auto-append` to the end of the command to avoid the need to type 'yes' to approve the deployment.
-    terraform apply
+    # Alternative approach.
+    # Execute plan without Python script verification execution.
+    # Note: You can append `--auto-approve` to the end of the command to avoid the need to type 'yes' to approve the deployment.
+    $ terraform apply
     ```
+
 
 ### Teardown
 
-1. To destroy the infrastructure created via Terraform, execute the following command:
+1. To destroy the deployed infrastructure:
     ```bash
-    terraform destroy
+    $ terraform destroy
     ```
-
-
-## Logging
-
-The tool offers the ability to configure the specific docker logging driver used to capture Tower container logs. By default, the [`local file`](https://docs.docker.com/config/containers/logging/local/) logging driver is configured.
 
 
 ## WARNINGS
@@ -196,12 +148,12 @@ The tool offers the ability to configure the specific docker logging driver used
 
 ## Multiple Deployment Consideration
 
-Given client environment variability, Seqera offers no official guidance re: how best to run multiple concurrent implementations (e.g. entirely separate repositories, different branches in a monorepo, Terraform workspaces, git submodules, etc). Each site must decide what is best for them and implement accordingly.
+Given client environment variability, Seqera offers no official guidance re: how best to run multiple concurrent implementations (_e.g. entirely separate repositories, different branches in a monorepo, Terraform workspaces, git submodules, etc_). Each site must decide what is best for them and implement accordingly.
 
 With that said, for design purposes, this tool assumes that multiple project instances will live in the same filesystem (_each within its own exclusive namespace_). Each project's `ssh_config` file uses an alias matching the unique `app_name` from your `tfvars` file, making it possible to add multiple non-conflicting `Include` statements in your `~/.ssh/config`.
 
 
-## Terraform asset details
+## Terraform Asset details
 
 ### Providers
 

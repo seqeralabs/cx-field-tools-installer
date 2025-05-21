@@ -1,5 +1,5 @@
 # Prepare Secrets
-This page provides instructions on how to populate the secrets your Seqera Platform instance will load and use at run-time.
+This page provides instructions on how to populate the secrets payload your Seqera Platform instance will load and use at run-time.
 
 
 ## NOTE
