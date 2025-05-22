@@ -38,24 +38,12 @@ def get_tfvars_as_json():
     if not os.path.exists(tfvars_path):
         raise FileNotFoundError("terraform.tfvars file not found in current directory.")
 
-    # Deployment machines are a mix of Intel and Mac. Dynamically assess chip architecture to pass correct container architecture qualifier.
-    # For Mac Silicon, if no ARM image, without `--paltform``, Docker will pull the amd image and run automatically.
-    # To make logic simpler, we set `--platform` manually to amd if machine architecture is arm64
-    arch = platform.machine().lower()
-    if arch in ["x86_64", "amd64"]:
-        arch = "linux/amd64"
-    elif arch == "arm64":
-        arch = "linux/amd64" 
-    else:
-        raise Exception("Chip-type is not x86_64, AMD64, or arm64.")
-
     # Because this is a 3rd party container, we are locking down as much as possible for security reasons:
     # Single local file mounted as read-only, non-root user, disabled network capabilities, and
     # use of immutable container hash fingerprint over mutable tag.
-    timestamp = datetime.now().strftime("%Y_%b%d_%I-%M%p")
     cmd = [
             "docker", "run",
-            "--platform", arch,
+            "--platform", "linux/amd64",
             "-i", "--rm",
             "-v", f"{os.getcwd()}/terraform.tfvars:/tmp/terraform.tfvars:ro",
             "--user", "1000:1000",
@@ -76,6 +64,7 @@ def get_tfvars_as_json():
 
     # Redirect output to temporary JSON file (debugging only)
     if logging.getLevelName(logger.getEffectiveLevel()) == "DEBUG":
+        timestamp = datetime.now().strftime("%Y_%b%d_%I-%M%p")
         with tempfile.NamedTemporaryFile(delete=False, prefix=f"terraform_tfvars_{timestamp}_", suffix=".json", mode='w+', dir="/tmp") as temp_output:
             temp_output.write(payload)
     
