@@ -85,6 +85,4 @@ def get_tfvars_as_json():
     except json.JSONDecodeError as e:
         raise RuntimeError("Failed to decode Docker output as JSON.") from e
 
-# For direct invocation/testing
-if __name__ == "__main__":
-    tf_vars_json_payload = get_tfvars_as_json()
+tf_vars_json_payload = get_tfvars_as_json()
