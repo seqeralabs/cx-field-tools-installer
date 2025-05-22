@@ -146,3 +146,18 @@ In addition to the general design decisions noted above, there are a few decisio
     }
     ```
 
+11. **Replace home-grown parser with better 3rd-party alternative** (_affects Releases > 1.5.0_)
+
+    Aspects of this solution rely on transforming the HCL contained in `terraform.tfvars` into a Python library (_i.e. database connection string generation, tfvars validation_). Releases <= 1.5.0 all rely on a crude parser created by `gwright99`. This approach was taken to avoid introducing a 3rd-party binary dependency in our clients' environments.
+
+    The [Add Wave Lite](https://github.com/seqeralabs/cx-field-tools-installer/issues/197) enhancement work has introduced more complex objects which the parser simply cannot handle. Rather than spend significant staff time to rewrite the crude solution, we have opted instead to introduce a third party dependency in the form of [`tmccombs/hcl2json`](https://github.com/tmccombs/hcl2json). Furthermore, rather than require our implementors to install Golang on their machines, we've opted to access the binary via supplied container (original source: [https://hub.docker.com/r/tmccombs/hcl2json](https://hub.docker.com/r/tmccombs/hcl2json)).
+
+    We recognize the effect of this decision on the existing security posture, and have thus taken the following actions to mitigate risks:
+
+    1. Seqera Security personnel conducted an analysis of the open-source project. 
+    2. We have vendored the image, using its SHA signature, to ensure continuity.
+    3. When calling the container as part of the deployment process, the following precautions are in place:
+        1. Use of a non-root UID.
+        2. Volume bind-mounting only the `terraform.tfvars` file required as input.
+        3. Complete removal of access to any networking capability.
+        4. Container stdout is captured and written to file by our own code rather than allowing the container to do so.

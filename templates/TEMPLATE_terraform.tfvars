@@ -510,7 +510,8 @@ db_container_engine_version                       = "8.0"
 ## Database (External)
 ## ------------------------------------------------------------------------------------
 The official Seqera reference architecture advises using an RDS instance as your Seqera 
-Platform's database. 
+Platform's database. As of May 21/25 this section is augmented with settings for the
+Wave-Lite feature (Release > 1.5.0).
 
 You may choose to forgo this in lower environments if you are cost-conscious. Additionally,
 when conducting initial interative testing, you may wish to stick with the containerized 
@@ -525,16 +526,74 @@ WARNING:
   - You must supply your own backup solution.
 */
 
-db_engine                               = "mysql"
-db_engine_version                       = "8.0"
-db_instance_class                       = "db.m5.large"
-db_allocated_storage                    = 30
+db_engine                                         = "mysql"
+db_engine_version                                 = "8.0"
+db_instance_class                                 = "db.m5.large"
+db_allocated_storage                              = 30
 
-db_deletion_protection                  = true
-skip_final_snapshot                     = false
+db_deletion_protection                            = true
+skip_final_snapshot                               = false
 
-db_backup_retention_period              = 7
-db_enable_storage_encrypted             = true
+db_backup_retention_period                        = 7
+db_enable_storage_encrypted                       = true
+
+
+wave_lite_db_engine                               = "postgres"
+wave_lite_db_engine_version                       = "17.5"
+wave_lite_db_param_group                          = "postgres17"
+wave_lite_db_instance_class                       = "db.t4g.micro"   #"db.m5.large"
+wave_lite_db_allocated_storage                    = 10
+
+wave_lite_db_deletion_protection                  = false
+wave_lite_skip_final_snapshot                     = true
+wave_lite_db_backup_retention_period              = 7
+wave_lite_db_enable_storage_encrypted             = true
+
+
+/*
+## ------------------------------------------------------------------------------------
+## Elasticache (External)
+## Specify the details of the external database to create or reuse
+## ------------------------------------------------------------------------------------
+This is a compound object designed to facilated passing of values to the underlying 
+Elasticache module. 
+
+The module supports both singleton (unclustered) and clusterd mode.
+Unclustered & clustered modes are mutually exclusive; if the `unclustered` block's
+`num_cache_nodes` is non-zero, the `clustered` block must keep its null values.
+*/
+
+# TODO - Add Seqera Platform core config in some release after Wave-Lite
+
+wave_lite_elasticache = {
+  apply_immediately = true
+
+  engine                        = "redis"
+  engine_version                = "7.1"
+  node_type                     = "cache.t4g.micro"
+  port                          = 6379
+
+  security_group_ids            = [] # Leave blank to use TF-generated SG.
+  subnet_ids                    = [] # Leave blank to use all private subnets.
+
+  unclustered = {
+    num_cache_nodes             = 1
+  }
+
+  clustered = {
+    multi_az_enabled           = false
+    automatic_failover_enabled = false
+    num_node_groups            = null
+    replicas_per_node_group    = null
+    parameter_group_name       = "default.redis7"
+  }
+
+  encryption = {
+    at_rest_encryption_enabled = true
+    transit_encryption_enabled = true
+    #kms_key_id missing
+  }
+}
 
 
 /*
