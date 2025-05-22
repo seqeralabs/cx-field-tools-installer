@@ -1,19 +1,37 @@
 from datetime import datetime
 import json
+import logging
 import os
+from pathlib import Path
 import subprocess
+import sys
 import tempfile
+
+
+base_import_dir = Path(__file__).resolve().parents[2]
+if base_import_dir not in sys.path:
+    sys.path.append(str(base_import_dir))
+
+from installer.utils.logger import logger
 
 ## ------------------------------------------------------------------------------------
 ## Convert terraform.tfvars to JSON
 ## Notes:
-##   1. Deprecation Notice: Starting May 16, 20205, the bespoke parser to convert terraform.tfvars into json will be replaced with a new container based solution from tmccombs/hcl2json. The home-rolled parser was originally created to avoid introducing packages from the internet. Due to more complicated parsing needs, the new parser solution has been implemented. To refer to the previous parser, please refer to previous Git histroy.
-##   2. The new parser relies on the containerized solution provided here: https://github.com/tmccombs/hcl2json. Seqera will vendor their own copy of the image within Harbor.
+##   1. As of May 16, 2025, the bespoke parser to convert terraform.tfvars into json is replaced with a new container-based
+##      solution from tmccombs/hcl2json. The home-rolled parser was originally created to avoid introducing packages from 
+##      the internet. Due to more complicated parsing needs, the new parser solution has been implemented. 
+##      To refer to the previous parser, please refer to previous Git histroy.
+##
+##   2. The new parser relies on the containerized solution provided here: https://github.com/tmccombs/hcl2json. 
+##      Seqera will vendor their own copy of the image within Harbor.
 ## ------------------------------------------------------------------------------------
 
 
 def get_tfvars_as_json():
-    """Uses the `tmccombs/hcl2json` Docker image to convert `terraform.tfvars` into JSON format and return it as a Python dictionary."""
+    """
+    Uses the `tmccombs/hcl2json` Docker image to convert `terraform.tfvars` into JSON format and return it as 
+    a Python dictionary.
+    """
     
     tfvars_path = os.path.abspath("terraform.tfvars")
     timestamp = datetime.now().strftime("%Y_%b%d_%I-%M%p")
@@ -38,16 +56,29 @@ def get_tfvars_as_json():
                 "/tmp/terraform.tfvars"
             ]
 
-        # Redirect output to temporary JSON file
-        with open(output_path, "w") as outfile:
-            subprocess.run(cmd, stdout=outfile, stderr=subprocess.PIPE, check=True)
+        # Assign result to variable (to then be returned directly or written to file for debugging)
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        payload = result.stdout
+
+        # Redirect output to temporary JSON file (debugging only)
+        if logging.getLevelName(logger.getEffectiveLevel()):
+            with open(output_path, "w") as outfile:
+                outfile.writelines(payload)
+            # with open(output_path, "w") as outfile:
+            #     subprocess.run(cmd, stdout=outfile, stderr=subprocess.PIPE, check=True)
+
+        logger.info(payload)
+        return json.loads(payload)
 
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"Docker command failed: {e.stderr.decode().strip()}")
 
-    # Read and return the parsed JSON
-    with open(output_path, "r") as json_file:
-        return json.load(json_file)
+    # # Read and return the parsed JSON
+    # with open(output_path, "r") as json_file:
+    #     return json.load(json_file)
     
     # TODO: Should script clean up after using the json
     # os.remove(output_path)
+
+
+tf_vars_json_payload = get_tfvars_as_json()
