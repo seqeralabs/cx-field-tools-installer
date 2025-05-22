@@ -276,6 +276,46 @@ variable "wave_lite_db_enable_storage_encrypted" { type = bool }
 
 
 # ------------------------------------------------------------------------------------
+# Elasicache (External)
+# ------------------------------------------------------------------------------------
+
+# TODO: Add Seqera Platform core instance post Wave-Lite feature release.
+
+variable "wave_lite_elasticache" {
+  type = object({
+    apply_immediately = bool
+    engine            = string
+    engine_version    = string
+    node_type         = string
+    port              = number
+
+    security_group_ids = list(string)
+    subnet_ids         = list(string)
+
+    unclustered = object({
+      num_cache_nodes = number
+    })
+
+    clustered = object({
+      multi_az_enabled           = bool
+      automatic_failover_enabled = bool
+      num_node_groups            = optional(number)
+      replicas_per_node_group    = optional(number)
+      parameter_group_name       = string
+    })
+
+    encryption = object({
+      auth_token                 = optional(string)
+      at_rest_encryption_enabled = bool
+      transit_encryption_enabled = bool
+      kms_key_id                 = optional(string)
+    })
+  })
+  description = "Configuration for the Wave Elasticache instance including networking, clustering, and encryption settings"
+}
+
+
+# ------------------------------------------------------------------------------------
 # IAM
 # ------------------------------------------------------------------------------------
 
@@ -399,39 +439,3 @@ variable "seqerakit_flag_credential_create_codecommit" { type = bool }
 variable "seqerakit_flag_credential_use_aws_role" { type = bool }
 variable "seqerakit_flag_credential_use_codecommit_baseurl" { type = bool }
 
-
-
-## WIP
-
-variable "elasticache_wave_instance" {
-  type = object({
-    apply_immediately = bool
-    engine            = string
-    engine_version    = string
-    node_type         = string
-    port              = number
-
-    security_group_ids = list(string)
-    subnet_ids         = list(string)
-
-    unclustered = object({
-      num_cache_nodes = number
-    })
-
-    clustered = object({
-      multi_az_enabled           = bool
-      automatic_failover_enabled = bool
-      num_node_groups            = optional(number)
-      replicas_per_node_group    = optional(number)
-      parameter_group_name       = string
-    })
-
-    encryption = object({
-      auth_token                 = optional(string)
-      at_rest_encryption_enabled = bool
-      transit_encryption_enabled = bool
-      kms_key_id                 = optional(string)
-    })
-  })
-  description = "Configuration for the Wave Elasticache instance including networking, clustering, and encryption settings"
-}
