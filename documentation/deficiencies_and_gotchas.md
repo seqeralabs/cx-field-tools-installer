@@ -86,11 +86,15 @@ This page lists to-be-built-in-future functionality and various oddities you may
 
     Current as of June 28/24, the custom `nginx` container in the custom `docker-compose.yml` file supplied in the project is not configured to support Data Studio traffic.
 
+- Private Certificate Option does not support Wave-Lite
+
+    Current as of May 21/25, the custom `nginx` container in the custom `docker-compose.yml` file supplied in the project is not configured to support Wave-Lite traffic.
+
 
 ## Deficiencies
 
 In no particular order, the following items are acknowledged for eventual future remediation.
 
 - Modify solution to allow use of existing ALB (must create new for now).
-- Replace `mysql` client install (Ansible step) with docker container. Bypasses risk of expiring GPG key.
+- ~Replace `mysql` client install (Ansible step) with docker container. Bypasses risk of expiring GPG key.~
 - Move hardcoded Elasticache values to `terraform.tfvars` file.

@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from installer.utils.extractors import get_tfvars_as_json
+from installer.utils.extractors import tf_vars_json_payload
 
 from scripts.installer.data_external.generate_db_connection_string import (
     MYSQL8_CONNSTRING,
@@ -8,7 +8,7 @@ from scripts.installer.data_external.generate_db_connection_string import (
     generate_connection_string,
 )
 
-data_dictionary = get_tfvars_as_json()
+data_dictionary = tf_vars_json_payload
 data = SimpleNamespace(**data_dictionary)
 
 BLANK_CONNSTRING = ""
