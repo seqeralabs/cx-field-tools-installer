@@ -12,7 +12,7 @@ grandparent_dir = Path(__file__).resolve().parents[2]
 sys.path.append(str(grandparent_dir))
 
 
-from installer.utils.extractors import get_tfvars_as_json
+from installer.utils.extractors import tf_vars_json_payload
 
 BLANK_CONNSTRING = ""
 MYSQL8_CONNSTRING = "allowPublicKeyRetrieval=true&useSSL=false"
@@ -57,7 +57,7 @@ def generate_connection_string(data: SimpleNamespace):
 if __name__ == "__main__":
 
     # Extract tfvars just like we do with the Python validation script
-    data_dictionary = get_tfvars_as_json()
+    data_dictionary = tf_vars_json_payload
     data = SimpleNamespace(**data_dictionary)
 
     return_tf_payload("0", generate_connection_string(data))
