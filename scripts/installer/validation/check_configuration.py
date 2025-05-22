@@ -12,7 +12,7 @@ base_import_dir = Path(__file__).resolve().parents[2]
 if base_import_dir not in sys.path:
     sys.path.append(str(base_import_dir))
 
-from installer.utils.extractors import get_tfvars_as_json
+from installer.utils.extractors import tf_vars_json_payload
 from installer.utils.logger import logger
 from installer.utils.subnets import get_all_subnets
 
@@ -626,7 +626,7 @@ if __name__ == "__main__":
 
     # Generate dictionary from tfvars then convert to SimpleNamespace for cleaner dot-notation access.
     # Kept the two objects different for convenience when .keys() method is required.
-    data_dictionary = get_tfvars_as_json()
+    data_dictionary = tf_vars_json_payload
     data = SimpleNamespace(**data_dictionary)
 
     # Check minimum container version

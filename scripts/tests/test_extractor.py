@@ -1,8 +1,8 @@
 from types import SimpleNamespace
 
-from installer.utils.extractors import get_tfvars_as_json
+from installer.utils.extractors import tf_vars_json_payload
 
-data_dictionary = get_tfvars_as_json()
+data_dictionary = tf_vars_json_payload
 data = SimpleNamespace(**data_dictionary)
 
 

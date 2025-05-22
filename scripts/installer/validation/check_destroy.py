@@ -14,7 +14,7 @@ import re
 from types import SimpleNamespace
 from typing import List
 
-from utils.extractors import get_tfvars_as_json #convert_tfvars_to_dictionary
+from utils.extractors import tf_vars_json_payload #convert_tfvars_to_dictionary
 from utils.logger import logger
 from utils.subnets import get_all_subnets
 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     # Generate dictionary from tfvars then convert to SimpleNamespace for cleaner dot-notation access.
     # Kept the two objects different for convenience when .keys() method is required.
-    data_dictionary = get_tfvars_as_json()
+    data_dictionary = tf_vars_json_payload
     data = SimpleNamespace(**data_dictionary)
 
 

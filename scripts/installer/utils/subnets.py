@@ -1,10 +1,10 @@
 from types import SimpleNamespace
 
 import boto3
-from installer.utils.extractors import get_tfvars_as_json
+from installer.utils.extractors import tf_vars_json_payload
 from installer.utils.logger import logger
 
-data = get_tfvars_as_json()
+data = tf_vars_json_payload
 data = SimpleNamespace(**data)  # Can access items via dot-notation for cleaner code.
 
 

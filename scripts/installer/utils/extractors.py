@@ -1,172 +1,78 @@
-import ast
+from datetime import datetime
 import json
+import logging
+import os
+from pathlib import Path
+import platform
+import subprocess
+import sys
+import tempfile
+
+base_import_dir = Path(__file__).resolve().parents[2]
+if base_import_dir not in sys.path:
+    sys.path.append(str(base_import_dir))
 
 from installer.utils.logger import logger
 
 ## ------------------------------------------------------------------------------------
 ## Convert terraform.tfvars to JSON
 ## Notes:
-##   1. I know it's dumb to home-roll your own parser, but I don't want to introduce extra random
-##      packages from the internet. This is fine for our purposes.
-##   2. Clean command: `sed '/^\s*\/\*/,/^\s*\*\//d;/^\s*#/d' terraform.tfvars > terraform_no_comments.tfvars`
-##      However, `sed` has problem on MacOS, so sticking with (uglier) native Python.
+##   1. As of May 16, 2025, the bespoke parser to convert terraform.tfvars into json is replaced with a new container-based
+##      solution from tmccombs/hcl2json. The home-rolled parser was originally created to avoid introducing packages from 
+##      the internet. Due to more complicated parsing needs, the new parser solution has been implemented. 
+##      To refer to the previous parser, please refer to previous Git histroy.
+##
+##   2. The new parser relies on the containerized solution provided here: https://github.com/tmccombs/hcl2json. 
+##      Seqera will vendor their own copy of the image within Harbor.
 ## ------------------------------------------------------------------------------------
-
-# Rules:
-#   1. Purge any blank line.
-#   2. Purge any line starting with a `#``
-#   3. Purge any line starting with `/*`, `*/`, or in between them.
-#   4. Purge via tracking indices; purge from right-to-left to avoid index shifting.
-
-# Assumptions:
-#   1. Inline comments will only use 1 `#`
-#   2. All discrete keys start on Column 1 of a line.
-
-# Edgecase:
-#   1. `default_tags` has closing brace without leading space.
-
-
-lines_array = []
-data = {}
-default_tags = {}
-data_studio_options = {}
-
-
-def purge_indices_in_reverse(indices_to_pop):
-    for i in reversed(indices_to_pop):
-        lines_array.pop(i)
-
-
-def convert_tfvars_to_dictionary(file):
-
-    global lines_array
-
-    with open(file, "r") as file:
-        lines = file.readlines()
-        lines_array = [line.strip() for line in lines]
-
-
-        # Hack for Wave lite
-        elasticache_wave_instance_index = 0
-        for i, line in enumerate(lines_array):
-            if "elasticache_wave_instance" in line:
-                elasticache_wave_instance_index = i
-                break
-        if elasticache_wave_instance_index > 0:
-            lines_array = lines_array[:elasticache_wave_instance_index]
-
-        # 1) Remove any blank link in file
-        flag_skip_block_comment = False
-        indices_to_pop = []
-
-        for i, line in enumerate(lines_array):
-
-            if (line.strip() == "") or (line.startswith("#")):
-                indices_to_pop.append(i)
-
-            # Once '/*' detected, flag every line for deletion until '*/' encountered.
-            elif line.startswith("/*"):
-                flag_skip_block_comment = True
-                indices_to_pop.append(i)
-                continue
-            elif line.startswith("*/"):
-                flag_skip_block_comment = False
-                indices_to_pop.append(i)
-                continue
-            elif flag_skip_block_comment:
-                indices_to_pop.append(i)
-
-        logger.debug(f"Indices to pop: {indices_to_pop}")
-        purge_indices_in_reverse(indices_to_pop)
-
-        # 2) Purge inline comments from rationalized kv pairs
-        for i, line in enumerate(lines_array):
-            line = line.rsplit("#")[0]
-            lines_array[i] = line
-
-        # 3) Handle `default tags` edge case: extract this value specifically into a dict and pop lines.
-        start_handling_tags = False
-        indices_to_pop = []
-
-        for i, line in enumerate(lines_array):
-            if "default_tags" in line:
-                start_handling_tags = True
-                indices_to_pop.append(i)
-            elif (start_handling_tags) and ("=" in line):
-                key, value = [x.strip() for x in line.split("=", 1)]
-                default_tags[key] = value.strip('"')
-                indices_to_pop.append(i)
-            elif (start_handling_tags) and (line == "}"):
-                indices_to_pop.append(i)
-                break
-
-        purge_indices_in_reverse(indices_to_pop)
-        data["default_tags"] = default_tags
-
-        # Handle data_studio_options.This feels a little crazy. Find something better (Sept 11/24)
-        start_handling_ds_options = False
-        extract_ds_object = False
-        current_key = None
-        indices_to_pop = []
-
-        for i, line in enumerate(lines_array):
-            if "data_studio_options" in line:
-                start_handling_ds_options = True
-                indices_to_pop.append(i)
-            elif (start_handling_ds_options) and ("= {" in line):
-                extract_ds_object = True
-                key = [x.strip() for x in line.split("=", 1)][0]
-                data_studio_options[key] = {}
-                indices_to_pop.append(i)
-                current_key = key
-            # Each value of a DS object
-            elif (extract_ds_object) and ("=" in line):
-                key, value = [x.strip() for x in line.split("=", 1)]
-                data_studio_options[current_key][key] = value.strip('"')
-                indices_to_pop.append(i)
-            elif (extract_ds_object) and ("}," in line):
-                extract_ds_object = False
-                current_key = None
-            elif (start_handling_ds_options) and (line == "}"):
-                indices_to_pop.append(i)
-                break
-
-        purge_indices_in_reverse(indices_to_pop)
-        data["data_studio_options"] = data_studio_options
-
-        # 4) Handle multiline arrays. Find opening line with '=' and ending in '['
-        target_index = None
-        indices_to_pop = []
-        for i, line in enumerate(lines_array):
-            if ("=" in line) and (line.strip()[-1] == "["):
-                target_index = i
-                continue
-
-            if target_index is not None:
-                lines_array[target_index] += line.strip()
-                indices_to_pop.append(i)
-
-            if line.strip()[-1] == "]":
-                target_index = None
-
-        purge_indices_in_reverse(indices_to_pop)
-
-        # 5) Convert items to proper python types.
-        for line in lines_array:
-            if "=" in line:
-                key, value = [x.strip() for x in line.split("=", 1)]
-                if value.lower() == "true":
-                    data[key] = True
-                elif value.lower() == "false":
-                    data[key] = False
-                else:
-                    data[key] = ast.literal_eval(value)
-
-    return data
-
-    # # with open('output.json', 'w') as file:
-    # #     json.dump(data, file, indent=4)
 
 
 def get_tfvars_as_json():
-    return convert_tfvars_to_dictionary("terraform.tfvars")
+    """
+    Uses the `tmccombs/hcl2json` Docker image to convert `terraform.tfvars` into JSON format and return it as 
+    a Python dictionary.
+    """
+    
+    # Check for tfvars
+    tfvars_path = os.path.abspath("terraform.tfvars")
+    if not os.path.exists(tfvars_path):
+        raise FileNotFoundError("terraform.tfvars file not found in current directory.")
+
+    # Because this is a 3rd party container, we are locking down as much as possible for security reasons:
+    # Single local file mounted as read-only, non-root user, disabled network capabilities, and
+    # use of immutable container hash fingerprint over mutable tag.
+    cmd = [
+            "docker", "run",
+            "--platform", "linux/amd64",
+            "-i", "--rm",
+            "-v", f"{os.getcwd()}/terraform.tfvars:/tmp/terraform.tfvars:ro",
+            "--user", "1000:1000",
+            "--network", "none",
+            "tmccombs/hcl2json@sha256:312ac54d3418b87b2ad64f82027483cb8b7750db6458b7b9ebe42ec278696e96",
+            "/tmp/terraform.tfvars"
+        ]
+    
+    # Assign result to variable (to then be returned directly or written to file for debugging)
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    # Capture Docker runtime failures
+    if result.returncode != 0:
+        raise RuntimeError(f"Docker command failed:\nSTDERR: {result.stderr.strip()}")
+
+    # Capture Docker stdout
+    payload = result.stdout.strip()
+
+    # Redirect output to temporary JSON file (debugging only)
+    if logging.getLevelName(logger.getEffectiveLevel()) == "DEBUG":
+        timestamp = datetime.now().strftime("%Y_%b%d_%I-%M%p")
+        with tempfile.NamedTemporaryFile(delete=False, prefix=f"terraform_tfvars_{timestamp}_", suffix=".json", mode='w+', dir="/tmp") as temp_output:
+            temp_output.write(payload)
+    
+    # Capture invalid json errors
+    try:
+        logger.info(payload)
+        return json.loads(payload)
+    except json.JSONDecodeError as e:
+        raise RuntimeError("Failed to decode Docker output as JSON.") from e
+
+tf_vars_json_payload = get_tfvars_as_json()
