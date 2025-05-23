@@ -13,8 +13,8 @@ The Seqera CX team has developed a field tool to simplify deployment in two ways
 - [Disclaimer](#disclaimer)
 - [Appropriateness Criteria](#appropriateness-criteria)
 - [Prerequisites](#prerequisites)
-  - [Tool Dependencies](#tool-dependencies)
-  - [AWS IAM Permissions](#aws-iam-permissions)
+  - [01: Tool Dependencies](#01-tool-dependencies)
+  - [02: AWS IAM Permissions](#02-aws-iam-permissions)
 - [Configuration Steps (Mandatory)](#configuration-steps-mandatory)
   - [01: Clone the repository](#01-clone-the-repository)
   - [02: Prepare Configuration Files](#02-prepare-configuration-files)
@@ -63,7 +63,7 @@ You must meet the following criteria to use this solution successfully.
 4. You have access to a local **Linux**-based terminal (_Mac supported, with caveats_).
 5. You can use [Terraform](https://www.terraform.io/) to provision infrastructure.
 6. You use OpenSSH and can maintain a `~/.ssh/config` file. 
-7. **(New as of May 21, 2025)** You have access to a local container runtime (_e.g. [Docker](https://www.docker.com/_).
+7. **(New as of May 21, 2025)** You have access to a local container runtime (_e.g. [Docker](https://www.docker.com/)_).
 
 <br />
 

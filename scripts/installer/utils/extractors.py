@@ -50,7 +50,8 @@ def get_tfvars_as_json():
             "-v", f"{os.getcwd()}/terraform.tfvars:/tmp/terraform.tfvars:ro",
             "--user", "1000:1000",
             "--network", "none",
-            "tmccombs/hcl2json@sha256:312ac54d3418b87b2ad64f82027483cb8b7750db6458b7b9ebe42ec278696e96",
+            #"tmccombs/hcl2json@sha256:312ac54d3418b87b2ad64f82027483cb8b7750db6458b7b9ebe42ec278696e96",
+            "ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json@sha256:48af2029d19d824ba1bd1662c008e691c04d5adcb055464e07b2dc04980dcbf5",
             "/tmp/terraform.tfvars"
         ]
     

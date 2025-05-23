@@ -155,7 +155,7 @@ In addition to the general design decisions noted above, there are a few decisio
     We recognize the effect of this decision on the existing security posture, and have thus taken the following actions to mitigate risks:
 
     1. Seqera Security personnel conducted an analysis of the open-source project. 
-    2. We pull from DockerHub using the immutable SHA signature instead of mutable tag.
+    2. We have [vendored our own copy](https://github.com/seqeralabs/cx-field-tools-installer/pkgs/container/cx-field-tools-installer%2Fhcl2json) of the image (_with source Dockerfile included in the project_).
     3. When calling the container as part of the deployment process, the following precautions are in place:
         1. Use of a non-root UID.
         2. Volume bind-mounting only the `terraform.tfvars` file required as input.
