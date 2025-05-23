@@ -19,7 +19,6 @@ from installer.utils.extractors import tf_vars_json_payload
 # in this logic or you'll break the TF `external` mechanism!!
 ## ------------------------------------------------------------------------------------
 
-
 BLANK_CONNSTRING = ""
 MYSQL8_CONNSTRING = "allowPublicKeyRetrieval=true&useSSL=false"
 V24PLUS_CONNSTRING = "permitMysqlScheme=true"

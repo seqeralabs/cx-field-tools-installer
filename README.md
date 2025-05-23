@@ -24,7 +24,8 @@ The Seqera CX team has developed a field tool to simplify deployment in two ways
   - [04: Modify OpenSSH config](#04-modify-openssh-config)
 - [Configuration Steps (Optional)](#configuration-steps-optional)
   - [01: Review your Terraform state storage strategy](#01-review-your-terraform-state-storage-strategy)
-  - [02: Update your Git repo settings](#02-update-your-git-repo-settings)
+  - [02: Fusion Binary Vendoring](#02-fusion-binary-vendoring)
+  - [03: Update your Git repo settings](#03-update-your-git-repo-settings)
 - [Execution Steps](#execution-steps)
   - [Deployment](#deployment)
   - [Teardown](#teardown)
@@ -122,7 +123,10 @@ The following configuration actions are encouraged but not mandatory.
 #### 01: Review your Terraform state storage strategy
 1. Follow the instructions in [Review Terraform State Strategy](./documentation/setup/optional_tfstate.md).
 
-#### 02: Update your Git repo settings
+#### 02: Fusion Binary Vendoring 
+1. Follow the instructions in [Fusion Binary Vendoring](./documentation/setup/optional_fusion_binary_vendoring.md).
+
+#### 03: Update your Git repo settings
 1. Follow the instructions in [Update Githooks Settings](./documentation/setup/optional_githook.md).
 
 <br />
