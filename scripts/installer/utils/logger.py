@@ -25,7 +25,7 @@ stdout_handler = logging.StreamHandler(stream=sys.stdout)
 handlers = [file_handler, stdout_handler]
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     # format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
     # https://stackoverflow.com/questions/57925917/python-logging-left-align-with-brackets
     format="%(asctime)s  %(filename)-25s:%(lineno)-4d %(levelname)-12s %(message)s",
