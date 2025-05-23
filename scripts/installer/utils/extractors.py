@@ -24,6 +24,8 @@ from installer.utils.logger import logger
 ##
 ##   2. The new parser relies on the containerized solution provided here: https://github.com/tmccombs/hcl2json. 
 ##      Seqera will vendor their own copy of the image within Harbor.
+##
+## WARNING / REMINDER: DONT ADD ANY stdout emissions in this logic or you'll break the TF `external` mechanism!!
 ## ------------------------------------------------------------------------------------
 
 
@@ -70,8 +72,8 @@ def get_tfvars_as_json():
     
     # Capture invalid json errors
     try:
-        logger.info(payload)
-        return json.loads(payload)
+        # logger.info(payload)
+        return json.loads(payload)  # json.loads converts json string to python object.
     except json.JSONDecodeError as e:
         raise RuntimeError("Failed to decode Docker output as JSON.") from e
 

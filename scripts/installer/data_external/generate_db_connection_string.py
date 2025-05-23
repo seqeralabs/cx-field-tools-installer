@@ -11,8 +11,14 @@ from types import SimpleNamespace
 grandparent_dir = Path(__file__).resolve().parents[2]
 sys.path.append(str(grandparent_dir))
 
-
 from installer.utils.extractors import tf_vars_json_payload
+
+
+## ------------------------------------------------------------------------------------
+## WARNING / REMINDER: DONT ADD ANY stdout emissions (beyond a single print of the payload we are returning) 
+# in this logic or you'll break the TF `external` mechanism!!
+## ------------------------------------------------------------------------------------
+
 
 BLANK_CONNSTRING = ""
 MYSQL8_CONNSTRING = "allowPublicKeyRetrieval=true&useSSL=false"

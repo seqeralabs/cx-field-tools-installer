@@ -161,3 +161,18 @@ In addition to the general design decisions noted above, there are a few decisio
         2. Volume bind-mounting only the `terraform.tfvars` file required as input.
         3. Complete removal of access to any networking capability.
         4. Container stdout is captured and written to file by our own code rather than allowing the container to do so.
+
+12. **Wave-Lite `.sql` file generation**
+
+    Prior to the introduction of the Wave-Lite feature (Release > 1.5.0), application configuration files were defined as `.tpl` files and processed / interpolated by Terrafrom templatefile functions at deployment time. Unfortunately, the Wave-Lite deployment relies on postgres as a backend; postgres is insistent on **single-quotes** in various SQL statements; and terraform templatefile functions detest single quotes.
+
+    The result is a mess: appeasing one tool enrages the other. As a result, the creation of `.sql` files for Wave-Lite behaves differently than the generation of other config files. For Wave-Lite files:
+
+    - The source file is does not have a `.tpl` extension.
+    - The source file is written in proper `psql`.
+    - The source file contains string-based text placeholders.
+    - The text placeholders are processed in `010_prepare_config_files.tf` by:
+        1. Copying the source file to the target folder.
+        2. Running targeted `sed` commands to replace the placeholder with configured SSM Secret.
+
+    As noted in the various config files, this is definitely a hacky solution but it allows the application to deploy and provide some degree of legibility and consistency. Suggestions for improvement are welcome but - in the meantime - we'll stick with this pattern.
