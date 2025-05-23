@@ -279,8 +279,8 @@ services:
       - 5432:5432
     volumes:
       - $HOME/.wave/db/postgresql:/var/lib/postgresql/data
-      - $HOME/target/wave_lite_config/wave-lite.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - $HOME/target/wave_lite_config/wave-lite2.sql:/docker-entrypoint-initdb.d/02-permissions.sql
+      - $HOME/target/wave_lite_config/wave-lite-container-1.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - $HOME/target/wave_lite_config/wave-lite-container-2.sql:/docker-entrypoint-initdb.d/02-permissions.sql
     # env_file:
     #   - wave-lite.env
     environment:

@@ -149,23 +149,6 @@ locals {
       tower_contact_email           = var.tower_contact_email,
     }
   )
-
-  wave_lite_sql = templatefile("assets/src/wave_lite_config/wave-lite.sql.tpl",
-    {
-        username = "postgres" # "$${{'}}postgres$${{'}}" # TODO Add USERNAME & PASSWORD SECRET
-        
-        wave_lite_db_limited_user     = local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_USER"]["value"]
-        wave_lite_db_limited_password = local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]
-
-    }
-  )
-
-  wave_lite_sql2 = templatefile("assets/src/wave_lite_config/wave-lite2.sql.tpl",
-    {
-        wave_lite_db_limited_user     = local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_USER"]["value"]
-
-    }
-  )
 }
        
 
@@ -341,8 +324,8 @@ locals {
   ansible_02_update_file_configurations = templatefile("assets/src/ansible/02_update_file_configurations.yml.tpl",
     {
       app_name          = var.app_name
-      db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"]
-      db_tower_password = local.tower_secrets["TOWER_DB_PASSWORD"]["value"]
+      #db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"]
+      #db_tower_password = local.tower_secrets["TOWER_DB_PASSWORD"]["value"]
     }
   )
 

@@ -162,7 +162,7 @@ module "elasticache_wave_lite" {
   default_security_group_ids = [module.sg_redis[0].security_group_id]
 
   # Composite object from TFVars
-  elasticache_instance = var.elasticache_wave_instance
+  elasticache_instance = var.wave_lite_elasticache 
   # Bespoke secrets that cant be put in TFVars object
   redis_password = local.wave_lite_secrets["WAVE_LITE_REDIS_AUTH"]["value"]
 }
