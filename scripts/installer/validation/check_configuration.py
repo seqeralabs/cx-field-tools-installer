@@ -578,7 +578,8 @@ def verify_redis_version(data: SimpleNamespace):
 
 
 def verify_wave(data: SimpleNamespace):
-    if (data.flag_use_wave == True) and ((data.flag_create_external_db == False) or (data.flag_create_external_redis == False)):
+    if (data.flag_use_wave_lite == True) and (
+        (data.flag_create_external_db == False) or (data.flag_create_external_redis == False)):
         logger.warning(
             "WARNING: You are running Wave Lite without a managed DB/Redis. Seqera will not troubleshoot Wave Lite deployments not using managed services."
         )
