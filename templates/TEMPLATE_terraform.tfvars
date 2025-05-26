@@ -529,6 +529,7 @@ WARNING:
 
 db_engine                                         = "mysql"
 db_engine_version                                 = "8.0"
+db_param_group                                    = "mysql8.0"
 db_instance_class                                 = "db.m5.large"
 db_allocated_storage                              = 30
 
@@ -542,7 +543,6 @@ db_enable_storage_encrypted                       = true
 wave_lite_db_engine                               = "postgres"
 wave_lite_db_engine_version                       = "17.5"
 wave_lite_db_param_group                          = "postgres17"
-db_param_group                                    = "default.postgres17"
 wave_lite_db_instance_class                       = "db.t4g.micro"   #"db.m5.large"
 wave_lite_db_allocated_storage                    = 10
 
