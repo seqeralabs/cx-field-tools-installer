@@ -1,7 +1,15 @@
 ---
 - hosts: localhost
 
+  # https://repost.aws/questions/QU1jeKaTRYQ7WeA7XobfP21g/how-do-i-install-docker-version-27-3-1-on-amazon-linux-2023
   vars:
+    architecture: "el9.x86_64"
+    buildx_version: "0.24.0"
+    compose_version: "2.36.1"
+    containerd_version: "2.1.1"
+    docker_rpm_base_url: "https://download.docker.com/linux/centos/9/x86_64/stable/Packages"
+    docker_version: "28.1.1"
+
   # https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_privilege_escalation.html#using-become
   # When 'become' is yes and 'become_user' not mentioned, becomes root user by default. Setting anyways for explicitness.
   become: yes
@@ -9,6 +17,19 @@
   become_method: sudo
 
   tasks:
+
+  - name: Remove docker
+    ansible.builtin.dnf:
+      name: 
+        - docker 
+        - docker-client 
+        - docker-client-latest 
+        - docker-common 
+        - docker-latest 
+        - docker-latest-logrotate 
+        - docker-logrotate 
+        - docker-engine
+      state: absent
 
   - name: Install wget & nano.
     ansible.builtin.yum:
@@ -19,13 +40,47 @@
         - wget
         - nano
         - git
+        - yum-utils
+        - device-mapper-persistent-data 
+        - lvm2
 
 
-  - name: Install docker.
-  # https://docs.docker.com/engine/install/ubuntu/
+  # - name: Install docker.
+  # # https://docs.docker.com/engine/install/ubuntu/
+  #   ansible.builtin.dnf:
+  #     #name: docker-25.0.6
+  #     name: docker-27.5.1    #28.1.1  28.1.0
+  #     state: present
+
+  - name: Add Docker Repo
+    become: true
+    become_user: ec2-user
+    ansible.builtin.shell: |
+      sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+      sudo sed -i 's/$releasever/42/g' /etc/yum.repos.d/docker-ce.repo
+
+  - name: Install Docker components
     ansible.builtin.dnf:
-      name: docker-25.0.6
+      name: 
+        - docker-ce-28.1.1
+        - docker-ce-cli-28.1.1
+        - containerd.io 
+        - docker-buildx-plugin 
+        - docker-compose-plugin
       state: present
+
+
+  # - name: Install Docker components from RPMs
+  #   ansible.builtin.dnf:
+  #     name: "{{ docker_rpm_base_url }}/{{ item }}"
+  #     state: present
+  #     disable_gpg_check: true
+  #   loop:
+  #     - "containerd.io-{{ containerd_version }}.{{ architecture }}.rpm"
+  #     - "docker-ce-cli-{{ docker_version }}.{{ architecture }}.rpm"
+  #     - "docker-buildx-plugin-{{ buildx_version }}.{{ architecture }}.rpm"
+  #     - "docker-ce-{{ docker_version }}.{{ architecture }}.rpm"
+  #     - "docker-compose-plugin-{{ compose_version }}.{{ architecture }}.rpm"
 
   - name: Ensure docker is running
   # https://stackoverflow.com/questions/42040688/docker-daemon-start-using-ansible
