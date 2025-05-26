@@ -20,9 +20,6 @@ tower:
   endpoint:
     url: "${tower_server_url}/api"
 rate-limit:
-  build:
-    anonymous: 25/1d
-    authenticated: 100/1h
   pull:
     anonymous: 250/1h
     authenticated: 2000/1m
