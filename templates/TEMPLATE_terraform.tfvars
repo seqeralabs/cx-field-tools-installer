@@ -32,7 +32,7 @@ app_name                                = "tower-dev"
 secrets_bootstrap_tower                 = "/seqera/sensitive-values/tower-dev/tower"
 secrets_bootstrap_seqerakit             = "/seqera/sensitive-values/tower-dev/seqerakit"
 secrets_bootstrap_groundswell           = "/seqera/sensitive-values/tower-dev/groundswell"
-secrets_bootstrap_groundswell           = "/seqera/sensitive-values/tower-dev/wave_lite"
+secrets_bootstrap_wave_lite           = "/seqera/sensitive-values/tower-dev/wave_lite"
 
 aws_account                             = "REPLACE_ME"
 aws_region                              = "REPLACE_ME"
