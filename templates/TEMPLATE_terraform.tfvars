@@ -542,6 +542,7 @@ db_enable_storage_encrypted                       = true
 wave_lite_db_engine                               = "postgres"
 wave_lite_db_engine_version                       = "17.5"
 wave_lite_db_param_group                          = "postgres17"
+db_param_group                                    = "default.postgres17"
 wave_lite_db_instance_class                       = "db.t4g.micro"   #"db.m5.large"
 wave_lite_db_allocated_storage                    = 10
 
