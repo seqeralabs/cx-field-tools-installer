@@ -135,7 +135,7 @@ locals {
   wave_lite_yml = templatefile("assets/src/wave_lite_config/wave-lite.yml.tpl",
     {
       tower_server_url              = local.tower_server_url,
-      wave_server_url               = var.wave_server_url,
+      wave_server_url               = local.tower_wave_url,
 
       wave_lite_db_master_user      = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_USER"]["value"]
       wave_lite_db_master_password  = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_PASSWORD"]["value"]
