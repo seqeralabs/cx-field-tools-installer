@@ -158,38 +158,38 @@ locals {
 locals {
   docker_compose = templatefile("assets/src/docker_compose/docker-compose.yml.tpl",
     {
-      docker_version = var.tower_container_version,
-      auth_oidc      = local.oidc_auth,
-      auth_github    = local.oidc_github,
+      docker_version                      = var.tower_container_version,
+      auth_oidc                           = local.oidc_auth,
+      auth_github                         = local.oidc_github,
 
-      db_database_name  = var.db_database_name
-      db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"],
-      db_tower_password = local.tower_secrets["TOWER_DB_PASSWORD"]["value"],
+      db_database_name                    = var.db_database_name
+      db_tower_user                       = local.tower_secrets["TOWER_DB_USER"]["value"],
+      db_tower_password                   = local.tower_secrets["TOWER_DB_PASSWORD"]["value"],
 
       flag_use_container_db               = var.flag_use_container_db,
       flag_use_container_redis            = var.flag_use_container_redis,
       flag_use_custom_docker_compose_file = var.flag_use_custom_docker_compose_file,
 
-      flag_enable_groundswell = var.flag_enable_groundswell,
-      swell_container_version = var.swell_container_version,
+      flag_enable_groundswell             = var.flag_enable_groundswell,
+      swell_container_version             = var.swell_container_version,
 
-      flag_new_enough_for_migrate_db = local.flag_new_enough_for_migrate_db,
+      flag_new_enough_for_migrate_db      = local.flag_new_enough_for_migrate_db,
 
-      db_container_engine = var.db_container_engine,
-      db_container_engine_version = var.db_container_engine_version,
+      db_container_engine                 = var.db_container_engine,
+      db_container_engine_version         = var.db_container_engine_version,
 
-      flag_enable_data_studio = var.flag_enable_data_studio,
-      data_studio_container_version = var.data_studio_container_version,
-      updated_redis_version = tonumber(length(regexall("^v24.2.[0-9]", var.tower_container_version))) >= 1 || tonumber(length(regexall("^v25.1.[0-9]", var.tower_container_version))) >= 1 ? true : false,
-      studio_uses_distroless = local.studio_uses_distroless,
+      flag_enable_data_studio             = var.flag_enable_data_studio,
+      data_studio_container_version       = var.data_studio_container_version,
+      updated_redis_version               = tonumber(length(regexall("^v24.2.[0-9]", var.tower_container_version))) >= 1 || tonumber(length(regexall("^v25.1.[0-9]", var.tower_container_version))) >= 1 ? true : false,
+      studio_uses_distroless              = local.studio_uses_distroless,
 
-      flag_use_wave_lite = var.flag_use_wave_lite,
-      wave_lite_redis_container = local.wave_lite_redis_container,
-      wave_lite_db_container = local.wave_lite_db_container,
+      flag_use_wave_lite                  = var.flag_use_wave_lite,
+      wave_lite_redis_container           = local.wave_lite_redis_container,
+      wave_lite_db_container              = local.wave_lite_db_container,
 
-      wave_lite_db_master_user      = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_USER"]["value"]
-      wave_lite_db_master_password  = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_PASSWORD"]["value"],
-      wave_lite_redis_auth          = local.wave_lite_secrets["WAVE_LITE_REDIS_AUTH"]["value"]
+      wave_lite_db_master_user            = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_USER"]["value"]
+      wave_lite_db_master_password        = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_PASSWORD"]["value"],
+      wave_lite_redis_auth                = local.wave_lite_secrets["WAVE_LITE_REDIS_AUTH"]["value"]
     }
   )
 }
@@ -200,27 +200,27 @@ locals {
 locals {
   seqerakit_yml = templatefile("assets/src/seqerakit/setup.yml.tpl",
     {
-      seqerakit_org_name     = var.seqerakit_org_name,
-      seqerakit_org_fullname = var.seqerakit_org_fullname,
-      seqerakit_org_url      = var.seqerakit_org_url,
+      seqerakit_org_name                                = var.seqerakit_org_name,
+      seqerakit_org_fullname                            = var.seqerakit_org_fullname,
+      seqerakit_org_url                                 = var.seqerakit_org_url,
 
-      seqerakit_team_name    = var.seqerakit_team_name,
-      seqerakit_team_members = replace(var.seqerakit_team_members, "/\\s+/", ""),
+      seqerakit_team_name                               = var.seqerakit_team_name,
+      seqerakit_team_members                            = replace(var.seqerakit_team_members, "/\\s+/", ""),
 
-      seqerakit_workspace_name     = var.seqerakit_workspace_name,
-      seqerakit_workspace_fullname = var.seqerakit_workspace_fullname,
+      seqerakit_workspace_name                          = var.seqerakit_workspace_name,
+      seqerakit_workspace_fullname                      = var.seqerakit_workspace_fullname,
 
-      seqerakit_workdir          = var.seqerakit_workdir,
-      seqerakit_outdir           = var.seqerakit_outdir,
-      seqerakit_compute_env_name = var.seqerakit_compute_env_name,
+      seqerakit_workdir                                 = var.seqerakit_workdir,
+      seqerakit_outdir                                  = var.seqerakit_outdir,
+      seqerakit_compute_env_name                        = var.seqerakit_compute_env_name,
 
-      seqerakit_flag_credential_create_aws    = var.seqerakit_flag_credential_create_aws,
-      seqerakit_flag_credential_create_github = var.seqerakit_flag_credential_create_github,
-      seqerakit_flag_credential_create_docker = var.seqerakit_flag_credential_create_docker,
-      seqerakit_flag_credential_create_codecommit = var.seqerakit_flag_credential_create_codecommit,
+      seqerakit_flag_credential_create_aws              = var.seqerakit_flag_credential_create_aws,
+      seqerakit_flag_credential_create_github           = var.seqerakit_flag_credential_create_github,
+      seqerakit_flag_credential_create_docker           = var.seqerakit_flag_credential_create_docker,
+      seqerakit_flag_credential_create_codecommit       = var.seqerakit_flag_credential_create_codecommit,
 
-      seqerakit_flag_credential_use_aws_role = var.seqerakit_flag_credential_use_aws_role
-      seqerakit_flag_credential_use_codecommit_baseurl = var.seqerakit_flag_credential_use_codecommit_baseurl
+      seqerakit_flag_credential_use_aws_role            = var.seqerakit_flag_credential_use_aws_role
+      seqerakit_flag_credential_use_codecommit_baseurl  = var.seqerakit_flag_credential_use_codecommit_baseurl
     }
   )
 }
@@ -232,19 +232,19 @@ locals {
 locals {
   aws_batch_manual = templatefile("assets/src/seqerakit/compute-envs/aws_batch_manual.yml.tpl",
     {
-      aws_region = var.seqerakit_compute_env_region,
+      aws_region                          = var.seqerakit_compute_env_region,
 
-      seqerakit_org_name         = var.seqerakit_org_name,
-      seqerakit_workspace_name   = var.seqerakit_workspace_name,
-      seqerakit_workdir          = var.seqerakit_workdir,
-      seqerakit_compute_env_name = var.seqerakit_compute_env_name,
+      seqerakit_org_name                  = var.seqerakit_org_name,
+      seqerakit_workspace_name            = var.seqerakit_workspace_name,
+      seqerakit_workdir                   = var.seqerakit_workdir,
+      seqerakit_compute_env_name          = var.seqerakit_compute_env_name,
 
-      seqerakit_aws_manual_head_queue    = var.seqerakit_aws_manual_head_queue,
-      seqerakit_aws_manual_compute_queue = var.seqerakit_aws_manual_compute_queue,
+      seqerakit_aws_manual_head_queue     = var.seqerakit_aws_manual_head_queue,
+      seqerakit_aws_manual_compute_queue  = var.seqerakit_aws_manual_compute_queue,
 
-      use_fusion_v2    = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",
-      use_wave         = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",
-      use_fast_storage = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False"
+      use_fusion_v2                       = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",
+      use_wave                            = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",
+      use_fast_storage                    = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False"
     }
   )
 }
@@ -253,21 +253,21 @@ locals {
 locals {
   aws_batch_forge = templatefile("assets/src/seqerakit/compute-envs/aws_batch_forge.yml.tpl",
     {
-      aws_region = var.seqerakit_compute_env_region,
+      aws_region                  = var.seqerakit_compute_env_region,
 
-      seqerakit_org_name         = var.seqerakit_org_name,
-      seqerakit_workspace_name   = var.seqerakit_workspace_name,
-      seqerakit_workdir          = var.seqerakit_workdir,
-      seqerakit_compute_env_name = var.seqerakit_compute_env_name,
+      seqerakit_org_name          = var.seqerakit_org_name,
+      seqerakit_workspace_name    = var.seqerakit_workspace_name,
+      seqerakit_workdir           = var.seqerakit_workdir,
+      seqerakit_compute_env_name  = var.seqerakit_compute_env_name,
 
-      vpc_id         = local.vpc_id,
-      subnets        = local.subnet_ids_ec2,
-      securityGroups = [module.sg_batch.security_group_id], # local.sg_ec2_final,
-      ec2KeyPair     = aws_key_pair.generated_key.key_name,
+      vpc_id                      = local.vpc_id,
+      subnets                     = local.subnet_ids_ec2,
+      securityGroups              = [module.sg_batch.security_group_id], # local.sg_ec2_final,
+      ec2KeyPair                  = aws_key_pair.generated_key.key_name,
 
-      use_fusion_v2    = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",
-      use_wave         = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",
-      use_fast_storage = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",
+      use_fusion_v2               = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",
+      use_wave                    = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",
+      use_fast_storage            = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",
 
       instance_types = (
         var.seqerakit_aws_use_fusion_v2 == true ?

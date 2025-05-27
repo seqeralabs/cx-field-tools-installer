@@ -1,7 +1,6 @@
 ---
 - hosts: localhost
 
-  # https://repost.aws/questions/QU1jeKaTRYQ7WeA7XobfP21g/how-do-i-install-docker-version-27-3-1-on-amazon-linux-2023
   vars:
 
   # https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_privilege_escalation.html#using-become
@@ -17,6 +16,26 @@
 
   tasks:
 
+  - name: Install wget & nano & et al.
+    ansible.builtin.yum:
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+        - wget
+        - nano
+        - git
+        - yum-utils
+        - device-mapper-persistent-data 
+        - lvm2
+
+  # https://repost.aws/questions/QU1jeKaTRYQ7WeA7XobfP21g/how-do-i-install-docker-version-27-3-1-on-amazon-linux-2023
+  # We only want to remove docker on the very first deployment. Keep stateful marker for conditional actions (lower)
+  - name: Check if docker removal marker exists
+    ansible.builtin.stat:
+      path: /home/ec2-user/.ansible_docker_removal_done
+    register: docker_removal_marker
+
   - name: Remove docker
     ansible.builtin.dnf:
       name: 
@@ -31,19 +50,13 @@
         - docker-engine-selinux
         - docker-engine
       state: absent
+    when: not docker_removal_marker.stat.exists
 
-  - name: Install wget & nano & et al.
-    ansible.builtin.yum:
-      name: "{{ packages }}"
-      state: present
-    vars:
-      packages:
-        - wget
-        - nano
-        - git
-        - yum-utils
-        - device-mapper-persistent-data 
-        - lvm2
+  - name: Create marker file after docker removal
+    ansible.builtin.file:
+      path: /home/ec2-user/.ansible_docker_removal_done
+      state: touch
+    when: not docker_removal_marker.stat.exists
 
   # - name: Install docker.
   # # https://docs.docker.com/engine/install/ubuntu/
@@ -59,6 +72,7 @@
       sudo dnf -y install dnf-plugins-core
       sudo dnf-3 config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
       sudo sed -i 's/$releasever/42/g' /etc/yum.repos.d/docker-ce.repo
+    when: not docker_removal_marker.stat.exists
 
   - name: Install Docker components
     ansible.builtin.dnf:
@@ -69,17 +83,19 @@
         - docker-buildx-plugin 
         - docker-compose-plugin
       state: present
+    when: not docker_removal_marker.stat.exists
 
   # After installing docker directly from source, got errors like:
   # docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: unable to retrieve OCI runtime error (open /run/containerd/io.containerd.runtime.v2.task/moby/54d38675c8125612fc18580fc686460c184453050d4849099298714ddc26da43/log.json: no such file or directory): runc did not terminate successfully: exit status 1: unknown
   # Fixed by installing new runc release.
-  - name: Add Docker Repo
+  - name: Add Runc Repo
     become: true
     become_user: ec2-user
     ansible.builtin.shell: |
       curl -Lo runc https://github.com/opencontainers/runc/releases/download/v1.3.0/runc.amd64
       chmod +x runc
       sudo mv runc /usr/bin/runc
+    when: not docker_removal_marker.stat.exists
 
   - name: Ensure docker is running
   # https://stackoverflow.com/questions/42040688/docker-daemon-start-using-ansible
