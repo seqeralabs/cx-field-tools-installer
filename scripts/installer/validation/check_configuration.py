@@ -590,7 +590,7 @@ def verify_wave(data: SimpleNamespace):
         )
 
     if (data.flag_use_wave_lite == True):
-        if data.wave_server_url in ['https://wave.seqera.io']:
+        if data.wave_lite_server_url in ['https://wave.seqera.io']:
             log_error_and_exit(
             "`Your Wave Lite URL is pointing to the Seqera-hosted Wave service. Please modify `wave_server_url`."
             )
