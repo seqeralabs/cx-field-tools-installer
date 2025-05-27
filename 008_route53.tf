@@ -91,7 +91,7 @@ resource "aws_route53_record" "ec2_connect" {
 
 
 resource "aws_route53_record" "alb_wave" {
-  count = local.dns_create_alb_record == true ? 1 : 0
+  count = local.dns_create_alb_record == true && var.flag_use_wave_lite == true ? 1 : 0
 
   zone_id = local.dns_zone_id
   # name    = local.tower_connect_dns

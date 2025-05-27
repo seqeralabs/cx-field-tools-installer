@@ -3,12 +3,6 @@
 
   # https://repost.aws/questions/QU1jeKaTRYQ7WeA7XobfP21g/how-do-i-install-docker-version-27-3-1-on-amazon-linux-2023
   vars:
-    architecture: "el9.x86_64"
-    buildx_version: "0.24.0"
-    compose_version: "2.36.1"
-    containerd_version: "2.1.1"
-    docker_rpm_base_url: "https://download.docker.com/linux/centos/9/x86_64/stable/Packages"
-    docker_version: "28.1.1"
 
   # https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_privilege_escalation.html#using-become
   # When 'become' is yes and 'become_user' not mentioned, becomes root user by default. Setting anyways for explicitness.

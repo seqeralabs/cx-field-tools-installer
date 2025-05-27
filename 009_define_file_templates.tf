@@ -4,126 +4,125 @@
 locals {
   tower_env = templatefile("assets/src/tower_config/tower.env.tpl",
     {
-      tower_server_url       = local.tower_server_url,
-      tower_contact_email    = var.tower_contact_email,
-      tower_enable_platforms = replace(var.tower_enable_platforms, "/\\s+/", ""),
+      tower_server_url                          = local.tower_server_url,
+      tower_contact_email                       = var.tower_contact_email,
+      tower_enable_platforms                    = replace(var.tower_enable_platforms, "/\\s+/", ""),
 
-      tower_root_users = replace(var.tower_root_users, "/\\s+/", ""),
+      tower_root_users                          = replace(var.tower_root_users, "/\\s+/", ""),
 
-      flag_use_container_db = var.flag_use_container_db,
-      db_engine_version     = var.db_engine_version,
+      flag_use_container_db                     = var.flag_use_container_db,
+      db_engine_version                         = var.db_engine_version,
 
-      tower_db_url           = local.tower_db_url,
-      tower_db_driver        = var.tower_db_driver,
-      tower_db_dialect       = var.tower_db_dialect,
-      tower_db_min_pool_size = var.tower_db_min_pool_size,
-      tower_db_max_pool_size = var.tower_db_max_pool_size,
-      tower_db_max_lifetime  = var.tower_db_max_lifetime,
-      flyway_locations       = var.flyway_locations,
+      tower_db_url                              = local.tower_db_url,
+      tower_db_driver                           = var.tower_db_driver,
+      tower_db_dialect                          = var.tower_db_dialect,
+      tower_db_min_pool_size                    = var.tower_db_min_pool_size,
+      tower_db_max_pool_size                    = var.tower_db_max_pool_size,
+      tower_db_max_lifetime                     = var.tower_db_max_lifetime,
+      flyway_locations                          = var.flyway_locations,
 
-      tower_redis_url = local.tower_redis_url,
+      tower_redis_url                           = local.tower_redis_url,
 
-      flag_use_aws_ses_iam_integration = var.flag_use_aws_ses_iam_integration,
-      flag_use_existing_smtp           = var.flag_use_existing_smtp,
+      flag_use_aws_ses_iam_integration          = var.flag_use_aws_ses_iam_integration,
+      flag_use_existing_smtp                    = var.flag_use_existing_smtp,
 
-      tower_smtp_host = var.tower_smtp_host,
-      tower_smtp_port = var.tower_smtp_port,
+      tower_smtp_host                           = var.tower_smtp_host,
+      tower_smtp_port                           = var.tower_smtp_port,
 
-      flag_do_not_use_https = var.flag_do_not_use_https,
+      flag_do_not_use_https                     = var.flag_do_not_use_https,
 
-      flag_use_wave           = local.wave_enabled,
-      wave_server_url         = var.wave_server_url,
-      flag_enable_groundswell = var.flag_enable_groundswell,
+      flag_use_wave                             = local.wave_enabled,
+      wave_server_url                           = local.tower_wave_url,
+      flag_enable_groundswell                   = var.flag_enable_groundswell,
 
-      flag_data_explorer_enabled        = var.flag_data_explorer_enabled,
-      data_explorer_disabled_workspaces = var.data_explorer_disabled_workspaces,
+      flag_data_explorer_enabled                = var.flag_data_explorer_enabled,
+      data_explorer_disabled_workspaces         = var.data_explorer_disabled_workspaces,
 
-      tower_container_version = var.tower_container_version,
+      tower_container_version                   = var.tower_container_version,
       
-      flag_enable_data_studio = var.flag_enable_data_studio,
+      flag_enable_data_studio                   = var.flag_enable_data_studio,
       flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces,
-      data_studio_eligible_workspaces = var.data_studio_eligible_workspaces,
-      tower_connect_server_url = local.tower_connect_server_url,
+      data_studio_eligible_workspaces           = var.data_studio_eligible_workspaces,
+      tower_connect_server_url                  = local.tower_connect_server_url,
 
-      data_studio_options = var.data_studio_options,
+      data_studio_options                       = var.data_studio_options,
     }
   )
 
   tower_yml = templatefile("assets/src/tower_config/tower.yml.tpl",
     {
-      app_name                  = var.app_name,
-      tower_root_users          = var.tower_root_users,
-      tower_email_trusted_orgs  = replace(var.tower_email_trusted_orgs, "/\\s+/", ""),
-      tower_email_trusted_users = replace(var.tower_email_trusted_users, "/\\s+/", ""),
+      app_name                                  = var.app_name,
+      tower_root_users                          = var.tower_root_users,
+      tower_email_trusted_orgs                  = replace(var.tower_email_trusted_orgs, "/\\s+/", ""),
+      tower_email_trusted_users                 = replace(var.tower_email_trusted_users, "/\\s+/", ""),
 
-      TOWER_CONTACT_EMAIL = "${local.dollar}${local.dollar}{TOWER_CONTACT_EMAIL}",
-      TOWER_SMTP_HOST     = "${local.dollar}${local.dollar}{TOWER_SMTP_HOST}",
-      TOWER_SMTP_PORT     = "${local.dollar}${local.dollar}{TOWER_SMTP_PORT}",
-      TOWER_SMTP_USER     = "${local.dollar}${local.dollar}{TOWER_SMTP_USER}",
-      TOWER_SMTP_PASSWORD = "${local.dollar}${local.dollar}{TOWER_SMTP_PASSWORD}",
+      TOWER_CONTACT_EMAIL                       = "${local.dollar}${local.dollar}{TOWER_CONTACT_EMAIL}",
+      TOWER_SMTP_HOST                           = "${local.dollar}${local.dollar}{TOWER_SMTP_HOST}",
+      TOWER_SMTP_PORT                           = "${local.dollar}${local.dollar}{TOWER_SMTP_PORT}",
+      TOWER_SMTP_USER                           = "${local.dollar}${local.dollar}{TOWER_SMTP_USER}",
+      TOWER_SMTP_PASSWORD                       = "${local.dollar}${local.dollar}{TOWER_SMTP_PASSWORD}",
 
-      tower_smtp_auth               = var.tower_smtp_auth,
-      tower_smtp_starttls_enable    = var.tower_smtp_starttls_enable,
-      tower_smtp_starttles_required = var.tower_smtp_starttls_required,
-      tower_smtp_ssl_protocols      = var.tower_smtp_ssl_protocols,
+      tower_smtp_auth                           = var.tower_smtp_auth,
+      tower_smtp_starttls_enable                = var.tower_smtp_starttls_enable,
+      tower_smtp_starttles_required             = var.tower_smtp_starttls_required,
+      tower_smtp_ssl_protocols                  = var.tower_smtp_ssl_protocols,
 
-      flag_disable_email_login = var.flag_disable_email_login,
+      flag_disable_email_login                  = var.flag_disable_email_login,
 
-      flag_enable_data_studio = var.flag_enable_data_studio,
+      flag_enable_data_studio                   = var.flag_enable_data_studio,
       flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces,
 
-      tower_audit_retention_days = var.tower_audit_retention_days,
+      tower_audit_retention_days                = var.tower_audit_retention_days,
 
-      flag_using_micronaut_4 = local.flag_using_micronaut_4 ,
+      flag_using_micronaut_4                    = local.flag_using_micronaut_4 ,
 
     }
   )
 
   tower_sql = templatefile("assets/src/tower_config/tower.sql.tpl",
     {
-      db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"],
-      db_tower_password = local.tower_secrets["TOWER_DB_PASSWORD"]["value"],
-      db_database_name  = var.db_database_name
+      db_tower_user                             = local.tower_secrets["TOWER_DB_USER"]["value"],
+      db_tower_password                         = local.tower_secrets["TOWER_DB_PASSWORD"]["value"],
+      db_database_name                          = var.db_database_name
     }
   )
 
   groundswell_sql = templatefile("assets/src/groundswell_config/groundswell.sql.tpl",
     {
-      db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"],
-      db_tower_password = local.tower_secrets["TOWER_DB_PASSWORD"]["value"],
-      db_database_name  = var.db_database_name,
+      db_tower_user                             = local.tower_secrets["TOWER_DB_USER"]["value"],
+      db_tower_password                         = local.tower_secrets["TOWER_DB_PASSWORD"]["value"],
+      db_database_name                          = var.db_database_name,
 
-      swell_db_user       = local.groundswell_secrets["SWELL_DB_USER"]["value"],
-      swell_db_password   = local.groundswell_secrets["SWELL_DB_PASSWORD"]["value"],
-      swell_database_name = var.swell_database_name,
-      db_database_name  = var.db_database_name,
+      swell_db_user                             = local.groundswell_secrets["SWELL_DB_USER"]["value"],
+      swell_db_password                         = local.groundswell_secrets["SWELL_DB_PASSWORD"]["value"],
+      swell_database_name                       = var.swell_database_name,
+      db_database_name                          = var.db_database_name,
     }
   )
 
   groundswell_env = templatefile("assets/src/groundswell_config/groundswell.env.tpl",
     {
-      db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"],
-      db_tower_password = local.tower_secrets["TOWER_DB_PASSWORD"]["value"],
-      db_database_name  = var.db_database_name,
-      tower_db_url      = local.tower_db_url,
+      db_tower_user                             = local.tower_secrets["TOWER_DB_USER"]["value"],
+      db_tower_password                         = local.tower_secrets["TOWER_DB_PASSWORD"]["value"],
+      db_database_name                          = var.db_database_name,
+      tower_db_url                              = local.tower_db_url,
 
-      swell_db_user       = local.groundswell_secrets["SWELL_DB_USER"]["value"],
-      swell_db_password   = local.groundswell_secrets["SWELL_DB_PASSWORD"]["value"],
-      # swell_database_name = var.swell_database_name,
-      swell_db_url = local.swell_db_url,
+      swell_db_user                             = local.groundswell_secrets["SWELL_DB_USER"]["value"],
+      swell_db_password                         = local.groundswell_secrets["SWELL_DB_PASSWORD"]["value"],
+      # swell_database_name                     = var.swell_database_name,
+      swell_db_url                              = local.swell_db_url,
 
-      flag_use_container_db = var.flag_use_container_db,
-      db_engine_version     = var.db_engine_version
+      flag_use_container_db                     = var.flag_use_container_db,
+      db_engine_version                         = var.db_engine_version
     }
   )
 
   data_studios_env = templatefile("assets/src/tower_config/data-studios.env.tpl",
     {
-      tower_server_url          = local.tower_server_url,
-      # tower_redis_url           = local.tower_redis_url,
-      tower_redis_url           = local.tower_connect_redis_url,
-      tower_connect_server_url  = local.tower_connect_server_url, 
-      studio_uses_distroless = local.studio_uses_distroless
+      tower_server_url                          = local.tower_server_url,
+      tower_redis_url                           = local.tower_connect_redis_url,
+      tower_connect_server_url                  = local.tower_connect_server_url, 
+      studio_uses_distroless                    = local.studio_uses_distroless
     }
   )
 }
