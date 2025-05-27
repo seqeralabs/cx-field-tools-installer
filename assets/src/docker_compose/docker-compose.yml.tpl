@@ -1,4 +1,6 @@
-version: "3"
+# May 27/2025: removing since this causes problems with the native compose feature in Docker (we 
+#              no longer install the separate docker-compose extension)
+# version: "3"
 services:
 
 %{ if flag_use_container_db == true ~}

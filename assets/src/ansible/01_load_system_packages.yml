@@ -12,6 +12,11 @@
 
   # https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_privilege_escalation.html#using-become
   # When 'become' is yes and 'become_user' not mentioned, becomes root user by default. Setting anyways for explicitness.
+  #
+  # NOTE: May 27/2025
+  # AWS Inspector noted several Critical / High CVEs with available docker package but patched versions
+  # were not available. As a result, new steps have been added to pull assets from docker repo directly.
+  # See: https://docs.docker.com/engine/install/fedora/ for the steps that were followed.
   become: yes
   become_user: root
   become_method: sudo
@@ -27,11 +32,13 @@
         - docker-common 
         - docker-latest 
         - docker-latest-logrotate 
-        - docker-logrotate 
+        - docker-logrotat
+        - docker-selinux
+        - docker-engine-selinux
         - docker-engine
       state: absent
 
-  - name: Install wget & nano.
+  - name: Install wget & nano & et al.
     ansible.builtin.yum:
       name: "{{ packages }}"
       state: present
@@ -44,19 +51,19 @@
         - device-mapper-persistent-data 
         - lvm2
 
-
   # - name: Install docker.
   # # https://docs.docker.com/engine/install/ubuntu/
   #   ansible.builtin.dnf:
-  #     #name: docker-25.0.6
-  #     name: docker-27.5.1    #28.1.1  28.1.0
+  #     name: docker-25.0.6
   #     state: present
 
+  # As of May 27, 2025 available Fedora versions were 41 and 42. Future-proofiing with 42.
   - name: Add Docker Repo
     become: true
     become_user: ec2-user
     ansible.builtin.shell: |
-      sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+      sudo dnf -y install dnf-plugins-core
+      sudo dnf-3 config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
       sudo sed -i 's/$releasever/42/g' /etc/yum.repos.d/docker-ce.repo
 
   - name: Install Docker components
@@ -69,18 +76,16 @@
         - docker-compose-plugin
       state: present
 
-
-  # - name: Install Docker components from RPMs
-  #   ansible.builtin.dnf:
-  #     name: "{{ docker_rpm_base_url }}/{{ item }}"
-  #     state: present
-  #     disable_gpg_check: true
-  #   loop:
-  #     - "containerd.io-{{ containerd_version }}.{{ architecture }}.rpm"
-  #     - "docker-ce-cli-{{ docker_version }}.{{ architecture }}.rpm"
-  #     - "docker-buildx-plugin-{{ buildx_version }}.{{ architecture }}.rpm"
-  #     - "docker-ce-{{ docker_version }}.{{ architecture }}.rpm"
-  #     - "docker-compose-plugin-{{ compose_version }}.{{ architecture }}.rpm"
+  # After installing docker directly from source, got errors like:
+  # docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: unable to retrieve OCI runtime error (open /run/containerd/io.containerd.runtime.v2.task/moby/54d38675c8125612fc18580fc686460c184453050d4849099298714ddc26da43/log.json: no such file or directory): runc did not terminate successfully: exit status 1: unknown
+  # Fixed by installing new runc release.
+  - name: Add Docker Repo
+    become: true
+    become_user: ec2-user
+    ansible.builtin.shell: |
+      curl -Lo runc https://github.com/opencontainers/runc/releases/download/v1.3.0/runc.amd64
+      chmod +x runc
+      sudo mv runc /usr/bin/runc
 
   - name: Ensure docker is running
   # https://stackoverflow.com/questions/42040688/docker-daemon-start-using-ansible
@@ -178,14 +183,14 @@
       owner: ec2-user
       group: ec2-user
 
-  - name: Install Docker-Compose (v2)
-    # https://www.techcrumble.net/2019/12/how-install-docker-and-docker-compose-using-ansible-playbooks/
-    # https://github.com/docker/compose/releases/
-    # Pinning to specific version rather than latest.
-    get_url:
-      url: https://github.com/docker/compose/releases/download/v2.24.2/docker-compose-linux-x86_64
-      dest: /home/ec2-user/.docker/cli-plugins/docker-compose
-      mode: 'u+x,g+x,o+x'
+  # - name: Install Docker-Compose (v2)
+  #   # https://www.techcrumble.net/2019/12/how-install-docker-and-docker-compose-using-ansible-playbooks/
+  #   # https://github.com/docker/compose/releases/
+  #   # Pinning to specific version rather than latest.
+  #   get_url:
+  #     url: https://github.com/docker/compose/releases/download/v2.24.2/docker-compose-linux-x86_64
+  #     dest: /home/ec2-user/.docker/cli-plugins/docker-compose
+  #     mode: 'u+x,g+x,o+x'
 
 
   - name: Install twcli
