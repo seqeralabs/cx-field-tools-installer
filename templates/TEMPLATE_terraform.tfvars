@@ -34,6 +34,7 @@ secrets_bootstrap_seqerakit             = "/seqera/sensitive-values/tower-dev/se
 secrets_bootstrap_groundswell           = "/seqera/sensitive-values/tower-dev/groundswell"
 secrets_bootstrap_wave_lite             = "/seqera/sensitive-values/tower-dev/wave-lite"
 
+
 aws_account                             = "REPLACE_ME"
 aws_region                              = "REPLACE_ME"
 aws_profile                             = "REPLACE_ME"
@@ -522,7 +523,7 @@ This section added to handle new connection string requirements for Tower v24.1.
 */
 db_container_engine                               = "mysql"
 db_container_engine_version                       = "8.0"
-
+db_param_group                                    = "mysql8.0"
 
 /*
 ## ------------------------------------------------------------------------------------
