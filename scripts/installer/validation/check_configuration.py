@@ -578,12 +578,6 @@ def verify_redis_version(data: SimpleNamespace):
 
 
 def verify_wave(data: SimpleNamespace):
-    if (data.flag_use_wave_lite == True) and (
-        (data.flag_create_external_db == False) or (data.flag_create_external_redis == False)):
-        logger.warning(
-            "WARNING: You are running Wave Lite without a managed DB/Redis. This does not align to Seqera-recommended Production deployment best practices and can result in system instability."
-        )
-        
     if (data.flag_use_wave == True) and (data.flag_use_wave_lite == True):
         log_error_and_exit(
             "`flag_use_wave` and `flag_use_wave_lite` cannot both be set to true."
@@ -615,6 +609,19 @@ def verify_ssh_access(data: SimpleNamespace):
             logger.warning(
                 "You have set `flag_make_instance_public = true`. Please ensure `vpc_existing_ec2_subnets` is populated by a public subnet CIDR."
             )
+
+
+def verify_production_deployment(data: SimpleNamespace): 
+    if (data.flag_create_external_db == False) or (data.flag_create_external_redis == False):
+        logger.warning(
+            "WARNING: You are running Seqera Platform without a managed DB/Redis. This does not align to Seqera-recommended Production deployment best practices and can result in system instability."
+        )
+
+    if (data.flag_use_wave_lite == True) and (
+        (data.flag_create_external_db == False) or (data.flag_create_external_redis == False)):
+        logger.warning(
+            "WARNING: You are running Wave Lite without a managed DB/Redis. This does not align to Seqera-recommended Production deployment best practices and can result in system instability."
+        )
 
 
 # -------------------------------------------------------------------------------
@@ -682,6 +689,12 @@ if __name__ == "__main__":
     verify_flow_logs(data)
     verify_alb_settings(data)
 
+    # Verify Public/Private Subnet settings
+    print("\n")
+    logger.info("Verifying Subnet settings")
+    logger.info("-" * 50)
+    verify_ssh_access(data)
+
     # Verify data studio settings
     print("\n")
     logger.info("Verifying Data Studio settings")
@@ -701,11 +714,12 @@ if __name__ == "__main__":
     logger.info("-" * 50)
     verify_wave(data)
 
-    # Verify Public/Private Subnet settings
+    # Verify alignment to Production Best Practice
     print("\n")
-    logger.info("Verifying Subnet settings")
+    logger.info("Verifying alignment to Production Best Practices")
     logger.info("-" * 50)
-    verify_ssh_access(data)
+    verify_production_deployment(data)
+
 
     print("\n")
     logger.info("Finished tfvars configuration check.")
