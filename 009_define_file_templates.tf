@@ -184,6 +184,7 @@ locals {
       studio_uses_distroless              = local.studio_uses_distroless,
 
       flag_use_wave_lite                  = var.flag_use_wave_lite,
+      num_wave_lite_replicas              = var.num_wave_lite_replicas,
       wave_lite_redis_container           = local.wave_lite_redis_container,
       wave_lite_db_container              = local.wave_lite_db_container,
 
