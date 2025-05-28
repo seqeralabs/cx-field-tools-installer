@@ -34,6 +34,7 @@ resource "null_resource" "regenerate_config_files_from_data" {
       cp ${path.module}/assets/src/wave_lite_config/wave-lite-container-1.sql ${path.module}/assets/target/wave_lite_config/wave-lite-container-1.sql
       cp ${path.module}/assets/src/wave_lite_config/wave-lite-container-2.sql ${path.module}/assets/target/wave_lite_config/wave-lite-container-2.sql
       cp ${path.module}/assets/src/wave_lite_config/wave-lite-rds.sql ${path.module}/assets/target/wave_lite_config/wave-lite-rds.sql
+      cp ${path.module}/assets/src/wave_lite_config/nginx.conf ${path.module}/assets/target/wave_lite_config/nginx.conf
 
       export SALT=${path.module}/scripts/installer/utils/sedalternative.py
       python3 $SALT replace_me_wave_lite_db_limited_user     ${local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_USER"]["value"]}     ${path.module}/assets/target/wave_lite_config/wave-lite-container-1.sql

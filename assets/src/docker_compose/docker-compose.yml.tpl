@@ -253,8 +253,10 @@ services:
 %{ if flag_use_wave_lite == true ~}
   wave-lite:
     image: hrma017/app:1.20.0-B1   # TODO: swap with real image later.
-    ports:
-      - 9099:9090
+    # ports:
+    #   - 9099:9090
+    expose:
+      - 9090
     volumes:
       - $HOME/target/wave_lite_config/wave-lite.yml:/work/config.yml
     #env_file:
@@ -267,6 +269,20 @@ services:
       - backend
     working_dir: /work
     restart: always
+    deploy:
+      mode: replicated
+      replicas: ${num_wave_lite_replicas}
+
+  wave-lite-reverse-proxy:
+    image: nginx:latest
+    ports:
+      - "9099:80"
+    volumes:
+      - $HOME/target/wave_lite_config/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - wave-lite
+    networks:
+      - backend
 %{ endif ~}
 
 %{ if wave_lite_db_container == true ~}
