@@ -53,6 +53,9 @@ For further information on how the project is managed, please see:
 - [Deficiencies & Gotchas](documentation/deficiencies_and_gotchas.md)<br />
     Information on existing deficiencies and gotchas.
 
+- [Software License Warning](documentation/license_warning.md)
+    Ensure you are compliant with software licenses.
+
 
 ## Appropriateness Criteria
 You must meet the following criteria to use this solution successfully.

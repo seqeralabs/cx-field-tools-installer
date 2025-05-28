@@ -32,7 +32,8 @@ app_name                                = "tower-dev"
 secrets_bootstrap_tower                 = "/seqera/sensitive-values/tower-dev/tower"
 secrets_bootstrap_seqerakit             = "/seqera/sensitive-values/tower-dev/seqerakit"
 secrets_bootstrap_groundswell           = "/seqera/sensitive-values/tower-dev/groundswell"
-secrets_bootstrap_wave_lite           = "/seqera/sensitive-values/tower-dev/wave_lite"
+secrets_bootstrap_wave_lite             = "/seqera/sensitive-values/tower-dev/wave-lite"
+
 
 aws_account                             = "REPLACE_ME"
 aws_region                              = "REPLACE_ME"
@@ -208,11 +209,29 @@ flag_use_custom_docker_compose_file             = false
 ## ------------------------------------------------------------------------------------
 ## Wave Service
 ## ------------------------------------------------------------------------------------
+Enable Tower to connect to the Wave service.
+
+To connect the Seqera-hosted Wave Service, set `flag_use_wave` to true.
+To connect to a self-hosted Wave Lite instance instead, set `flag_use_wave_lite` to true.
+
+You should not need to modify the URL of the Seqera-hosted wave.
+
+If you are deploying a Wave-LIte instance, you will need to make a decision re: DNS. Seqera recommends exposing 
+the service as a subdomain of your `tower_server_url` value (see entry in section further below). This pattern works 
+well because you can reuse this pattern if/when you enable the Studios feature. e.g:
+    - wave.myseqeraplatform.example.com
+
+If you organization cannot support subdomains, you will need to deply a peer record so that DNS population logic continues 
+to work. e.g:
+    - myseqeraplatform.example.com
+    - mywavelite.example.com
+
 */
-# Enable Tower to connect to the Wave service hosted by Seqera
-flag_use_wave                      = false
-flag_use_wave_lite                 = false
-wave_server_url                    = "https://wave.seqera.io"
+flag_use_wave                           = false
+flag_use_wave_lite                      = false
+num_wave_lite_replicas                  = 2
+wave_server_url                         = "https://wave.seqera.io"
+wave_lite_server_url                    = "https://REPLACE_ME_IF_NEEDED"
 
 /*
 ## ------------------------------------------------------------------------------------
@@ -529,6 +548,7 @@ WARNING:
 
 db_engine                                         = "mysql"
 db_engine_version                                 = "8.0"
+db_param_group                                    = "mysql8.0"
 db_instance_class                                 = "db.m5.large"
 db_allocated_storage                              = 30
 

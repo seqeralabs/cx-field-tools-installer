@@ -186,14 +186,15 @@ locals {
   tower_connect_dns           = "connect.${var.tower_server_url}"
   # Handle host-matching in the ALB (e.g.): studio.TOWER_DOMAIN, 123.TOWER_DOMAIN, 456.TOWER_DOMAIN
   tower_connect_wildcard_dns  = "*.${var.tower_server_url}"
-  tower_wave_dns              = "wave.${var.tower_server_url}"
-
+  
   tower_connect_server_url = (
     var.flag_create_load_balancer == false && var.flag_do_not_use_https == true ?
     "http://connect.${var.tower_server_url}:9090" :
     "https://connect.${var.tower_server_url}"
   )
   
+  tower_wave_url              = var.flag_use_wave_lite == true ? var.wave_lite_server_url : var.wave_server_url
+  tower_wave_dns              = replace(local.tower_wave_url, "https://", "")
 
 
   # Security Groups

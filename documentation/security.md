@@ -6,7 +6,7 @@
 We originally used [tfsec](https://github.com/aquasecurity/tfsec) to scan this project for vulnerabilities. This has since been replaced by [trivy](https://github.com/aquasecurity/trivy) due to `tfsec`'s integration with the `trivy` project.
 
 
-### Scanning History
+### Terraform Scanning History
 - **May 21, 2025**, traced in [Trivy Security Scan -- May 21, 2025](https://github.com/seqeralabs/cx-field-tools-installer/issues/205).
 
 - **Mid April 2024**, traced in [Issue #36 - Fix tfsec-identified Critical/High vulnerabilities](https://github.com/seqeralabs/cx-field-tools-installer/issues/36).
@@ -124,6 +124,17 @@ By default, the installer will try to grab the [very latest Amazon Linux 2023 AM
 This is generally seen as a good idea because it ensures security/application patches are introduced into your environment regularly. Unfortunately, it can occasionally cause VMs to be destroyed and replaced (_potentially resulting in the loss of data if the implementation is using the container db_) and can also knock highly regulated installations out of compliance (_i.e. if an AMI is auto-replaced without the necessary paperwork). 
 
 As of Release 1.3, more control has been introduced to allow implementers to pick a pattern which best fits their needs. [Reference Issue](https://github.com/seqeralabs/cx-field-tools-installer/issues/73)
+
+
+### AMI & Package Patching
+
+We use [Amazon Inspector](https://aws.amazon.com/inspector/) to scan the resulting EC2 for vulnerabilities. Vulnerabilities are tracked as [Project Issues](https://github.com/seqeralabs/cx-field-tools-installer/issues).
+
+- [Vulnerabilities found during Wave Lite Feature Deploymen](https://github.com/seqeralabs/cx-field-tools-installer/issues/212) (_May 27, 2025_)
+- [ansible-core CVEs](https://github.com/seqeralabs/cx-field-tools-installer/issues/179) (_Feb 11, 2025_)
+- [Docker CVEs](https://github.com/seqeralabs/cx-field-tools-installer/issues/175)  (_Feb 10, 2025_)
+- [CVE-2021-29921 - ipaddress](https://github.com/seqeralabs/cx-field-tools-installer/issues/173)  (_Feb 10, 2025_)
+- [Java CVEs](https://github.com/seqeralabs/cx-field-tools-installer/issues/172)  (_Feb 10, 2025_)
 
 
 ## Egress Rules

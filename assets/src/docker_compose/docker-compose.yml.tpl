@@ -1,4 +1,6 @@
-version: "3"
+# May 27/2025: removing since this causes problems with the native compose feature in Docker (we 
+#              no longer install the separate docker-compose extension)
+# version: "3"
 services:
 
 %{ if flag_use_container_db == true ~}
@@ -250,25 +252,37 @@ services:
 
 %{ if flag_use_wave_lite == true ~}
   wave-lite:
-    image: hrma017/app:1.20.0-B0   # swap with real image later.
-    ports:
-      - 9099:9090
+    image: hrma017/app:1.20.0-B1   # TODO: swap with real image later.
+    # ports:
+    #   - 9099:9090
+    expose:
+      - 9090
     volumes:
-      # - $PWD:/work
       - $HOME/target/wave_lite_config/wave-lite.yml:/work/config.yml
     #env_file:
     #  - wave-lite.env
     environment:
       - MICRONAUT_ENVIRONMENTS=lite,rate-limit,redis,prometheus,postgres
       - WAVE_JVM_OPTS=-Djdk.traceVirtualThreadInThreadDump=full -XX:InitialRAMPercentage=65 -XX:MaxRAMPercentage=65 -XX:+HeapDumpOnOutOfMemoryError -XX:MaxDirectMemorySize=200m -Dio.netty.maxDirectMemory=0 -Djdk.httpclient.keepalive.timeout=10 -Djdk.tracePinnedThreads=short
-      - WAVE_BUILD_WORKSPACE=/work/build-workspace   # Remove later (not now)
     networks:
       - frontend
       - backend
-    working_dir: /work   # keep this
-    # Mount yml in at /work/config.yml  -- yes
-    # No mail
+    working_dir: /work
     restart: always
+    deploy:
+      mode: replicated
+      replicas: ${num_wave_lite_replicas}
+
+  wave-lite-reverse-proxy:
+    image: nginx:latest
+    ports:
+      - "9099:80"
+    volumes:
+      - $HOME/target/wave_lite_config/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - wave-lite
+    networks:
+      - backend
 %{ endif ~}
 
 %{ if wave_lite_db_container == true ~}
@@ -281,11 +295,9 @@ services:
       - $HOME/.wave/db/postgresql:/var/lib/postgresql/data
       - $HOME/target/wave_lite_config/wave-lite-container-1.sql:/docker-entrypoint-initdb.d/01-init.sql
       - $HOME/target/wave_lite_config/wave-lite-container-2.sql:/docker-entrypoint-initdb.d/02-permissions.sql
-    # env_file:
-    #   - wave-lite.env
     environment:
-      - POSTGRES_USER=${wave_lite_db_master_user}  # postgresMaster
-      - POSTGRES_PASSWORD=${wave_lite_db_master_password}  # postgresMaster
+      - POSTGRES_USER=${wave_lite_db_master_user}
+      - POSTGRES_PASSWORD=${wave_lite_db_master_password}
       - POSTGRES_DB=wave
     networks:
       - backend
@@ -298,7 +310,6 @@ services:
     platform: linux/amd64
     expose:
       - 6380:6379
-    # command: --appendonly yes
     command: ["redis-server", "--requirepass", "${wave_lite_redis_auth}"]
     restart: always
     volumes:
@@ -306,7 +317,6 @@ services:
     networks:
       - backend
 %{ endif ~}
-
 
 
 networks:

@@ -176,3 +176,15 @@ In addition to the general design decisions noted above, there are a few decisio
         2. Running targeted `sed` commands to replace the placeholder with configured SSM Secret.
 
     As noted in the various config files, this is definitely a hacky solution but it allows the application to deploy and provide some degree of legibility and consistency. Suggestions for improvement are welcome but - in the meantime - we'll stick with this pattern.
+
+13. **Wave-Lite Multiple Replicas & Reverse-Proxy**
+
+    The Wave-Lite augmentation flow is a single-threaded blocking function. To reduce bottlenecks, the Wave Lite container has been designed to run with multiple replicas (_default 2_).
+
+    Running multiple container copies, however, created networking challenges:
+    
+        - The containers could not all share the same host port as this caused errors when the _nth_ container tried to bind an already-bound port. 
+        - Host ports could be dynamically assigned to each replica but this would require upstream work to modify how the ALB target groups send Wave-related traffic to the EC2 instance.
+        - We could use a "poor man's K8s Service" and introduce a reverse proxy container into the deployment which would accept all Wave-related traffic and then round-robin the calls to the downstream containers.
+
+    The decision was made to implement the reverse proxy solution. We introduced an brand new instance rather than repurposing the existing proxy using for private certs. This was done to minimize the mixing of concerns and simplify implementation. We may choose to rationalize this deployment in a future release (TBD).

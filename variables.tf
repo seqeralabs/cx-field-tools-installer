@@ -103,7 +103,9 @@ variable "flag_use_custom_docker_compose_file" { type = bool }
 
 variable "flag_use_wave" { type = bool }
 variable "flag_use_wave_lite" { type = bool }
+variable "num_wave_lite_replicas" { type = number }
 variable "wave_server_url" { type = string }
+variable "wave_lite_server_url" { type = string }
 
 
 # ------------------------------------------------------------------------------------
