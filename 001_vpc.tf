@@ -85,7 +85,7 @@ resource "aws_vpc_endpoint" "tower_endpoints" {
   subnet_ids         = [local.subnet_ids_ec2[0]]
   vpc_endpoint_type  = "Interface"
   service_name       = "com.amazonaws.${var.aws_region}.${each.key}"
-  security_group_ids = [module.tower_interface_endpoint_sg.security_group_id]
+  security_group_ids = [module.sg_vpc_endpoint.security_group_id]
 
   auto_accept         = true
   private_dns_enabled = true
@@ -102,7 +102,7 @@ resource "aws_vpc_endpoint" "batch_endpoints" {
   subnet_ids         = local.subnet_ids_batch
   vpc_endpoint_type  = "Interface"
   service_name       = "com.amazonaws.${var.aws_region}.${each.key}"
-  security_group_ids = [module.tower_interface_endpoint_sg.security_group_id]
+  security_group_ids = [module.sg_vpc_endpoint.security_group_id]
 
   auto_accept = true
 

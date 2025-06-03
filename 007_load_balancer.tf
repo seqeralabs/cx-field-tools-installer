@@ -10,12 +10,15 @@ module "alb" {
 
   vpc_id          = local.vpc_id
   subnets         = local.subnet_ids_alb
-  security_groups = [module.tower_alb_sg.security_group_id]
+  security_groups = [module.sg_alb_core[0].security_group_id]
   internal        = var.flag_make_instance_private == true || var.flag_private_tower_without_eice == true ? true : false
 
+  # Suppress useless blank security group
+  create_security_group      = false
+  
   # Do not keep or breaks Tower audit logging.
   # https://registry.terraform.io/modules/terraform-aws-modules/alb/aws/latest
-  enable_xff_client_port = false
+  enable_xff_client_port     = false
 
   # Fixes tfsec warning
   # https://aquasecurity.github.io/tfsec/latest/checks/aws/elb/drop-invalid-headers/
@@ -80,6 +83,19 @@ module "alb" {
         }
       }
     },
+    {
+      name_prefix      = "p9099"
+      backend_protocol = "HTTP"
+      backend_port     = 9099
+      target_type      = "instance"
+
+      targets = {
+        my_target = {
+          target_id = aws_instance.ec2.id
+          port      = 9099
+        }
+      }
+    },
   ]
 
   https_listener_rules = [
@@ -96,9 +112,10 @@ module "alb" {
         host_headers = [var.tower_server_url]
       }]
     },
+    # May 12/2025 had to lower priority so wave.<TOWER_SERVER_URL> could match first.
     {
       https_listener_index = 0
-      priority = 5001
+      priority = 5010
 
       actions = [{
         type = "forward"
@@ -108,6 +125,22 @@ module "alb" {
       conditions = [{
         # host_headers = [local.tower_connect_dns]
         host_headers = [local.tower_connect_wildcard_dns]
+      }]
+    },
+
+    # Forward wave.<TOWER_SERVER_URL> to Wave Lite container
+    {
+      https_listener_index = 0
+      priority = 5001
+
+      actions = [{
+        type = "forward"
+        target_group_index =2
+      }]
+
+      conditions = [{
+        # host_headers = [local.tower_connect_dns]
+        host_headers = [local.tower_wave_dns]
       }]
     }
   ]

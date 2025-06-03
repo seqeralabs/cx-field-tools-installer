@@ -146,3 +146,45 @@ In addition to the general design decisions noted above, there are a few decisio
     }
     ```
 
+11. **Replace home-grown parser with better 3rd-party alternative** (_affects Releases > 1.5.0_)
+
+    Aspects of this solution rely on transforming the HCL contained in `terraform.tfvars` into a Python library (_i.e. database connection string generation, tfvars validation_). Releases <= 1.5.0 all rely on a crude parser created by `gwright99`. This approach was taken to avoid introducing a 3rd-party binary dependency in our clients' environments.
+
+    The [Add Wave Lite](https://github.com/seqeralabs/cx-field-tools-installer/issues/197) enhancement work has introduced more complex objects which the parser simply cannot handle. Rather than spend significant staff time to rewrite the crude solution, we have opted instead to introduce a third party dependency in the form of [`tmccombs/hcl2json`](https://github.com/tmccombs/hcl2json). Furthermore, rather than require our implementors to install Golang on their machines, we've opted to access the binary via supplied container (original source: [https://hub.docker.com/r/tmccombs/hcl2json](https://hub.docker.com/r/tmccombs/hcl2json)).
+
+    We recognize the effect of this decision on the existing security posture, and have thus taken the following actions to mitigate risks:
+
+    1. Seqera Security personnel conducted an analysis of the open-source project. 
+    2. We have [vendored our own copy](https://github.com/seqeralabs/cx-field-tools-installer/pkgs/container/cx-field-tools-installer%2Fhcl2json) of the image (_with source Dockerfile included in the project_).
+    3. When calling the container as part of the deployment process, the following precautions are in place:
+        1. Use of a non-root UID.
+        2. Volume bind-mounting only the `terraform.tfvars` file required as input.
+        3. Complete removal of access to any networking capability.
+        4. Container stdout is captured and written to file by our own code rather than allowing the container to do so.
+
+12. **Wave-Lite `.sql` file generation**
+
+    Prior to the introduction of the Wave-Lite feature (Release > 1.5.0), application configuration files were defined as `.tpl` files and processed / interpolated by Terrafrom templatefile functions at deployment time. Unfortunately, the Wave-Lite deployment relies on postgres as a backend; postgres is insistent on **single-quotes** in various SQL statements; and terraform templatefile functions detest single quotes.
+
+    The result is a mess: appeasing one tool enrages the other. As a result, the creation of `.sql` files for Wave-Lite behaves differently than the generation of other config files. For Wave-Lite files:
+
+    - The source file is does not have a `.tpl` extension.
+    - The source file is written in proper `psql`.
+    - The source file contains string-based text placeholders.
+    - The text placeholders are processed in `010_prepare_config_files.tf` by:
+        1. Copying the source file to the target folder.
+        2. Running targeted `sed` commands to replace the placeholder with configured SSM Secret.
+
+    As noted in the various config files, this is definitely a hacky solution but it allows the application to deploy and provide some degree of legibility and consistency. Suggestions for improvement are welcome but - in the meantime - we'll stick with this pattern.
+
+13. **Wave-Lite Multiple Replicas & Reverse-Proxy**
+
+    The Wave-Lite augmentation flow is a single-threaded blocking function. To reduce bottlenecks, the Wave Lite container has been designed to run with multiple replicas (_default 2_).
+
+    Running multiple container copies, however, created networking challenges:
+    
+        - The containers could not all share the same host port as this caused errors when the _nth_ container tried to bind an already-bound port. 
+        - Host ports could be dynamically assigned to each replica but this would require upstream work to modify how the ALB target groups send Wave-related traffic to the EC2 instance.
+        - We could use a "poor man's K8s Service" and introduce a reverse proxy container into the deployment which would accept all Wave-related traffic and then round-robin the calls to the downstream containers.
+
+    The decision was made to implement the reverse proxy solution. We introduced an brand new instance rather than repurposing the existing proxy using for private certs. This was done to minimize the mixing of concerns and simplify implementation. We may choose to rationalize this deployment in a future release (TBD).

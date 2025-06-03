@@ -1,105 +1,169 @@
 ## ------------------------------------------------------------------------------------
 ## NOTE!
 ## ------------------------------------------------------------------------------------
-# This is less elegant than using a for-each construct but I think it's easier to maintain.
-# YMMV - A rewrite could make things cleaner.
+/* 1. Modules rewritten May 15/2025 (combined ingress & egress).
+
+   2. Config entries like `ingress_with_cidr_blocks` require comma-delimited string, 
+      whereas other config entries like `egress_rules` expect a list.
+
+      To be reverse-compatible with existing installations, I've left tfvars keys as lists
+      and process as required within each module call.
+
+      For good config examples, see: https://github.com/terraform-aws-modules/terraform-aws-security-group/blob/master/examples/complete/main.tf
+
+   3. Nuanced distinction between `sg_ec2_core` vs `sg_ec2_noalb` vs `sg_from_alb_`:
+        - sg_ec2_core     :  Rules that need to be present regardless of how traffic gets to it (inbound SSH & egress)
+        - sg_ec2_noalb_*  :  Rules that allow inbound traffic directly to the EC2 instance when an ALB has not been deployed.
+        - sg_from_alb_*   :  Rules that allow inbound traffic from the ALB when the ALB is deployed.
+*/
 
 
 ## ------------------------------------------------------------------------------------
 ## Instance Connect Endpoint Controls
 ## ------------------------------------------------------------------------------------
-module "tower_eice_ingress_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+module "sg_eice" {
+  source            = "terraform-aws-modules/security-group/aws"
+  version           = "5.1.0"
 
-  name        = "${local.global_prefix}_eice_sg"
-  description = "Allowed ingress CIDRS EC2 Instance Connect endpoint."
+  name              = "${local.global_prefix}_eice_sg"
+  description       = "EICE traffic."
 
-  vpc_id              = local.vpc_id
-  ingress_cidr_blocks = var.sg_ssh_cidrs
-  ingress_rules       = ["ssh-tcp"]
-}
-
-
-module "tower_eice_egress_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
-
-  name        = "${local.global_prefix}_ec2_egress_sg"
-  description = "Allowed egress CIDRS EC2 Instance Connect endpoint."
-
-  vpc_id       = local.vpc_id
-  egress_rules = var.sg_egress_eice
+  vpc_id            = local.vpc_id
+  ingress_with_cidr_blocks = [
+    {
+      rule          = "ssh-tcp"
+      cidr_blocks   = join(",", var.sg_ssh_cidrs)
+    }
+  ]
+  egress_rules      = var.sg_egress_eice
 }
 
 
 ## ------------------------------------------------------------------------------------
 ## EC2 Controls
 ## ------------------------------------------------------------------------------------
-module "tower_ec2_ssh_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+module "sg_ec2_core" {
+  source            = "terraform-aws-modules/security-group/aws"
+  version           = "5.1.0"
 
-  name        = "${local.global_prefix}_ec2_ssh_sg"
-  description = "Allowed SSH ingress to EC2 instance (EICE only)."
+  name              = "${local.global_prefix}_ec2_core"
+  description       = "Core EC2 traffic (SSH & Egress)."
 
-  vpc_id              = local.vpc_id
-  ingress_cidr_blocks = var.sg_ssh_cidrs
-  ingress_rules       = ["ssh-tcp"]
+  vpc_id            = local.vpc_id
+  ingress_with_cidr_blocks = [
+    {
+      rule          = "ssh-tcp"
+      cidr_blocks   = join(",", var.sg_ssh_cidrs)
+    }
+  ]
+  egress_rules      = var.sg_egress_tower_ec2
+
 }
 
 
-module "tower_ec2_egress_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+# May 15/2025
+# Keeping these three rules separate so that we dont unnecessarily open Ports if they aren't needed.
+# This means the code is a bit more complicated than I would like, but seems worth it for security.
+module "sg_ec2_noalb" {
+  source              = "terraform-aws-modules/security-group/aws"
+  version             = "5.1.0"
 
-  name        = "${local.global_prefix}_ec2_egress_sg"
-  description = "Tower EC2 host egress."
+  count               = var.flag_create_load_balancer == false ? 1 : 0
 
-  vpc_id              = local.vpc_id
-  ingress_cidr_blocks = var.sg_ingress_cidrs
-  egress_rules        = var.sg_egress_tower_ec2
-}
-
-
-module "tower_ec2_direct_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
-
-  name        = "${local.global_prefix}_ec2_direct_sg"
-  description = "Direct HTTP to Tower EC2 host."
+  name                = "${local.global_prefix}_ec2_direct"
+  description         = "Direct HTTP (80, 443, and 8000) traffic to EC2."
 
   vpc_id              = local.vpc_id
   ingress_cidr_blocks = var.sg_ingress_cidrs
   ingress_rules       = ["https-443-tcp", "http-80-tcp", "splunk-web-tcp"]
 }
 
-module "tower_ec2_direct_connect_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
 
-  count = var.flag_enable_data_studio == true ? 1 : 0
+module "sg_ec2_noalb_connect" {
+  source                    = "terraform-aws-modules/security-group/aws"
+  version                   = "5.1.0"
 
-  name        = "${local.global_prefix}_ec2_direct_connect_sg"
-  description = "Direct HTTP to Tower EC2 host when Connect active."
+  count                     = var.flag_create_load_balancer == false && var.flag_enable_data_studio == true ? 1 : 0
 
-  vpc_id              = local.vpc_id
-  ingress_with_cidr_blocks = local.tower_ec2_direct_connect_sg_final
+  name                      = "${local.global_prefix}_ec2_direct_connect"
+  description               = "Direct HTTP (9090) traffic to EC2."
+
+  vpc_id                    = local.vpc_id
+  computed_ingress_with_cidr_blocks = [
+    {
+      from_port     = 9090
+      to_port       = 9090
+      protocol      = "tcp"
+      description   = "Connect-Proxy"
+      cidr_blocks   = "${join(",", var.sg_ingress_cidrs)}"
+    }
+  ]
+  number_of_computed_ingress_with_source_security_group_id = 1
 }
 
 
-module "tower_ec2_alb_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+module "sg_from_alb_core" {
+  source                    = "terraform-aws-modules/security-group/aws"
+  version                   = "5.1.0"
 
-  name        = "${local.global_prefix}_ec2_alb_sg"
-  description = "ALB HTTP to Tower EC2 host."
+  count                     = var.flag_create_load_balancer == true ? 1 : 0
 
-  vpc_id = local.vpc_id
+  name                      = "${local.global_prefix}_from_alb_core"
+  description               = "Allow HTTP (8000) traffic via ALB."
+
+  vpc_id                    = local.vpc_id
   computed_ingress_with_source_security_group_id = [
     {
       rule                     = "splunk-web-tcp"
-      source_security_group_id = module.tower_alb_sg.security_group_id
+      source_security_group_id = module.sg_alb_core[0].security_group_id
+    }
+  ]
+  number_of_computed_ingress_with_source_security_group_id = 1
+}
+
+
+
+module "sg_from_alb_connect" {
+  source                    = "terraform-aws-modules/security-group/aws"
+  version                   = "5.1.0"
+
+  count                     = var.flag_create_load_balancer == true && var.flag_enable_data_studio == true ? 1 : 0
+
+  name                      = "${local.global_prefix}_from_alb_connect"
+  description               = "Allow Studio traffic via ALB."
+
+  vpc_id                    = local.vpc_id
+  computed_ingress_with_source_security_group_id = [
+    {
+      from_port   = 9090
+      to_port     = 9090
+      protocol    = "tcp"
+      description = "Studio"
+      source_security_group_id = module.sg_alb_core[0].security_group_id
+    }
+  ]
+  number_of_computed_ingress_with_source_security_group_id = 1
+}
+
+
+# Wave Lite only currently supported via ALB
+module "sg_from_alb_wave" {
+  source                    = "terraform-aws-modules/security-group/aws"
+  version                   = "5.1.0"
+
+  count                     = var.flag_create_load_balancer == true && var.flag_use_wave_lite == true ? 1 : 0
+
+  name                      = "${local.global_prefix}_from_alb_wave"
+  description               = "Allow Wave Lite traffic via ALB."
+
+  vpc_id                    = local.vpc_id
+  computed_ingress_with_source_security_group_id = [
+    {
+      from_port   = 9099
+      to_port     = 9099
+      protocol    = "tcp"
+      description = "Wave_Lite"
+      source_security_group_id = module.sg_alb_core[0].security_group_id
     }
   ]
   number_of_computed_ingress_with_source_security_group_id = 1
@@ -109,95 +173,89 @@ module "tower_ec2_alb_sg" {
 ## ------------------------------------------------------------------------------------
 ## ALB Controls
 ## ------------------------------------------------------------------------------------
-module "tower_alb_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+module "sg_alb_core" {
+  source                    = "terraform-aws-modules/security-group/aws"
+  version                   = "5.1.0"
 
-  name        = "${local.global_prefix}_alb_sg"
-  description = "HTTP to Tower ALB instance."
+  count                     = var.flag_create_load_balancer == true ? 1 : 0
 
-  vpc_id              = local.vpc_id
-  ingress_cidr_blocks = local.alb_ingress_cidrs #var.sg_ingress_cidrs
-  ingress_rules       = ["https-443-tcp", "http-80-tcp"]
-  egress_rules        = var.sg_egress_tower_alb
+  name                      = "${local.global_prefix}_alb_core"
+  description               = "Allow HTTP (80, 443) to ALB."
+
+  vpc_id                    = local.vpc_id
+  ingress_cidr_blocks       = local.alb_ingress_cidrs
+  ingress_rules             = ["https-443-tcp", "http-80-tcp"]
+  egress_rules              = var.sg_egress_tower_alb
 }
 
-
-module "tower_ec2_alb_connect_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
-
-  count = var.flag_enable_data_studio == true ? 1 : 0
-
-  name        = "${local.global_prefix}_ec2_alb_connect_sg"
-  description = "Direct HTTP to Tower EC2 host when Connect active."
-
-  vpc_id              = local.vpc_id
-  # computed_ingress_with_cidr_blocks = local.tower_ec2_alb_connect_sg_final
-  # computed_ingress_with_cidr_blocks = local.tower_ec2_alb_connect_sg_final
-  computed_ingress_with_source_security_group_id= local.tower_ec2_alb_connect_sg_final
-  number_of_computed_ingress_with_source_security_group_id = 1
-}
 
 ## ------------------------------------------------------------------------------------
 ## DB Controls
 ## ------------------------------------------------------------------------------------
-module "tower_db_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+module "sg_db" {
+  source                    = "terraform-aws-modules/security-group/aws"
+  version                   = "5.1.0"
 
-  name        = "${local.global_prefix}_rds_sg"
-  description = "Security group for Tower RDS instance."
+  count                     = var.flag_create_external_db == true ? 1 : 0
 
-  vpc_id = local.vpc_id
+  name                      = "${local.global_prefix}_rds"
+  description               = "Seqera Platform RDS traffic."
+
+  vpc_id                    = local.vpc_id
   computed_ingress_with_source_security_group_id = [
     {
       rule                     = "mysql-tcp"
-      source_security_group_id = module.tower_ec2_egress_sg.security_group_id
+      source_security_group_id = module.sg_ec2_core.security_group_id
+    },
+    {
+      rule                     = "postgresql-tcp"
+      source_security_group_id = module.sg_ec2_core.security_group_id
     }
   ]
-  number_of_computed_ingress_with_source_security_group_id = 1
+  # TODO: Decide whether 
+  number_of_computed_ingress_with_source_security_group_id = 2
 }
 
 
 ## ------------------------------------------------------------------------------------
 ## AWS Batch Security Groups
 ## ------------------------------------------------------------------------------------
-module "tower_batch_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+module "sg_batch" {
+  source                      = "terraform-aws-modules/security-group/aws"
+  version                     = "5.1.0"
 
-  name        = "${local.global_prefix}_batch_sg"
-  description = "Security group for Tower Batch instance."
+  name                        = "${local.global_prefix}_batch"
+  description                 = "Security group for Tower Batch instance."
 
-  vpc_id       = local.vpc_id
-  egress_rules = var.sg_egress_batch_ec2
-
+  vpc_id                      = local.vpc_id
   computed_ingress_with_source_security_group_id = [
     {
       rule                     = "ssh-tcp"
-      source_security_group_id = module.tower_ec2_egress_sg.security_group_id
+      source_security_group_id = module.sg_ec2_core.security_group_id
     }
   ]
   number_of_computed_ingress_with_source_security_group_id = 1
+  egress_rules                = var.sg_egress_batch_ec2
 }
 
 
 ## ------------------------------------------------------------------------------------
 ## Elasticache (Redis) Controls
 ## ------------------------------------------------------------------------------------
-module "tower_redis_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+module "sg_redis" {
+  source                      = "terraform-aws-modules/security-group/aws"
+  version                     = "5.1.0"
 
-  name        = "${local.global_prefix}_redis_sg"
-  description = "Security group for Tower Elasticache instance."
+  count                       = var.flag_create_external_redis == true ? 1 : 0
 
-  vpc_id = local.vpc_id
+  name                        = "${local.global_prefix}_redis"
+  description                 = "Seqera Platform Redis traffic."
+
+  vpc_id                      = local.vpc_id
   computed_ingress_with_source_security_group_id = [
     {
       rule                     = "redis-tcp"
-      source_security_group_id = module.tower_ec2_egress_sg.security_group_id
+      source_security_group_id = module.sg_ec2_core.security_group_id
     }
   ]
   number_of_computed_ingress_with_source_security_group_id = 1
@@ -207,15 +265,15 @@ module "tower_redis_sg" {
 ## ------------------------------------------------------------------------------------
 ## Gateway & Interface Endpoint Controls
 ## ------------------------------------------------------------------------------------
-module "tower_interface_endpoint_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+module "sg_vpc_endpoint" {
+  source                      = "terraform-aws-modules/security-group/aws"
+  version                     = "5.1.0"
 
-  name        = "${local.global_prefix}_interface_sg"
-  description = "Allowed ingress on VPC endpoints in Tower Subnet."
+  name                        = "${local.global_prefix}_vpc_interface"
+  description                 = "Seqera Platform VPC Endpoint traffic."
 
-  vpc_id              = local.vpc_id
-  ingress_cidr_blocks = [var.vpc_new_cidr_range]
-  ingress_rules       = ["all-all"]
-  egress_rules        = var.sg_egress_interface_endpoint
+  vpc_id                      = local.vpc_id
+  ingress_cidr_blocks         = [var.vpc_new_cidr_range]
+  ingress_rules               = ["all-all"]
+  egress_rules                = var.sg_egress_interface_endpoint
 }

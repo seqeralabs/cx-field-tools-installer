@@ -27,6 +27,12 @@ Permissions were identified via:
 			]
 		},
 		{
+  			"Sid": "AllowSSHviaEICE",
+  			"Effect": "Allow",
+  			"Action": "ec2-instance-connect:OpenTunnel",
+  			"Resource": "arn:aws:ec2:u<REGION>:<ACCOUNT>:instance-connect-endpoint/*"
+		},
+		{
 			"Sid": "InteractWithTFPrefixedIAMResources",
 			"Effect": "Allow",
 			"Action": [

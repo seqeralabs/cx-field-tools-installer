@@ -1,6 +1,7 @@
-## ------------------------------------------------------------------------------------
-## Mandatory Bootstrap Values
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# Mandatory Bootstrap Values
+# ------------------------------------------------------------------------------------
+
 variable "app_name" { type = string }
 
 variable "secrets_bootstrap_tower" {
@@ -18,6 +19,11 @@ variable "secrets_bootstrap_groundswell" {
   description = "SSM SecureString for Groundswell secrets."
 }
 
+variable "secrets_bootstrap_wave_lite" {
+  type        = string
+  description = "SSM SecureString for Wave Lite secrets."
+}
+
 variable "aws_account" { type = string }
 variable "aws_region" { type = string }
 variable "aws_profile" { type = string }
@@ -28,9 +34,10 @@ variable "tower_container_version" {
 }
 
 
-## ------------------------------------------------------------------------------------
-## SSM 
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# SSM 
+# ------------------------------------------------------------------------------------
+
 variable "flag_overwrite_ssm_keys" {
   type        = bool
   description = "Not to be used in PROD but helpful when sharing same instance in DEV."
@@ -38,22 +45,25 @@ variable "flag_overwrite_ssm_keys" {
 }
 
 
-## ------------------------------------------------------------------------------------
-## Tags -- Default
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# Tags -- Default
+# ------------------------------------------------------------------------------------
+
 variable "default_tags" { type = map(string) }
 
 
-## ------------------------------------------------------------------------------------
-## Flags - Custom Naming
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# Flags - Custom Naming
+# ------------------------------------------------------------------------------------
+
 variable "flag_use_custom_resource_naming_prefix" { type = bool }
 variable "custom_resource_naming_prefix" { type = string }
 
 
-## ------------------------------------------------------------------------------------
-## Flags - Infrastructure
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# Flags - Infrastructure
+# ------------------------------------------------------------------------------------
+
 variable "flag_create_new_vpc" { type = bool }
 variable "flag_use_existing_vpc" { type = bool }
 
@@ -73,9 +83,9 @@ variable "flag_use_aws_ses_iam_integration" { type = bool }
 variable "flag_use_existing_smtp" { type = bool }
 
 
-## ------------------------------------------------------------------------------------
-## Flags - Networking
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# Flags - Networking
+# ------------------------------------------------------------------------------------
 
 variable "flag_make_instance_public" { type = bool }
 variable "flag_make_instance_private" { type = bool }
@@ -87,17 +97,21 @@ variable "flag_vm_copy_files_to_instance" { type = bool }
 variable "flag_use_custom_docker_compose_file" { type = bool }
 
 
-## ------------------------------------------------------------------------------------
-## Wave Service
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# Wave Service
+# ------------------------------------------------------------------------------------
+
 variable "flag_use_wave" { type = bool }
+variable "flag_use_wave_lite" { type = bool }
+variable "num_wave_lite_replicas" { type = number }
 variable "wave_server_url" { type = string }
+variable "wave_lite_server_url" { type = string }
 
 
-## ------------------------------------------------------------------------------------
-## Flags - DNS
-## ------------------------------------------------------------------------------------
-# Only one can be true
+# ------------------------------------------------------------------------------------
+# Flags - DNS
+# ------------------------------------------------------------------------------------
+
 variable "flag_create_route53_private_zone" { type = bool }
 variable "flag_use_existing_route53_public_zone" { type = bool }
 variable "flag_use_existing_route53_private_zone" { type = bool }
@@ -109,18 +123,20 @@ variable "existing_route53_public_zone_name" { type = string }
 variable "existing_route53_private_zone_name" { type = string }
 
 
-## ------------------------------------------------------------------------------------
-## Custom Private CA
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# Custom Private CA
+# ------------------------------------------------------------------------------------
+
 variable "bucket_prefix_for_new_private_ca_cert" { type = string }
 
 variable "existing_ca_cert_file" { type = string }
 variable "existing_ca_key_file" { type = string }
 
 
-## ------------------------------------------------------------------------------------
-## VPC (New)
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# VPC (New)
+# ------------------------------------------------------------------------------------
+
 variable "vpc_new_cidr_range" { type = string }
 variable "vpc_new_azs" { type = list(string) }
 
@@ -137,9 +153,10 @@ variable "vpc_new_alb_subnets" { type = list(string) }
 variable "enable_vpc_flow_logs" { type = bool }
 
 
-## ------------------------------------------------------------------------------------
-## VPC (Existing)
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# VPC (Existing)
+# ------------------------------------------------------------------------------------
+
 variable "vpc_existing_id" { type = string }
 variable "vpc_existing_ec2_subnets" { type = list(string) }
 variable "vpc_existing_batch_subnets" { type = list(string) }
@@ -149,21 +166,23 @@ variable "vpc_existing_redis_subnets" { type = list(string) }
 variable "vpc_existing_alb_subnets" { type = list(string) }
 
 
-## ------------------------------------------------------------------------------------
-## VPC Endpoints
+# ------------------------------------------------------------------------------------
+# VPC Endpoints
 # ssmmessages,ec2messages,cloudwatch-monitoring,cloudwatch-logs,smtp-ses,
 # awsbatch,secretsmanager,rds,ecr-dkr,codecommit,git-codecommit,
 # ecs-agent,ecs-telemetry,ecs
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+
 variable "vpc_gateway_endpoints_all" { type = list(any) }
 
 variable "vpc_interface_endpoints_tower" { type = list(any) }
 variable "vpc_interface_endpoints_batch" { type = list(any) }
 
 
-## ------------------------------------------------------------------------------------
-## Security Group - Transaction Sources
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# Security Group - Transaction Sources
+# ------------------------------------------------------------------------------------
+
 variable "sg_ingress_cidrs" { type = list(string) }
 variable "sg_ssh_cidrs" { type = list(string) }
 
@@ -174,26 +193,29 @@ variable "sg_egress_batch_ec2" {type = list(string)}
 variable "sg_egress_interface_endpoint" {type = list(string)}
 
 
-## ------------------------------------------------------------------------------------
-## Groundswell
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# Groundswell
+# ------------------------------------------------------------------------------------
+
 variable "flag_enable_groundswell" { type = bool }
 
 variable "swell_container_version" { type = string }
 variable "swell_database_name" { type = string }
 
 
-## ------------------------------------------------------------------------------------
-## Data Explorer - Feature Gated (23.4.3+)
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# Data Explorer - Feature Gated (23.4.3+)
+# ------------------------------------------------------------------------------------
+
 variable "flag_data_explorer_enabled" { type = bool }
 
 variable "data_explorer_disabled_workspaces" { type = string }
 
 
-## ------------------------------------------------------------------------------------
-## Data Studio - Feature Gated (24.1.0+)
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# Data Studio - Feature Gated (24.1.0+)
+# ------------------------------------------------------------------------------------
+
 variable "flag_enable_data_studio" { type = bool }
 variable "data_studio_container_version" { type = string }
 
@@ -211,24 +233,28 @@ variable "data_studio_options" {
 }
 
 
-## ------------------------------------------------------------------------------------
-## Database (Generic)
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# Database (Generic)
+# ------------------------------------------------------------------------------------
+
 variable "db_database_name" { type = string }
 
 
-## ------------------------------------------------------------------------------------
-## Database (Container)
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# Database (Container)
+# ------------------------------------------------------------------------------------
+
 variable "db_container_engine" { type = string }
 variable "db_container_engine_version" { type = string }
 
 
-## ------------------------------------------------------------------------------------
-## Database (External)
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# Database (External)
+# ------------------------------------------------------------------------------------
+
 variable "db_engine" { type = string }
 variable "db_engine_version" { type = string }
+variable "db_param_group" { type = string }
 variable "db_instance_class" { type = string }
 variable "db_allocated_storage" { type = number }
 
@@ -239,16 +265,70 @@ variable "db_backup_retention_period"  { type = number }
 variable "db_enable_storage_encrypted" { type = bool }
 
 
-## ------------------------------------------------------------------------------------
-## IAM
-## ------------------------------------------------------------------------------------
+variable "wave_lite_db_engine" { type = string }
+variable "wave_lite_db_engine_version" { type = string }
+variable "wave_lite_db_param_group" { type = string }
+variable "wave_lite_db_instance_class" { type = string }
+variable "wave_lite_db_allocated_storage" { type = number }
+
+variable "wave_lite_db_deletion_protection" { type = bool }
+variable "wave_lite_skip_final_snapshot"    { type = bool }
+variable "wave_lite_db_backup_retention_period"  { type = number }
+variable "wave_lite_db_enable_storage_encrypted" { type = bool }
+
+
+# ------------------------------------------------------------------------------------
+# Elasicache (External)
+# ------------------------------------------------------------------------------------
+
+# TODO: Add Seqera Platform core instance post Wave-Lite feature release.
+
+variable "wave_lite_elasticache" {
+  type = object({
+    apply_immediately = bool
+    engine            = string
+    engine_version    = string
+    node_type         = string
+    port              = number
+
+    security_group_ids = list(string)
+    subnet_ids         = list(string)
+
+    unclustered = object({
+      num_cache_nodes = number
+    })
+
+    clustered = object({
+      multi_az_enabled           = bool
+      automatic_failover_enabled = bool
+      num_node_groups            = optional(number)
+      replicas_per_node_group    = optional(number)
+      parameter_group_name       = string
+    })
+
+    encryption = object({
+      auth_token                 = optional(string)
+      at_rest_encryption_enabled = bool
+      transit_encryption_enabled = bool
+      kms_key_id                 = optional(string)
+    })
+  })
+  description = "Configuration for the Wave Elasticache instance including networking, clustering, and encryption settings"
+}
+
+
+# ------------------------------------------------------------------------------------
+# IAM
+# ------------------------------------------------------------------------------------
+
 variable "flag_iam_use_prexisting_role_arn" { type = bool }
 variable "iam_prexisting_instance_role_arn" { type = string }
 
 
-## ------------------------------------------------------------------------------------
-## EC2 Host
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# EC2 Host
+# ------------------------------------------------------------------------------------
+
 variable "ec2_host_instance_type" { type = string }
 
 variable "flag_encrypt_ebs" { type = bool }
@@ -261,15 +341,17 @@ variable "ec2_require_imds_token"  { type = bool }
 variable "ec2_update_ami_if_available"  { type = bool }
 
 
-## ------------------------------------------------------------------------------------
-## ALB
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# ALB
+# ------------------------------------------------------------------------------------
+
 variable "alb_certificate_arn" { type = string }
 
 
-## ------------------------------------------------------------------------------------
-## TOWER CONFIGURATION
-## ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+# TOWER CONFIGURATION
+# ------------------------------------------------------------------------------------
+
 variable "tower_server_url" { type = string }
 variable "tower_server_port" { type = string } # TODO: Update SG-generation logic to use this value
 variable "tower_contact_email" { type = string }
@@ -296,9 +378,11 @@ variable "tower_email_trusted_users" { type = string }
 
 variable "tower_audit_retention_days" { type = number }
 
+
 # ------------------------------------------------------------------------------------
-## TOWER CONFIGURATION - OIDC
-## ------------------------------------------------------------------------------------
+# TOWER CONFIGURATION - OIDC
+# ------------------------------------------------------------------------------------
+
 variable "flag_oidc_use_generic" { type = bool }
 variable "flag_oidc_use_google" { type = bool }
 variable "flag_oidc_use_github" { type = bool }
@@ -307,8 +391,9 @@ variable "flag_disable_email_login" { type = bool }
 
 
 # ------------------------------------------------------------------------------------
-## EC2 - Docker Configuration
-## ------------------------------------------------------------------------------------
+# EC2 - Docker Configuration
+# ------------------------------------------------------------------------------------
+
 variable "flag_docker_logging_local" { type = bool }
 variable "flag_docker_logging_journald" { type = bool }
 variable "flag_docker_logging_jsonfile" { type = bool }
@@ -316,10 +401,10 @@ variable "flag_docker_logging_jsonfile" { type = bool }
 variable "docker_cidr_range" { type = string }
 
 
+# ------------------------------------------------------------------------------------
+# seqerakit
+# ------------------------------------------------------------------------------------
 
-## ------------------------------------------------------------------------------------
-## seqerakit
-## ------------------------------------------------------------------------------------
 variable "flag_run_seqerakit" { type = bool }
 
 variable "seqerakit_org_name" { type = string }
@@ -355,3 +440,4 @@ variable "seqerakit_flag_credential_create_codecommit" { type = bool }
 
 variable "seqerakit_flag_credential_use_aws_role" { type = bool }
 variable "seqerakit_flag_credential_use_codecommit_baseurl" { type = bool }
+

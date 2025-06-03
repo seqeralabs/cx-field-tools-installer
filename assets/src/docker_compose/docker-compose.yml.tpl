@@ -1,4 +1,6 @@
-version: "3"
+# May 27/2025: removing since this causes problems with the native compose feature in Docker (we 
+#              no longer install the separate docker-compose extension)
+# version: "3"
 services:
 
 %{ if flag_use_container_db == true ~}
@@ -247,6 +249,75 @@ services:
       - $HOME/target/customcerts/REPLACE_CUSTOM_KEY:/etc/ssl/private/REPLACE_CUSTOM_KEY
     restart: always
 %{ endif ~}
+
+%{ if flag_use_wave_lite == true ~}
+  wave-lite:
+    image: hrma017/app:1.20.0-B1   # TODO: swap with real image later.
+    # ports:
+    #   - 9099:9090
+    expose:
+      - 9090
+    volumes:
+      - $HOME/target/wave_lite_config/wave-lite.yml:/work/config.yml
+    #env_file:
+    #  - wave-lite.env
+    environment:
+      - MICRONAUT_ENVIRONMENTS=lite,rate-limit,redis,prometheus,postgres
+      - WAVE_JVM_OPTS=-Djdk.traceVirtualThreadInThreadDump=full -XX:InitialRAMPercentage=65 -XX:MaxRAMPercentage=65 -XX:+HeapDumpOnOutOfMemoryError -XX:MaxDirectMemorySize=200m -Dio.netty.maxDirectMemory=0 -Djdk.httpclient.keepalive.timeout=10 -Djdk.tracePinnedThreads=short
+    networks:
+      - frontend
+      - backend
+    working_dir: /work
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: ${num_wave_lite_replicas}
+
+  wave-lite-reverse-proxy:
+    image: nginx:latest
+    ports:
+      - "9099:80"
+    volumes:
+      - $HOME/target/wave_lite_config/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - wave-lite
+    networks:
+      - backend
+%{ endif ~}
+
+%{ if wave_lite_db_container == true ~}
+  wave-db:
+    image: postgres:latest
+    platform: linux/amd64
+    expose:
+      - 5432:5432
+    volumes:
+      - $HOME/.wave/db/postgresql:/var/lib/postgresql/data
+      - $HOME/target/wave_lite_config/wave-lite-container-1.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - $HOME/target/wave_lite_config/wave-lite-container-2.sql:/docker-entrypoint-initdb.d/02-permissions.sql
+    environment:
+      - POSTGRES_USER=${wave_lite_db_master_user}
+      - POSTGRES_PASSWORD=${wave_lite_db_master_password}
+      - POSTGRES_DB=wave
+    networks:
+      - backend
+    restart: always
+%{ endif ~}
+
+%{ if wave_lite_redis_container == true ~}
+  wave-redis:
+    image: cr.seqera.io/public/redis:7.0.10
+    platform: linux/amd64
+    expose:
+      - 6380:6379
+    command: ["redis-server", "--requirepass", "${wave_lite_redis_auth}"]
+    restart: always
+    volumes:
+      - $HOME/.wave/db/wave-lite-redis:/data
+    networks:
+      - backend
+%{ endif ~}
+
 
 networks:
   frontend: {}

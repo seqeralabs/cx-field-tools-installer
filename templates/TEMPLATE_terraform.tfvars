@@ -32,12 +32,14 @@ app_name                                = "tower-dev"
 secrets_bootstrap_tower                 = "/seqera/sensitive-values/tower-dev/tower"
 secrets_bootstrap_seqerakit             = "/seqera/sensitive-values/tower-dev/seqerakit"
 secrets_bootstrap_groundswell           = "/seqera/sensitive-values/tower-dev/groundswell"
+secrets_bootstrap_wave_lite             = "/seqera/sensitive-values/tower-dev/wave-lite"
+
 
 aws_account                             = "REPLACE_ME"
 aws_region                              = "REPLACE_ME"
 aws_profile                             = "REPLACE_ME"
 
-tower_container_version                 = "v24.1.5"
+tower_container_version                 = "v25.1.1"
 
 
 /*
@@ -207,10 +209,29 @@ flag_use_custom_docker_compose_file             = false
 ## ------------------------------------------------------------------------------------
 ## Wave Service
 ## ------------------------------------------------------------------------------------
+Enable Tower to connect to the Wave service.
+
+To connect the Seqera-hosted Wave Service, set `flag_use_wave` to true.
+To connect to a self-hosted Wave Lite instance instead, set `flag_use_wave_lite` to true.
+
+You should not need to modify the URL of the Seqera-hosted wave.
+
+If you are deploying a Wave-LIte instance, you will need to make a decision re: DNS. Seqera recommends exposing 
+the service as a subdomain of your `tower_server_url` value (see entry in section further below). This pattern works 
+well because you can reuse this pattern if/when you enable the Studios feature. e.g:
+    - wave.myseqeraplatform.example.com
+
+If you organization cannot support subdomains, you will need to deply a peer record so that DNS population logic continues 
+to work. e.g:
+    - myseqeraplatform.example.com
+    - mywavelite.example.com
+
 */
-# Enable Tower to connect to the Wave service hosted by Seqera
-flag_use_wave                      = false
-wave_server_url                    = "https://wave.seqera.io"
+flag_use_wave                           = false
+flag_use_wave_lite                      = false
+num_wave_lite_replicas                  = 2
+wave_server_url                         = "https://wave.seqera.io"
+wave_lite_server_url                    = "https://REPLACE_ME_IF_NEEDED"
 
 /*
 ## ------------------------------------------------------------------------------------
@@ -503,13 +524,13 @@ This section added to handle new connection string requirements for Tower v24.1.
 db_container_engine                               = "mysql"
 db_container_engine_version                       = "8.0"
 
-
 /*
 ## ------------------------------------------------------------------------------------
 ## Database (External)
 ## ------------------------------------------------------------------------------------
 The official Seqera reference architecture advises using an RDS instance as your Seqera 
-Platform's database. 
+Platform's database. As of May 21/25 this section is augmented with settings for the
+Wave-Lite feature (Release > 1.5.0).
 
 You may choose to forgo this in lower environments if you are cost-conscious. Additionally,
 when conducting initial interative testing, you may wish to stick with the containerized 
@@ -524,16 +545,75 @@ WARNING:
   - You must supply your own backup solution.
 */
 
-db_engine                               = "mysql"
-db_engine_version                       = "8.0"
-db_instance_class                       = "db.m5.large"
-db_allocated_storage                    = 30
+db_engine                                         = "mysql"
+db_engine_version                                 = "8.0"
+db_param_group                                    = "mysql8.0"
+db_instance_class                                 = "db.m5.large"
+db_allocated_storage                              = 30
 
-db_deletion_protection                  = true
-skip_final_snapshot                     = false
+db_deletion_protection                            = true
+skip_final_snapshot                               = false
 
-db_backup_retention_period              = 7
-db_enable_storage_encrypted             = true
+db_backup_retention_period                        = 7
+db_enable_storage_encrypted                       = true
+
+
+wave_lite_db_engine                               = "postgres"
+wave_lite_db_engine_version                       = "17.5"
+wave_lite_db_param_group                          = "postgres17"
+wave_lite_db_instance_class                       = "db.t4g.micro"   #"db.m5.large"
+wave_lite_db_allocated_storage                    = 10
+
+wave_lite_db_deletion_protection                  = false
+wave_lite_skip_final_snapshot                     = true
+wave_lite_db_backup_retention_period              = 7
+wave_lite_db_enable_storage_encrypted             = true
+
+
+/*
+## ------------------------------------------------------------------------------------
+## Elasticache (External)
+## Specify the details of the external database to create or reuse
+## ------------------------------------------------------------------------------------
+This is a compound object designed to facilated passing of values to the underlying 
+Elasticache module. 
+
+The module supports both singleton (unclustered) and clusterd mode.
+Unclustered & clustered modes are mutually exclusive; if the `unclustered` block's
+`num_cache_nodes` is non-zero, the `clustered` block must keep its null values.
+*/
+
+# TODO - Add Seqera Platform core config in some release after Wave-Lite
+
+wave_lite_elasticache = {
+  apply_immediately = true
+
+  engine                        = "redis"
+  engine_version                = "7.1"
+  node_type                     = "cache.t4g.micro"
+  port                          = 6379
+
+  security_group_ids            = [] # Leave blank to use TF-generated SG.
+  subnet_ids                    = [] # Leave blank to use all private subnets.
+
+  unclustered = {
+    num_cache_nodes             = 1
+  }
+
+  clustered = {
+    multi_az_enabled           = false
+    automatic_failover_enabled = false
+    num_node_groups            = null
+    replicas_per_node_group    = null
+    parameter_group_name       = "default.redis7"
+  }
+
+  encryption = {
+    at_rest_encryption_enabled = true
+    transit_encryption_enabled = true
+    #kms_key_id missing
+  }
+}
 
 
 /*

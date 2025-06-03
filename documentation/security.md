@@ -3,9 +3,13 @@
 
 ## Hardening the Installer Project
 
-We use [tfsec](https://github.com/aquasecurity/tfsec) to scan this project for vulnerabilities. 
+We originally used [tfsec](https://github.com/aquasecurity/tfsec) to scan this project for vulnerabilities. This has since been replaced by [trivy](https://github.com/aquasecurity/trivy) due to `tfsec`'s integration with the `trivy` project.
 
-The latest scan was conducted **mid April 2024**, with highlighted vulnerabilities and fixes being tracked and actioned in [Issue #36 - Fix tfsec-identified Critical/High vulnerabilities](https://github.com/seqeralabs/cx-field-tools-installer/issues/36).
+
+### Terraform Scanning History
+- **May 21, 2025**, traced in [Trivy Security Scan -- May 21, 2025](https://github.com/seqeralabs/cx-field-tools-installer/issues/205).
+
+- **Mid April 2024**, traced in [Issue #36 - Fix tfsec-identified Critical/High vulnerabilities](https://github.com/seqeralabs/cx-field-tools-installer/issues/36).
 
 
 ### Patching vs Suppression vs Ignoring Reported Vulnerabilites
@@ -29,6 +33,10 @@ While it would be ideal to completely fix all reported issues, there are a few-c
     - Unquantified cost: [VPC Flow logs](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html#flow-logs-pricing)
     - No cost with default options: [RDS Performance Insights](https://aws.amazon.com/rds/performance-insights/pricing/)
 
+
+- **Uncertain Client Environments**
+
+    We cannot account for the realities of client environments and thus should not force hardcoded decisions upon them (_e.g. forcing encryption of an EBS volume_). Rather, we supply default values which align to best practices but allow the client to modify values, as necessary, to match the needs of their own environment.
 
 - **Necessity of feature**
 
@@ -111,11 +119,22 @@ We try to expose suggested best practices, but it **ultimately the implementer's
 
 ### AMI Updating 
 
-By default, the installer will try to grab the [very latest Amazon Linux 2023 AMI available](https://github.com/seqeralabs/cx-field-tools-installer/blob/master/006_ec2.tf#L1-L25) in your region. 
+By default, the installer will try to grab the [very latest Amazon Linux 2023 AMI available](https://github.com/seqeralabs/cx-field-tools-installer/blob/master/006_ec2.tf#L1-L25) in your region. This was modified in December 2024 (_see [`Make EBS boot volume configurable`](https://github.com/seqeralabs/cx-field-tools-installer/issues/164)) where we maintained the core update logic but limited the AMI family type to `al2023-ami-minimal-` only.
 
 This is generally seen as a good idea because it ensures security/application patches are introduced into your environment regularly. Unfortunately, it can occasionally cause VMs to be destroyed and replaced (_potentially resulting in the loss of data if the implementation is using the container db_) and can also knock highly regulated installations out of compliance (_i.e. if an AMI is auto-replaced without the necessary paperwork). 
 
 As of Release 1.3, more control has been introduced to allow implementers to pick a pattern which best fits their needs. [Reference Issue](https://github.com/seqeralabs/cx-field-tools-installer/issues/73)
+
+
+### AMI & Package Patching
+
+We use [Amazon Inspector](https://aws.amazon.com/inspector/) to scan the resulting EC2 for vulnerabilities. Vulnerabilities are tracked as [Project Issues](https://github.com/seqeralabs/cx-field-tools-installer/issues).
+
+- [Vulnerabilities found during Wave Lite Feature Deploymen](https://github.com/seqeralabs/cx-field-tools-installer/issues/212) (_May 27, 2025_)
+- [ansible-core CVEs](https://github.com/seqeralabs/cx-field-tools-installer/issues/179) (_Feb 11, 2025_)
+- [Docker CVEs](https://github.com/seqeralabs/cx-field-tools-installer/issues/175)  (_Feb 10, 2025_)
+- [CVE-2021-29921 - ipaddress](https://github.com/seqeralabs/cx-field-tools-installer/issues/173)  (_Feb 10, 2025_)
+- [Java CVEs](https://github.com/seqeralabs/cx-field-tools-installer/issues/172)  (_Feb 10, 2025_)
 
 
 ## Egress Rules
