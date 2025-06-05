@@ -160,6 +160,7 @@ locals {
     {
       docker_version                      = var.tower_container_version,
       auth_oidc                           = local.oidc_auth,
+      auth_google                         = local.oidc_google,
       auth_github                         = local.oidc_github,
 
       db_database_name                    = var.db_database_name
