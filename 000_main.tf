@@ -81,69 +81,43 @@ locals {
   vpc_id                        = var.flag_create_new_vpc == true ? module.vpc[0].vpc_id : var.vpc_existing_id
   vpc_private_route_table_ids   = var.flag_create_new_vpc == true ? module.vpc[0].private_route_table_ids : data.aws_route_tables.preexisting.ids
 
-  # If creating VPC from scratch, map all subnet CIDRS to corresponding subnet ID
-  #  zipmap -- turn 2 lists into a dictionary. https://developer.hashicorp.com/terraform/language/functions/zipmap
-  #  merge  -- join  two dictionaries. https://developer.hashicorp.com/terraform/language/functions/merge
-  vpc_new_cidr_block_to_id_public  = var.flag_create_new_vpc == true ? zipmap(module.vpc[0].public_subnets_cidr_blocks, module.vpc[0].public_subnets) : {}
-  vpc_new_cidr_block_to_id_private = var.flag_create_new_vpc == true ? zipmap(module.vpc[0].private_subnets_cidr_blocks, module.vpc[0].private_subnets) : {}
-  vpc_new_cidr_block_to_id_unified = var.flag_create_new_vpc == true ? merge(local.vpc_new_cidr_block_to_id_public, local.vpc_new_cidr_block_to_id_private) : {}
+  # Define subnet lists based on VPC creation mode
+  # NOTE: I know this is a bit simplistic, but it's clean and easy to understand. Using a module or mapping function would add
+  #       complexity and lines of code, for very little extensibility gains.
+  subnets_ec2       = var.flag_create_new_vpc == true ? var.vpc_new_ec2_subnets   : var.vpc_existing_ec2_subnets
+  subnets_batch     = var.flag_create_new_vpc == true ? var.vpc_new_batch_subnets : var.vpc_existing_batch_subnets
+  subnets_db        = var.flag_create_new_vpc == true ? var.vpc_new_db_subnets    : var.vpc_existing_db_subnets
+  subnets_redis     = var.flag_create_new_vpc == true ? var.vpc_new_redis_subnets : var.vpc_existing_redis_subnets
+  subnets_alb       = var.flag_create_new_vpc == true ? var.vpc_new_alb_subnets   : var.vpc_existing_alb_subnets
 
-  # Regardless of whether we build a new VPC or use existing, assign the subnet CIDRs to a common variable for subsequent subnet ID lookup. 
-  #  concat -- join lists of strings. https://developer.hashicorp.com/terraform/language/functions/concat
-  subnets_ec2   = var.flag_create_new_vpc == true ? var.vpc_new_ec2_subnets : var.vpc_existing_ec2_subnets
-  subnets_batch = var.flag_create_new_vpc == true ? var.vpc_new_batch_subnets : var.vpc_existing_batch_subnets
-  subnets_db    = var.flag_create_new_vpc == true ? var.vpc_new_db_subnets : var.vpc_existing_db_subnets
-  subnets_redis = var.flag_create_new_vpc == true ? var.vpc_new_redis_subnets : var.vpc_existing_redis_subnets
-  subnets_alb   = var.flag_create_new_vpc == true ? var.vpc_new_alb_subnets : var.vpc_existing_alb_subnets
+  subnets_all       = concat(local.subnets_ec2, local.subnets_batch, local.subnets_db, local.subnets_redis, local.subnets_alb)
 
-  subnets_all = concat(local.subnets_ec2, local.subnets_batch, local.subnets_db, local.subnets_redis, local.subnets_alb)
+  # Use subnet_collector module to get subnet mappings, then resolve the ids based on CIDRs assigned in tfvars.
+  subnet_mappings   = module.subnet_collector.cidr_to_id_map
 
-  # If using existing VPC, get subnet IDs by querying datasources with subnet CIDR.
-  # If building new VPC, make dictionary from cidr_block and subnet id (two different list outputs from VPC module).
-  subnet_ids_ec2 = (var.flag_create_new_vpc == true ?
-    [for cidr in local.subnets_ec2 : lookup(local.vpc_new_cidr_block_to_id_unified, cidr)] :
-    [for cidr in local.subnets_ec2 : data.aws_subnet.existing[cidr].id]
-  )
-
-  subnet_ids_batch = (var.flag_create_new_vpc == true ?
-    [for cidr in local.subnets_batch : lookup(local.vpc_new_cidr_block_to_id_unified, cidr)] :
-    [for cidr in local.subnets_batch : data.aws_subnet.existing[cidr].id]
-  )
-
-  subnet_ids_db = (var.flag_create_new_vpc == true ?
-    [for cidr in local.subnets_db : lookup(local.vpc_new_cidr_block_to_id_unified, cidr)] :
-    [for cidr in local.subnets_db : data.aws_subnet.existing[cidr].id]
-  )
-
-  subnet_ids_redis = (var.flag_create_new_vpc == true ?
-    [for cidr in local.subnets_redis : lookup(local.vpc_new_cidr_block_to_id_unified, cidr)] :
-    [for cidr in local.subnets_redis : data.aws_subnet.existing[cidr].id]
-  )
-
-  subnet_ids_alb = (
-    var.flag_create_load_balancer == true && var.flag_create_new_vpc == true ?
-      [for cidr in var.vpc_new_alb_subnets : lookup(local.vpc_new_cidr_block_to_id_unified, cidr)] :
-      var.flag_create_load_balancer == true && var.flag_use_existing_vpc == true ?
-        [for cidr in var.vpc_existing_alb_subnets : data.aws_subnet.existing[cidr].id] : []
-  )
+  subnet_ids_ec2    = [for cidr in local.subnets_ec2    : local.subnet_mappings[cidr]]
+  subnet_ids_batch  = [for cidr in local.subnets_batch  : local.subnet_mappings[cidr]]
+  subnet_ids_db     = [for cidr in local.subnets_db     : local.subnet_mappings[cidr]]
+  subnet_ids_redis  = [for cidr in local.subnets_redis  : local.subnet_mappings[cidr]]
+  subnet_ids_alb    = try([for cidr in local.subnets_alb : local.subnet_mappings[cidr]], []) 
 
 
   # SSM
   # ---------------------------------------------------------------------------------------
   # Load bootstrapped secrets and define target for TF-generated SSM values. Magical - don't know why it works but it does.
-  ssm_root = "/config/{$var.app_name}"
+  ssm_root                = "/config/${var.app_name}"
 
-  tower_secrets     = jsondecode(data.aws_ssm_parameter.tower_secrets.value)
-  tower_secret_keys = nonsensitive(toset([for k, v in local.tower_secrets : k]))
+  tower_secrets           = jsondecode(data.aws_ssm_parameter.tower_secrets.value)
+  tower_secret_keys       = nonsensitive(toset([for k, v in local.tower_secrets : k]))
 
-  seqerakit_secrets     = jsondecode(data.aws_ssm_parameter.seqerakit_secrets.value)
-  seqerakit_secret_keys = nonsensitive(toset([for k, v in local.seqerakit_secrets : k]))
+  seqerakit_secrets       = jsondecode(data.aws_ssm_parameter.seqerakit_secrets.value)
+  seqerakit_secret_keys   = nonsensitive(toset([for k, v in local.seqerakit_secrets : k]))
 
   groundswell_secrets     = jsondecode(data.aws_ssm_parameter.groundswell_secrets.value)
   groundswell_secret_keys = nonsensitive(toset([for k, v in local.groundswell_secrets : k]))
 
-  wave_lite_secrets     = jsondecode(data.aws_ssm_parameter.wave_lite_secrets.value)
-  wave_lite_secret_keys = nonsensitive(toset([for k, v in local.wave_lite_secrets : k]))
+  wave_lite_secrets       = jsondecode(data.aws_ssm_parameter.wave_lite_secrets.value)
+  wave_lite_secret_keys   = nonsensitive(toset([for k, v in local.wave_lite_secrets : k]))
 
 
   # SSH
@@ -339,4 +313,13 @@ locals {
     tonumber(length(regexall("^v24.[0-9]", var.tower_container_version))) >= 1 || 
       tonumber(length(regexall("^v2[5-9]", var.tower_container_version))) >= 1 ? true : false
   )
+}
+
+# Add subnet_collector module
+module "subnet_collector" {
+  source = "./modules/subnet_collector/v1.0.0"
+
+  create_new_vpc  = var.flag_create_new_vpc
+  vpc_id          = local.vpc_id
+  vpc_module      = var.flag_create_new_vpc ? module.vpc[0] : null
 }

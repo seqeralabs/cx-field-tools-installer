@@ -34,18 +34,6 @@ module "vpc" {
   # flow_log_cloudwatch_log_group_class       = "INFREQUENT_ACCESS"
 }
 
-
-# https://stackoverflow.com/questions/67562197/terraform-loop-through-ids-list-and-generate-data-blocks-from-it-and-access-it
-data "aws_subnet" "existing" {
-  # Creates a map with the keys being the CIDRs --  e.g. `data.aws_subnet.public["10.0.0.0/20"].id
-  # Only make a data query if we are using an existing VPC
-  for_each = var.flag_use_existing_vpc == true ? toset(local.subnets_all) : []
-
-  vpc_id     = local.vpc_id
-  cidr_block = each.key
-}
-
-
 # Needed to add this to get existing CIDR range to limit ALB listeners
 data "aws_vpc" "preexisting" {
   id = local.vpc_id
@@ -61,22 +49,18 @@ data "aws_route_tables" "preexisting" {
   }
 }
 
-
 resource "aws_vpc_endpoint" "global_endpoints" {
   for_each = toset(var.vpc_gateway_endpoints_all)
 
   vpc_id            = local.vpc_id
   vpc_endpoint_type = "Gateway"
   service_name      = "com.amazonaws.${var.aws_region}.${each.key}"
-  # route_table_ids   = module.vpc[0].private_route_table_ids
-  route_table_ids = local.vpc_private_route_table_ids
-
+  route_table_ids   = local.vpc_private_route_table_ids
 
   tags = {
     Name = "${local.global_prefix}-global-${each.key}"
   }
 }
-
 
 resource "aws_vpc_endpoint" "tower_endpoints" {
   for_each = toset(var.vpc_interface_endpoints_tower)
