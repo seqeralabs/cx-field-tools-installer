@@ -110,7 +110,7 @@ services:
       - tower.env
     environment:
       # Micronaut environments are required. Do not edit these value
-      - MICRONAUT_ENVIRONMENTS=prod,redis,cron${auth_oidc}${auth_github}${auth_google}
+      - MICRONAUT_ENVIRONMENTS=prod,redis,cron,${oidc_consolidated}
     restart: always
     depends_on:
       migrate:
@@ -136,7 +136,7 @@ services:
       - tower.env
     environment:
       # Micronaut environments are required. Do not edit these value
-      - MICRONAUT_ENVIRONMENTS=prod,redis,cron${auth_oidc}${auth_github}${auth_google}
+      - MICRONAUT_ENVIRONMENTS=prod,redis,cron,${oidc_consolidated}
     restart: always
 %{ if flag_use_container_db == true || flag_use_container_redis == true ~}
     depends_on:
@@ -170,7 +170,7 @@ services:
     env_file:
       - tower.env
     environment:
-      - MICRONAUT_ENVIRONMENTS=prod,redis,ha${auth_oidc}${auth_github}${auth_google}
+      - MICRONAUT_ENVIRONMENTS=prod,redis,ha,${oidc_consolidated}
     restart: always
     depends_on:
 %{ if flag_use_container_db == true ~}

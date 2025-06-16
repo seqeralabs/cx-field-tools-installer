@@ -159,9 +159,7 @@ locals {
   docker_compose = templatefile("assets/src/docker_compose/docker-compose.yml.tpl",
     {
       docker_version                      = var.tower_container_version,
-      auth_oidc                           = local.oidc_auth,
-      auth_google                         = local.oidc_google,
-      auth_github                         = local.oidc_github,
+      oidc_consolidated                   = local.oidc_consolidated,
 
       db_database_name                    = var.db_database_name
       db_tower_user                       = local.tower_secrets["TOWER_DB_USER"]["value"],

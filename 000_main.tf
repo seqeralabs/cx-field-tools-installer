@@ -258,9 +258,10 @@ locals {
   # OIDC
   # ---------------------------------------------------------------------------------------
   # If flags are set, populate local with keyword for MICRONAUT_ENVIRONMENTS inclusion. If not, blank string.
-  oidc_auth   = var.flag_oidc_use_generic == true ? ",auth-oidc" : ""
-  oidc_google = var.flag_oidc_use_google == true ? ",auth-google" : ""
-  oidc_github = var.flag_oidc_use_github == true ? ",auth-github" : ""
+  oidc_auth         = var.flag_oidc_use_generic == true ? "auth-oidc"   : ""
+  oidc_google       = var.flag_oidc_use_google == true  ? "auth-google" : ""
+  oidc_github       = var.flag_oidc_use_github == true  ? "auth-github" : ""
+  oidc_consolidated = "${local.oidc_auth},${local.oidc_google},${local.oidc_github}"
 
 
   # Studios
