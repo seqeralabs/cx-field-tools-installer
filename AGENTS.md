@@ -112,6 +112,11 @@ TODO
 - **Terraform**:    1.3.7
 - **Python**:       3.9.22
 
+- **Terraform Module**
+    - Ensure any created module includes: README.md, and CHANGELOG.md.
+    - Ensure newly-created or modified modules are locally version using semantic versioning.
+    - If changes are made to an existing module, ensure updates are made to the README.md and CHANGELOG.md
+
 <!-- *   **Python**: 3.12+, FastAPI, `async/await` preferred.
 *   **Formatting**: `ruff` enforces 96-char lines, double quotes, sorted imports. Standard `ruff` linter rules.
 *   **Typing**: Strict (Pydantic v2 models preferred); `from __future__ import annotations`.
