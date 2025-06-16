@@ -4,7 +4,7 @@
 locals {
   tower_env = templatefile("assets/src/tower_config/tower.env.tpl",
     {
-      tower_server_url                          = local.tower_server_url,
+      tower_server_url                          = module.connection_strings.tower_server_url,
       tower_contact_email                       = var.tower_contact_email,
       tower_enable_platforms                    = replace(var.tower_enable_platforms, "/\\s+/", ""),
 
@@ -13,7 +13,7 @@ locals {
       flag_use_container_db                     = var.flag_use_container_db,
       db_engine_version                         = var.db_engine_version,
 
-      tower_db_url                              = local.tower_db_url,
+      tower_db_url                              = module.connection_strings.tower_db_url,
       tower_db_driver                           = var.tower_db_driver,
       tower_db_dialect                          = var.tower_db_dialect,
       tower_db_min_pool_size                    = var.tower_db_min_pool_size,
@@ -21,7 +21,7 @@ locals {
       tower_db_max_lifetime                     = var.tower_db_max_lifetime,
       flyway_locations                          = var.flyway_locations,
 
-      tower_redis_url                           = local.tower_redis_url,
+      tower_redis_url                           = module.connection_strings.tower_redis_url,
 
       flag_use_aws_ses_iam_integration          = var.flag_use_aws_ses_iam_integration,
       flag_use_existing_smtp                    = var.flag_use_existing_smtp,
@@ -32,7 +32,7 @@ locals {
       flag_do_not_use_https                     = var.flag_do_not_use_https,
 
       flag_use_wave                             = local.wave_enabled,
-      wave_server_url                           = local.tower_wave_url,
+      wave_server_url                           = module.connection_strings.tower_wave_url,
       flag_enable_groundswell                   = var.flag_enable_groundswell,
 
       flag_data_explorer_enabled                = var.flag_data_explorer_enabled,
@@ -43,7 +43,7 @@ locals {
       flag_enable_data_studio                   = var.flag_enable_data_studio,
       flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces,
       data_studio_eligible_workspaces           = var.data_studio_eligible_workspaces,
-      tower_connect_server_url                  = local.tower_connect_server_url,
+      tower_connect_server_url                  = module.connection_strings.tower_connect_server_url,
 
       data_studio_options                       = var.data_studio_options,
     }
@@ -105,12 +105,12 @@ locals {
       db_tower_user                             = local.tower_secrets["TOWER_DB_USER"]["value"],
       db_tower_password                         = local.tower_secrets["TOWER_DB_PASSWORD"]["value"],
       db_database_name                          = var.db_database_name,
-      tower_db_url                              = local.tower_db_url,
+      tower_db_url                              = module.connection_strings.tower_db_url,
 
       swell_db_user                             = local.groundswell_secrets["SWELL_DB_USER"]["value"],
       swell_db_password                         = local.groundswell_secrets["SWELL_DB_PASSWORD"]["value"],
       # swell_database_name                     = var.swell_database_name,
-      swell_db_url                              = local.swell_db_url,
+      swell_db_url                              = module.connection_strings.swell_db_url,
 
       flag_use_container_db                     = var.flag_use_container_db,
       db_engine_version                         = var.db_engine_version
@@ -119,9 +119,9 @@ locals {
 
   data_studios_env = templatefile("assets/src/tower_config/data-studios.env.tpl",
     {
-      tower_server_url                          = local.tower_server_url,
-      tower_redis_url                           = local.tower_connect_redis_url,
-      tower_connect_server_url                  = local.tower_connect_server_url, 
+      tower_server_url                          = module.connection_strings.tower_server_url,
+      tower_redis_url                           = module.connection_strings.tower_connect_redis_url,
+      tower_connect_server_url                  = module.connection_strings.tower_connect_server_url, 
       studio_uses_distroless                    = local.studio_uses_distroless
     }
   )
@@ -134,8 +134,8 @@ locals {
 locals {
   wave_lite_yml = templatefile("assets/src/wave_lite_config/wave-lite.yml.tpl",
     {
-      tower_server_url              = local.tower_server_url,
-      wave_server_url               = local.tower_wave_url,
+      tower_server_url              = module.connection_strings.tower_server_url,
+      wave_server_url               = module.connection_strings.tower_wave_url,
 
       wave_lite_db_master_user      = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_USER"]["value"]
       wave_lite_db_master_password  = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_PASSWORD"]["value"]
@@ -143,8 +143,8 @@ locals {
       wave_lite_db_limited_password = local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]
       wave_lite_redis_auth          = local.wave_lite_secrets["WAVE_LITE_REDIS_AUTH"]["value"]
 
-      wave_lite_db_url              = local.wave_lite_db_url,
-      wave_lite_redis_url           = local.wave_lite_redis_url,
+      wave_lite_db_url              = module.connection_strings.wave_lite_db_url,
+      wave_lite_redis_url           = module.connection_strings.wave_lite_redis_url,
       tower_contact_email           = var.tower_contact_email,
     }
   )
@@ -297,17 +297,17 @@ locals {
       existing_ca_key_file                  = var.existing_ca_key_file,
 
       populate_external_db                  = local.populate_external_db,
-      tower_db_url                          = local.tower_db_root,
+      tower_db_url                          = module.connection_strings.tower_db_root,
       db_database_name                      = var.db_database_name,
 
       use_wave_lite                         = var.flag_use_wave_lite,
-      wave_lite_db_url                      = local.wave_lite_db_url,
+      wave_lite_db_url                      = module.connection_strings.wave_lite_db_url,
 
       docker_compose_file                   = local.docker_compose_file,
 
-      tower_base_url                        = local.tower_base_url,
-      tower_server_url                      = local.tower_server_url,
-      tower_api_endpoint                    = local.tower_api_endpoint,
+      tower_base_url                        = module.connection_strings.tower_base_url,
+      tower_server_url                      = module.connection_strings.tower_server_url,
+      tower_api_endpoint                    = module.connection_strings.tower_api_endpoint,
 
       flag_create_hosts_file_entry          = var.flag_create_hosts_file_entry
 

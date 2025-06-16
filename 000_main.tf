@@ -147,28 +147,7 @@ locals {
     "No_Match_Found"
   )
 
-  # If no HTTPS and no load-balancer, use `http` prefix and expose port in URL. Otherwise, use `https` prefix and no port.
-  tower_server_url = (
-    var.flag_create_load_balancer == false && var.flag_do_not_use_https == true ?
-    "http://${var.tower_server_url}:${var.tower_server_port}" :
-    "https://${var.tower_server_url}"
-  )
 
-  tower_base_url              = var.tower_server_url
-  tower_api_endpoint          = "${local.tower_server_url}/api"
-
-  tower_connect_dns           = "connect.${var.tower_server_url}"
-  # Handle host-matching in the ALB (e.g.): studio.TOWER_DOMAIN, 123.TOWER_DOMAIN, 456.TOWER_DOMAIN
-  tower_connect_wildcard_dns  = "*.${var.tower_server_url}"
-  
-  tower_connect_server_url = (
-    var.flag_create_load_balancer == false && var.flag_do_not_use_https == true ?
-    "http://connect.${var.tower_server_url}:9090" :
-    "https://connect.${var.tower_server_url}"
-  )
-  
-  tower_wave_url              = var.flag_use_wave_lite == true ? var.wave_lite_server_url : var.wave_server_url
-  tower_wave_dns              = replace(local.tower_wave_url, "https://", "")
 
 
   # Security Groups
@@ -224,27 +203,6 @@ locals {
   # If creating new RDS, get address from TF. IF using existing RDS, get address from user. 
   populate_external_db  = var.flag_create_external_db == true || var.flag_use_existing_external_db == true ? "true" : "false"
 
-  tower_db_url          = "${local.tower_db_root}/${var.db_database_name}${data.external.generate_db_connection_string.result.value}"
-  swell_db_url          = "${local.tower_db_root}/${var.swell_database_name}${data.external.generate_db_connection_string.result.value}"
-  tower_db_root         = var.flag_use_container_db == true || var.flag_use_existing_external_db == true ? var.tower_db_url : module.rds[0].db_instance_address
-
-
-  # Redis
-  # ---------------------------------------------------------------------------------------
-  # TODO: May 16/2025 -- This Redis is unsecured (unlike Wave). To be fixed in post-Wave-Lite Feature Release.
-  tower_redis_url = (
-    var.flag_create_external_redis == true ?
-    "redis://${aws_elasticache_cluster.redis[0].cache_nodes[0].address}:${aws_elasticache_cluster.redis[0].cache_nodes[0].port}" :
-    "redis://redis:6379"
-  )
-
-  #  Connect logic seems to append `redis://` as prefix. Breaks if we reuse `tower_redis_url`.
-  # TODO: May 16/2025 -- post-Wave-Lite Feature Release, check if auto-appending behaviour still happening.
-  tower_connect_redis_url = (
-    var.flag_create_external_redis == true ?
-    "${aws_elasticache_cluster.redis[0].cache_nodes[0].address}:${aws_elasticache_cluster.redis[0].cache_nodes[0].port}" :
-    "redis:6379"
-  )
 
   # Docker-Compose
   # ---------------------------------------------------------------------------------------
@@ -276,25 +234,11 @@ locals {
 
   # Wave
   # ---------------------------------------------------------------------------------------
-  wave_enabled = (var.flag_use_wave == true || var.flag_use_wave_lite == true ? true : false)
-  wave_lite_redis_container = var.flag_create_external_redis == true ? false : true
-  wave_lite_db_container = var.flag_create_external_db == true ? false : true
+  wave_enabled              = var.flag_use_wave == true || var.flag_use_wave_lite == true ? true : false
+  wave_lite_redis_container = var.flag_use_wave_lite == true && var.flag_create_external_redis == true ? false : true
+  wave_lite_db_container    = var.flag_use_wave_lite == true && var.flag_create_external_db == true ? false : true
 
-  # Modify this to handle container paths and TF paths.
-  wave_lite_db_url = (
-    var.flag_create_external_db == true && var.flag_use_wave_lite == true ?
-    module.rds-wave-lite[0].db_instance_address :
-    "wave-db:5432"
-  )
-
-  wave_lite_redis_url = (
-    var.flag_create_external_redis == true && var.flag_use_wave_lite == true ?
-    "rediss://${module.elasticache_wave_lite[0].url}" :
-    "redis://wave-redis:6379"
-  )
   
-
-
   # Miscellaneous
   # ---------------------------------------------------------------------------------------
   # These are needed to handle templatefile rendering to Bash echoing to file craziness.
@@ -323,4 +267,35 @@ module "subnet_collector" {
   create_new_vpc  = var.flag_create_new_vpc
   vpc_id          = local.vpc_id
   vpc_module      = var.flag_create_new_vpc ? module.vpc[0] : null
+}
+
+# Add connection_strings module
+module "connection_strings" {
+  source = "./modules/connection_strings/v1.0.0"
+
+  # Feature Flags
+  flag_create_load_balancer = var.flag_create_load_balancer
+  flag_do_not_use_https    = var.flag_do_not_use_https
+  flag_create_external_db  = var.flag_create_external_db
+  flag_create_external_redis = var.flag_create_external_redis
+  flag_use_wave_lite      = var.flag_use_wave_lite
+
+  # Tower Configuration
+  tower_server_url = var.tower_server_url
+  tower_db_url    = var.tower_db_url
+  db_database_name = var.db_database_name
+
+  # Groundswell Configuration
+  swell_database_name = var.swell_database_name
+
+  # Wave Configuration
+  wave_server_url = var.wave_server_url
+  wave_lite_server_url = var.wave_lite_server_url
+
+  # External Resource References
+  rds                   = var.flag_create_external_db ? module.rds[0] : null
+  rds_wave_lite         = var.flag_create_external_db ? module.rds-wave-lite[0] : null
+  aws_elasticache_redis = var.flag_create_external_redis ? aws_elasticache_cluster.redis[0] : null
+  elasticache_wave_lite = var.flag_create_external_redis ? module.elasticache_wave_lite[0] : null
+  
 }

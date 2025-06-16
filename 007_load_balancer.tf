@@ -124,7 +124,7 @@ module "alb" {
 
       conditions = [{
         # host_headers = [local.tower_connect_dns]
-        host_headers = [local.tower_connect_wildcard_dns]
+        host_headers = [module.connection_strings.tower_connect_wildcard_dns]
       }]
     },
 
@@ -140,7 +140,7 @@ module "alb" {
 
       conditions = [{
         # host_headers = [local.tower_connect_dns]
-        host_headers = [local.tower_wave_dns]
+        host_headers = [module.connection_strings.tower_wave_dns]
       }]
     }
   ]

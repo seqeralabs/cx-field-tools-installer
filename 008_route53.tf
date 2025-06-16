@@ -66,7 +66,7 @@ resource "aws_route53_record" "alb_connect" {
 
   zone_id = local.dns_zone_id
   # name    = local.tower_connect_dns
-  name    = local.tower_connect_wildcard_dns
+  name    = module.connection_strings.tower_connect_wildcard_dns
   type    = "A"
 
   alias {
@@ -82,7 +82,7 @@ resource "aws_route53_record" "ec2_connect" {
 
   zone_id = local.dns_zone_id
   # name    = local.tower_connect_dns
-  name    = local.tower_connect_wildcard_dns
+  name    = module.connection_strings.tower_connect_wildcard_dns
   type    = "A"
 
   ttl     = "5"
@@ -95,7 +95,7 @@ resource "aws_route53_record" "alb_wave" {
 
   zone_id = local.dns_zone_id
   # name    = local.tower_connect_dns
-  name    = local.tower_wave_dns
+  name    = module.connection_strings.tower_wave_dns
   type    = "A"
 
   alias {
