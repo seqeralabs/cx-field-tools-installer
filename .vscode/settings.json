@@ -13,4 +13,12 @@
         "--max-line-length=120",
         "--ignore=E202,E402"
     ],
+
+    // https://forum.cursor.com/t/the-mdc-editor-is-whack-please-revert-it-or-just-generate-a-template/50906/5
+    "workbench.editorAssociations": {
+        "*.mdc": "default"
+    },
+    "files.associations": {
+        "*.mdc": "markdown"
+    }
 }

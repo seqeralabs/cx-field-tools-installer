@@ -16,3 +16,4 @@ tmp.log
 **/__pycache__
 **/scripts/logs/*.*
 **/.pytest_cache
+.cursor/

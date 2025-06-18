@@ -50,21 +50,6 @@ resource "random_pet" "stackname" {
 data "aws_caller_identity" "current" {}
 
 
-# https://medium.com/@leslie.alldridge/terraform-external-data-source-using-custom-python-script-with-example-cea5e618d83e
-# data "external" "generate_db_connection_string" {
-#   program = ["python3", "${path.module}/.githooks/data_external/generate_db_connection_string.py"]
-#   query = {
-#     tower_container_version = var.tower_container_version
-#     flag_use_container_db = var.flag_use_container_db
-#     db_container_engine_version = var.db_container_engine_version
-#     db_engine_version = var.db_engine_version
-#   }
-# }
-data "external" "generate_db_connection_string" {
-  program = ["python3", "${path.module}/scripts/installer/data_external/generate_db_connection_string.py"]
-  query = {}
-}
-
 
 ## ------------------------------------------------------------------------------------
 ## Omnibus Locals
@@ -264,9 +249,9 @@ locals {
 module "subnet_collector" {
   source = "./modules/subnet_collector/v1.0.0"
 
-  create_new_vpc  = var.flag_create_new_vpc
-  vpc_id          = local.vpc_id
-  vpc_module      = var.flag_create_new_vpc ? module.vpc[0] : null
+  create_new_vpc              = var.flag_create_new_vpc
+  vpc_id                      = local.vpc_id
+  vpc_module                  = var.flag_create_new_vpc ? module.vpc[0] : null
 }
 
 # Add connection_strings module
@@ -274,28 +259,28 @@ module "connection_strings" {
   source = "./modules/connection_strings/v1.0.0"
 
   # Feature Flags
-  flag_create_load_balancer = var.flag_create_load_balancer
-  flag_do_not_use_https    = var.flag_do_not_use_https
-  flag_create_external_db  = var.flag_create_external_db
-  flag_create_external_redis = var.flag_create_external_redis
-  flag_use_wave_lite      = var.flag_use_wave_lite
+  flag_create_load_balancer   = var.flag_create_load_balancer
+  flag_do_not_use_https       = var.flag_do_not_use_https
+  flag_create_external_db     = var.flag_create_external_db
+  flag_create_external_redis  = var.flag_create_external_redis
+  flag_use_wave_lite          = var.flag_use_wave_lite
 
   # Tower Configuration
-  tower_server_url = var.tower_server_url
-  tower_db_url    = var.tower_db_url
-  db_database_name = var.db_database_name
+  tower_server_url            = var.tower_server_url
+  tower_db_url                = var.tower_db_url
+  db_database_name            = var.db_database_name
 
   # Groundswell Configuration
-  swell_database_name = var.swell_database_name
+  swell_database_name         = var.swell_database_name
 
   # Wave Configuration
-  wave_server_url = var.wave_server_url
-  wave_lite_server_url = var.wave_lite_server_url
+  wave_server_url             = var.wave_server_url
+  wave_lite_server_url        = var.wave_lite_server_url
 
   # External Resource References
-  rds                   = var.flag_create_external_db ? module.rds[0] : null
-  rds_wave_lite         = var.flag_create_external_db ? module.rds-wave-lite[0] : null
-  aws_elasticache_redis = var.flag_create_external_redis ? aws_elasticache_cluster.redis[0] : null
-  elasticache_wave_lite = var.flag_create_external_redis ? module.elasticache_wave_lite[0] : null
+  rds                         = var.flag_create_external_db ? module.rds[0] : null
+  rds_wave_lite               = var.flag_create_external_db ? module.rds-wave-lite[0] : null
+  aws_elasticache_redis       = var.flag_create_external_redis ? aws_elasticache_cluster.redis[0] : null
+  elasticache_wave_lite       = var.flag_create_external_redis ? module.elasticache_wave_lite[0] : null
   
 }

@@ -42,7 +42,7 @@ locals {
   # TBD: June 16/2025 -- Should I continue mirroring verbose tfvars keys for traceabilty or chop down for more compact code?
   tower_redis_local     = "redis://redis:6379"
   tower_redis_remote    = "redis://${var.aws_elasticache_redis.cache_nodes[0].address}:${var.aws_elasticache_redis.cache_nodes[0].port}"
-  tower_redis_url       = var.flag_create_external_redis == true ? local.tower_redis_remote : local.tower_redis_local 
+  tower_redis_url       = var.flag_create_external_redis ? local.tower_redis_remote : local.tower_redis_local 
 
 
   # GROUNDSWELL
