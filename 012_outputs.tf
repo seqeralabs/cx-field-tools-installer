@@ -41,10 +41,10 @@ output "aws_ec2_public_ip" {
   value = var.flag_make_instance_public == true ? aws_eip.towerhost[0].public_ip : "EC2 has no public IP." 
 }
 
-output "database_connection_string" {
-  description = "Dynamically generated db connectino string based on tfvars selections."
-  value = data.external.generate_db_connection_string.result.value
-}
+# output "database_connection_string" {
+#   description = "Dynamically generated db connectino string based on tfvars selections."
+#   value = data.external.generate_db_connection_string.result.value
+# }
 
 output "tower_db_url" {
   description = "The complete database URL for Tower including database name and connection string"

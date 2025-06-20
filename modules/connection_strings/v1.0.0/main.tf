@@ -41,7 +41,7 @@ locals {
   # TODO: May 16/2025 -- This Redis is unsecured (unlike Wave). To be fixed in post-Wave-Lite Feature Release.
   # TBD: June 16/2025 -- Should I continue mirroring verbose tfvars keys for traceabilty or chop down for more compact code?
   tower_redis_local     = "redis://redis:6379"
-  tower_redis_remote    = "redis://${var.aws_elasticache_redis.cache_nodes[0].address}:${var.aws_elasticache_redis.cache_nodes[0].port}"
+  tower_redis_remote    = try("redis://${var.aws_elasticache_redis.cache_nodes[0].address}:${var.aws_elasticache_redis.cache_nodes[0].port}", "N/A")
   tower_redis_url       = var.flag_create_external_redis ? local.tower_redis_remote : local.tower_redis_local 
 
 
@@ -66,7 +66,7 @@ locals {
   #  Connect logic seems to append `redis://` as prefix. Breaks if we reuse `tower_redis_url`.
   # TODO: May 16/2025 -- post-Wave-Lite Feature Release, check if auto-appending behaviour still happening.
   connect_redis_local       = "redis:6379"
-  connect_redis_remote      = "${var.aws_elasticache_redis.cache_nodes[0].address}:${var.aws_elasticache_redis.cache_nodes[0].port}" 
+  connect_redis_remote      = try("${var.aws_elasticache_redis.cache_nodes[0].address}:${var.aws_elasticache_redis.cache_nodes[0].port}", "N/A")
   tower_connect_redis_url   = var.flag_create_external_redis ? local.connect_redis_remote : local.connect_redis_local
   
 
@@ -81,10 +81,10 @@ locals {
 
   # TODO: June 16/2025 -- Modify this to handle container paths and TF paths.
   wl_db_local         = "wave-db:5432"
-  wl_db_remote        = var.rds_wave_lite.db_instance_address
+  wl_db_remote        = try(var.rds_wave_lite.db_instance_address, "N/A")
   wave_lite_db_url    = var.flag_create_external_db ? local.wl_db_remote : local.wl_db_local
 
   wl_redis_local      = "redis://wave-redis:6379"
-  wl_redis_remote     = "rediss://${var.elasticache_wave_lite[0].url}"
+  wl_redis_remote     = try("rediss://${var.elasticache_wave_lite[0].url}", "N/A")
   wave_lite_redis_url = var.flag_create_external_redis ? local.wl_redis_remote : local.wl_redis_local
 }
