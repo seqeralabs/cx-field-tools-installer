@@ -19,3 +19,18 @@ apply: verify
 destroy: 
 	@python3 .githooks/check_destroy.py
 	@terraform destroy
+
+# TESTING
+generate_json_plan:
+	@echo "Generating JSON representation of plan"
+	@rm tfplan || true >           /dev/null 2>&1
+	@rm tfplan.json || true>       /dev/null 2>&1
+	@terraform plan -out=tfplan >  /dev/null 2>&1
+	@terraform show -json tfplan | jq . > tfplan.json
+
+test_plan_only:
+	@echo "Testing plan values only."
+	@./tests/run_tests.sh
+
+test_deployed_infrastructure:
+	@echo "Testing deployed infrastructure."

@@ -17,3 +17,5 @@ tmp.log
 **/scripts/logs/*.*
 **/.pytest_cache
 .cursor/
+tfplan
+tfplan.json
