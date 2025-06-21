@@ -282,5 +282,8 @@ module "connection_strings" {
   rds_wave_lite               = var.flag_create_external_db ? module.rds-wave-lite[0] : null
   aws_elasticache_redis       = var.flag_create_external_redis ? aws_elasticache_cluster.redis[0] : null
   elasticache_wave_lite       = var.flag_create_external_redis ? module.elasticache_wave_lite[0] : null
+
+  # Testing flag
+  testing_use_mock_resources  = var.testing_use_mock_resources
   
 }

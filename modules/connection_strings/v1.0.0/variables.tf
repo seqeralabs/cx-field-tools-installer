@@ -103,4 +103,11 @@ variable "elasticache_wave_lite" {
 # - module.elasticache_wave_lite[0].url
 
 
-
+## ------------------------------------------------------------------------------------
+## Testing
+## ------------------------------------------------------------------------------------
+variable "testing_use_mock_resources" { 
+  type = bool
+  default = false 
+  description = "Use to drive mocking behaviour for to-be-created resources."
+}
