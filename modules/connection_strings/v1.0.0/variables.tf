@@ -106,7 +106,7 @@ variable "elasticache_wave_lite" {
 ## ------------------------------------------------------------------------------------
 ## Testing
 ## ------------------------------------------------------------------------------------
-variable "testing_use_mock_resources" { 
+variable "use_mocks" { 
   type = bool
   default = false 
   description = "Use to drive mocking behaviour for to-be-created resources."

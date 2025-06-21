@@ -13,14 +13,19 @@ data "external" "generate_db_connection_string" {
   query = {}
 }
 
+# Had to put this in to get the module to be picked up in `expected_values > root_module > child_modules`
+resource "null_resource" "placeholder_do_not_delete" {
+  # Pass
+}
+
 
 locals {
   # Testing Mocks
   # ---------------------------------------------------------------------------------------
-  # If testing_use_mock_resources is true, we will mock the resources that would otherwise be created.
+  # If use_mocks is true, we will mock the resources that would otherwise be created.
   # This is useful for testing the connection strings without having to create the resources.
-  testing_use_mock_resources = var.testing_use_mock_resources
-  mock_tower_db_url          = "mock-tower-db.example.com"
+  use_mocks             = var.use_mocks
+  mock_tower_db_url     = "mock-new-tower-db.example.com"
   
 
   # Control Flags
@@ -31,32 +36,27 @@ locals {
   # TOWER CORE
   # ---------------------------------------------------------------------------------------
   # Get the desired DNS name / IP from value user specified in terraform.tfvars 
-  tower_base_url        = var.tower_server_url
+  tower_base_url                  = var.tower_server_url
 
-  tower_url_secure      = "https://${var.tower_server_url}"
-  tower_url_insecure    = "http://${var.tower_server_url}:9090"
-  tower_server_url      = local.use_insecure_ec2 ? local.tower_url_insecure : local.tower_url_secure 
+  tower_url_secure                = "https://${var.tower_server_url}"
+  tower_url_insecure              = "http://${var.tower_server_url}:9090"
+  tower_server_url                = local.use_insecure_ec2 ? local.tower_url_insecure : local.tower_url_secure 
 
-  tower_api_endpoint    = "${local.tower_server_url}/api"
+  tower_api_endpoint              = "${local.tower_server_url}/api"
 
   # Refactor: June 21, 2025 -- Refactored logic to make external resource dependency testable without creating resources.
-  tower_db_external_root_new      = (local.testing_use_mock_resources ? 
-                                      local.mock_tower_db_url : try(var.rds.db_instance_address, "")
-                                    )
+  tower_db_external_root_new      = local.use_mocks ? local.mock_tower_db_url : try(var.rds.db_instance_address, "")
   tower_db_external_root_existing = try(var.tower_db_url, "")
   tower_db_container_root         = "db:3306"
-  tower_db_root_options           = [
-                                      local.tower_db_external_root_new, 
+  # Two values should always be "", so safe to smash them together and use unified string afterwards
+  tower_db_root_options           = [ local.tower_db_external_root_new, 
                                       local.tower_db_external_root_existing, 
-                                      local.tower_db_container_root
-                                    ]
+                                      local.tower_db_container_root, ]
   tower_db_root                   = join("", local.tower_db_root_options)
-
-  tower_db_url                    = format(
-                                      "%s/%s?%s",
-                                        local.tower_db_root,
-                                        var.db_database_name,
-                                        data.external.generate_db_connection_string.result.value
+  tower_db_url                    = format("%s/%s?%s",
+                                      local.tower_db_root,
+                                      var.db_database_name,
+                                      data.external.generate_db_connection_string.result.value,
                                     )
 
   # TODO: May 16/2025 -- This Redis is unsecured (unlike Wave). To be fixed in post-Wave-Lite Feature Release.

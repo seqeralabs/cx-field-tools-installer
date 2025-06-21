@@ -1,17 +1,21 @@
 import pytest
 import tftest
+import shutil
 
 import json
 from pathlib import Path
 
 
-@pytest.fixture
-def fixtures_dir(tmpdir):
-    # Create a temporary test directory
-    return tmpdir.mkdir("fixtures")
+# @pytest.fixture
+# def scratch(tmpdir):
+#     print(f"{str(tmpdir)=}")
+#     root = '/home/deeplearning/cx-field-tools-installer'
+#     target = f"{str(tmpdir)}/cx-field-tools-installer"
+#     shutil.copytree(root, target)
+#     yield target
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def datafiles_folder():
     parent_path = Path(__file__).parent.absolute()
     return parent_path / "datafiles"
@@ -30,26 +34,6 @@ def datafiles_folder():
 #         ]
 #     )
 #     return tf
-
-@pytest.fixture
-def terraform_test(fixtures_dir): 
-    # Initialize test with fixtures
-    tf = tftest.TerraformTest(fixtures_dir)
-    
-    # Copy test configurations to fixtures directory
-    tf.setup(
-        extra_files=[
-            'test.tfvars',
-            'mock_provider.tf'
-        ]
-    )
-    return tf
-
-# def test_resource_creation(terraform_test):
-#     # Run plan and verify outputs
-#     plan = terraform_test.plan(output=True)
-#     assert plan.outputs['database_endpoint'] == 'mock-db.example.com'
-
 
 
 # TODO Add logger for agentic access

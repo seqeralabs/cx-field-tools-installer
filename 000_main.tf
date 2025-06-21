@@ -267,7 +267,7 @@ module "connection_strings" {
 
   # Tower Configuration
   tower_server_url            = var.tower_server_url
-  tower_db_url                = var.tower_db_url
+  tower_db_url                = var.flag_use_existing_external_db == true ? var.tower_db_url : "" 
   db_database_name            = var.db_database_name
 
   # Groundswell Configuration
@@ -284,6 +284,6 @@ module "connection_strings" {
   elasticache_wave_lite       = var.flag_create_external_redis ? module.elasticache_wave_lite[0] : null
 
   # Testing flag
-  testing_use_mock_resources  = var.testing_use_mock_resources
+  use_mocks                   = var.use_mocks
   
 }
