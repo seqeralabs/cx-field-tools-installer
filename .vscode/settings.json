@@ -12,6 +12,12 @@
         "--max-line-length=120",
         "--ignore=E202,E402"
     ],
+    "python.autoComplete.extraPaths": [
+        "/home/deeplearning/.pyenv/versions/3.10.0/lib/python3.10/site-packages",
+    ],
+    "cursorpyright.analysis.extraPaths": [
+        "/home/deeplearning/.pyenv/versions/3.10.0/lib/python3.10/site-packages",
+    ],
 
     // https://forum.cursor.com/t/the-mdc-editor-is-whack-please-revert-it-or-just-generate-a-template/50906/5
     "workbench.editorAssociations": {

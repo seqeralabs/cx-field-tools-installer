@@ -34,3 +34,10 @@ test_plan_only:
 
 test_deployed_infrastructure:
 	@echo "Testing deployed infrastructure."
+
+# Purge existing, copy baseline values, generate core file, then override files.
+# Terraform processes .auto.tfvars in alphabetical order with last occurence of variable winning.
+generate_test_data:
+	@cp templates/TEMPLATE_terraform.tfvars tests/datafiles/terraform.tfvars
+	@cd tests/datafiles && ./generate_core_data.sh
+	@cd tests/datafiles && ./generate_override_data.sh	
