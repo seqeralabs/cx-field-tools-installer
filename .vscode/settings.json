@@ -2,8 +2,7 @@
     "python.envFile": "${workspaceFolder}/scripts/.env",
 
     "python.testing.pytestArgs": [
-        ".",
-        "-s"
+        "tests"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
