@@ -2,15 +2,15 @@
 # AWS Account Details
 # ----------------------------------------------------------------------------------------------------------------------
 output "aws_account_id" {
-  value = data.aws_caller_identity.current.account_id
+  value = var.use_mocks ? "N/A" : data.aws_caller_identity.current[0].account_id
 }
 
 output "aws_caller_arn" {
-  value = data.aws_caller_identity.current.arn
+  value = var.use_mocks ? "N/A" : data.aws_caller_identity.current[0].arn
 }
 
 output "aws_caller_user" {
-  value = data.aws_caller_identity.current.user_id
+  value = var.use_mocks ? "N/A" : data.aws_caller_identity.current[0].user_id
 }
 
 

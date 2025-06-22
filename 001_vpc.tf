@@ -25,9 +25,9 @@ module "vpc" {
 
   # Flow log config
   # Config taken from here: https://github.com/terraform-aws-modules/terraform-aws-vpc/blob/master/examples/vpc-flow-logs/main.tf
-  enable_flow_log = var.enable_vpc_flow_logs
-  create_flow_log_cloudwatch_log_group = true
-  create_flow_log_cloudwatch_iam_role  = true
+  enable_flow_log                           = var.enable_vpc_flow_logs
+  create_flow_log_cloudwatch_log_group      = true
+  create_flow_log_cloudwatch_iam_role       = true
   flow_log_max_aggregation_interval         = 60
   flow_log_cloudwatch_log_group_name_prefix = "/${local.global_prefix}/vpc-flow-logs/"
   flow_log_cloudwatch_log_group_name_suffix = "platform"
@@ -36,15 +36,17 @@ module "vpc" {
 
 # Needed to add this to get existing CIDR range to limit ALB listeners
 data "aws_vpc" "preexisting" {
-  id = local.vpc_id
+  count = var.flag_use_existing_vpc == true ? 1 : 0
+  id    = local.vpc_id
 }
 
 # Needed to grab route tables from pre-existing VPC to create VPC endpoints.
 data "aws_route_tables" "preexisting" {
+  count  = var.flag_use_existing_vpc == true ? 1 : 0
   vpc_id = local.vpc_id
 
   filter {
-    name = "tag:Name"
+    name   = "tag:Name"
     values = ["*private*"]
   }
 }
