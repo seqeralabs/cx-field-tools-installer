@@ -1,16 +1,16 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # AWS Account Details
 # ----------------------------------------------------------------------------------------------------------------------
-output "aws_account_id" { 
-  value = data.aws_caller_identity.current.account_id 
-  }
-
-output "aws_caller_arn" { 
-  value = data.aws_caller_identity.current.arn 
+output "aws_account_id" {
+  value = data.aws_caller_identity.current.account_id
 }
 
-output "aws_caller_user" { 
-  value = data.aws_caller_identity.current.user_id 
+output "aws_caller_arn" {
+  value = data.aws_caller_identity.current.arn
+}
+
+output "aws_caller_user" {
+  value = data.aws_caller_identity.current.user_id
 }
 
 
@@ -25,20 +25,20 @@ output "ec2_ssh_key" {
 # ----------------------------------------------------------------------------------------------------------------------
 # Tower Core
 # ----------------------------------------------------------------------------------------------------------------------
-output "tower_server_url" { 
+output "tower_server_url" {
   value = module.connection_strings.tower_server_url
 }
 
-output "tower_api_endpoint" { 
-  value = module.connection_strings.tower_api_endpoint 
+output "tower_api_endpoint" {
+  value = module.connection_strings.tower_api_endpoint
 }
 
-output "aws_ec2_private_ip" { 
-  value = var.flag_private_tower_without_eice == true ? aws_instance.ec2.private_ip : "N/A connect via EICE." 
+output "aws_ec2_private_ip" {
+  value = var.flag_private_tower_without_eice == true ? aws_instance.ec2.private_ip : "N/A connect via EICE."
 }
 
-output "aws_ec2_public_ip" { 
-  value = var.flag_make_instance_public == true ? aws_eip.towerhost[0].public_ip : "EC2 has no public IP." 
+output "aws_ec2_public_ip" {
+  value = var.flag_make_instance_public == true ? aws_eip.towerhost[0].public_ip : "EC2 has no public IP."
 }
 
 # output "database_connection_string" {
@@ -75,6 +75,11 @@ output "tower_connect_dns" {
 output "tower_connect_server_url" {
   description = "The server URL for Connect with appropriate protocol and port"
   value       = module.connection_strings.tower_connect_server_url
+}
+
+output "tower_connect_redis_url" {
+  description = "The URL for the Redis instance used by Connect."
+  value       = module.connection_strings.tower_connect_redis_url
 }
 
 # ----------------------------------------------------------------------------------------------------------------------

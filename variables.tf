@@ -2,9 +2,9 @@
 # Testing
 # ------------------------------------------------------------------------------------
 # Added June 21/2025 for testing purposes (to drive mocking behaviour for to-be-created resources).
-variable "use_mocks" { 
-  type = bool
-  default = false 
+variable "use_mocks" {
+  type        = bool
+  default     = false
   description = "Use to drive mocking behaviour for to-be-created resources."
 }
 
@@ -197,11 +197,11 @@ variable "vpc_interface_endpoints_batch" { type = list(any) }
 variable "sg_ingress_cidrs" { type = list(string) }
 variable "sg_ssh_cidrs" { type = list(string) }
 
-variable "sg_egress_eice" {type = list(string)}
-variable "sg_egress_tower_ec2" {type = list(string)}
-variable "sg_egress_tower_alb" {type = list(string)}
-variable "sg_egress_batch_ec2" {type = list(string)}
-variable "sg_egress_interface_endpoint" {type = list(string)}
+variable "sg_egress_eice" { type = list(string) }
+variable "sg_egress_tower_ec2" { type = list(string) }
+variable "sg_egress_tower_alb" { type = list(string) }
+variable "sg_egress_batch_ec2" { type = list(string) }
+variable "sg_egress_interface_endpoint" { type = list(string) }
 
 
 # ------------------------------------------------------------------------------------
@@ -236,9 +236,9 @@ variable "data_studio_eligible_workspaces" { type = string }
 variable "data_studio_options" {
   type = map(object({
     qualifier = string
-    icon = string
-    tool = optional(string)
-    status = optional(string)
+    icon      = string
+    tool      = optional(string)
+    status    = optional(string)
     container = string
   }))
 }
@@ -270,9 +270,9 @@ variable "db_instance_class" { type = string }
 variable "db_allocated_storage" { type = number }
 
 variable "db_deletion_protection" { type = bool }
-variable "skip_final_snapshot"    { type = bool }
+variable "skip_final_snapshot" { type = bool }
 
-variable "db_backup_retention_period"  { type = number }
+variable "db_backup_retention_period" { type = number }
 variable "db_enable_storage_encrypted" { type = bool }
 
 
@@ -283,8 +283,8 @@ variable "wave_lite_db_instance_class" { type = string }
 variable "wave_lite_db_allocated_storage" { type = number }
 
 variable "wave_lite_db_deletion_protection" { type = bool }
-variable "wave_lite_skip_final_snapshot"    { type = bool }
-variable "wave_lite_db_backup_retention_period"  { type = number }
+variable "wave_lite_skip_final_snapshot" { type = bool }
+variable "wave_lite_db_backup_retention_period" { type = number }
 variable "wave_lite_db_enable_storage_encrypted" { type = bool }
 
 
@@ -347,9 +347,9 @@ variable "flag_use_kms_key" { type = bool }
 variable "ec2_ebs_kms_key" { type = string }
 variable "ec2_root_volume_size" { type = number }
 
-variable "ec2_require_imds_token"  { type = bool }
+variable "ec2_require_imds_token" { type = bool }
 
-variable "ec2_update_ami_if_available"  { type = bool }
+variable "ec2_update_ami_if_available" { type = bool }
 
 
 # ------------------------------------------------------------------------------------

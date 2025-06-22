@@ -50,16 +50,16 @@ variable "db_database_name" {
 }
 
 
-variable "rds" {
+variable "rds_tower" {
   description = "The rds module object containing Tower RDS configuration"
-  type = any
-  default = null
+  type        = any
+  default     = null
 }
 
-variable "aws_elasticache_redis" {
+variable "elasticache_tower" {
   description = "The aws_elasticache_cluster.redis object containing Redis cluster configuration"
-  type = any
-  default = null
+  type        = any
+  default     = null
 }
 
 ## ------------------------------------------------------------------------------------
@@ -85,14 +85,14 @@ variable "wave_lite_server_url" {
 
 variable "rds_wave_lite" {
   description = "The rds-wave-lite module object containing RDS configuration"
-  type = any
-  default = null
+  type        = any
+  default     = null
 }
 
 variable "elasticache_wave_lite" {
   description = "The elasticache_wave_lite module object containing Redis configuration"
-  type = any
-  default = null
+  type        = any
+  default     = null
 }
 
 
@@ -111,8 +111,8 @@ variable "elasticache_wave_lite" {
 ## ------------------------------------------------------------------------------------
 ## Testing
 ## ------------------------------------------------------------------------------------
-variable "use_mocks" { 
-  type = bool
-  default = false 
+variable "use_mocks" {
+  type        = bool
+  default     = false
   description = "Use to drive mocking behaviour for to-be-created resources."
 }
