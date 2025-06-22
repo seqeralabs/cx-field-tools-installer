@@ -8,11 +8,19 @@
 #     db_engine_version = var.db_engine_version
 #   }
 # }
+
+# BACKUP
+# data "external" "generate_db_connection_string" {
+#   program = ["python3", "${path.root}/scripts/installer/data_external/generate_db_connection_string.py"]
+#   query   = {}
+# }
+
 data "external" "generate_db_connection_string" {
-  program = ["python3", "${path.root}/scripts/installer/data_external/generate_db_connection_string.py"]
+  # program = ["python3", "../../../scripts/installer/data_external/generate_db_connection_string.py"]
+  # program = ["python3", "scripts/installer/data_external/generate_db_connection_string.py"]
+  program = ["python3", "${path.module}/../../../scripts/installer/data_external/generate_db_connection_string.py"]
   query   = {}
 }
-
 
 locals {
   # Testing Mocks
