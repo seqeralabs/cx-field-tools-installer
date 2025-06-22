@@ -25,8 +25,11 @@ locals {
   # If use_mocks is true, we will mock the resources that would otherwise be created.
   # This is useful for testing the connection strings without having to create the resources.
   use_mocks             = var.use_mocks
-  mock_tower_db_url     = "mock-new-tower-db.example.com"
   
+  # mock_tower_db_url     = "mock-new-tower-db.example.com"
+  mock_wave_lite_db_url = "mock-new-wave-lite-db.example.com"
+
+  # mock_tower_redis_url  = "mock-new-tower-redis.example.com"
 
   # Control Flags
   # ---------------------------------------------------------------------------------------
@@ -44,15 +47,20 @@ locals {
 
   tower_api_endpoint              = "${local.tower_server_url}/api"
 
-  # Refactor: June 21, 2025 -- Refactored logic to make external resource dependency testable without creating resources.
-  tower_db_external_root_new      = local.use_mocks ? local.mock_tower_db_url : try(var.rds.db_instance_address, "")
-  tower_db_external_root_existing = try(var.tower_db_url, "")
-  tower_db_container_root         = "db:3306"
+  # Dont try to be smart. Just calculate all strings and use the flags / module feed to control what comes in.
+  # Two DB options should always be "" so we can smash together in a unified catch-all.
+  tower_db_local                  = "db:3306"
+  tower_db_remote_existing        = try(var.tower_db_url, "")
+  tower_db_remote_new_real        = try(var.rds.db_instance_address, "")
+  tower_db_remote_new_mock        = "mock-new-tower-db.example.com"
+  tower_db_remote_new             = local.use_mocks ? local.tower_db_remote_new_mock : local.tower_db_remote_new_real
+  
   # Two values should always be "", so safe to smash them together and use unified string afterwards
-  tower_db_root_options           = [ local.tower_db_external_root_new, 
-                                      local.tower_db_external_root_existing, 
-                                      local.tower_db_container_root, ]
-  tower_db_root                   = join("", local.tower_db_root_options)
+  tower_db_options                = [ local.tower_db_local,
+                                      local.tower_db_remote_existing,
+                                      local.tower_db_remote_new,
+                                    ]
+  tower_db_root                   = join("", local.tower_db_options)
   tower_db_url                    = format("%s/%s?%s",
                                       local.tower_db_root,
                                       var.db_database_name,
@@ -61,15 +69,22 @@ locals {
 
   # TODO: May 16/2025 -- This Redis is unsecured (unlike Wave). To be fixed in post-Wave-Lite Feature Release.
   # TBD: June 16/2025 -- Should I continue mirroring verbose tfvars keys for traceabilty or chop down for more compact code?
-  tower_redis_local     = "redis://redis:6379"
-  tower_redis_remote    = try("redis://${var.aws_elasticache_redis.cache_nodes[0].address}:${var.aws_elasticache_redis.cache_nodes[0].port}", "N/A")
-  tower_redis_url       = var.flag_create_external_redis ? local.tower_redis_remote : local.tower_redis_local 
+  tower_redis_local           = "redis://redis:6379"
+  tower_redis_remote_real     = try("redis://${var.aws_elasticache_redis.cache_nodes[0].address}:${var.aws_elasticache_redis.cache_nodes[0].port}", "")
+  tower_redis_remote_mock     = "mock-new-tower-redis.example.com"
+  tower_redis_remote          = local.use_mocks ? local.tower_redis_remote_mock : local.tower_redis_remote_real 
+  tower_redis_url             = var.flag_create_external_redis ? local.tower_redis_remote : local.tower_redis_local 
 
 
   # GROUNDSWELL
   # ---------------------------------------------------------------------------------------
-  # Groundswell needs its own area of the core Tower database, but not Redis.
-  swell_db_url          = "${local.tower_db_root}/${var.swell_database_name}${data.external.generate_db_connection_string.result.value}"
+  # Uses a separate compartment in same DB as Tower uses.
+  # Does not need Redis.
+  swell_db_url                = format("%s/%s?%s",
+                                  local.tower_db_root,
+                                  var.swell_database_name,
+                                  data.external.generate_db_connection_string.result.value
+                                )
 
   
   # CONNECT (STUDIO)
@@ -97,12 +112,13 @@ locals {
   #                     The infra wont actually get created unless this flag is true.
   # TODO: June 16/25 -- Consider if `rediss://` hardcode aligns with how config is presented.
   # TODO: June 16/25 -- Consider if abbreviated variables make code more legible.
+
   tower_wave_url      = var.flag_use_wave_lite ? var.wave_lite_server_url : var.wave_server_url
   tower_wave_dns      = replace(local.tower_wave_url, "https://", "")
 
   # TODO: June 16/2025 -- Modify this to handle container paths and TF paths.
   wl_db_local         = "wave-db:5432"
-  wl_db_remote        = try(var.rds_wave_lite.db_instance_address, "N/A")
+  wl_db_remote        = local.use_mocks ? local.mock_wave_lite_db_url : try(var.rds_wave_lite.db_instance_address, "")
   wave_lite_db_url    = var.flag_create_external_db ? local.wl_db_remote : local.wl_db_local
 
   wl_redis_local      = "redis://wave-redis:6379"

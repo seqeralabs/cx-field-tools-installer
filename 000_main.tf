@@ -263,6 +263,7 @@ module "connection_strings" {
   flag_do_not_use_https       = var.flag_do_not_use_https
   flag_create_external_db     = var.flag_create_external_db
   flag_create_external_redis  = var.flag_create_external_redis
+  flag_use_wave               = var.flag_use_wave
   flag_use_wave_lite          = var.flag_use_wave_lite
 
   # Tower Configuration
@@ -274,8 +275,8 @@ module "connection_strings" {
   swell_database_name         = var.swell_database_name
 
   # Wave Configuration
-  wave_server_url             = var.wave_server_url
-  wave_lite_server_url        = var.wave_lite_server_url
+  wave_server_url             = var.flag_use_wave ? var.wave_server_url : ""
+  wave_lite_server_url        = var.flag_use_wave_lite ? var.wave_lite_server_url : ""
 
   # External Resource References
   rds                         = var.flag_create_external_db ? module.rds[0] : null

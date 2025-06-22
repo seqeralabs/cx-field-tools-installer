@@ -5,7 +5,13 @@
 
 [] - DB connection strings:
     [] - `flag_create_external_db = true`
+        [x] - Check `tower_db_url`
+        [x] - Check `swell_db_url`
+        [x] - Check `wave_lite_db_url`
     [] - `flag_use_existing_external_db = true`
+        [x] - Check `tower_db_url`
+        [x] - Check `swell_db_url`
+        [] - Check `wave_lite_db_url` (GAP)
     [] - `flag_use_container_db = true`
 
 - [] - VPC
