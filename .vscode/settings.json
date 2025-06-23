@@ -1,12 +1,10 @@
 {
     "python.envFile": "${workspaceFolder}/scripts/.env",
-
     "python.testing.pytestArgs": [
         "tests"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-
     // E402 - module level import not at top of file (done because need to mess with filepaths).
     "flake8.args": [
         "--max-line-length=120",
@@ -18,12 +16,12 @@
     "cursorpyright.analysis.extraPaths": [
         "/home/deeplearning/.pyenv/versions/3.10.0/lib/python3.10/site-packages",
     ],
-
     // https://forum.cursor.com/t/the-mdc-editor-is-whack-please-revert-it-or-just-generate-a-template/50906/5
     "workbench.editorAssociations": {
         "*.mdc": "default"
     },
     "files.associations": {
         "*.mdc": "markdown"
-    }
+    },
+    "python.formatting.provider": "black"
 }

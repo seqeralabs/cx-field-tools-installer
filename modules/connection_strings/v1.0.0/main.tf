@@ -123,7 +123,7 @@ locals {
   wave_lite_db_url        = var.flag_create_external_db ? local.wl_db_remote_reconciled : local.wl_db_local
 
   wl_redis_local             = "wave-redis:6379"
-  wl_redis_remote_new        = try("${var.elasticache_wave_lite[0].url}", "")
+  wl_redis_remote_new        = try("${var.elasticache_wave_lite.url}", "abc")
   wl_redis_remote_mock       = "mock-new-wave-lite-redis.example.com"
   wl_redis_remote_reconciled = local.use_mocks ? local.wl_redis_remote_mock : local.wl_redis_remote_new
   wl_redis_url_reconciled    = var.flag_create_external_redis ? local.wl_redis_remote_reconciled : local.wl_redis_local

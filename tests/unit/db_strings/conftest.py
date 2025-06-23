@@ -4,7 +4,7 @@ import tftest
 import os
 from pathlib import Path
 import shutil
-import time
+import warnings
 
 
 # TODO: June 21/2025 -- This is a hack to get the test to run.
@@ -24,10 +24,13 @@ time and bandwidth.
 (see: https://github.com/pytest-dev/pytest-xdist/issues/346 and https://stackoverflow.com/questions/42288175/why-does-pytest-xdist-make-my-tests-run-slower-not-faster)
 Keeping the hooks in for now but DONT use them until there is more critical mass.
 
-Rewrote the call to the python function to use path.module, so the fixtures below can specifically target that connection_strings module alone versus whole project.
+Rewritten the call to the python function to use path.module, so the fixtures below can specifically target that connection_strings module alone versus whole project.
 Saves about 20 seconds per testing cycle and pattern is scaleable in situations where full project plannning is required.
 
-NOTE: DONT cleanup on exist or you'll crush the symlinked .terraform folder and have to reinstall in actual project.
+NOTE: 
+1) DONT cleanup on exist or you'll crush the symlinked .terraform folder and have to reinstall in actual project.
+2) Targeting module only seems to produce no output. Stick with full plan.
+  e.g `return tf.plan(output=True, targets=["module.connection_strings"])` vs `return tf.plan(output=True, targets=["aws_instance.ec2"])`
 """
 
 # def create_symlinked_folder(source_dir, target_dir):
@@ -54,15 +57,17 @@ def create_copied_folder(source_dir, target_dir):
 
     # Create target directory if it doesn't exist
     target_path.mkdir(parents=True, exist_ok=True)
+    # print(f"Scratch: {target_dir}")
 
     # Create physical copies for all items in source
     for item in source_path.iterdir():
-        # Dont copy .git
-        if str(item) in [".git", "terraform.tfvars"]:
-            print(f"Found not-to-be-copied file: {item}")
+        # Dont copy .git or terraform.tfvars
+        # print(f"Item: {str(item)}")
+        if any(substring in str(item) for substring in [".git", "terraform.tfvars"]):
+            # print(f"\nFound not-to-be-copied file: {str(item)}")
             continue
         elif ".terraform" in str(item):
-            print(f"Found .terraform {item}")
+            # print(f"Found .terraform {item}")
             link_path = target_path / item.name
             if not link_path.exists():
                 os.symlink(item, link_path)
@@ -75,16 +80,20 @@ def create_copied_folder(source_dir, target_dir):
                     shutil.copy2(item, dest_path)
 
 
+def cleanup_folder(scratch):
+    # Suppress warnings about not finding the auto-unlinked extra_files
+    warnings.filterwarnings("ignore", category=pytest.PytestUnraisableExceptionWarning)
+    shutil.rmtree(str(scratch))
+
+
 @pytest.fixture(scope="session")
 def plan_new_db(tmpdir_factory, datafiles_folder):
-
     # Generate string representation and build symlinks.
     scratch = tmpdir_factory.mktemp("newdb")
     create_copied_folder(root, scratch)
-    print(f"Scratch: {scratch}")
-    tf = tftest.TerraformTest(
-        tfdir=f"{scratch}/modules/connection_strings/v1.0.0"
-    )
+    # print(f"Scratch: {scratch}")
+
+    tf = tftest.TerraformTest(tfdir=f"{scratch}/modules/connection_strings/v1.0.0")
 
     # Copy test configurations to fixtures directory
     tf.setup(
@@ -94,22 +103,23 @@ def plan_new_db(tmpdir_factory, datafiles_folder):
         ],
         cleanup_on_exit=False,  # Dont trash .terraform and terraform.tfstate
     )
-    return tf.plan(output=True)
+    yield tf.plan(output=True)
+
+    # Clean up folder
+    cleanup_folder(scratch)
 
 
 @pytest.fixture(scope="session")
-def plan_existing_db(
-    tmpdir_factory, datafiles_folder
-):
+def plan_existing_db(tmpdir_factory, datafiles_folder):
     # Copy original files and symlinks.
     scratch = tmpdir_factory.mktemp("existingdb")
     create_copied_folder(root, scratch)
-    print(f"Scratch: {scratch}")
+    # print(f"Scratch: {scratch}")
 
     # Tftest
     tf = tftest.TerraformTest(
-        tfdir=f"{scratch}/modules/connection_strings/v1.0.0"
-    )
+        tfdir=f"{scratch}"
+    )  # /modules/connection_strings/v1.0.0")
 
     # Copy test configurations to fixtures directory
     tf.setup(
@@ -119,21 +129,23 @@ def plan_existing_db(
         ],
         cleanup_on_exit=False,  # Dont trash .terraform and terraform.tfstate
     )
-    return tf.plan(output=True)
+    yield tf.plan(output=True)
+
+    # Clean up folder
+    cleanup_folder(scratch)
 
 
 @pytest.fixture(scope="session")
 def plan_new_redis(tmpdir_factory, datafiles_folder):
-
     # Copy original files and symlinks.
     scratch = tmpdir_factory.mktemp("newredis")
     create_copied_folder(root, scratch)
-    print(f"Scratch: {scratch}")
+    # print(f"Scratch: {scratch}")
 
     # Tftest
     tf = tftest.TerraformTest(
-        tfdir=f"{scratch}/modules/connection_strings/v1.0.0"
-    )
+        tfdir=f"{scratch}"
+    )  # /modules/connection_strings/v1.0.0")
 
     # Copy test configurations to fixtures directory
     tf.setup(
@@ -143,4 +155,8 @@ def plan_new_redis(tmpdir_factory, datafiles_folder):
         ],
         cleanup_on_exit=False,  # Dont trash .terraform and terraform.tfstate
     )
-    return tf.plan(output=True)
+    # return tf.plan(output=True, targets=["module.connection_strings"])  # BREAKS THING
+    yield tf.plan(output=True)
+
+    # Clean up folder
+    cleanup_folder(scratch)
