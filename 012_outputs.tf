@@ -25,6 +25,10 @@ output "ec2_ssh_key" {
 # ----------------------------------------------------------------------------------------------------------------------
 # Tower Core
 # ----------------------------------------------------------------------------------------------------------------------
+output "tower_base_url" {
+  value = module.connection_strings.tower_base_url
+}
+
 output "tower_server_url" {
   value = module.connection_strings.tower_server_url
 }

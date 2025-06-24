@@ -28,16 +28,17 @@ generate_json_plan:
 	@terraform plan -out=tfplan >  /dev/null 2>&1
 	@terraform show -json tfplan | jq . > tfplan.json
 
-test_plan_only:
-	@echo "Testing plan values only."
-	@./tests/run_tests.sh
-
-test_deployed_infrastructure:
-	@echo "Testing deployed infrastructure."
-
 # Purge existing, copy baseline values, generate core file, then override files.
 # Terraform processes .auto.tfvars in alphabetical order with last occurence of variable winning.
 generate_test_data:
 	@cp templates/TEMPLATE_terraform.tfvars tests/datafiles/terraform.tfvars
 	@cd tests/datafiles && ./generate_core_data.sh
-	@cd tests/datafiles && ./generate_override_data.sh	
+
+test_plan_only:
+	@echo "Testing plan values only."
+	@time pytest tests/unit/test_module_connection_strings/ -v -s -x
+
+test_deployed_infrastructure:
+	@echo "Testing deployed infrastructure."
+
+
