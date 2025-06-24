@@ -80,10 +80,6 @@ def prepare_plan(override_data):
 
 ## ------------------------------------------------------------------------------------
 ## Terraform Plan Fixtures
-##
-## NOTE:
-##  1) ALWAYS include `cleanup_on_exit=False` or else .terraform will be deleted!
-##  2) tftest requires tf_vars booleans to be double-quotes lowercase.
 ## ------------------------------------------------------------------------------------
 @pytest.fixture(scope="session")
 def plan_new_db(backup_tfvars):
@@ -95,48 +91,28 @@ def plan_new_db(backup_tfvars):
     plan = prepare_plan(new_db_override_data)
     yield plan
 
-#    os.remove(f"{root}/override.auto.tfvars")
-
 
 @pytest.fixture(scope="session")
 def plan_existing_db(backup_tfvars):
     existing_db_override_data = """
-        flag_create_external_db = false
-        flag_use_existing_external_db = true
-        flag_use_container_db = false
-        tower_db_url = "mock-existing-tower-db.example.com"
+        flag_create_external_db         = false
+        flag_use_existing_external_db   = true
+        flag_use_container_db           = false
+
+        tower_db_url                    = "mock-existing-tower-db.example.com"
     """
     plan = prepare_plan(existing_db_override_data)
     yield plan
 
-#    os.remove(f"{root}/override.auto.tfvars")
-
 
 @pytest.fixture(scope="session")
-def plan_new_redis(tmpdir_factory, datafiles_folder):
-    # Copy original files and symlinks.
-    scratch = tmpdir_factory.mktemp("newredis")
-    create_copied_folder(root, scratch)
-    # print(f"Scratch: {scratch}")
-
-    # Tftest
-    tf = tftest.TerraformTest(
-        tfdir=f"{scratch}"
-    )  # /modules/connection_strings/v1.0.0")
-
-    # Copy test configurations to fixtures directory
-    tf.setup(
-        extra_files=[
-            f"{datafiles_folder}/terraform.tfvars",
-            f"{datafiles_folder}/test_module_connection_strings/external_redis_new.auto.tfvars",
-        ],
-        cleanup_on_exit=False,  # Dont trash .terraform and terraform.tfstate
-    )
-    # return tf.plan(output=True, targets=["module.connection_strings"])  # BREAKS THING
-    yield tf.plan(output=True)
-
-    # Clean up folder
-    cleanup_folder(scratch)
+def plan_new_redis(backup_tfvars):
+    new_redis_override_data = """
+        flag_create_external_redis                      = true
+        flag_use_container_redis                        = false
+    """
+    plan = prepare_plan(new_redis_override_data)
+    yield plan
 
 
 @pytest.fixture(scope="session")
