@@ -5,14 +5,11 @@ import os
 from pathlib import Path
 import shutil
 import warnings
-import sys
 
 
 # TODO: June 21/2025 -- This is a hack to get the test to run.
 root = "/home/deeplearning/cx-field-tools-installer"
-tfvars_path = f"{root}/terraform.tfvars"
-tfvars_backup_path = f"{root}/terraform.tfvars.backup"
-test_tfvars_path = f"{root}/tests/datafiles/terraform.tfvars"
+
 
 """
 EXPLANATION
@@ -36,76 +33,106 @@ NOTE:
   e.g `return tf.plan(output=True, targets=["module.connection_strings"])` vs `return tf.plan(output=True, targets=["aws_instance.ec2"])`
 """
 
+# def create_symlinked_folder(source_dir, target_dir):
+#     """
+#     Usage example:
+#     create_symlinked_folder('/path/to/source', '/path/to/target')
+#     """
+#     source_path = Path(source_dir).resolve()
+#     target_path = Path(target_dir).resolve()
 
-## ------------------------------------------------------------------------------------
-## Helper Fixtures
-## ------------------------------------------------------------------------------------
+#     # Create target directory if it doesn't exist
+#     target_path.mkdir(parents=True, exist_ok=True)
+
+#     # Create symlinks for all items in source
+#     for item in source_path.iterdir():
+#         link_path = target_path / item.name
+#         if not link_path.exists():
+#             os.symlink(item, link_path)
+
+
+def create_copied_folder(source_dir, target_dir):
+    source_path = Path(source_dir).resolve()
+    target_path = Path(target_dir).resolve()
+
+    # Create target directory if it doesn't exist
+    target_path.mkdir(parents=True, exist_ok=True)
+    # print(f"Scratch: {target_dir}")
+
+    # Create physical copies for all items in source
+    for item in source_path.iterdir():
+        # Dont copy .git or terraform.tfvars
+        # print(f"Item: {str(item)}")
+        if any(substring in str(item) for substring in [".git", "terraform.tfvars"]):
+            print(f"\nFound not-to-be-copied file: {str(item)}")
+            continue
+        elif ".terraform" in str(item):
+            # print(f"Found .terraform {item}")
+            link_path = target_path / item.name
+            if not link_path.exists():
+                os.symlink(item, link_path)
+        else:
+            dest_path = target_path / item.name
+            if not dest_path.exists():
+                if item.is_dir():
+                    shutil.copytree(item, dest_path)
+                else:
+                    shutil.copy2(item, dest_path)
+
+
+def cleanup_folder(scratch):
+    # Suppress warnings about not finding the auto-unlinked extra_files
+    warnings.filterwarnings("ignore", category=pytest.PytestUnraisableExceptionWarning)
+    shutil.rmtree(str(scratch))
+
+
 @pytest.fixture(scope="session")
-def backup_tfvars():
-    try:
-        print(f"Backing up tfvars from {tfvars_path} to {tfvars_backup_path}")
-        shutil.move(tfvars_path, tfvars_backup_path)
+def plan_new_db(tmpdir_factory, datafiles_folder):
+    # Generate string representation and build symlinks.
+    scratch = tmpdir_factory.mktemp("newdb")
+    create_copied_folder(root, scratch)
+    # print(f"Scratch: {scratch}")
 
-        print(f"Loading testing tfvars {tfvars_path} to {tfvars_backup_path}")
-        shutil.copy2(test_tfvars_path, tfvars_path)
+    tf = tftest.TerraformTest(tfdir=f"{scratch}/modules/connection_strings/v1.0.0")
+    # tf = tftest.TerraformTest(tfdir=f"{scratch}")
 
-    except FileNotFoundError:
-        print("Source file not found.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        sys.exit(1)
-
-    yield
-
-    print("Restoring tfvars")
-    shutil.move(tfvars_backup_path, tfvars_path)
-
-
-## ------------------------------------------------------------------------------------
-## Terraform Plan Fixtures
-##
-## NOTE:
-##  1) ALWAYS include `cleanup_on_exit=False` or else .terraform will be deleted!
-##  2) tftest requires tf_vars booleans to be double-quotes lowercase.
-## ------------------------------------------------------------------------------------
-@pytest.fixture(scope="session")
-def plan_new_db(backup_tfvars):
-    # tf = tftest.TerraformTest(basedir=root, tfdir="modules/connection_strings/v1.0.0")
-    # shutil.copy2(test_tfvars_path, f"{root}/modules/connection_strings/v1.0.0")
-
-    tf = tftest.TerraformTest(tfdir=root)
-
-    tf.setup(cleanup_on_exit=False)
-
-    yield tf.plan(
-        output=True,
-        tf_var_file=tfvars_path,
-        targets=["module.connection_strings"],
-        tf_vars={
-            "flag_create_external_db": "true",
-            "flag_use_existing_external_db": "false",
-            "flag_use_container_db": "false",
-        },
-    )
-
-
-@pytest.fixture(scope="session")
-def plan_existing_db(backup_tfvars):
-    tf = tftest.TerraformTest(tfdir=f"{root}/modules/connection_strings/v1.0.0")
-
+    # Copy test configurations to fixtures directory
     tf.setup(
-        extra_files=[f"{test_data_root}/terraform.tfvars"],
-        cleanup_on_exit=False,
+        extra_files=[
+            f"{datafiles_folder}/terraform.tfvars",
+            f"{datafiles_folder}/test_module_connection_strings/external_db_new.auto.tfvars",
+        ],
+        cleanup_on_exit=False,  # Dont trash .terraform and terraform.tfstate
     )
-    yield tf.plan(
-        output=True,
-        tf_vars={
-            "flag_create_external_db": "false",
-            "flag_use_existing_external_db": "true",
-            "flag_use_container_db": "false",
-            "tower_db_url": "mock-existing-tower-db.example.com",
-        },
+    yield tf.plan(output=True)
+
+    # Clean up folder
+    cleanup_folder(scratch)
+
+
+@pytest.fixture(scope="session")
+def plan_existing_db(tmpdir_factory, datafiles_folder):
+    # Copy original files and symlinks.
+    scratch = tmpdir_factory.mktemp("existingdb")
+    create_copied_folder(root, scratch)
+    # print(f"Scratch: {scratch}")
+
+    # Tftest
+    tf = tftest.TerraformTest(tfdir=f"{scratch}/modules/connection_strings/v1.0.0")
+    # tf = tftest.TerraformTest(tfdir=f"{scratch}")
+
+    # Copy test configurations to fixtures directory
+    tf.setup(
+        extra_files=[
+            f"{datafiles_folder}/terraform.tfvars",
+            f"{datafiles_folder}/test_module_connection_strings/external_db_existing.auto.tfvars",
+        ],
+        cleanup_on_exit=False,  # Dont trash .terraform and terraform.tfstate
     )
+    yield tf.plan(output=True)
+
+    # Clean up folder
+    cleanup_folder(scratch)
 
 
 @pytest.fixture(scope="session")
@@ -162,15 +189,23 @@ def plan_assets_urls_static(tmpdir_factory, datafiles_folder):
 
 @pytest.fixture(scope="session")
 def plan_assets_urls_insecure(tmpdir_factory, datafiles_folder):
+    # Copy original files and symlinks.
+    scratch = tmpdir_factory.mktemp("assets_urls_insecure")
+    create_copied_folder(root, scratch)
+    # print(f"Scratch: {scratch}")
+
     # Tftest
     tf = tftest.TerraformTest(tfdir=f"{scratch}/modules/connection_strings/v1.0.0")
 
     # Copy test configurations to fixtures directory
     tf.setup(
-        extra_files=[f"{datafiles_folder}/terraform.tfvars"],
+        extra_files=[
+            f"{datafiles_folder}/terraform.tfvars"  # ,
+            # f"{datafiles_folder}/test_module_connection_strings/assets_urls.auto.tfvars",
+        ],
         cleanup_on_exit=False,  # Dont trash .terraform and terraform.tfstate
     )
-
+    # return tf.plan(output=True, targets=["module.connection_strings"])  # BREAKS THING
     yield tf.plan(
         output=True,
         tf_vars={

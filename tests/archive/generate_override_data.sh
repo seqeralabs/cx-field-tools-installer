@@ -2,6 +2,17 @@
 
 echo "generate_override_data.sh: Current directory is $PWD"
 
+# Generate override data
+## ------------------------------------------------------------------------------------
+## New RDS
+## ------------------------------------------------------------------------------------
+echo "Generating external_db_new"
+cat << 'EOF' > test_module_connection_stringsexternal_db_new.auto.tfvars
+
+flag_create_external_db                 = true
+flag_use_existing_external_db           = false
+flag_use_container_db                   = false
+EOF
 
 
 ## ------------------------------------------------------------------------------------
@@ -45,6 +56,6 @@ EOF
 echo "Generating assets_urls_secure"
 cat << 'EOF' > test_module_connection_strings/assets_urls_secure.auto.tfvars
 
-tower_server_url                                = "mock-tower-base-secure.example.com"
+tower_server_url                                = "mock-tower-base.example.com"
 flag_use_container_redis                        = false
 EOF
