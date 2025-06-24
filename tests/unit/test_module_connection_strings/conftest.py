@@ -7,6 +7,9 @@ import shutil
 import warnings
 import sys
 
+import subprocess
+import json
+
 
 # TODO: June 21/2025 -- This is a hack to get the test to run.
 root = "/home/deeplearning/cx-field-tools-installer"
@@ -43,10 +46,10 @@ NOTE:
 @pytest.fixture(scope="session")
 def backup_tfvars():
     try:
-        print(f"Backing up tfvars from {tfvars_path} to {tfvars_backup_path}")
+        print(f"\nBacking up tfvars from {tfvars_path} to {tfvars_backup_path}")
         shutil.move(tfvars_path, tfvars_backup_path)
 
-        print(f"Loading testing tfvars {tfvars_path} to {tfvars_backup_path}")
+        print(f"\nLoading testing tfvars {tfvars_path} to {tfvars_backup_path}")
         shutil.copy2(test_tfvars_path, tfvars_path)
 
     except FileNotFoundError:
@@ -57,8 +60,22 @@ def backup_tfvars():
 
     yield
 
-    print("Restoring tfvars")
+    print("\nRestoring tfvars")
     shutil.move(tfvars_backup_path, tfvars_path)
+
+    # Removing override file (once to not have conflict)
+    os.remove(f"{root}/override.auto.tfvars")
+
+
+def prepare_plan(override_data):
+    """Generate override.auto.tfvars and then run `terrform plan` to produce useable JSON."""
+
+    with open(f"{root}/override.auto.tfvars", "w") as f:
+        f.write(override_data)
+    subprocess.run(["make", "generate_json_plan"])
+    with open(f"{root}/tfplan.json", "r") as f:
+        plan = json.load(f)
+    return plan
 
 
 ## ------------------------------------------------------------------------------------
@@ -70,42 +87,29 @@ def backup_tfvars():
 ## ------------------------------------------------------------------------------------
 @pytest.fixture(scope="session")
 def plan_new_db(backup_tfvars):
-    # tf = tftest.TerraformTest(basedir=root, tfdir="modules/connection_strings/v1.0.0")
-    # shutil.copy2(test_tfvars_path, f"{root}/modules/connection_strings/v1.0.0")
+    new_db_override_data = """
+        flag_create_external_db = true
+        flag_use_existing_external_db = false
+        flag_use_container_db =  false
+    """
+    plan = prepare_plan(new_db_override_data)
+    yield plan
 
-    tf = tftest.TerraformTest(tfdir=root)
-
-    tf.setup(cleanup_on_exit=False)
-
-    yield tf.plan(
-        output=True,
-        tf_var_file=tfvars_path,
-        targets=["module.connection_strings"],
-        tf_vars={
-            "flag_create_external_db": "true",
-            "flag_use_existing_external_db": "false",
-            "flag_use_container_db": "false",
-        },
-    )
+#    os.remove(f"{root}/override.auto.tfvars")
 
 
 @pytest.fixture(scope="session")
 def plan_existing_db(backup_tfvars):
-    tf = tftest.TerraformTest(tfdir=f"{root}/modules/connection_strings/v1.0.0")
+    existing_db_override_data = """
+        flag_create_external_db = false
+        flag_use_existing_external_db = true
+        flag_use_container_db = false
+        tower_db_url = "mock-existing-tower-db.example.com"
+    """
+    plan = prepare_plan(existing_db_override_data)
+    yield plan
 
-    tf.setup(
-        extra_files=[f"{test_data_root}/terraform.tfvars"],
-        cleanup_on_exit=False,
-    )
-    yield tf.plan(
-        output=True,
-        tf_vars={
-            "flag_create_external_db": "false",
-            "flag_use_existing_external_db": "true",
-            "flag_use_container_db": "false",
-            "tower_db_url": "mock-existing-tower-db.example.com",
-        },
-    )
+#    os.remove(f"{root}/override.auto.tfvars")
 
 
 @pytest.fixture(scope="session")

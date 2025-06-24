@@ -45,6 +45,10 @@ output "aws_ec2_public_ip" {
 #   description = "Dynamically generated db connectino string based on tfvars selections."
 #   value = data.external.generate_db_connection_string.result.value
 # }
+output "tower_db_root" {
+  description = "The DB root."
+  value       = module.connection_strings.tower_db_root
+}
 
 output "tower_db_url" {
   description = "The complete database URL for Tower including database name and connection string"

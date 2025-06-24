@@ -14,39 +14,38 @@ def test_new_tower_db_root(plan_new_db):
     - tower_db_remote_existing should be empty
     - tower_db_remote_new_reconciled should be mock value
     """
-    assert plan_new_db.outputs["tower_db_root"] == "mock-new-tower-db.example.com"
+    print(f"plan_new_db outputs are: {plan_new_db['planned_values']['outputs']}")
+    print(f"plan_new_db outputs are: {plan_new_db['planned_values']['outputs'].keys()}")
+    outputs = plan_new_db['planned_values']['outputs']
+
+    assert (
+        outputs["tower_db_root"]["value"] == "mock-new-tower-db.example.com"
+    )
 
 
 @pytest.mark.local
 @pytest.mark.db
 @pytest.mark.db_new
 def test_new_tower_db_url(plan_new_db):
-    # assert plan_new_db.outputs['tower_db_url'] == 'mock-db.example.com'
-    # mod = plan_new_db.modules['module.connection_strings']
-    # print(mod)
-    # res ['tower_db_url'] == 'mock-db.example.com'
-    # print(plan_new_db.modules)
-    # mod = plan_new_db.modules['module.connection_strings']
-    # print(mod)
-    # print(plan_new_db.outputs)
-    # This value comes from mock value in module.connection_strings.main.tf
-
-    assert "mock-new-tower-db.example.com" in plan_new_db.outputs["tower_db_url"]
+    outputs = plan_new_db['planned_values']['outputs']
+    assert "mock-new-tower-db.example.com" in outputs["tower_db_url"]["value"]
 
 
 @pytest.mark.local
 @pytest.mark.db
 @pytest.mark.db_new
 def test_new_swell_db_url(plan_new_db):
-    assert "mock-new-tower-db.example.com" in plan_new_db.outputs["swell_db_url"]
+    outputs = plan_new_db['planned_values']['outputs']
+    assert "mock-new-tower-db.example.com" in outputs["swell_db_url"]["value"]
 
 
 @pytest.mark.local
 @pytest.mark.db
 @pytest.mark.db_new
 def test_new_wave_lite_db_url(plan_new_db):
+    outputs = plan_new_db['planned_values']['outputs']
     assert (
-        "mock-new-wave-lite-db.example.com" in plan_new_db.outputs["wave_lite_db_url"]
+        "mock-new-wave-lite-db.example.com" in outputs["wave_lite_db_url"]["value"]
     )
 
 
@@ -63,11 +62,9 @@ def test_existing_tower_db_root(plan_existing_db):
     - tower_db_remote_existing should be mock value
     - tower_db_remote_new_reconciled should be empty
     """
-    print("================================================")
-    print(f"Outputs: {plan_existing_db.outputs}")
+    outputs = plan_existing_db['planned_values']['outputs']
     assert (
-        plan_existing_db.outputs["tower_db_root"]
-        == "mock-existing-tower-db.example.com"
+        outputs['tower_db_root']['value'] == "mock-existing-tower-db.example.com"
     )
 
 
@@ -75,8 +72,9 @@ def test_existing_tower_db_root(plan_existing_db):
 @pytest.mark.db
 @pytest.mark.db_existing
 def test_existing_tower_db_url(plan_existing_db):
+    outputs = plan_existing_db['planned_values']['outputs']
     assert (
-        "mock-existing-tower-db.example.com" in plan_existing_db.outputs["tower_db_url"]
+        "mock-existing-tower-db.example.com" in outputs['tower_db_url']['value']
     )
 
 
@@ -84,8 +82,9 @@ def test_existing_tower_db_url(plan_existing_db):
 @pytest.mark.db
 @pytest.mark.db_existing
 def test_existing_swell_db_url(plan_existing_db):
+    outputs = plan_existing_db['planned_values']['outputs']
     assert (
-        "mock-existing-tower-db.example.com" in plan_existing_db.outputs["swell_db_url"]
+        "mock-existing-tower-db.example.com" in outputs['swell_db_url']['value']
     )
 
 

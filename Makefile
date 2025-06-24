@@ -22,7 +22,7 @@ destroy:
 
 # TESTING
 generate_json_plan:
-	@echo "Generating JSON representation of plan"
+	@echo "\nGenerating JSON representation of plan"
 	@rm tfplan || true >           /dev/null 2>&1
 	@rm tfplan.json || true>       /dev/null 2>&1
 	@terraform plan -out=tfplan >  /dev/null 2>&1
