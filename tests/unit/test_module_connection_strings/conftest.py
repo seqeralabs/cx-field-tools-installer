@@ -116,49 +116,20 @@ def plan_new_redis(backup_tfvars):
 
 
 @pytest.fixture(scope="session")
-def plan_assets_urls_static(tmpdir_factory, datafiles_folder):
-    # Copy original files and symlinks.
-    scratch = tmpdir_factory.mktemp("assets_urls_static")
-    create_copied_folder(root, scratch)
-    # print(f"Scratch: {scratch}")
-
-    # Tftest
-    tf = tftest.TerraformTest(tfdir=f"{scratch}/modules/connection_strings/v1.0.0")
-
-    # Copy test configurations to fixtures directory
-    tf.setup(
-        extra_files=[
-            f"{datafiles_folder}/terraform.tfvars",
-            f"{datafiles_folder}/test_module_connection_strings/assets_urls_static.auto.tfvars",
-        ],
-        cleanup_on_exit=False,  # Dont trash .terraform and terraform.tfstate
-    )
-    # return tf.plan(output=True, targets=["module.connection_strings"])  # BREAKS THING
-    yield tf.plan(output=True)
-
-    # Clean up folder
-    cleanup_folder(scratch)
+def plan_urls_static(backup_tfvars):
+    urls_static_override_data = """
+        tower_server_url                                = "mock-tower-base-static.example.com"
+        flag_use_container_redis                        = false
+    """
+    plan = prepare_plan(urls_static_override_data)
+    yield plan
 
 
 @pytest.fixture(scope="session")
-def plan_assets_urls_insecure(tmpdir_factory, datafiles_folder):
-    # Tftest
-    tf = tftest.TerraformTest(tfdir=f"{scratch}/modules/connection_strings/v1.0.0")
-
-    # Copy test configurations to fixtures directory
-    tf.setup(
-        extra_files=[f"{datafiles_folder}/terraform.tfvars"],
-        cleanup_on_exit=False,  # Dont trash .terraform and terraform.tfstate
-    )
-
-    yield tf.plan(
-        output=True,
-        tf_vars={
-            "tower_server_url": "mock-tower-base-insecure.example.com",
-            "flag_create_load_balancer": "false",
-            "flag_do_not_use_https": "true",
-        },
-    )
-
-    # Clean up folder
-    cleanup_folder(scratch)
+def plan_assets_urls_insecure(backup_tfvars):
+    urls_static_override_data = """
+        tower_server_url                                = "mock-tower-base.example.com"
+        flag_use_container_redis                        = false
+    """
+    plan = prepare_plan(urls_static_override_data)
+    yield plan
