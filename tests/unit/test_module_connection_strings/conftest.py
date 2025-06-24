@@ -64,7 +64,7 @@ def create_copied_folder(source_dir, target_dir):
         # Dont copy .git or terraform.tfvars
         # print(f"Item: {str(item)}")
         if any(substring in str(item) for substring in [".git", "terraform.tfvars"]):
-            # print(f"\nFound not-to-be-copied file: {str(item)}")
+            print(f"\nFound not-to-be-copied file: {str(item)}")
             continue
         elif ".terraform" in str(item):
             # print(f"Found .terraform {item}")
@@ -94,12 +94,13 @@ def plan_new_db(tmpdir_factory, datafiles_folder):
     # print(f"Scratch: {scratch}")
 
     tf = tftest.TerraformTest(tfdir=f"{scratch}/modules/connection_strings/v1.0.0")
+    # tf = tftest.TerraformTest(tfdir=f"{scratch}")
 
     # Copy test configurations to fixtures directory
     tf.setup(
         extra_files=[
             f"{datafiles_folder}/terraform.tfvars",
-            f"{datafiles_folder}/external_db_new.auto.tfvars",
+            f"{datafiles_folder}/test_module_connection_strings/external_db_new.auto.tfvars",
         ],
         cleanup_on_exit=False,  # Dont trash .terraform and terraform.tfstate
     )
@@ -117,15 +118,14 @@ def plan_existing_db(tmpdir_factory, datafiles_folder):
     # print(f"Scratch: {scratch}")
 
     # Tftest
-    tf = tftest.TerraformTest(
-        tfdir=f"{scratch}"
-    )  # /modules/connection_strings/v1.0.0")
+    tf = tftest.TerraformTest(tfdir=f"{scratch}/modules/connection_strings/v1.0.0")
+    # tf = tftest.TerraformTest(tfdir=f"{scratch}")
 
     # Copy test configurations to fixtures directory
     tf.setup(
         extra_files=[
             f"{datafiles_folder}/terraform.tfvars",
-            f"{datafiles_folder}/external_db_existing.auto.tfvars",
+            f"{datafiles_folder}/test_module_connection_strings/external_db_existing.auto.tfvars",
         ],
         cleanup_on_exit=False,  # Dont trash .terraform and terraform.tfstate
     )
@@ -151,12 +151,69 @@ def plan_new_redis(tmpdir_factory, datafiles_folder):
     tf.setup(
         extra_files=[
             f"{datafiles_folder}/terraform.tfvars",
-            f"{datafiles_folder}/external_redis_new.auto.tfvars",
+            f"{datafiles_folder}/test_module_connection_strings/external_redis_new.auto.tfvars",
         ],
         cleanup_on_exit=False,  # Dont trash .terraform and terraform.tfstate
     )
     # return tf.plan(output=True, targets=["module.connection_strings"])  # BREAKS THING
     yield tf.plan(output=True)
+
+    # Clean up folder
+    cleanup_folder(scratch)
+
+
+@pytest.fixture(scope="session")
+def plan_assets_urls_static(tmpdir_factory, datafiles_folder):
+    # Copy original files and symlinks.
+    scratch = tmpdir_factory.mktemp("assets_urls_static")
+    create_copied_folder(root, scratch)
+    # print(f"Scratch: {scratch}")
+
+    # Tftest
+    tf = tftest.TerraformTest(tfdir=f"{scratch}/modules/connection_strings/v1.0.0")
+
+    # Copy test configurations to fixtures directory
+    tf.setup(
+        extra_files=[
+            f"{datafiles_folder}/terraform.tfvars",
+            f"{datafiles_folder}/test_module_connection_strings/assets_urls_static.auto.tfvars",
+        ],
+        cleanup_on_exit=False,  # Dont trash .terraform and terraform.tfstate
+    )
+    # return tf.plan(output=True, targets=["module.connection_strings"])  # BREAKS THING
+    yield tf.plan(output=True)
+
+    # Clean up folder
+    cleanup_folder(scratch)
+
+
+@pytest.fixture(scope="session")
+def plan_assets_urls_insecure(tmpdir_factory, datafiles_folder):
+    # Copy original files and symlinks.
+    scratch = tmpdir_factory.mktemp("assets_urls_insecure")
+    create_copied_folder(root, scratch)
+    # print(f"Scratch: {scratch}")
+
+    # Tftest
+    tf = tftest.TerraformTest(tfdir=f"{scratch}/modules/connection_strings/v1.0.0")
+
+    # Copy test configurations to fixtures directory
+    tf.setup(
+        extra_files=[
+            f"{datafiles_folder}/terraform.tfvars"  # ,
+            # f"{datafiles_folder}/test_module_connection_strings/assets_urls.auto.tfvars",
+        ],
+        cleanup_on_exit=False,  # Dont trash .terraform and terraform.tfstate
+    )
+    # return tf.plan(output=True, targets=["module.connection_strings"])  # BREAKS THING
+    yield tf.plan(
+        output=True,
+        tf_vars={
+            "tower_server_url": "mock-tower-base-insecure.example.com",
+            "flag_create_load_balancer": "false",
+            "flag_do_not_use_https": "true",
+        },
+    )
 
     # Clean up folder
     cleanup_folder(scratch)

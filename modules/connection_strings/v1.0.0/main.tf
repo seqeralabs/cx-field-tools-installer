@@ -41,19 +41,20 @@ locals {
   tower_base_url = var.tower_server_url
 
   tower_url_secure   = "https://${var.tower_server_url}"
-  tower_url_insecure = "http://${var.tower_server_url}:9090"
+  tower_url_insecure = "http://${var.tower_server_url}:8000"
   tower_server_url   = local.use_insecure_ec2 ? local.tower_url_insecure : local.tower_url_secure
 
   tower_api_endpoint = "${local.tower_server_url}/api"
 
   # Dont try to be smart. Just calculate all strings and use the flags / module feed to control what comes in.
   # Two DB options should always be "" so we can smash together in a unified catch-all.
-  tower_db_local                 = "db:3306"
-  tower_db_remote_existing       = try(var.tower_db_url, "")
-  tower_db_remote_new_real       = try(var.rds_tower.db_instance_address, "")
-  tower_db_remote_new_mock       = "mock-new-tower-db.example.com"
+  tower_db_local                 = "dba:3306"
+  tower_db_remote_existing       = var.flag_use_existing_external_db ? var.tower_db_url : ""
+  tower_db_remote_new_real       = var.flag_create_external_db ? try(var.rds_tower.db_instance_address, "") : ""
+  tower_db_remote_new_mock       = var.flag_create_external_db ? "mock-new-tower-db.example.com" : ""
   tower_db_remote_new_reconciled = local.use_mocks ? local.tower_db_remote_new_mock : local.tower_db_remote_new_real
-  tower_db_root                  = join("", [local.tower_db_local, local.tower_db_remote_existing, local.tower_db_remote_new_reconciled])
+  tower_db_remote_reconciled     = join("", [local.tower_db_remote_existing, local.tower_db_remote_new_reconciled])
+  tower_db_root                  = local.tower_db_remote_reconciled != "" ? local.tower_db_remote_reconciled : local.tower_db_local
 
   tower_db_url = format(
     "%s/%s?%s",

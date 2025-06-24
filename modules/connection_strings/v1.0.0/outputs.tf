@@ -19,19 +19,19 @@ output "tower_api_endpoint" {
 output "tower_db_root" {
   description = "The root database connection for Tower"
   value       = local.tower_db_root
-  sensitive   = true
+  sensitive   = false
 }
 
 output "tower_db_url" {
   description = "The complete database URL for Tower including database name and connection string"
   value       = local.tower_db_url
-  sensitive   = true
+  sensitive   = false
 }
 
 output "tower_redis_url" {
   description = "The Redis URL for Tower"
   value       = local.tower_redis_url
-  sensitive   = true
+  sensitive   = false
 }
 
 ## ------------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ output "tower_redis_url" {
 output "swell_db_url" {
   description = "The complete database URL for Groundswell"
   value       = local.swell_db_url
-  sensitive   = true
+  sensitive   = false
 }
 
 ## ------------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ output "tower_connect_server_url" {
 output "tower_connect_redis_url" {
   description = "The Redis URL for Connect"
   value       = local.tower_connect_redis_url
-  sensitive   = true
+  sensitive   = false
 }
 
 ## ------------------------------------------------------------------------------------
@@ -83,11 +83,11 @@ output "tower_wave_dns" {
 output "wave_lite_db_url" {
   description = "The database URL for Wave-Lite"
   value       = local.wave_lite_db_url
-  sensitive   = true
+  sensitive   = false
 }
 
 output "wave_lite_redis_url" {
   description = "The Redis URL for Wave-Lite"
   value       = local.wave_lite_redis_url
-  sensitive   = true
+  sensitive   = false
 }

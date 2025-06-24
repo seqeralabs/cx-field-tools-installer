@@ -16,6 +16,11 @@ variable "flag_create_external_db" {
   type        = bool
 }
 
+variable "flag_use_existing_external_db" {
+  description = "Whether to use an existing external database"
+  type        = bool
+}
+
 variable "flag_create_external_redis" {
   description = "Whether to create external Redis"
   type        = bool
