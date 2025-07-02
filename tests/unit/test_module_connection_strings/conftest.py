@@ -10,6 +10,12 @@ import sys
 import subprocess
 import json
 
+# base_import_dir = Path(__file__).resolve().parents[3]
+# print(f"{base_import_dir=}")
+# if base_import_dir not in sys.path:
+#     sys.path.append(str(base_import_dir))
+
+from scripts.installer.utils.purge_folders import delete_pycache_folders
 
 # TODO: June 21/2025 -- This is a hack to get the test to run.
 root = "/home/deeplearning/cx-field-tools-installer"
@@ -65,6 +71,9 @@ def backup_tfvars():
 
     # Removing override file (once to not have conflict)
     os.remove(f"{root}/override.auto.tfvars")
+
+    # Purging __pycache__ folder
+    delete_pycache_folders(root)
 
 
 def prepare_plan(override_data):
@@ -126,10 +135,11 @@ def plan_urls_static(backup_tfvars):
 
 
 @pytest.fixture(scope="session")
-def plan_assets_urls_insecure(backup_tfvars):
-    urls_static_override_data = """
-        tower_server_url                                = "mock-tower-base.example.com"
-        flag_use_container_redis                        = false
+def plan_urls_insecure(backup_tfvars):
+    urls_insecure_override_data = """
+        tower_server_url                                = "mock-tower-base-insecure.example.com"
+        flag_create_load_balancer                       = false
+        flag_do_not_use_https				= true
     """
-    plan = prepare_plan(urls_static_override_data)
+    plan = prepare_plan(urls_insecure_override_data)
     yield plan
