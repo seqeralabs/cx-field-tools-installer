@@ -28,3 +28,18 @@ def test_tower_insecure_urls(plan_urls_insecure):
         "http://mock-tower-base-insecure.example.com:8000"
         in outputs["tower_server_url"]["value"]
     )
+
+
+## ------------------------------------------------------------------------------------
+## Tower Core URL Tests - Secure
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.urls
+@pytest.mark.urls_secure
+def test_tower_secure_urls(plan_urls_secure):
+    """Test tower secure url output."""
+    outputs = plan_urls_secure["planned_values"]["outputs"]
+    assert (
+        "https://mock-tower-base-secure.example.com"
+        == outputs["tower_server_url"]["value"]
+    )

@@ -20,3 +20,4 @@ tmp.log
 tfplan
 tfplan.json
 terraform.tfvars.backup
+tests/.plan_cache/

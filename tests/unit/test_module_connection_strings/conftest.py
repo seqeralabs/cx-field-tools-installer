@@ -6,6 +6,8 @@ from pathlib import Path
 import shutil
 import warnings
 import sys
+import hashlib
+from typing import Dict, Any
 
 import subprocess
 import json
@@ -23,27 +25,52 @@ tfvars_path = f"{root}/terraform.tfvars"
 tfvars_backup_path = f"{root}/terraform.tfvars.backup"
 test_tfvars_path = f"{root}/tests/datafiles/terraform.tfvars"
 
+# Cache infrastructure for `terraform plan` results.
+_plan_cache: Dict[str, Any] = {}
+_cache_dir = f"{root}/tests/.plan_cache"
+
 """
 EXPLANATION
 =======================================
-I don't want tests happening in the source project. But `tftest` needs to be able to find the source code.
-So, we copy the source code to a temporary directory and then run the tests from there.
-This feels like a hack but I haven't seen better guidance anywhere.
-`.terraform` folder is 400+MB. I can cache plugins but not the modules (downloaded each time). So these are symlinked in to save
-time and bandwidth.
+Originally tried using [tftest](https://pypi.org/project/tftest/) package to test but this became complicated and unwieldy. Instead, simplified
+testing loop to:
 
-`try/except` wraps the tf.plan beause I wanted to use pytest-xdist to parallelize. Multiprocessing massively slows down small volumes 
-(see: https://github.com/pytest-dev/pytest-xdist/issues/346 and https://stackoverflow.com/questions/42288175/why-does-pytest-xdist-make-my-tests-run-slower-not-faster)
-Keeping the hooks in for now but DONT use them until there is more critical mass.
-
-Rewritten the call to the python function to use path.module, so the fixtures below can specifically target that connection_strings module alone versus whole project.
-Saves about 20 seconds per testing cycle and pattern is scaleable in situations where full project plannning is required.
-
-NOTE: 
-1) DONT cleanup on exist or you'll crush the symlinked .terraform folder and have to reinstall in actual project.
-2) Targeting module only seems to produce no output. Stick with full plan.
-  e.g `return tf.plan(output=True, targets=["module.connection_strings"])` vs `return tf.plan(output=True, targets=["aws_instance.ec2"])`
+1. Test in the project directory.
+2. Take a backup of the existing `terraform.tfvars` file.
+3. Create a new `terraform.tfvars` file for testing purposes (_sourced from `tests/datafiles/generate_core_data.sh`).
+4. Provide override values to test fixtures (which will generate a new `override.auto.tfvars` file in the project root).
+    This file supercedes the same keys defined in the `terraform.tfvars` file.
+5. Run the tests:
+    1. For each fixture, run `terraform plan` based on the test tvars and override file. Results as cached to speed up n+1 test runs.
+    2. Execute tests tied to that fixture.
+    3. Repeat.
+6. Purge the test tfvars and override file.
+7.Restore the original `terraform.tfvars` file when testing is complete.
 """
+
+
+## ------------------------------------------------------------------------------------
+## Cache Utility Functions
+## ------------------------------------------------------------------------------------
+def get_cache_key(override_data: str) -> str:
+    """Generate SHA-256 hash of override data for cache key."""
+    normalized = override_data.strip()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:16]
+
+
+def ensure_cache_dir():
+    """Ensure cache directory exists."""
+    os.makedirs(_cache_dir, exist_ok=True)
+
+
+def clear_plan_cache():
+    """Clear both in-memory and disk cache."""
+    global _plan_cache
+    _plan_cache.clear()
+
+    if os.path.exists(_cache_dir):
+        shutil.rmtree(_cache_dir)
+    print("Plan cache cleared")
 
 
 ## ------------------------------------------------------------------------------------
@@ -70,20 +97,66 @@ def backup_tfvars():
     shutil.move(tfvars_backup_path, tfvars_path)
 
     # Removing override file (once to not have conflict)
-    os.remove(f"{root}/override.auto.tfvars")
+    try:
+        os.remove(f"{root}/override.auto.tfvars")
+    except FileNotFoundError:
+        pass
+
+    # Clean up cache on session end
+    # July 4/2025 -- Removed auto-cleanup since it was deleting files at the end of every testing run.
+    # I want to keep these for the next run so n+1 goes much faster.
+    # clear_plan_cache()
 
     # Purging __pycache__ folder
     delete_pycache_folders(root)
 
 
-def prepare_plan(override_data):
-    """Generate override.auto.tfvars and then run `terrform plan` to produce useable JSON."""
+def prepare_plan(override_data: str, use_cache: bool = True) -> dict:
+    """Generate override.auto.tfvars and run terraform plan with caching.
+
+    Args:
+        override_data: Terraform variable overrides
+        use_cache: Whether to use cached results (default: True)
+
+    Returns:
+        Terraform plan JSON data
+    """
+    cache_key = get_cache_key(override_data)
+
+    # Check in-memory cache first
+    if use_cache and cache_key in _plan_cache:
+        print(f"Using cached plan for key: {cache_key}")
+        return _plan_cache[cache_key]
+
+    # Check disk cache
+    cache_file = f"{_cache_dir}/plan_{cache_key}.json"
+    if use_cache and os.path.exists(cache_file):
+        try:
+            print(f"Loading cached plan from disk: {cache_key}")
+            with open(cache_file, "r") as f:
+                plan = json.load(f)
+            _plan_cache[cache_key] = plan
+            return plan
+        except (json.JSONDecodeError, IOError) as e:
+            print(f"Cache file corrupted, regenerating: {e}")
+
+    # Generate new plan
+    print(f"Generating new plan for key: {cache_key}")
+    ensure_cache_dir()
 
     with open(f"{root}/override.auto.tfvars", "w") as f:
         f.write(override_data)
-    subprocess.run(["make", "generate_json_plan"])
+
+    subprocess.run(["make", "generate_json_plan"], check=True)
+
     with open(f"{root}/tfplan.json", "r") as f:
         plan = json.load(f)
+
+    # Cache the result
+    _plan_cache[cache_key] = plan
+    with open(cache_file, "w") as f:
+        json.dump(plan, f, indent=2)
+
     return plan
 
 
@@ -142,4 +215,15 @@ def plan_urls_insecure(backup_tfvars):
         flag_do_not_use_https				= true
     """
     plan = prepare_plan(urls_insecure_override_data)
+    yield plan
+
+
+@pytest.fixture(scope="session")
+def plan_urls_secure(backup_tfvars):
+    urls_secure_override_data = """
+        tower_server_url                                = "mock-tower-base-secure.example.com"
+        flag_create_load_balancer                       = true
+        flag_do_not_use_https                           = false
+    """
+    plan = prepare_plan(urls_secure_override_data)
     yield plan

@@ -8,10 +8,12 @@
         [x] - Check `tower_db_url`
         [x] - Check `swell_db_url`
         [x] - Check `wave_lite_db_url`
+        [x] - Check `tower_db_root`
     [-] - `flag_use_existing_external_db = true`
         [x] - Check `tower_db_url`
         [x] - Check `swell_db_url`
         [-] - Check `wave_lite_db_url` (GAP)
+        [x] - Check `tower_db_root`
     [] - `flag_use_container_db = true`
         [] - Check `tower_db_url`
         [] - Check `swell_db_url`

@@ -41,4 +41,4 @@ test_plan_only:
 test_deployed_infrastructure:
 	@echo "Testing deployed infrastructure."
 
-
+# (FROM ROOT) pytest tests/ -sv
