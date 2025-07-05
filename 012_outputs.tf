@@ -96,9 +96,9 @@ output "tower_connect_redis_url" {
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
-# Wave Lite
+# Wave / Wave Lite
 # ----------------------------------------------------------------------------------------------------------------------
-output "wave_lite_tower_url" {
+output "tower_wave_url" {
   description = "The URL for Wave-Lite"
   value       = module.connection_strings.tower_wave_url
 }

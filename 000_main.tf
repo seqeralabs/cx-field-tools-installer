@@ -278,7 +278,7 @@ module "connection_strings" {
   swell_database_name = var.swell_database_name
 
   # Wave Configuration
-  wave_server_url      = var.flag_use_wave ? var.wave_server_url : ""
+  wave_server_url      = var.flag_use_wave ? var.wave_server_url : "https://wave.seqera.io"
   wave_lite_server_url = var.flag_use_wave_lite ? var.wave_lite_server_url : ""
 
   # External Resource References
