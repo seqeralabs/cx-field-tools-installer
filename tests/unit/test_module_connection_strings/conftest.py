@@ -8,6 +8,7 @@ import warnings
 import sys
 import hashlib
 from typing import Dict, Any
+import re
 
 import subprocess
 import json
@@ -138,6 +139,12 @@ def prepare_plan(override_data: str, use_cache: bool = True) -> dict:
     Returns:
         Terraform plan JSON data
     """
+    # Remove intermediate whitespace (extra space makes same keys hash to different values).
+    # Convert multiple sapces to single space (ASSUMPTION: Python tabs insert spaces!)
+    # NOTE: Need to keep `\n` to not break HCL formatting expectations.
+    override_data = "\n".join(
+        re.sub(r"\s+", " ", line) for line in override_data.splitlines()
+    )
     cache_key = get_cache_key(override_data)
 
     # Check in-memory cache first

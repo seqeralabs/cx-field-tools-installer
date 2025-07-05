@@ -48,7 +48,7 @@ locals {
 
   # Dont try to be smart. Just calculate all strings and use the flags / module feed to control what comes in.
   # Two DB options should always be "" so we can smash together in a unified catch-all.
-  tower_db_local                 = "dba:3306"
+  tower_db_local                 = "db:3306"
   tower_db_remote_existing       = var.flag_use_existing_external_db ? var.tower_db_url : ""
   tower_db_remote_new_real       = var.flag_create_external_db ? try(var.rds_tower.db_instance_address, "") : ""
   tower_db_remote_new_mock       = var.flag_create_external_db ? "mock-new-tower-db.example.com" : ""
@@ -92,8 +92,8 @@ locals {
   tower_connect_dns          = "connect.${var.tower_server_url}"
   tower_connect_wildcard_dns = "*.${var.tower_server_url}"
 
-  connect_url_secure       = "https://${local.tower_server_url}"
-  connect_url_insecure     = "http://${local.tower_server_url}:9090"
+  connect_url_secure       = "https://${local.tower_connect_dns}"
+  connect_url_insecure     = "http://${var.tower_server_url}:9090"
   tower_connect_server_url = local.use_insecure_ec2 ? local.connect_url_insecure : local.connect_url_secure
 
 

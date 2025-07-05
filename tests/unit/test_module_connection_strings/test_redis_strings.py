@@ -6,6 +6,9 @@ from conftest import prepare_plan
 ## ------------------------------------------------------------------------------------
 ## New Redis
 ## ------------------------------------------------------------------------------------
+# NOTE: Mock DNS values here are hardcoded into the modules/connection_strings/v1.0.0/main.tf file.
+
+
 @pytest.mark.local
 @pytest.mark.redis
 def test_external_redis_url(backup_tfvars):

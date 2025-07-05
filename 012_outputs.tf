@@ -80,6 +80,11 @@ output "tower_connect_dns" {
   value       = module.connection_strings.tower_connect_dns
 }
 
+output "tower_connect_wildcard_dns" {
+  description = "The DNS name for Connect"
+  value       = module.connection_strings.tower_connect_wildcard_dns
+}
+
 output "tower_connect_server_url" {
   description = "The server URL for Connect with appropriate protocol and port"
   value       = module.connection_strings.tower_connect_server_url
