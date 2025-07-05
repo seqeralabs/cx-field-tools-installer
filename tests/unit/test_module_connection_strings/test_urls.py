@@ -1,17 +1,26 @@
 import pytest
 
+from conftest import prepare_plan
+
 
 ## ------------------------------------------------------------------------------------
 ## Tower Core URL Tests
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.urls
-def test_tower_base_url(plan_urls_static):
-    """Test tower_base_url output.
-    This test verifies that the base URL for Tower is correctly constructed.
+def test_tower_base_url(backup_tfvars):
+    """Verify that the base URL for Tower is correctly constructed."""
+    # Given
+    urls_static_override_data = """
+        tower_server_url                                = "mock-tower-base-static.example.com"
+        flag_use_container_redis                        = false
     """
-    # The base URL should be constructed from the mock values in the test fixtures
-    outputs = plan_urls_static["planned_values"]["outputs"]
+
+    # When
+    plan = prepare_plan(urls_static_override_data)
+    outputs = plan["planned_values"]["outputs"]
+
+    # Then
     assert "mock-tower-base-static.example.com" in outputs["tower_base_url"]["value"]
 
 
@@ -21,9 +30,20 @@ def test_tower_base_url(plan_urls_static):
 @pytest.mark.local
 @pytest.mark.urls
 @pytest.mark.urls_insecure
-def test_tower_insecure_urls(plan_urls_insecure):
-    """Test tower insecure url output."""
-    outputs = plan_urls_insecure["planned_values"]["outputs"]
+def test_tower_insecure_urls(backup_tfvars):
+    """Test Tower insecure url output."""
+    # Given
+    urls_insecure_override_data = """
+        tower_server_url                                = "mock-tower-base-insecure.example.com"
+        flag_create_load_balancer                       = false
+        flag_do_not_use_https				            = true
+    """
+
+    # When
+    plan = prepare_plan(urls_insecure_override_data)
+    outputs = plan["planned_values"]["outputs"]
+
+    # Then
     assert (
         "http://mock-tower-base-insecure.example.com:8000"
         in outputs["tower_server_url"]["value"]
@@ -36,9 +56,20 @@ def test_tower_insecure_urls(plan_urls_insecure):
 @pytest.mark.local
 @pytest.mark.urls
 @pytest.mark.urls_secure
-def test_tower_secure_urls(plan_urls_secure):
-    """Test tower secure url output."""
-    outputs = plan_urls_secure["planned_values"]["outputs"]
+def test_tower_secure_urls(backup_tfvars):
+    """Test Tower secure url output."""
+    # Given
+    urls_secure_override_data = """
+        tower_server_url                                = "mock-tower-base-secure.example.com"
+        flag_create_load_balancer                       = true
+        flag_do_not_use_https                           = false
+    """
+
+    # When
+    plan = prepare_plan(urls_secure_override_data)
+    outputs = plan["planned_values"]["outputs"]
+
+    # Then
     assert (
         "https://mock-tower-base-secure.example.com"
         == outputs["tower_server_url"]["value"]

@@ -78,6 +78,9 @@ def clear_plan_cache():
 ## ------------------------------------------------------------------------------------
 @pytest.fixture(scope="session")
 def backup_tfvars():
+    # Create a fresh copy of the base testing terraform.tfvars file.
+    subprocess.run(["make", "generate_test_data"], check=True)
+
     try:
         print(f"\nBacking up tfvars from {tfvars_path} to {tfvars_backup_path}")
         shutil.move(tfvars_path, tfvars_backup_path)
@@ -85,8 +88,8 @@ def backup_tfvars():
         print(f"\nLoading testing tfvars {tfvars_path} to {tfvars_backup_path}")
         shutil.copy2(test_tfvars_path, tfvars_path)
 
-    except FileNotFoundError:
-        print("Source file not found.")
+    except FileNotFoundError as e:
+        print(f"Source file not found: {e}")
     except Exception as e:
         print(f"An error occurred: {e}")
         sys.exit(1)
@@ -94,20 +97,21 @@ def backup_tfvars():
     yield
 
     print("\nRestoring tfvars")
-    shutil.move(tfvars_backup_path, tfvars_path)
-
-    # Removing override file (once to not have conflict)
     try:
-        os.remove(f"{root}/override.auto.tfvars")
-    except FileNotFoundError:
-        pass
+        shutil.move(tfvars_backup_path, tfvars_path)
+    except FileNotFoundError as e:
+        print(f"Source file not found: {e}")
 
-    # Clean up cache on session end
-    # July 4/2025 -- Removed auto-cleanup since it was deleting files at the end of every testing run.
-    # I want to keep these for the next run so n+1 goes much faster.
+    # Remove testing files
+    for file in [f"{root}/override.auto.tfvars", test_tfvars_path]:
+        try:
+            os.remove(file)
+        except FileNotFoundError as e:
+            print(f"Source file not found: {e}")
+
+    # July 4/2025 -- Removed cache auto-cleanup since it want these to persist between runs so n+1 goes much faster.
     # clear_plan_cache()
 
-    # Purging __pycache__ folder
     delete_pycache_folders(root)
 
 
@@ -163,67 +167,14 @@ def prepare_plan(override_data: str, use_cache: bool = True) -> dict:
 ## ------------------------------------------------------------------------------------
 ## Terraform Plan Fixtures
 ## ------------------------------------------------------------------------------------
-@pytest.fixture(scope="session")
-def plan_new_db(backup_tfvars):
-    new_db_override_data = """
-        flag_create_external_db = true
-        flag_use_existing_external_db = false
-        flag_use_container_db =  false
-    """
-    plan = prepare_plan(new_db_override_data)
-    yield plan
+# Keeping this pattern for reference -- devolved many original fixtures into the test cases themselves.
 
-
-@pytest.fixture(scope="session")
-def plan_existing_db(backup_tfvars):
-    existing_db_override_data = """
-        flag_create_external_db         = false
-        flag_use_existing_external_db   = true
-        flag_use_container_db           = false
-
-        tower_db_url                    = "mock-existing-tower-db.example.com"
-    """
-    plan = prepare_plan(existing_db_override_data)
-    yield plan
-
-
-@pytest.fixture(scope="session")
-def plan_new_redis(backup_tfvars):
-    new_redis_override_data = """
-        flag_create_external_redis                      = true
-        flag_use_container_redis                        = false
-    """
-    plan = prepare_plan(new_redis_override_data)
-    yield plan
-
-
-@pytest.fixture(scope="session")
-def plan_urls_static(backup_tfvars):
-    urls_static_override_data = """
-        tower_server_url                                = "mock-tower-base-static.example.com"
-        flag_use_container_redis                        = false
-    """
-    plan = prepare_plan(urls_static_override_data)
-    yield plan
-
-
-@pytest.fixture(scope="session")
-def plan_urls_insecure(backup_tfvars):
-    urls_insecure_override_data = """
-        tower_server_url                                = "mock-tower-base-insecure.example.com"
-        flag_create_load_balancer                       = false
-        flag_do_not_use_https				= true
-    """
-    plan = prepare_plan(urls_insecure_override_data)
-    yield plan
-
-
-@pytest.fixture(scope="session")
-def plan_urls_secure(backup_tfvars):
-    urls_secure_override_data = """
-        tower_server_url                                = "mock-tower-base-secure.example.com"
-        flag_create_load_balancer                       = true
-        flag_do_not_use_https                           = false
-    """
-    plan = prepare_plan(urls_secure_override_data)
-    yield plan
+# @pytest.fixture(scope="session")
+# def plan_new_db(backup_tfvars):
+#     new_db_override_data = """
+#         flag_create_external_db = true
+#         flag_use_existing_external_db = false
+#         flag_use_container_db =  false
+#     """
+#     plan = prepare_plan(new_db_override_data)
+#     yield plan
