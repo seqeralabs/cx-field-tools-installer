@@ -21,22 +21,28 @@ destroy:
 	@terraform destroy
 
 # TESTING
+# If this stage fails with exit status 2, renew AWS SSO credentials.
 generate_json_plan:
-	@echo "\nGenerating JSON representation of plan"
-	@rm tfplan || true >           /dev/null 2>&1
-	@rm tfplan.json || true>       /dev/null 2>&1
+	@echo "\nGenerating JSON representation of plan."
+	@rm -f tfplan
+	@rm -f tfplan.json
 	@terraform plan -out=tfplan >  /dev/null 2>&1
 	@terraform show -json tfplan | jq . > tfplan.json
 
 # Purge existing, copy baseline values, generate core file, then override files.
 # Terraform processes .auto.tfvars in alphabetical order with last occurence of variable winning.
+# Delete cached terraform plan files since the underlying core is now changed (-f handles errors if no files exist)
 generate_test_data:
+	@echo "Generating test data and deleting cached plan files."
 	@cp templates/TEMPLATE_terraform.tfvars tests/datafiles/terraform.tfvars
 	@cd tests/datafiles && ./generate_core_data.sh
 
+purge_cached_plans:
+	@cd tests/.plan_cache && rm -f *.json
+
 test_plan_only:
 	@echo "Testing plan values only."
-	@time pytest tests/unit/test_module_connection_strings/ -v -s -x
+	@time PYTHONDONTWRITEBYTECODE=1 pytest tests/unit/test_module_connection_strings/ -v -s -x
 
 test_deployed_infrastructure:
 	@echo "Testing deployed infrastructure."

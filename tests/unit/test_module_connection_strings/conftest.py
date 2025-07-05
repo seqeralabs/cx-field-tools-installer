@@ -53,9 +53,20 @@ testing loop to:
 ## Cache Utility Functions
 ## ------------------------------------------------------------------------------------
 def get_cache_key(override_data: str) -> str:
-    """Generate SHA-256 hash of override data for cache key."""
+    """Generate SHA-256 hash of override data and tfvars content for cache key."""
     normalized = override_data.strip()
-    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:16]
+
+    # Read tfvars file content and include in cache key
+    try:
+        with open(tfvars_path, "r") as f:
+            tfvars_content = f.read().strip()
+    except FileNotFoundError as e:
+        print(f"An error occurred: {e}")
+        sys.exit(1)
+
+    # Combine override data and tfvars content for cache key
+    combined_content = f"{normalized}\n---TFVARS---\n{tfvars_content}"
+    return hashlib.sha256(combined_content.encode("utf-8")).hexdigest()[:16]
 
 
 def ensure_cache_dir():
@@ -96,7 +107,7 @@ def backup_tfvars():
 
     yield
 
-    print("\nRestoring tfvars")
+    print("\nRestoring original environment.")
     try:
         shutil.move(tfvars_backup_path, tfvars_path)
     except FileNotFoundError as e:
@@ -107,7 +118,9 @@ def backup_tfvars():
         try:
             os.remove(file)
         except FileNotFoundError as e:
-            print(f"Source file not found: {e}")
+            # Commented out to avoid noise in test output.
+            # print(f"Source file not found: {e}")
+            pass
 
     # July 4/2025 -- Removed cache auto-cleanup since it want these to persist between runs so n+1 goes much faster.
     # clear_plan_cache()
