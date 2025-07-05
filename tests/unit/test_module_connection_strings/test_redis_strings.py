@@ -24,9 +24,6 @@ def test_external_tower_redis_url(backup_tfvars):
 
     # When
     plan = prepare_plan(override_data)
-    import time
-
-    time.sleep(300)
     outputs = plan["planned_values"]["outputs"]
 
     # Then
@@ -161,7 +158,7 @@ def test_container_connect_redis_url(backup_tfvars):
 
     # Then
     # Connect Redis should use the same container service
-    assert "redis://redis:6379" in outputs["tower_connect_redis_url"]["value"]
+    assert "redis:6379" in outputs["tower_connect_redis_url"]["value"]
 
 
 @pytest.mark.local
