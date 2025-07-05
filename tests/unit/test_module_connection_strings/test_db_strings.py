@@ -87,6 +87,7 @@ def test_external_existing_db_url(backup_tfvars):
 @pytest.mark.local
 @pytest.mark.db
 @pytest.mark.db_container
+@pytest.mark.container
 def test_container_db_url(backup_tfvars):
     """Test URLs targeting container database mode."""
     # Given
@@ -110,6 +111,7 @@ def test_container_db_url(backup_tfvars):
 @pytest.mark.local
 @pytest.mark.db
 @pytest.mark.db_container
+@pytest.mark.container
 def test_wave_lite_container_db_url(backup_tfvars):
     """Test Wave-Lite database URL with container database."""
     # Given

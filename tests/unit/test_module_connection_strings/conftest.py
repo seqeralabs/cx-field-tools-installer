@@ -145,6 +145,7 @@ def prepare_plan(override_data: str, use_cache: bool = True) -> dict:
     override_data = "\n".join(
         re.sub(r"\s+", " ", line) for line in override_data.splitlines()
     )
+    print(f"{override_data=}")
     cache_key = get_cache_key(override_data)
 
     # Check in-memory cache first
