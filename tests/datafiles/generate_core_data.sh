@@ -18,13 +18,13 @@ use_mocks = true
 ## ------------------------------------------------------------------------------------
 ## Mandatory Bootstrap Values
 ## ------------------------------------------------------------------------------------
-app_name                                = "tower-dev"  # NOTE: must use hyphen (not underscore) or breaks ALB name.
+app_name                                  = "tower-dev"  # NOTE: must use hyphen (not underscore) or breaks ALB name.
 
 # These values must match the parameters you have created in the AWS SSM Parameter Store
-secrets_bootstrap_tower                 = "/seqera/sensitive-values/tower-dev/tower"
-secrets_bootstrap_seqerakit             = "/seqera/sensitive-values/tower-dev/seqerakit"
-secrets_bootstrap_groundswell           = "/seqera/sensitive-values/tower-dev/groundswell"
-secrets_bootstrap_wave_lite             = "/seqera/sensitive-values/tower-dev/wave-lite"
+secrets_bootstrap_tower                   = "/seqera/sensitive-values/tower-dev/tower"
+secrets_bootstrap_seqerakit               = "/seqera/sensitive-values/tower-dev/seqerakit"
+secrets_bootstrap_groundswell             = "/seqera/sensitive-values/tower-dev/groundswell"
+secrets_bootstrap_wave_lite               = "/seqera/sensitive-values/tower-dev/wave-lite"
 # secrets_bootstrap_tower                 = "/seqera/sensitive-values/fake/tower"
 # secrets_bootstrap_seqerakit             = "/seqera/sensitive-values/fake/seqerakit"
 # secrets_bootstrap_groundswell           = "/seqera/sensitive-values/fake/groundswell"
@@ -35,13 +35,13 @@ aws_account                                     = "128997144437"
 aws_region                                      = "us-east-1"
 aws_profile                                     = "development" # "management"
 
-# Localstack -- using us-east-1 seems to point back to Seqera dev
-# aws_account                             = "000000000000"
-# aws_region                              = "us-east-1"
-# aws_profile                             = "localstack"
+# Localstack -- Feasibility testing
+# aws_account                                   = "000000000000"
+# aws_region                                    = "us-east-1"
+# aws_profile                                   = "localstack"
 
 
-tower_container_version                         = "v25.1.1"  #"v24.2.5" # "v25.1.1" #"v25.1.1"  #"v25.1.1"
+tower_container_version                         = "v25.1.1"  #
 
 
 /*
@@ -124,7 +124,7 @@ flag_use_custom_docker_compose_file             = false
 flag_use_wave                             = false
 flag_use_wave_lite                        = true
 num_wave_lite_replicas                    = 3
-wave_server_url                           = "https://wave.stage-seqera.io"
+wave_server_url                           = "https://wave.seqera.io"
 wave_lite_server_url                      = "https://wave.autodc.dev-seqera.net"
 
 
@@ -138,7 +138,7 @@ flag_use_existing_route53_private_zone  = false
 flag_create_hosts_file_entry            = false
 
 # Populate this field if creating a new private hosted zone
-new_route53_private_zone_name           = "dev-seqera-private-sage.net"
+new_route53_private_zone_name           = "dev-seqera-private.net"
 
 # Only populate if flag set above to use existing hosted zone.
 existing_route53_public_zone_name       = "dev-seqera.net"
@@ -434,19 +434,19 @@ ec2_update_ami_if_available             = false
 ## ALB
 ## ------------------------------------------------------------------------------------
 # *.autodc.dev-seqera.net
-alb_certificate_arn = "arn:aws:acm:us-east-1:128997144437:certificate/58c948c6-e65f-4bbc-8cd6-53391fa1d3cc"
+alb_certificate_arn                     = "arn:aws:acm:us-east-1:128997144437:certificate/58c948c6-e65f-4bbc-8cd6-53391fa1d3cc"
 
 ## ------------------------------------------------------------------------------------
 ## TOWER CONFIGURATION
 ## ------------------------------------------------------------------------------------
 # Example: `autodc.dev-seqera.net` (not `http(s)`).
 # If using a private hosted zone, please ensure the right-most part of the URL matches the value given above.
-#tower_server_url                        = "autodc.dev-seqera.net"  # "autodc.dev-seqera-private.net" # "autodc.dev-seqera.net"
+#tower_server_url                       = "autodc.dev-seqera.net"  # "autodc.dev-seqera-private.net"
 tower_server_url                        = "autodc.dev-seqera.net"
 tower_server_port                       = "8000"
 
 # This must be a verified identity / domain.
-tower_contact_email                     = "graham.wright@seqera.io" #"daniel.wood@seqera.io"
+tower_contact_email                     = "graham.wright@seqera.io"
 tower_enable_platforms                  = "awsbatch-platform,azbatch-platform,googlebatch-platform,k8s-platform,slurm-platform,eks-platform"
 
 ## tower_jwt_secret                      = "DO_NOT_UNCOMMENT_ME"
@@ -476,7 +476,7 @@ tower_smtp_starttls_enable              = true
 tower_smtp_starttls_required            = true
 tower_smtp_ssl_protocols                = "TLSv1.2"
 
-# tower_root_users                        = "gwright99@hotmail.com,graham.wright@seqera.io,daniel.wood@seqera.io"
+# tower_root_users                      = "gwright99@hotmail.com,graham.wright@seqera.io,daniel.wood@seqera.io"
 tower_root_users                        = "graham.wright@seqera.io,gwright99@hotmail.com"
 tower_email_trusted_orgs                = "*@abc.com, *@def.com"
 tower_email_trusted_users               = "123@abc.com, 456@def.com"
@@ -551,7 +551,5 @@ seqerakit_flag_credential_create_codecommit = false
 
 seqerakit_flag_credential_use_aws_role      = true
 seqerakit_flag_credential_use_codecommit_baseurl = false
-
-
 
 EOF

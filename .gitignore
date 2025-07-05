@@ -17,7 +17,9 @@ tmp.log
 **/scripts/logs/*.*
 **/.pytest_cache
 .cursor/
+**/*.mdc
 tfplan
 tfplan.json
 terraform.tfvars.backup
 tests/.plan_cache/
+AGENTS.md

@@ -103,6 +103,11 @@ output "tower_wave_url" {
   value       = module.connection_strings.tower_wave_url
 }
 
+output "tower_wave_dns" {
+  description = "The DNS name for Wave without protocol prefix"
+  value       = module.connection_strings.tower_wave_dns
+}
+
 output "wave_lite_db_url" {
   description = "The database URL for Wave-Lite"
   value       = module.connection_strings.wave_lite_db_url
