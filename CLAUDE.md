@@ -156,6 +156,7 @@ Sequential numbered files defining infrastructure resources in dependency order.
 
 The project uses a hybrid testing approach:
 1. **Plan-based tests** - Mock resources using `terraform plan` output
+    1. Plan outputs are cached in `tests/.plan_cache` to speed up n+1 test cycles when underlying values are unchanged.
 2. **Unit tests** - Test individual modules in isolation
 3. **Integration tests** - Full deployment and validation cycle
 4. **Local value tests** - Validate computed values and data sources
