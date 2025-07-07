@@ -76,6 +76,8 @@ GW Musings (July 6/25):
         - 009 tower.env.tpl   tower_redis_url / tower_db_url using the connection_strings module are the culpris. Specifically the try() blocks on module invocation.
         - Problem is on external values past to connection_string modules. Wave_lite no VPC, the rest do need  VPC.
         - aws_elasticache_subnet_group.redis calls a local.subnet_ids_db. This value is populated by the subnet_collector. Changing local to hard-code ["10.1.0.0/24"] removes all VPC-related objects except for the VPC object itself. I think the root cause is how the subnet_collector module is invoked.
+        - Module subnet_collector runs unconditionally and has `data` elements in it that call the VPC.
+            - I dont know why this is firing for all the db and redis except Wave-LIte.
 
 ## Questions
 1. Is this worthh it? Redeploying containers to EC2 is pretty fast, is it worth the complication of local containers?

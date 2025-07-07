@@ -9,7 +9,7 @@ module "alb" {
   load_balancer_type = "application"
 
   vpc_id          = local.vpc_id
-  subnets         = local.subnet_ids_alb
+  subnets         = module.subnet_collector.subnet_ids_alb
   security_groups = [module.sg_alb_core[0].security_group_id]
   internal        = var.flag_make_instance_private == true || var.flag_private_tower_without_eice == true ? true : false
 

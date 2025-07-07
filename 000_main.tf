@@ -68,26 +68,6 @@ locals {
   vpc_id                      = var.flag_create_new_vpc == true ? module.vpc[0].vpc_id : var.vpc_existing_id
   vpc_private_route_table_ids = var.flag_create_new_vpc == true ? module.vpc[0].private_route_table_ids : data.aws_route_tables.preexisting[0].ids
 
-  # Define subnet lists based on VPC creation mode
-  # NOTE: I know this is a bit simplistic, but it's clean and easy to understand. Using a module or mapping function would add
-  #       complexity and lines of code, for very little extensibility gains.
-  subnets_ec2   = var.flag_create_new_vpc == true ? var.vpc_new_ec2_subnets : var.vpc_existing_ec2_subnets
-  subnets_batch = var.flag_create_new_vpc == true ? var.vpc_new_batch_subnets : var.vpc_existing_batch_subnets
-  subnets_db    = var.flag_create_new_vpc == true ? var.vpc_new_db_subnets : var.vpc_existing_db_subnets
-  subnets_redis = var.flag_create_new_vpc == true ? var.vpc_new_redis_subnets : var.vpc_existing_redis_subnets
-  subnets_alb   = var.flag_create_new_vpc == true ? var.vpc_new_alb_subnets : var.vpc_existing_alb_subnets
-
-  subnets_all = concat(local.subnets_ec2, local.subnets_batch, local.subnets_db, local.subnets_redis, local.subnets_alb)
-
-  # Use subnet_collector module to get subnet mappings, then resolve the ids based on CIDRs assigned in tfvars.
-  subnet_mappings = module.subnet_collector.cidr_to_id_map
-
-  subnet_ids_ec2   = [for cidr in local.subnets_ec2 : local.subnet_mappings[cidr]]
-  subnet_ids_batch = [for cidr in local.subnets_batch : local.subnet_mappings[cidr]]
-  subnet_ids_db    = ["10.1.0.0/24"] # [for cidr in local.subnets_db : local.subnet_mappings[cidr]]
-  subnet_ids_redis = [for cidr in local.subnets_redis : local.subnet_mappings[cidr]]
-  subnet_ids_alb   = try([for cidr in local.subnets_alb : local.subnet_mappings[cidr]], [])
-
 
   # SSM
   # ---------------------------------------------------------------------------------------
@@ -133,8 +113,6 @@ locals {
     var.flag_make_instance_public == true ? aws_eip.towerhost[0].public_ip :
     "No_Match_Found"
   )
-
-
 
 
   # Security Groups
@@ -246,19 +224,6 @@ locals {
     tonumber(length(regexall("^v2[5-9]", var.tower_container_version))) >= 1 ? true : false
   )
 
-  # Module strings
-  # rds_tower_object             = var.flag_create_external_db ? module.rds[0] : null
-  # rds_wave_lite_object         = var.flag_create_external_db ? module.rds-wave-lite[0] : null
-  rds_tower_object     = null
-  rds_wave_lite_object = null
-  elasticache_objects = var.flag_create_external_redis != true ? {
-    tower     = null
-    wave_lite = null
-    } : {
-    tower     = aws_elasticache_cluster.redis[0]
-    wave_lite = module.elasticache_wave_lite[0]
-  }
-
 }
 
 # Add subnet_collector module
@@ -268,6 +233,13 @@ module "subnet_collector" {
   create_new_vpc = var.flag_create_new_vpc
   vpc_id         = local.vpc_id
   vpc_module     = var.flag_create_new_vpc ? module.vpc[0] : null
+
+  # Define subnet lists based on VPC creation mode
+  subnets_ec2   = var.flag_create_new_vpc ? var.vpc_new_ec2_subnets : var.vpc_existing_ec2_subnets
+  subnets_batch = var.flag_create_new_vpc ? var.vpc_new_batch_subnets : var.vpc_existing_batch_subnets
+  subnets_db    = var.flag_create_new_vpc ? var.vpc_new_db_subnets : var.vpc_existing_db_subnets
+  subnets_redis = var.flag_create_new_vpc ? var.vpc_new_redis_subnets : var.vpc_existing_redis_subnets
+  subnets_alb   = var.flag_create_new_vpc ? var.vpc_new_alb_subnets : var.vpc_existing_alb_subnets
 }
 
 # Add connection_strings module
@@ -296,14 +268,10 @@ module "connection_strings" {
   wave_lite_server_url = var.flag_use_wave_lite ? var.wave_lite_server_url : ""
 
   # External Resource References
-  # rds_tower             = var.flag_create_external_db ? try(module.rds[0], null) : null
-  # rds_wave_lite         = var.flag_create_external_db ? try(module.rds-wave-lite[0], null) : null
-  # elasticache_tower     = var.flag_create_external_redis ? try(aws_elasticache_cluster.redis[0], null) : null
-  # elasticache_wave_lite = var.flag_create_external_redis ? try(module.elasticache_wave_lite[0], null) : null
-  rds_tower             = null
-  rds_wave_lite         = null
-  elasticache_tower     = local.elasticache_objects.tower
-  elasticache_wave_lite = local.elasticache_objects.wave_lite
+  rds_tower             = var.flag_create_external_db ? try(module.rds[0], null) : null
+  rds_wave_lite         = var.flag_create_external_db ? try(module.rds-wave-lite[0], null) : null
+  elasticache_tower     = var.flag_create_external_redis ? try(aws_elasticache_cluster.redis[0], null) : null
+  elasticache_wave_lite = var.flag_create_external_redis ? try(module.elasticache_wave_lite[0], null) : null
 
   # Testing flag
   use_mocks = var.use_mocks

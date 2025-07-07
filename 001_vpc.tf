@@ -68,7 +68,7 @@ resource "aws_vpc_endpoint" "tower_endpoints" {
   for_each = toset(var.vpc_interface_endpoints_tower)
 
   vpc_id             = local.vpc_id
-  subnet_ids         = [local.subnet_ids_ec2[0]]
+  subnet_ids         = [module.subnet_collector.subnet_ids_ec2[0]]
   vpc_endpoint_type  = "Interface"
   service_name       = "com.amazonaws.${var.aws_region}.${each.key}"
   security_group_ids = [module.sg_vpc_endpoint.security_group_id]
@@ -85,7 +85,7 @@ resource "aws_vpc_endpoint" "batch_endpoints" {
   for_each = toset(var.vpc_interface_endpoints_batch)
 
   vpc_id             = local.vpc_id
-  subnet_ids         = local.subnet_ids_batch
+  subnet_ids         = module.subnet_collector.subnet_ids_batch
   vpc_endpoint_type  = "Interface"
   service_name       = "com.amazonaws.${var.aws_region}.${each.key}"
   security_group_ids = [module.sg_vpc_endpoint.security_group_id]
