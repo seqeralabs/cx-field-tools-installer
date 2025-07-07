@@ -14,3 +14,28 @@ variable "vpc_module" {
   type        = any
   default     = null
 }
+
+variable "subnets_ec2" {
+  description = "List of EC2 subnets"
+  type        = list(string)
+}
+
+variable "subnets_batch" {
+  description = "List of Batch subnets"
+  type        = list(string)
+}
+
+variable "subnets_db" {
+  description = "List of DB subnets"
+  type        = list(string)
+}
+
+variable "subnets_redis" {
+  description = "List of Redis subnets"
+  type        = list(string)
+}
+
+variable "subnets_alb" {
+  description = "List of ALB subnets"
+  type        = list(string)
+}

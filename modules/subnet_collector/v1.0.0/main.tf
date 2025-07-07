@@ -62,4 +62,10 @@ locals {
   # Combined map of all subnets
   # Should create an output like `{ "10.0.1.0/24": "subnet-01234567890abcdef", "10.0.2.0/24": "subnet-01234567890abcdef" }`
   cidr_to_id_map = merge(local.public_cidr_to_id_map, local.private_cidr_to_id_map)
+
+  subnet_ids_ec2   = [for cidr in var.subnets_ec2 : local.cidr_to_id_map[cidr]]
+  subnet_ids_batch = [for cidr in var.subnets_batch : local.cidr_to_id_map[cidr]]
+  subnet_ids_db    = [for cidr in var.subnets_db : local.cidr_to_id_map[cidr]]
+  subnet_ids_redis = [for cidr in var.subnets_redis : local.cidr_to_id_map[cidr]]
+  subnet_ids_alb   = try([for cidr in var.subnets_alb : local.cidr_to_id_map[cidr]], [])
 }
