@@ -2,14 +2,14 @@
 ## Hosted Zone retrieval
 ## ------------------------------------------------------------------------------------
 data "aws_route53_zone" "public" {
-  count = var.flag_use_existing_route53_public_zone == true ? 1 : 0
+  count = var.flag_use_existing_route53_public_zone ? 1 : 0
 
   name = var.existing_route53_public_zone_name
 }
 
 
 data "aws_route53_zone" "private" {
-  count = var.flag_use_existing_route53_private_zone == true ? 1 : 0
+  count = var.flag_use_existing_route53_private_zone ? 1 : 0
 
   name         = var.existing_route53_private_zone_name
   vpc_id       = local.vpc_id
@@ -21,7 +21,7 @@ data "aws_route53_zone" "private" {
 ## Hosted Zone Generation
 ## ------------------------------------------------------------------------------------
 resource "aws_route53_zone" "private" {
-  count = var.flag_create_route53_private_zone == true ? 1 : 0
+  count = var.flag_create_route53_private_zone ? 1 : 0
 
   name = var.new_route53_private_zone_name
   vpc {
@@ -35,7 +35,7 @@ resource "aws_route53_zone" "private" {
 ##   Note: If no Route53 records are generated, an entry will be added to the EC2 hosts file
 ## ------------------------------------------------------------------------------------
 resource "aws_route53_record" "alb" {
-  count = local.dns_create_alb_record == true ? 1 : 0
+  count = local.dns_create_alb_record ? 1 : 0
 
   zone_id = local.dns_zone_id
   name    = var.tower_server_url
@@ -50,7 +50,7 @@ resource "aws_route53_record" "alb" {
 
 
 resource "aws_route53_record" "ec2" {
-  count = local.dns_create_ec2_record == true ? 1 : 0
+  count = local.dns_create_ec2_record ? 1 : 0
 
   zone_id = local.dns_zone_id
   name    = var.tower_server_url
@@ -62,7 +62,7 @@ resource "aws_route53_record" "ec2" {
 
 # Tower Connect
 resource "aws_route53_record" "alb_connect" {
-  count = local.dns_create_alb_record == true ? 1 : 0
+  count = local.dns_create_alb_record ? 1 : 0
 
   zone_id = local.dns_zone_id
   # name    = local.tower_connect_dns
@@ -78,7 +78,7 @@ resource "aws_route53_record" "alb_connect" {
 
 
 resource "aws_route53_record" "ec2_connect" {
-  count = local.dns_create_ec2_record == true ? 1 : 0
+  count = local.dns_create_ec2_record ? 1 : 0
 
   zone_id = local.dns_zone_id
   # name    = local.tower_connect_dns
@@ -91,7 +91,7 @@ resource "aws_route53_record" "ec2_connect" {
 
 
 resource "aws_route53_record" "alb_wave" {
-  count = local.dns_create_alb_record == true && var.flag_use_wave_lite == true ? 1 : 0
+  count = local.dns_create_alb_record && var.flag_use_wave_lite ? 1 : 0
 
   zone_id = local.dns_zone_id
   # name    = local.tower_connect_dns

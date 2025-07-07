@@ -26,10 +26,10 @@ variable "flag_create_external_redis" {
   type        = bool
 }
 
-variable "flag_use_wave" {
-  description = "Whether to use Wave"
-  type        = bool
-}
+# variable "flag_use_wave" {
+#   description = "Whether to use Wave"
+#   type        = bool
+# }
 
 variable "flag_use_wave_lite" {
   description = "Whether to use Wave-Lite"

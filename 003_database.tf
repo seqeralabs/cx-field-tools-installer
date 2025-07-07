@@ -2,7 +2,7 @@
 ## Database Subnet Group
 ## ------------------------------------------------------------------------------------
 resource "aws_db_subnet_group" "tower_db" {
-  count = var.flag_create_external_db == true ? 1 : 0
+  count = var.flag_create_external_db ? 1 : 0
 
   name       = "${local.global_prefix}-tower-db"
   subnet_ids = local.subnet_ids_db
@@ -14,7 +14,7 @@ resource "aws_db_subnet_group" "tower_db" {
 
 
 resource "aws_db_subnet_group" "wave_lite_db" {
-  count = (var.flag_create_external_db == true && var.flag_use_wave_lite == true) ? 1 : 0
+  count = (var.flag_create_external_db && var.flag_use_wave_lite) ? 1 : 0
 
   name       = "${local.global_prefix}-wave-lite-db"
   subnet_ids = local.subnet_ids_db
@@ -32,7 +32,7 @@ module "rds" {
   source  = "terraform-aws-modules/rds/aws"
   version = "6.1.1"
 
-  count = var.flag_create_external_db == true ? 1 : 0
+  count = var.flag_create_external_db ? 1 : 0
 
   identifier = "${local.global_prefix}-db"
 
@@ -53,12 +53,12 @@ module "rds" {
 
   # Don't understand why I have to do this but the RDS module screams if I don't
   # family               = "${var.db_engine}${var.db_engine_version}" # DB parameter group
-  family               = "${var.db_param_group}" # DB parameter group
+  family = var.db_param_group # DB parameter group
   # May 14/25 - Getting Option Group errors when db_engine_version includes patch:
   #  creating DB Option Group: InvalidParameterValue: Only the major engine version may be specified (e.g. 8.0), not the full engine version.
   # Using regex to chop patch (e.g. `.42` from `8.0.42`) so as to not require new variable in tfvars.
   # major_engine_version = var.db_engine_version                      # DB option grou
-  major_engine_version = regex("^\\d+\\.\\d+", var.db_engine_version)                      # DB option group
+  major_engine_version = regex("^\\d+\\.\\d+", var.db_engine_version) # DB option group
 
   # Deletion protection
   deletion_protection = var.db_deletion_protection
@@ -66,13 +66,13 @@ module "rds" {
 
   # Backups
   backup_retention_period = var.db_backup_retention_period
-  storage_encrypted = var.db_enable_storage_encrypted
+  storage_encrypted       = var.db_enable_storage_encrypted
 
   # Performance Insights enablement
   # Fixes tfsec warning. As per AWS documentation, 7 day retention has no cost implication for customer.
   # Explicitly setting the 7-day retention period. Can be changed by installations should they wish to pay for longer period.
   # https://aws.amazon.com/rds/performance-insights/pricing/
-  performance_insights_enabled = true
+  performance_insights_enabled          = true
   performance_insights_retention_period = 7
 }
 
@@ -81,7 +81,7 @@ module "rds-wave-lite" {
   source  = "terraform-aws-modules/rds/aws"
   version = "6.1.1"
 
-  count = (var.flag_create_external_db == true && var.flag_use_wave_lite == true) ? 1 : 0
+  count = (var.flag_create_external_db && var.flag_use_wave_lite) ? 1 : 0
 
   identifier = "${local.global_prefix}-db-wave-lite"
 
@@ -99,8 +99,8 @@ module "rds-wave-lite" {
 
   publicly_accessible = false
 
-  family                    = "${var.wave_lite_db_param_group}"     # DB parameter group
-  major_engine_version      = var.wave_lite_db_engine_version       # DB option group
+  family               = var.wave_lite_db_param_group    # DB parameter group
+  major_engine_version = var.wave_lite_db_engine_version # DB option group
 
   # Deletion protection
   deletion_protection = var.wave_lite_db_deletion_protection
@@ -108,13 +108,13 @@ module "rds-wave-lite" {
 
   # Backups
   backup_retention_period = var.wave_lite_db_backup_retention_period
-  storage_encrypted = var.wave_lite_db_enable_storage_encrypted
+  storage_encrypted       = var.wave_lite_db_enable_storage_encrypted
 
   # Performance Insights enablement
   # Fixes tfsec warning. As per AWS documentation, 7 day retention has no cost implication for customer.
   # Explicitly setting the 7-day retention period. Can be changed by installations should they wish to pay for longer period.
   # https://aws.amazon.com/rds/performance-insights/pricing/
-  performance_insights_enabled = true
+  performance_insights_enabled          = true
   performance_insights_retention_period = 7
 }
 
@@ -123,7 +123,7 @@ module "rds-wave-lite" {
 ## Elasticache
 ## ------------------------------------------------------------------------------------
 resource "aws_elasticache_subnet_group" "redis" {
-  count = var.flag_create_external_redis == true ? 1 : 0
+  count = var.flag_create_external_redis ? 1 : 0
 
   name       = "${local.global_prefix}-redis"
   subnet_ids = local.subnet_ids_db
@@ -132,7 +132,7 @@ resource "aws_elasticache_subnet_group" "redis" {
 
 #tfsec:ignore:aws-elasticache-enable-backup-retention
 resource "aws_elasticache_cluster" "redis" {
-  count = var.flag_create_external_redis == true ? 1 : 0
+  count = var.flag_create_external_redis ? 1 : 0
 
   cluster_id      = "${local.global_prefix}-redis"
   engine          = "redis"
@@ -153,7 +153,7 @@ resource "aws_elasticache_cluster" "redis" {
 module "elasticache_wave_lite" {
   source = "./modules/elasticache"
 
-  count = (var.flag_create_external_redis == true && var.flag_use_wave_lite == true) ? 1 : 0
+  count = (var.flag_create_external_redis && var.flag_use_wave_lite) ? 1 : 0
 
   resource_prefix = "${local.global_prefix}-elasticache-wave-lite"
 
@@ -162,7 +162,7 @@ module "elasticache_wave_lite" {
   default_security_group_ids = [module.sg_redis[0].security_group_id]
 
   # Composite object from TFVars
-  elasticache_instance = var.wave_lite_elasticache 
+  elasticache_instance = var.wave_lite_elasticache
   # Bespoke secrets that cant be put in TFVars object
   redis_password = local.wave_lite_secrets["WAVE_LITE_REDIS_AUTH"]["value"]
 }

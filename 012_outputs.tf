@@ -38,11 +38,11 @@ output "tower_api_endpoint" {
 }
 
 output "aws_ec2_private_ip" {
-  value = var.flag_private_tower_without_eice == true ? aws_instance.ec2.private_ip : "N/A connect via EICE."
+  value = var.flag_private_tower_without_eice  ? aws_instance.ec2.private_ip : "N/A connect via EICE."
 }
 
 output "aws_ec2_public_ip" {
-  value = var.flag_make_instance_public == true ? aws_eip.towerhost[0].public_ip : "EC2 has no public IP."
+  value = var.flag_make_instance_public  ? aws_eip.towerhost[0].public_ip : "EC2 has no public IP."
 }
 
 # output "database_connection_string" {
@@ -121,5 +121,5 @@ output "wave_lite_redis_url" {
 # ----------------------------------------------------------------------------------------------------------------------
 # Route53
 # ----------------------------------------------------------------------------------------------------------------------
-output "route53_record_status" { value = var.flag_create_hosts_file_entry == true ? "Hosts file only. No R53 record." : "R53 record created." }
+output "route53_record_status" { value = var.flag_create_hosts_file_entry  ? "Hosts file only. No R53 record." : "R53 record created." }
 

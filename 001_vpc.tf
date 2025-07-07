@@ -5,7 +5,7 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.1.2"
 
-  count = var.flag_create_new_vpc == true ? 1 : 0
+  count = var.flag_create_new_vpc  ? 1 : 0
 
   name = "${local.global_prefix}-vpc"
   cidr = var.vpc_new_cidr_range
@@ -15,12 +15,12 @@ module "vpc" {
   public_subnets  = var.vpc_new_public_subnets
   # database_subnets        = var.vpc_new_db_subnets
 
-  map_public_ip_on_launch                           = var.flag_make_instance_public == true ? true : false
+  map_public_ip_on_launch                           = var.flag_make_instance_public
   public_subnet_private_dns_hostname_type_on_launch = "ip-name"
 
   # Opinionated for simplicity.
-  enable_nat_gateway     = var.flag_make_instance_private == true || var.flag_make_instance_private_behind_public_alb == true ? true : false
-  single_nat_gateway     = var.flag_make_instance_private == true || var.flag_make_instance_private_behind_public_alb == true ? true : false
+  enable_nat_gateway     = var.flag_make_instance_private  || var.flag_make_instance_private_behind_public_alb
+  single_nat_gateway     = var.flag_make_instance_private  || var.flag_make_instance_private_behind_public_alb
   one_nat_gateway_per_az = false
 
   # Flow log config
@@ -36,13 +36,13 @@ module "vpc" {
 
 # Needed to add this to get existing CIDR range to limit ALB listeners
 data "aws_vpc" "preexisting" {
-  count = var.flag_use_existing_vpc == true ? 1 : 0
+  count = var.flag_use_existing_vpc  ? 1 : 0
   id    = local.vpc_id
 }
 
 # Needed to grab route tables from pre-existing VPC to create VPC endpoints.
 data "aws_route_tables" "preexisting" {
-  count  = var.flag_use_existing_vpc == true ? 1 : 0
+  count  = var.flag_use_existing_vpc  ? 1 : 0
   vpc_id = local.vpc_id
 
   filter {

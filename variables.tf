@@ -157,7 +157,7 @@ variable "vpc_new_public_subnets" { type = list(string) }
 variable "vpc_new_ec2_subnets" { type = list(string) }
 variable "vpc_new_batch_subnets" { type = list(string) }
 variable "vpc_new_db_subnets" { type = list(string) }
-variable "vpc_new_redis_subnets" { type = list(string) }
+# variable "vpc_new_redis_subnets" { type = list(string) }
 
 variable "vpc_new_alb_subnets" { type = list(string) }
 
@@ -172,7 +172,7 @@ variable "vpc_existing_id" { type = string }
 variable "vpc_existing_ec2_subnets" { type = list(string) }
 variable "vpc_existing_batch_subnets" { type = list(string) }
 variable "vpc_existing_db_subnets" { type = list(string) }
-variable "vpc_existing_redis_subnets" { type = list(string) }
+# variable "vpc_existing_redis_subnets" { type = list(string) }
 
 variable "vpc_existing_alb_subnets" { type = list(string) }
 
@@ -364,7 +364,7 @@ variable "alb_certificate_arn" { type = string }
 # ------------------------------------------------------------------------------------
 
 variable "tower_server_url" { type = string }
-variable "tower_server_port" { type = string } # TODO: Update SG-generation logic to use this value
+# variable "tower_server_port" { type = string } # TODO: Update SG-generation logic to use this value
 variable "tower_contact_email" { type = string }
 variable "tower_enable_platforms" { type = string }
 

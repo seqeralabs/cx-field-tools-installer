@@ -1,6 +1,6 @@
 # https://registry.terraform.io/modules/terraform-aws-modules/alb/aws/latest
 module "alb" {
-  count = var.flag_create_load_balancer == true ? 1 : 0
+  count = var.flag_create_load_balancer  ? 1 : 0
 
   source  = "terraform-aws-modules/alb/aws"
   version = "8.7.0"
@@ -11,7 +11,7 @@ module "alb" {
   vpc_id          = local.vpc_id
   subnets         = local.subnet_ids_alb
   security_groups = [module.sg_alb_core[0].security_group_id]
-  internal        = var.flag_make_instance_private == true || var.flag_private_tower_without_eice == true ? true : false
+  internal        = var.flag_make_instance_private  || var.flag_private_tower_without_eice
 
   # Suppress useless blank security group
   create_security_group = false

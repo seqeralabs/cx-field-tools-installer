@@ -2,9 +2,9 @@
 ## File transfer (if allowed)
 ## ------------------------------------------------------------------------------------
 resource "null_resource" "copy_files_to_vm" {
-  count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
+  count = var.flag_vm_copy_files_to_instance ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
+  triggers   = { always_run = timestamp() }
   depends_on = [null_resource.allow_file_copy_to_start]
 
   provisioner "local-exec" {
@@ -56,9 +56,9 @@ resource "null_resource" "copy_files_to_vm" {
 ## ------------------------------------------------------------------------------------
 # If new private CA on VM, get generated CA cert back to local machine for local browser use.
 resource "null_resource" "copy_private_ca_cert" {
-  count = var.flag_generate_private_cacert == true ? 1 : 0
+  count = var.flag_generate_private_cacert ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
+  triggers   = { always_run = timestamp() }
   depends_on = [null_resource.copy_files_to_vm]
 
   provisioner "local-exec" {
@@ -76,9 +76,9 @@ resource "null_resource" "copy_private_ca_cert" {
 ## Run Seqerakit (if allowed)
 ## ------------------------------------------------------------------------------------
 resource "null_resource" "run_seqerkit" {
-  count = var.flag_vm_copy_files_to_instance == true && var.flag_run_seqerakit == true ? 1 : 0
+  count = var.flag_vm_copy_files_to_instance && var.flag_run_seqerakit ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
+  triggers   = { always_run = timestamp() }
   depends_on = [null_resource.copy_files_to_vm]
 
   provisioner "local-exec" {

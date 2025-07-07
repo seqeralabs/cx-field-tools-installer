@@ -37,7 +37,7 @@ resource "aws_ssm_parameter" "client_supplied_secrets_tower" {
 resource "aws_ssm_parameter" "client_supplied_secrets_seqerakit" {
   # for_each            = local.seqerakit_secret_keys
 
-  for_each = var.flag_run_seqerakit == true ? local.seqerakit_secret_keys : []
+  for_each = var.flag_run_seqerakit  ? local.seqerakit_secret_keys : []
   name          = nonsensitive(local.seqerakit_secrets[each.key]["ssm_key"])
   value         = local.seqerakit_secrets[each.key]["value"]
   type          = "SecureString"
@@ -47,10 +47,10 @@ resource "aws_ssm_parameter" "client_supplied_secrets_seqerakit" {
 
 resource "aws_ssm_parameter" "client_supplied_secrets_groundswell" {
 
-  # count               = var.flag_enable_groundswell == true ? 1 : 0
+  # count               = var.flag_enable_groundswell  ? 1 : 0
   # for_each            = local.groundswell_secret_keys
 
-  for_each      = var.flag_enable_groundswell == true ? local.groundswell_secret_keys : []
+  for_each      = var.flag_enable_groundswell  ? local.groundswell_secret_keys : []
   name          = nonsensitive(local.groundswell_secrets[each.key]["ssm_key"])
   value         = local.groundswell_secrets[each.key]["value"]
   type          = "SecureString"
@@ -60,7 +60,7 @@ resource "aws_ssm_parameter" "client_supplied_secrets_groundswell" {
 
 resource "aws_ssm_parameter" "client_supplied_secrets_wave_lite" {
 
-  for_each      = var.flag_use_wave_lite == true ? local.wave_lite_secret_keys : []
+  for_each      = var.flag_use_wave_lite  ? local.wave_lite_secret_keys : []
   name          = nonsensitive(local.wave_lite_secrets[each.key]["ssm_key"])
   value         = local.wave_lite_secrets[each.key]["value"]
   type          = "SecureString"

@@ -47,7 +47,7 @@ resource "aws_key_pair" "generated_key" {
 ## ------------------------------------------------------------------------------------
 resource "aws_launch_template" "lt_with_no_ami_lifecycle" {
 
-  count = var.ec2_update_ami_if_available == true ? 1 : 0
+  count = var.ec2_update_ami_if_available ? 1 : 0
 
   image_id      = data.aws_ami.amazon_linux_2023.id
   instance_type = var.ec2_host_instance_type
@@ -61,7 +61,7 @@ resource "aws_launch_template" "lt_with_no_ami_lifecycle" {
 
   metadata_options {
     # IMDS token config
-    http_tokens = var.ec2_require_imds_token == true ? "required" : "optional"
+    http_tokens = var.ec2_require_imds_token ? "required" : "optional"
   }
 
   user_data = base64encode(local.lt_content_raw)
@@ -70,7 +70,7 @@ resource "aws_launch_template" "lt_with_no_ami_lifecycle" {
 
 resource "aws_launch_template" "lt_with_ami_lifecycle" {
 
-  count = var.ec2_update_ami_if_available == false ? 1 : 0
+  count = !var.ec2_update_ami_if_available ? 1 : 0
 
   image_id                = data.aws_ami.amazon_linux_2023.id
   instance_type           = var.ec2_host_instance_type
@@ -84,7 +84,7 @@ resource "aws_launch_template" "lt_with_ami_lifecycle" {
 
   metadata_options {
     # IMDS token config
-    http_tokens = var.ec2_require_imds_token == true ? "required" : "optional"
+    http_tokens = var.ec2_require_imds_token ? "required" : "optional"
   }
 
   user_data = base64encode(local.lt_content_raw)
@@ -106,7 +106,7 @@ resource "aws_instance" "ec2" {
 
   launch_template {
     # id      = aws_launch_template.lt.id
-    id        = ( var.ec2_update_ami_if_available == true ? 
+    id        = ( var.ec2_update_ami_if_available ? 
       aws_launch_template.lt_with_no_ami_lifecycle[0].id : aws_launch_template.lt_with_ami_lifecycle[0].id
     )
     version = "$Latest"
@@ -114,7 +114,7 @@ resource "aws_instance" "ec2" {
 
   root_block_device {
     encrypted  = var.flag_encrypt_ebs
-    kms_key_id = var.flag_use_kms_key == true ? var.ec2_ebs_kms_key : ""
+    kms_key_id = var.flag_use_kms_key ? var.ec2_ebs_kms_key : ""
     volume_size = var.ec2_root_volume_size
   }
 
@@ -128,7 +128,7 @@ resource "aws_instance" "ec2" {
 
   metadata_options {
     # IMDS token config
-    http_tokens = var.ec2_require_imds_token == true ? "required" : "optional"
+    http_tokens = var.ec2_require_imds_token ? "required" : "optional"
   }
 
   tags = {
@@ -143,14 +143,14 @@ resource "aws_instance" "ec2" {
 ## Use so machine termination will not require changes to external DNS.
 ## ------------------------------------------------------------------------------------
 resource "aws_eip" "towerhost" {
-  count = var.flag_make_instance_public == true ? 1 : 0
+  count = var.flag_make_instance_public ? 1 : 0
 
   domain = "vpc"
 }
 
 
 resource "aws_eip_association" "eip_assoc" {
-  count = var.flag_make_instance_public == true ? 1 : 0
+  count = var.flag_make_instance_public ? 1 : 0
 
   instance_id   = aws_instance.ec2.id
   allocation_id = aws_eip.towerhost[0].id
@@ -164,7 +164,7 @@ resource "aws_eip_association" "eip_assoc" {
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/eice-quotas.html
 # https://discuss.hashicorp.com/t/the-for-each-value-depends-on-resource-attributes-that-cannot-be-determined-until-apply/25016/2
 resource "aws_ec2_instance_connect_endpoint" "example" {
-  count = var.flag_make_instance_private == true || var.flag_make_instance_private_behind_public_alb == true ? 1 : 0
+  count = var.flag_make_instance_private || var.flag_make_instance_private_behind_public_alb ? 1 : 0
 
   subnet_id          = local.subnet_ids_ec2[0]
   security_group_ids = [module.sg_eice.security_group_id]
