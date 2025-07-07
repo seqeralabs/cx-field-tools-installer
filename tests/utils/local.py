@@ -135,3 +135,40 @@ def prepare_plan(override_data: str, use_cache: bool = True) -> dict:
         json.dump(plan, f, indent=2)
 
     return plan
+
+
+def parse_key_value_file(file_path: str) -> Dict[str, str]:
+    """Parse a file containing KEY=VALUE pairs.
+
+    Args:
+        file_path: Path to the file to parse
+
+    Returns:
+        Dictionary containing key-value pairs
+    """
+    result = {}
+
+    try:
+        with open(file_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line and "=" in line:
+                    key, value = line.split("=", 1)
+                    result[key.strip()] = value.strip()
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+    except Exception as e:
+        print(f"Error parsing file {file_path}: {e}")
+
+    return result
+
+
+def reset_MAKE_TF_QUALIFIER():
+    """Reset MAKE_TF_QUALIFIER to default value."""
+    os.environ["MAKE_TF_QUALIFIER"] = ""
+
+
+def set_MAKE_TF_QUALIFIER(qualifier: str):
+    """Reset MAKE_TF_QUALIFIER to default value."""
+    os.environ["MAKE_TF_QUALIFIER"] = qualifier
+    subprocess.run(["bash", "-c", "export {qualifier}"], check=True)
