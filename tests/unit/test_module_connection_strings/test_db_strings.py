@@ -1,6 +1,6 @@
 import pytest
 
-from conftest import prepare_plan
+from tests.utils.local import prepare_plan
 
 
 ## ------------------------------------------------------------------------------------

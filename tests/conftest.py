@@ -1,5 +1,3 @@
-# Let tests inherit ability to import code from top-levelimport pytest
-
 import os
 from pathlib import Path
 import shutil
