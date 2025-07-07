@@ -226,7 +226,8 @@ locals {
 
 }
 
-# Add subnet_collector module
+# Add subnet_collector module. 
+# Testing Note: For quick config testins, use existing VPC to bypass VPC asset generation.
 module "subnet_collector" {
   source = "./modules/subnet_collector/v1.0.0"
 

@@ -22,11 +22,12 @@ destroy:
 
 # TESTING
 # If this stage fails with exit status 2, renew AWS SSO credentials.
+# MAKE_TF_QUALIFIER is used to pass a qualifier to the plan command (eg. target specific resource or variable)
 generate_json_plan:
 	@echo "\nGenerating JSON representation of plan."
 	@rm -f tfplan
 	@rm -f tfplan.json
-	@terraform plan -out=tfplan >  /dev/null 2>&1
+	@terraform plan ${MAKE_TF_QUALIFIER} -out=tfplan >  /dev/null 2>&1
 	@terraform show -json tfplan | jq . > tfplan.json
 
 # Purge existing, copy baseline values, generate core file, then override files.
@@ -48,3 +49,6 @@ test_deployed_infrastructure:
 	@echo "Testing deployed infrastructure."
 
 # (FROM ROOT) pytest tests/ -sv
+
+variable_test:
+	@echo "MAKE_TF_QUALIFIER: ${MAKE_TF_QUALIFIER}"
