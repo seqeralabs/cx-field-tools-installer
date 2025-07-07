@@ -5,7 +5,7 @@
 
 
 ## Considerations
-`terraform apply -target=null_resource.regenerate_config_files_from_data` is a guaranteed way to get configured `assets/target` files but it generates too much intermediate infrastructure.
+`terraform apply -target=null_resource.generate_config_files_with_dependencies` is a guaranteed way to get configured `assets/target` files but it generates too much intermediate infrastructure.
 
 Testing container connections locally means I dont need to worry about instantiating an EC2 or managing an SSH connection. However, e2e testing is still going to require me to spin up a full stack. Is intermediate worth the effort? Maybe I just do local and remote? 
 
@@ -67,6 +67,15 @@ GW Musings (July 6/25):
 - setup for test will involve:
     - Creating testing secrets (SSM)
     - copying config files to machine
+
+
+- Notes (July 6)
+    - Independent files still seem to have a dependency on VPC via `local.vpc_id`. I don't know why and haven't been able to find the dependency yet.
+        - tower.env, data-studios.env, groundswell.env -- all use the connection_strings module. This is the culprit.
+        - tower.yml & docker daemon do not. Why?
+        - 009 tower.env.tpl   tower_redis_url / tower_db_url using the connection_strings module are the culpris. Specifically the try() blocks on module invocation.
+        - Problem is on external values past to connection_string modules. Wave_lite no VPC, the rest do need  VPC.
+        - aws_elasticache_subnet_group.redis calls a local.subnet_ids_db. This value is populated by the subnet_collector. Changing local to hard-code ["10.1.0.0/24"] removes all VPC-related objects except for the VPC object itself. I think the root cause is how the subnet_collector module is invoked.
 
 ## Questions
 1. Is this worthh it? Redeploying containers to EC2 is pretty fast, is it worth the complication of local containers?

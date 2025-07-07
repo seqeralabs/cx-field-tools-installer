@@ -84,7 +84,7 @@ locals {
 
   subnet_ids_ec2   = [for cidr in local.subnets_ec2 : local.subnet_mappings[cidr]]
   subnet_ids_batch = [for cidr in local.subnets_batch : local.subnet_mappings[cidr]]
-  subnet_ids_db    = [for cidr in local.subnets_db : local.subnet_mappings[cidr]]
+  subnet_ids_db    = ["10.1.0.0/24"] # [for cidr in local.subnets_db : local.subnet_mappings[cidr]]
   subnet_ids_redis = [for cidr in local.subnets_redis : local.subnet_mappings[cidr]]
   subnet_ids_alb   = try([for cidr in local.subnets_alb : local.subnet_mappings[cidr]], [])
 
@@ -245,6 +245,20 @@ locals {
     tonumber(length(regexall("^v24.[0-9]", var.tower_container_version))) >= 1 ||
     tonumber(length(regexall("^v2[5-9]", var.tower_container_version))) >= 1 ? true : false
   )
+
+  # Module strings
+  # rds_tower_object             = var.flag_create_external_db ? module.rds[0] : null
+  # rds_wave_lite_object         = var.flag_create_external_db ? module.rds-wave-lite[0] : null
+  rds_tower_object     = null
+  rds_wave_lite_object = null
+  elasticache_objects = var.flag_create_external_redis != true ? {
+    tower     = null
+    wave_lite = null
+    } : {
+    tower     = aws_elasticache_cluster.redis[0]
+    wave_lite = module.elasticache_wave_lite[0]
+  }
+
 }
 
 # Add subnet_collector module
@@ -282,10 +296,14 @@ module "connection_strings" {
   wave_lite_server_url = var.flag_use_wave_lite ? var.wave_lite_server_url : ""
 
   # External Resource References
-  rds_tower             = var.flag_create_external_db ? module.rds[0] : null
-  rds_wave_lite         = var.flag_create_external_db ? try(module.rds-wave-lite[0], null) : null
-  elasticache_tower     = var.flag_create_external_redis ? try(aws_elasticache_cluster.redis[0], null) : null
-  elasticache_wave_lite = var.flag_create_external_redis ? try(module.elasticache_wave_lite[0], null) : null
+  # rds_tower             = var.flag_create_external_db ? try(module.rds[0], null) : null
+  # rds_wave_lite         = var.flag_create_external_db ? try(module.rds-wave-lite[0], null) : null
+  # elasticache_tower     = var.flag_create_external_redis ? try(aws_elasticache_cluster.redis[0], null) : null
+  # elasticache_wave_lite = var.flag_create_external_redis ? try(module.elasticache_wave_lite[0], null) : null
+  rds_tower             = null
+  rds_wave_lite         = null
+  elasticache_tower     = local.elasticache_objects.tower
+  elasticache_wave_lite = local.elasticache_objects.wave_lite
 
   # Testing flag
   use_mocks = var.use_mocks
