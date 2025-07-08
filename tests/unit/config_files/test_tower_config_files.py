@@ -43,8 +43,8 @@ def test_config_tower_env(backup_tfvars):
 
     # command = "terraform plan -target=null_resource.generate_independent_config_files -out=tfplan"
     qualifier = "-target=null_resource.generate_independent_config_files"
-    plan = prepare_plan(override_data, qualifier)
-    run_terraform_apply()
+    # plan = prepare_plan(override_data, qualifier)
+    run_terraform_apply(qualifier)
 
     # Apply plan
     # command = "terraform apply tfplan --auto-approve -target=null_resource.generate_independent_config_files"
