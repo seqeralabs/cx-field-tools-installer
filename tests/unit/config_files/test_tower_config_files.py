@@ -2,11 +2,7 @@ import pytest
 import subprocess
 
 from tests.utils.local import root
-from tests.utils.local import (
-    prepare_plan,
-    reset_MAKE_TF_QUALIFIER,
-    set_MAKE_TF_QUALIFIER,
-)
+from tests.utils.local import prepare_plan
 from tests.utils.local import parse_key_value_file
 
 
