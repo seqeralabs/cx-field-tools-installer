@@ -1,13 +1,7 @@
 import os
-from pathlib import Path
 import shutil
-import sys
-import hashlib
-from typing import Dict, Any
-import re
-
 import subprocess
-import json
+import sys
 
 import pytest
 
@@ -19,10 +13,7 @@ import pytest
 
 from scripts.installer.utils.purge_folders import delete_pycache_folders
 
-from tests.utils.local import prepare_plan
-from tests.utils.local import get_cache_key, ensure_cache_dir, clear_plan_cache
 from tests.utils.local import root, tfvars_path, tfvars_backup_path, test_tfvars_path
-from tests.utils.local import _plan_cache, _cache_dir
 
 
 """

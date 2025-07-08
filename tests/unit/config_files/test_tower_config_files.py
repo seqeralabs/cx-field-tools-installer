@@ -2,7 +2,7 @@ import pytest
 import subprocess
 
 from tests.utils.local import root
-from tests.utils.local import prepare_plan
+from tests.utils.local import prepare_plan, run_terraform_apply
 from tests.utils.local import parse_key_value_file
 
 
@@ -34,9 +34,6 @@ def test_config_tower_env(backup_tfvars):
     """
 
     # When
-    # tf_qualifier = "-target=null_resource.generate_independent_config_files"
-    # reset_MAKE_TF_QUALIFIER()
-    # set_MAKE_TF_QUALIFIER(tf_qualifier)
     # plan = prepare_plan(override_data)
     # outputs = plan["planned_values"]["outputs"]
 
@@ -44,14 +41,16 @@ def test_config_tower_env(backup_tfvars):
     with open(f"{root}/override.auto.tfvars", "w") as f:
         f.write(override_data)
 
-    command = "terraform plan -target=null_resource.generate_independent_config_files -out=tfplan"
-    subprocess.run(command.split(" "), check=True)
+    # command = "terraform plan -target=null_resource.generate_independent_config_files -out=tfplan"
+    qualifier = "-target=null_resource.generate_independent_config_files"
+    plan = prepare_plan(override_data, qualifier)
+    run_terraform_apply()
 
     # Apply plan
     # command = "terraform apply tfplan --auto-approve -target=null_resource.generate_independent_config_files"
     # subprocess.run(command.split(" "), check=True)
-    command = "terraform apply tfplan"
-    subprocess.run(command.split(" "), check=True)
+    # command = "terraform apply tfplan"
+    # subprocess.run(command.split(" "), check=True)
 
     # Crack actual created file
     file = parse_key_value_file(f"{root}/assets/target/tower/config/tower_env")
