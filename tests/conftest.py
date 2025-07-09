@@ -14,6 +14,7 @@ import pytest
 from scripts.installer.utils.purge_folders import delete_pycache_folders
 
 from tests.utils.local import root, tfvars_path, tfvars_backup_path, test_tfvars_path
+from tests.utils.local import run_terraform_destroy
 
 
 """
@@ -78,3 +79,12 @@ def backup_tfvars():
     # clear_plan_cache()
 
     delete_pycache_folders(root)
+
+
+@pytest.fixture(scope="function")
+def teardown_tf_state_all():
+    print("This testcase will have tf state destroyed.")
+
+    yield
+
+    run_terraform_destroy()

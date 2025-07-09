@@ -14,7 +14,7 @@ from tests.utils.local import parse_key_value_file
 
 @pytest.mark.local
 @pytest.mark.config_files
-def test_config_tower_env(backup_tfvars):
+def test_config_tower_env(backup_tfvars, teardown_tf_state_all):
     # Given
     override_data = """
         flag_create_new_vpc   = false
@@ -37,20 +37,9 @@ def test_config_tower_env(backup_tfvars):
     # plan = prepare_plan(override_data)
     # outputs = plan["planned_values"]["outputs"]
 
-    # Stolen from prepare_plan.
-    with open(f"{root}/override.auto.tfvars", "w") as f:
-        f.write(override_data)
-
-    # command = "terraform plan -target=null_resource.generate_independent_config_files -out=tfplan"
     qualifier = "-target=null_resource.generate_independent_config_files"
-    # plan = prepare_plan(override_data, qualifier)
+    plan = prepare_plan(override_data, qualifier, will_apply=True)
     run_terraform_apply(qualifier)
-
-    # Apply plan
-    # command = "terraform apply tfplan --auto-approve -target=null_resource.generate_independent_config_files"
-    # subprocess.run(command.split(" "), check=True)
-    # command = "terraform apply tfplan"
-    # subprocess.run(command.split(" "), check=True)
 
     # Crack actual created file
     file = parse_key_value_file(f"{root}/assets/target/tower/config/tower_env")
