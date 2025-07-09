@@ -71,8 +71,8 @@ default_tags  = {
 ## ------------------------------------------------------------------------------------
 ## Flags - Custom Naming
 ## ------------------------------------------------------------------------------------
-flag_use_custom_resource_naming_prefix          = false
-custom_resource_naming_prefix                   = "tf-graham-prefix"
+flag_use_custom_resource_naming_prefix          = true
+custom_resource_naming_prefix                   = "test"
 
 
 ## ------------------------------------------------------------------------------------

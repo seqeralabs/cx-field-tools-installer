@@ -13,14 +13,14 @@ from tests.utils.local import prepare_plan
 def test_external_new_db_url(backup_tfvars):
     """Test URLs targeting a new RDS instance."""
     # Given
-    new_db_override_data = """
+    override_data = """
         flag_create_external_db             = true
         flag_use_existing_external_db       = false
         flag_use_container_db               = false
     """
 
     # When
-    plan = prepare_plan(new_db_override_data)
+    plan = prepare_plan(override_data)
     outputs = plan["planned_values"]["outputs"]
 
     # Then
@@ -36,7 +36,7 @@ def test_external_new_db_url(backup_tfvars):
 def test_wave_lite_new_db_url(backup_tfvars):
     """Test Wave-Lite database URL with new RDS instance."""
     # Given
-    wave_lite_new_db_override_data = """
+    override_data = """
         flag_create_external_db         = true
         flag_use_existing_external_db   = false
         flag_use_container_db           = false
@@ -44,7 +44,7 @@ def test_wave_lite_new_db_url(backup_tfvars):
     """
 
     # When
-    plan = prepare_plan(wave_lite_new_db_override_data)
+    plan = prepare_plan(override_data)
     outputs = plan["planned_values"]["outputs"]
 
     # Then
@@ -63,7 +63,7 @@ def test_wave_lite_new_db_url(backup_tfvars):
 def test_external_existing_db_url(backup_tfvars):
     """Test URLs targeting an existing RDS instance."""
     # Given
-    existing_db_override_data = """
+    override_data = """
         flag_create_external_db         = false
         flag_use_existing_external_db   = true
         flag_use_container_db           = false
@@ -72,7 +72,7 @@ def test_external_existing_db_url(backup_tfvars):
     """
 
     # When
-    plan = prepare_plan(existing_db_override_data)
+    plan = prepare_plan(override_data)
     outputs = plan["planned_values"]["outputs"]
 
     # Then
@@ -91,14 +91,14 @@ def test_external_existing_db_url(backup_tfvars):
 def test_container_db_url(backup_tfvars):
     """Test URLs targeting container database mode."""
     # Given
-    container_db_override_data = """
+    override_data = """
         flag_create_external_db         = false
         flag_use_existing_external_db   = false
         flag_use_container_db           = true
     """
 
     # When
-    plan = prepare_plan(container_db_override_data)
+    plan = prepare_plan(override_data)
     outputs = plan["planned_values"]["outputs"]
 
     # Then
@@ -115,7 +115,7 @@ def test_container_db_url(backup_tfvars):
 def test_wave_lite_container_db_url(backup_tfvars):
     """Test Wave-Lite database URL with container database."""
     # Given
-    wave_lite_container_db_override_data = """
+    override_data = """
         flag_create_external_db         = false
         flag_use_existing_external_db   = false
         flag_use_container_db           = true
@@ -123,7 +123,7 @@ def test_wave_lite_container_db_url(backup_tfvars):
     """
 
     # When
-    plan = prepare_plan(wave_lite_container_db_override_data)
+    plan = prepare_plan(override_data)
     outputs = plan["planned_values"]["outputs"]
 
     # Then
