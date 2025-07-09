@@ -3,24 +3,6 @@
 ## Note: Must use `null_resource` instead of `local_file` because `local_file generates
 ##       files every-other-time (due to state checking PRIOR to deletion)
 ## ------------------------------------------------------------------------------------
-resource "null_resource" "test" {
-
-  triggers = { always_run = "${timestamp()}" }
-
-  provisioner "local-exec" {
-    working_dir = path.module
-    command     = <<-EOT
-
-      set -e
-
-      # Purge local folder before recreating
-      echo "hello"
-      echo '${local.tower_env}' > ${path.module}/assets/target/tower_config/tower.env
-
-    EOT
-  }
-}
-
 resource "null_resource" "generate_independent_config_files" {
 
   triggers = { always_run = "${timestamp()}" }
