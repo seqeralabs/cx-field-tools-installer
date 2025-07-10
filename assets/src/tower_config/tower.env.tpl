@@ -86,7 +86,7 @@ TOWER_ENABLE_WAVE=false
 GROUNDSWELL_SERVER_URL="http://groundswell:8090"
 TOWER_ENABLE_GROUNDSWELL=true
 %{ else ~}
-# Groundswell is not activated.
+TOWER_ENABLE_GROUNDSWELL=false
 %{ endif ~}
 
 
