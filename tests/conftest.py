@@ -17,7 +17,8 @@ from tests.utils.local import test_tfvars_override_source, test_tfvars_override_
 from tests.utils.local import test_case_override_target
 
 from tests.utils.local import copy_file, move_file
-from tests.utils.local import run_terraform_destroy
+from tests.utils.local import prepare_plan
+from tests.utils.local import run_terraform_apply, run_terraform_destroy
 
 
 """
@@ -69,6 +70,47 @@ def backup_tfvars():
 
     delete_pycache_folders(root)
     move_file(tfvars_backup_path, tfvars_path)
+
+
+# TODO: Make sure module is for the file calling it, NOT where this fixture lives.
+@pytest.fixture(scope="module")
+def config_baseline_settings_default():
+    """
+    Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars.
+
+    This test is slower than test_module_connections_strings since we need to plan every time and apply.
+    However, it generates almost every configuration (Tower / Wave Lite / Ansible / etc) so it's worth the time to check.
+    I use an existing VPC in the account the AWS provider is configured to use to speed things up, but it's not perfect.
+    TODO: Figure out if there's some way to speed up the plan (i.e. split out `data` resource calls? As of July 9/25, resources created:
+      - data.aws_ssm_parameter.groundswell_secrets
+      - data.aws_ssm_parameter.tower_secrets
+      - data.aws_ssm_parameter.wave_lite_secrets
+      - null_resource.generate_independent_config_files
+      - random_pet.stackname
+      - tls_private_key.connect_pem
+      - tls_private_key.ec2_ssh_key
+      - module.connection_strings.data.external.generate_db_connection_string
+      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-00fad764627895f33"]
+      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-0d0e8ba3b03b97a65"]
+      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-0e07c9b2edbd84ea4"]
+      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-0f18039d5ffcf6cd3"]
+      - module.subnet_collector.data.aws_subnets.all[0]
+      - module.subnet_collector.data.aws_vpc.sp_vpc)
+    """
+
+    override_data = """
+        # No override values needed. Testing baseline only.
+    """
+
+    qualifier = "-target=null_resource.generate_independent_config_files"
+    plan = prepare_plan(override_data, qualifier)
+    run_terraform_apply(qualifier)
+
+    # Apply will generate actual assets we can interrogate in project or via remote calls.
+    # Return plan only
+    yield plan
+
+    run_terraform_destroy()
 
 
 @pytest.fixture(scope="function")
