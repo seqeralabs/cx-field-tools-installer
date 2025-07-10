@@ -24,3 +24,4 @@ terraform.tfvars.backup
 tests/.plan_cache/
 AGENTS.md
 hcl2json
+BACKUP_*

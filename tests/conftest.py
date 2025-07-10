@@ -1,7 +1,5 @@
-import os
-import shutil
 import subprocess
-import sys
+from pathlib import Path
 
 import pytest
 
@@ -13,7 +11,12 @@ import pytest
 
 from scripts.installer.utils.purge_folders import delete_pycache_folders
 
-from tests.utils.local import root, tfvars_path, tfvars_backup_path, test_tfvars_path
+from tests.utils.local import root, tfvars_path, tfvars_backup_path
+from tests.utils.local import test_tfvars_source, test_tfvars_target
+from tests.utils.local import test_tfvars_override_source, test_tfvars_override_target
+from tests.utils.local import test_case_override_target
+
+from tests.utils.local import copy_file, move_file
 from tests.utils.local import run_terraform_destroy
 
 
@@ -43,47 +46,34 @@ testing loop to:
 @pytest.fixture(scope="session")
 def backup_tfvars():
     # Create a fresh copy of the base testing terraform.tfvars file.
-    subprocess.run(["make", "generate_test_data"], check=True)
+    subprocess.run("make generate_test_data", shell=True, check=True)
 
-    try:
-        print(f"\nBacking up tfvars from {tfvars_path} to {tfvars_backup_path}")
-        shutil.move(tfvars_path, tfvars_backup_path)
+    print(f"\nBacking up {tfvars_path} to {tfvars_backup_path}.")
+    move_file(tfvars_path, tfvars_backup_path)
 
-        print(f"\nLoading testing tfvars {tfvars_path} to {tfvars_backup_path}")
-        shutil.copy2(test_tfvars_path, tfvars_path)
-
-    except FileNotFoundError as e:
-        print(f"Source file not found: {e}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        sys.exit(1)
+    print(f"\nLoading test tfvars (base) artefacts.")
+    copy_file(test_tfvars_source, test_tfvars_target)
+    copy_file(test_tfvars_override_source, test_tfvars_override_target)
 
     yield
 
     print("\nRestoring original environment.")
-    try:
-        shutil.move(tfvars_backup_path, tfvars_path)
-    except FileNotFoundError as e:
-        print(f"Source file not found: {e}")
 
-    # Remove testing files
-    for file in [f"{root}/override.auto.tfvars", test_tfvars_path]:
-        try:
-            os.remove(file)
-        except FileNotFoundError as e:
-            # Commented out to avoid noise in test output.
-            # print(f"Source file not found: {e}")
-            pass
-
-    # July 4/2025 -- Removed cache auto-cleanup since it want these to persist between runs so n+1 goes much faster.
-    # clear_plan_cache()
+    # Remove testing files, delete __pycache__ folders, restore origin tfvars.
+    for file in [
+        test_case_override_target,
+        test_tfvars_target,
+        test_tfvars_override_target,
+    ]:
+        Path(file).unlink(missing_ok=True)
 
     delete_pycache_folders(root)
+    move_file(tfvars_backup_path, tfvars_path)
 
 
 @pytest.fixture(scope="function")
 def teardown_tf_state_all():
-    print("This testcase will have tf state destroyed.")
+    print("This testcase will have all tf state destroyed.")
 
     yield
 

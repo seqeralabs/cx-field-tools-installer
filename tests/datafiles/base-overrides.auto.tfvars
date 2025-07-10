@@ -1,20 +1,3 @@
-#!/bin/bash
-
-# NOTE: This script expects to be run from ROOT/tests/datafiles/
-
-echo "generate_core_data.sh: Current directory is $PWD"
-
-# Generate core data
-echo "Generating base terraform.tfvars file from templates/TEMPLATE_terraform.tfvars"
-
-
-cp ../../templates/TEMPLATE_terraform.tfvars terraform.tfvars
-
-
-# Create a `base-overrides.auto.tfvars` file. This replaces the REPLACE_ME values in the base file,
-# but will still lose out lexically to the override.auto.tfvars file created in each pytest test case.
-# See: https://developer.hashicorp.com/terraform/language/values/variables#variable-definition-precedence
-cat << 'EOF' > base-overrides.auto.tfvars
 ## ------------------------------------------------------------------------------------
 ## Testing
 ## ------------------------------------------------------------------------------------
@@ -215,4 +198,3 @@ seqerakit_flag_credential_create_codecommit = false
 
 seqerakit_flag_credential_use_aws_role           = true
 seqerakit_flag_credential_use_codecommit_baseurl = false
-EOF

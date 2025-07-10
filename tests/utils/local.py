@@ -1,3 +1,4 @@
+from pickle import FALSE
 from numpy.core.fromnumeric import nonzero
 import pytest
 
@@ -14,67 +15,60 @@ import json
 
 from scripts.installer.utils.purge_folders import delete_pycache_folders
 
-# TODO: June 21/2025 -- This is a hack to get the test to run.
-root = "/home/deeplearning/cx-field-tools-installer"
-tfvars_path = f"{root}/terraform.tfvars"
-tfvars_backup_path = f"{root}/terraform.tfvars.backup"
-test_tfvars_path = f"{root}/tests/datafiles/terraform.tfvars"
-
-# Cache infrastructure for `terraform plan` results.
-_plan_cache: Dict[str, Any] = {}
-_cache_dir = f"{root}/tests/.plan_cache"
-
-override_file = f"{root}/override.auto.tfvars"
-tfplan_file = f"{root}/tfplan"
-tfplan_json_file = f"{root}/tfplan.json"
 
 """
 EXPLANATION
 =======================================
-Originally tried using [tftest](https://pypi.org/project/tftest/) package to test but this became complicated and unwieldy. Instead, simplified
-testing loop to:
+Originally tried using [tftest](https://pypi.org/project/tftest/). Too complicated and abstract IMO. Now using simpler methodology:
 
 1. Test in the project directory.
 2. Take a backup of the existing `terraform.tfvars` file.
-3. Create a new `terraform.tfvars` file for testing purposes (_sourced from `tests/datafiles/generate_core_data.sh`).
-4. Provide override values to test fixtures (which will generate a new `override.auto.tfvars` file in the project root).
-    This file supercedes the same keys defined in the `terraform.tfvars` file.
-5. Run the tests:
-    1. For each fixture, run `terraform plan` based on the test tvars and override file. Results as cached to speed up n+1 test runs.
-    2. Execute tests tied to that fixture.
-    3. Repeat.
-6. Purge the test tfvars and override file.
-7.Restore the original `terraform.tfvars` file when testing is complete.
+3. Create a new testing artifacts:
+    - Core (via `tests/datafiles/generate_core_data.sh`):
+        - `terraform.tfvars` generate from `templates/TEMPLATE_terraform.tfvars.
+        - `base-overrides.auto.tfvars` to generate REPLACE_ME substitutions and set some values for faster baseline testing.
+    - Testcase:
+        - Generate a new `override.auto.tfvars` file in the project root based on necessary overrides for each test.
+        - Terraform lexical hierarchy means this file trumps same settings in core files.
+4. Run tests:
+    1. For each test case, run `terraform plan` using test tfvars and override files. 
+    2. Run assertions.
+    NOTE: Results cached when possible (i.e. local) to speed up n+1 test runs. Not always feasible with apply-type tests.
+
+5. When tests are complete:
+    - Purge tfvars and override files.
+    - Restore the original `terraform.tfvars` to project root.
 """
 
 
 ## ------------------------------------------------------------------------------------
-## Cache Utility Functions
+## Universal Configuration
 ## ------------------------------------------------------------------------------------
-def get_cache_key(override_data: str, qualifier: str = "") -> str:
-    """Generate SHA-256 hash of override data and tfvars content for cache key."""
-    override_data = override_data.strip()
-    qualifier = qualifier.strip()
+# Assumes this file lives at 3rd layer of project (i.e. PROJECT_ROOT/tests/utils/local.py)
+root = str(Path(__file__).parent.parent.parent.resolve())
 
-    with open(tfvars_path, "r") as f:
-        tfvars_content = f.read().strip()
+# Tfvars and override files filepaths
+tfvars_path = f"{root}/terraform.tfvars"
+tfvars_backup_path = f"{root}/terraform.tfvars.backup"
 
-    # Combine override data and tfvars content for cache key
-    combined_content = (
-        f"{override_data}\n---TFVARS---\n{qualifier}\n---QUALIFIER---\n{tfvars_content}"
-    )
-    return hashlib.sha256(combined_content.encode("utf-8")).hexdigest()[:16]
+test_tfvars_source = f"{root}/tests/datafiles/terraform.tfvars"
+test_tfvars_target = f"{root}/terraform.tfvars"
+test_tfvars_override_source = f"{root}/tests/datafiles/base-overrides.auto.tfvars"
+test_tfvars_override_target = f"{root}/base-overrides.auto.tfvars"
 
-
-def strip_overide_whitespace(override_data: str) -> str:
-    """
-    Normalize override_data by purging intermediate whitespace (extra space makes same keys hash to different values).
-    Convert multiple sapces to single space (ASSUMPTION: Python tabs insert spaces!)
-    NOTE: Need to keep `\n` to not break HCL formatting expectations.
-    """
-    return "\n".join(re.sub(r"\s+", " ", line) for line in override_data.splitlines())
+test_case_override_target = f"{root}/override.auto.tfvars"
 
 
+# Tfplan files and caching folder
+plan_cache_dir = f"{root}/tests/.plan_cache"
+
+test_case_tfplan_file = f"{root}/tfplan"
+test_case_tfplan_json_file = f"{root}/tfplan.json"
+
+
+## ------------------------------------------------------------------------------------
+## File Utility Functions
+## ------------------------------------------------------------------------------------
 def read_json(file_path: str) -> dict:
     """Read a JSON plan file."""
     with open(file_path, "r") as f:
@@ -89,12 +83,61 @@ def read_file(file_path: str) -> str:
 
 def write_file(file_path: str, content: str | bytes) -> None:
     """Write content to a file."""
+    if isinstance(content, bytes):
+        content = content.decode("utf-8")
     with open(file_path, "w") as f:
         f.write(content)
 
 
-# NOTE: I need the PIPE to capture output for the plan to apply, but it's noisy in the console. Not quite sure what to do yet.
-# subprocess.DEVNULL seems to have worked before but I'm not sure why.
+def move_file(source: str, target: str) -> None:
+    """Move a file."""
+    try:
+        shutil.move(source, target)
+    except FileNotFoundError as e:
+        print(f"File not found: {e}")
+        sys.exit(1)
+
+
+def copy_file(source: str, target: str) -> None:
+    """Move a file."""
+    try:
+        shutil.copy2(source, target)
+    except FileNotFoundError as e:
+        print(f"File not found: {e}")
+        sys.exit(1)
+
+
+## ------------------------------------------------------------------------------------
+## Cache Utility Functions
+## ------------------------------------------------------------------------------------
+def get_cache_key(override_data: str, qualifier: str = "") -> str:
+    """Generate SHA-256 hash of override data and tfvars content for cache key."""
+    override_data = override_data.strip()
+    qualifier = qualifier.strip()
+
+    tfvars_content = read_file(tfvars_path).strip()
+
+    # Create combined cache key
+    combined_content = (
+        f"{override_data}\n---TFVARS---\n{qualifier}\n---QUALIFIER---\n{tfvars_content}"
+    )
+    return hashlib.sha256(combined_content.encode("utf-8")).hexdigest()[:16]
+
+
+def strip_overide_whitespace(override_data: str) -> str:
+    """
+    Purges intermediate whitespace (extra space makes same keys hash to different values).
+    Convert multiple spaces to single space (ASSUMPTION: Python tabs insert spaces!)
+    NOTE: Need to keep `\n` to not break HCL formatting expectations.
+    """
+    return "\n".join(re.sub(r"\s+", " ", line) for line in override_data.splitlines())
+
+
+## ------------------------------------------------------------------------------------
+## Subprocess Utility Functions
+## ------------------------------------------------------------------------------------
+# NOTE: I need the PIPE to capture output for the plan to apply, but it's noisy in the console.
+# Ended up using shell-type subprocess.run commands so I can use native Bash to dump output to files.
 def execute_subprocess(command: str) -> bytes:
     """
     Execute a subprocess command.
@@ -116,44 +159,39 @@ def execute_subprocess(command: str) -> bytes:
 ## ------------------------------------------------------------------------------------
 def run_terraform_plan(qualifier: str = "") -> None:
     """
-    Override file generated by prepare_plan; core tfvars file generated by fixture.
-    Purge existing tfplan and tfplan.json.
-    Only include qualifier if it's not empty since it messes up split otherwise.
-    Uses Bash capabilities to keep code simpler.
+    Plan based on core tfvars, core override, and testcase override.
+    Uses shell-type Bash commands to simplify code.
     """
-    for file in [tfplan_file, tfplan_json_file]:
+    for file in [test_case_tfplan_file, test_case_tfplan_json_file]:
         Path(file).unlink(missing_ok=True)
 
-    command = "terraform plan -out=tfplan && terraform show -json tfplan > tfplan.json"
-    if len(qualifier) > 0:
-        command = f"terraform plan {qualifier} -out=tfplan && terraform show -json tfplan > tfplan.json"
-
+    command = f"terraform plan {qualifier} -out=tfplan && terraform show -json tfplan > tfplan.json"
     execute_subprocess(command)
 
 
 def run_terraform_apply(qualifier: str = "", auto_approve: bool = True) -> None:
     """
-    Override file generated by prepare_plan; core tfvars file generated by fixture.
+    Normally should use tfplan from `run_terraform_plan`.
+    Command override available for targeted apply just in case (will need to plan again).
+    Uses shell-type Bash commands to simplify code.
+    Results will generally be:
+        - `terraform apply --auto-approve tfpan`
+        - `terraform apply --auto-approve -target=null_resource.my_resource`
     """
-    command = f"terraform apply {'--auto-approve' if auto_approve else ''} tfplan"
-    if len(qualifier) > 0:
-        command = (
-            f"terraform apply {'--auto-approve' if auto_approve else ''} {qualifier}"
-        )
-
+    base_command = f"terraform apply {'--auto-approve' if auto_approve else ''}"
+    command = f"{base_command} {qualifier if len(qualifier) > 0 else 'tfplan'}"
     execute_subprocess(command)
 
 
 def run_terraform_destroy(qualifier: str = "", auto_approve: bool = True) -> None:
     """
     Override file generated by prepare_plan; core tfvars file generated by fixture.
+    Results will generally be:
+        - `terraform destroy --auto-approve`
+        - `terraform destroy --auto-approve -target=null_resource.my_resource`
     """
-    command = f"terraform destroy {'--auto-approve' if auto_approve else ''}"
-    if len(qualifier) > 0:
-        command = (
-            f"terraform destroy {'--auto-approve' if auto_approve else ''} {qualifier}"
-        )
-
+    base_command = f"terraform destroy {'--auto-approve' if auto_approve else ''}"
+    command = f"{base_command} {qualifier if len(qualifier) > 0 else ''}"
     execute_subprocess(command)
 
 
@@ -163,7 +201,6 @@ def run_terraform_destroy(qualifier: str = "", auto_approve: bool = True) -> Non
 def prepare_plan(
     override_data: str,
     qualifier: str = "",
-    will_apply: bool = False,
     use_cache: bool = True,
 ) -> dict:
     """Generate override.auto.tfvars and run terraform plan with caching.
@@ -171,7 +208,6 @@ def prepare_plan(
     Args:
         override_data: Terraform variable overrides
         qualifier: Additional modifier to add to cache key (e.g '-target=null_resource.my_resource')
-        will_apply: Whether this plan will be chained into a Terraform apply (default: False)
         use_cache: Whether to use cached results (default: True)
 
     Returns:
@@ -179,29 +215,33 @@ def prepare_plan(
     """
 
     override_data = strip_overide_whitespace(override_data)
+
     cache_key = get_cache_key(override_data, qualifier)
-    cached_json_file = f"{_cache_dir}/plan_{cache_key}.json"
+    cached_plan_file = f"{plan_cache_dir}/plan_{cache_key}"
+    cached_plan_json_file = f"{plan_cache_dir}/plan_{cache_key}.json"
 
-    os.makedirs(_cache_dir, exist_ok=True)
+    os.makedirs(plan_cache_dir, exist_ok=True)
 
-    if use_cache and os.path.exists(cached_json_file):
+    if use_cache and os.path.exists(cached_plan_json_file):
         print(f"Reusing cached plans for: {cache_key}")
-        execute_subprocess(f"cp {_cache_dir}/plan_{cache_key} {root}/tfplan")
-        execute_subprocess(f"cp {_cache_dir}/plan_{cache_key}.json {root}/tfplan.json")
-        write_file(override_file, override_data)
+
+        execute_subprocess(f"cp {cached_plan_file} {test_case_tfplan_file}")
+        execute_subprocess(f"cp {cached_plan_json_file} {test_case_tfplan_json_file}")
+        write_file(test_case_override_target, override_data)
     else:
-        # Make cachedir, write override file in root, create plans and stash in cachedir.
+        # Write override file in root and create plan files.
         print(f"Cache miss. Generating new plan for: {cache_key}")
-        write_file(override_file, override_data)
+        write_file(test_case_override_target, override_data)
         run_terraform_plan(qualifier)
 
-        execute_subprocess(f"cp {root}/tfplan {_cache_dir}/plan_{cache_key}")
-        execute_subprocess(f"cp {root}/tfplan.json {_cache_dir}/plan_{cache_key}.json")
+        # Stash generated plan files in cachedir for future use.
+        execute_subprocess(f"cp {test_case_tfplan_file} {cached_plan_file}")
+        execute_subprocess(f"cp {test_case_tfplan_json_file} {cached_plan_json_file}")
 
-    return read_json(tfplan_json_file)
+    return read_json(test_case_tfplan_json_file)
 
 
-def parse_key_value_file(file_path: str) -> Dict[str, str]:
+def parse_key_value_file(file_path: str) -> Dict[str, Any]:
     """Parse a file containing KEY=VALUE pairs.
 
     Args:
@@ -211,17 +251,12 @@ def parse_key_value_file(file_path: str) -> Dict[str, str]:
         Dictionary containing key-value pairs
     """
     result = {}
+    raw = read_file(file_path)
 
-    try:
-        with open(file_path, "r") as f:
-            for line in f:
-                line = line.strip()
-                if line and "=" in line:
-                    key, value = line.split("=", 1)
-                    result[key.strip()] = value.strip()
-    except FileNotFoundError:
-        print(f"File not found: {file_path}")
-    except Exception as e:
-        print(f"Error parsing file {file_path}: {e}")
+    for line in raw.splitlines():
+        line = line.strip()
+        if line and "=" in line:
+            key, value = line.split("=", 1)
+            result[key.strip()] = value.strip()
 
     return result
