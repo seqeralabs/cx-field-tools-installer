@@ -102,7 +102,7 @@ def config_baseline_settings_default():
     override_data = """
         # No override values needed. Testing baseline only.
     """
-
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
     qualifier = "-target=null_resource.generate_independent_config_files"
     # plan = prepare_plan(override_data, qualifier)
     plan = prepare_plan(override_data)
