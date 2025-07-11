@@ -199,12 +199,56 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
     else:
         assert key not in keys
 
-    # assert "TOWER_DATA_STUDIO_ALLOWED_WORKSPACES" in keys
-    # assert "TOWER_DATA_STUDIO_CONNECT_URL" in keys
-    # assert "TOWER_OIDC_PEM_PATH" in keys
-    # assert "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN" in keys
+    # ------------------------------------------------------------------------------------
+    # Test sometimes-present conditionals - Data studio
+    # ------------------------------------------------------------------------------------
+    # All keys locked behind the `flag_enable_data_studio` flag.
+    flag_enable_data_studio = variables["flag_enable_data_studio"]["value"]
 
-    # assert "TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_ICON" in keys
-    # assert "TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_REPOSITORY" in keys
-    # assert "TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_TOOL" in keys
-    # assert "TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_STATUS" in keys
+    key = "TOWER_DATA_STUDIO_ALLOWED_WORKSPACES"
+    value = variables["data_studio_eligible_workspaces"]["value"]
+    flag_limit_data_studio_to_some_workspaces = variables["flag_limit_data_studio_to_some_workspaces"]["value"]
+    if flag_enable_data_studio and flag_limit_data_studio_to_some_workspaces:
+        assert key in keys
+        assert tower_env_file[key] == value
+    else:
+        assert key not in keys
+
+    key = "TOWER_DATA_STUDIO_CONNECT_URL"
+    value = outputs["tower_connect_server_url"]["value"]
+    if flag_enable_data_studio:
+        assert key in keys
+        assert tower_env_file[key] == value
+    else:
+        assert key not in keys
+
+    key = "TOWER_OIDC_PEM_PATH"
+    value = "/data-studios-rsa.pem"
+    if flag_enable_data_studio:
+        assert key in keys
+        assert tower_env_file[key] == value
+    else:
+        assert key not in keys
+
+    key = "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN"
+    value = "ipsemlorem"
+    if flag_enable_data_studio:
+        assert key in keys
+        assert tower_env_file[key] == value
+    else:
+        assert key not in keys
+
+    # TODO: Align this edgecase in project?
+    for studio in variables["data_studio_options"]["value"]:
+        if flag_enable_data_studio:
+            for qualifier in ["ICON", "REPOSITORY", "TOOL", "STATUS"]:
+                key = "TOWER_DATA_STUDIO_TEMPLATES_${studio}_{qualifier}"
+                # EDGECASE: Called it 'container' in terrafrom tfvars, but setting is REPOSITORY
+                if qualifier == "REPOSITORY":
+                    value = variables["data_studio_options"]["value"][studio]["container"]
+                else:
+                    value = variables["data_studio_options"]["value"][studio][key.lower()]
+            assert key in keys
+            assert tower_env_file[key] == value
+        else:
+            assert key not in keys
