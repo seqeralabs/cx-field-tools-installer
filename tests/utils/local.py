@@ -257,6 +257,10 @@ def parse_key_value_file(file_path: str) -> Dict[str, Any]:
         line = line.strip()
         if line and "=" in line:
             key, value = line.split("=", 1)
+            # Edgecase: Config files have empty string represented by "" or ''
+            #  but python thinks the string is literally x2 doublequotes or single quotes.
+            if (value == '""') or (value == "''"):
+                value = ""
             result[key.strip()] = value.strip()
 
     return result

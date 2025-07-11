@@ -74,7 +74,7 @@ def backup_tfvars():
 
 
 # TODO: Make sure module is for the file calling it, NOT where this fixture lives.
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module")  # function
 def config_baseline_settings_default():
     """
     Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars.
@@ -102,6 +102,7 @@ def config_baseline_settings_default():
     override_data = """
         # No override values needed. Testing baseline only.
     """
+    print("ipsem lorem")
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
     qualifier = "-target=null_resource.generate_independent_config_files"
     # plan = prepare_plan(override_data, qualifier)
