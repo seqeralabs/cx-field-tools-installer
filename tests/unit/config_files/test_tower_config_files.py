@@ -333,3 +333,77 @@ def test_default_config_tower_yml(backup_tfvars, config_baseline_settings_defaul
     assert tower_root_users in key
     assert tower_email_trusted_orgs in key
     assert tower_email_trusted_users in key
+
+
+@pytest.mark.local
+@pytest.mark.config_keys
+@pytest.mark.vpc_existing
+@pytest.mark.quick
+def test_default_config_data_studios_env(backup_tfvars, config_baseline_settings_default):
+    """
+    Test the target data-studio.env generated from default test terraform.tfvars and base-override.auto.tfvars.
+    """
+
+    # Given
+    print("Testing data-studio.env generated from default settings.")
+
+    # When
+    outputs = config_baseline_settings_default["planned_values"]["outputs"]
+    variables = config_baseline_settings_default["variables"]
+
+    ds_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/data-studios.env")
+    print(f"{ds_env_file.items()=}")
+    keys = ds_env_file.keys()
+
+    """
+    WARNING!!!!!!
+      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
+            AFFECTS: `outputs` and `variables`
+      - tower_env_file values are directly cracked from HCL so they are "true".
+    """
+
+    # ------------------------------------------------------------------------------------
+    # Test data-studios.env - assert all core keys exist
+    # ------------------------------------------------------------------------------------
+    key = "PLATFORM_URL"
+    value = outputs["tower_server_url"]["value"]
+    assert key in keys
+    assert ds_env_file[key] == value
+
+    key = "CONNECT_HTTP_PORT"
+    value = 9090
+    assert key in keys
+    assert ds_env_file[key] == str(value)
+
+    key = "CONNECT_TUNNEL_URL"
+    value = "connect-server:7070"
+    assert key in keys
+    assert ds_env_file[key] == value
+
+    key = "CONNECT_PROXY_URL"
+    value = outputs["tower_connect_server_url"]["value"]
+    assert key in keys
+    assert ds_env_file[key] == value
+
+    key = "CONNECT_REDIS_ADDRESS"
+    value = outputs["tower_redis_url"]["value"]
+    assert key in keys
+    assert f"redis://{ds_env_file[key]}" == value
+
+    key = "CONNECT_REDIS_DB"
+    value = 1
+    assert key in keys
+    assert ds_env_file[key] == str(value)
+
+    key = "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN"
+    value = '"ipsemlorem"'  # TODO: Find better solution for this. Hacky.
+    assert key in keys
+    assert ds_env_file[key] == value
+
+    # TODO: Figure out how to use local.studio_uses_distroless for better targeting.
+    key = "CONNECT_LOG_LEVEL"
+    key2 = "CONNECT_SERVER_LOG_LEVEL"
+    if key in keys:
+        assert key2 not in keys
+    else:
+        assert key2 in keys
