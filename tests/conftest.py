@@ -19,6 +19,7 @@ from tests.utils.local import test_case_override_target
 from tests.utils.local import copy_file, move_file
 from tests.utils.local import prepare_plan
 from tests.utils.local import run_terraform_apply, run_terraform_destroy
+from tests.utils.local import execute_subprocess
 
 
 """
@@ -103,8 +104,10 @@ def config_baseline_settings_default():
     """
 
     qualifier = "-target=null_resource.generate_independent_config_files"
-    plan = prepare_plan(override_data, qualifier)
+    # plan = prepare_plan(override_data, qualifier)
+    plan = prepare_plan(override_data)
     run_terraform_apply(qualifier)
+    execute_subprocess(f"terraform state list > terraform_state_list.txt")
 
     # Apply will generate actual assets we can interrogate in project or via remote calls.
     # Return plan only

@@ -37,10 +37,20 @@ def test_config_baseline_settings_default(
     )
     print(f"{tower_env_file.items()=}")
 
+    # NOTE:
+    #  - Plan outputs are in Python dictionary form, so JSON "true" becomes True.
+    #  - tower_env_file values are directly cracked from HCL so they are "true".
     keys = tower_env_file.keys()
     # Test tower.env - assert all core keys exist
+    assert "TOWER_ENABLE_AWS_SSM" in keys
+    assert tower_env_file["TOWER_ENABLE_AWS_SSM"] == "true"
+
     assert "LICENSE_SERVER_URL" in keys
+    assert tower_env_file["LICENSE_SERVER_URL"] == "https://licenses.seqera.io"
+
     assert "TOWER_SERVER_URL" in keys
+    assert tower_env_file["TOWER_SERVER_URL"] == outputs["tower_server_url"]["value"]
+
     assert "TOWER_CONTACT_EMAIL" in keys
     assert "TOWER_ENABLE_PLATFORMS" in keys
     assert "TOWER_ROOT_USERS" in keys
@@ -64,14 +74,12 @@ def test_config_baseline_settings_default(
     ## Value checks
 
     # Test always-present conditionals
-    # NOTE: Plan outputs are in Python dictionary form, so JSON "true" becomes True.
     assert "TOWER_ENABLE_AWS_SES" in keys
     if variables["flag_use_aws_ses_iam_integration"]["value"] == True:
         assert tower_env_file["TOWER_ENABLE_AWS_SES"] == "true"
     else:
         assert tower_env_file["TOWER_ENABLE_AWS_SES"] == "false"
 
-    assert "TOWER_ENABLE_AWS_SSM" in keys
     assert "TOWER_ENABLE_UNSAFE_MODE" in keys
     assert "TOWER_ENABLE_WAVE" in keys
     assert "TOWER_ENABLE_GROUNDSWELL" in keys
