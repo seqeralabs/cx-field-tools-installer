@@ -19,7 +19,7 @@ TOWER_ROOT_USERS=${tower_root_users}
 # ------------------------------------------------
 # DB settings
 # ------------------------------------------------
-TOWER_DB_URL=jdbc:mysql://${tower_db_url}
+TOWER_DB_URL=${tower_db_url}
 
 TOWER_DB_DRIVER=${tower_db_driver}
 TOWER_DB_DIALECT=${tower_db_dialect}
@@ -95,10 +95,11 @@ TOWER_ENABLE_GROUNDSWELL=false
 # ------------------------------------------------
 %{ if flag_data_explorer_enabled == true ~}
 TOWER_DATA_EXPLORER_ENABLED=true
+TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES="${data_explorer_disabled_workspaces}"
 %{ else ~}
 TOWER_DATA_EXPLORER_ENABLED=false
 %{ endif ~}
-TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES="${data_explorer_disabled_workspaces}"
+
 
 
 # ------------------------------------------------

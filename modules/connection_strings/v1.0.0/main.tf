@@ -57,7 +57,7 @@ locals {
   tower_db_root                  = local.tower_db_remote_reconciled != "" ? local.tower_db_remote_reconciled : local.tower_db_local
 
   tower_db_url = format(
-    "%s/%s?%s",
+    "jdbc:mysql://%s/%s?%s",
     local.tower_db_root,
     var.db_database_name,
     data.external.generate_db_connection_string.result.value,
