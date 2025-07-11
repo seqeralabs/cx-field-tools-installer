@@ -3,26 +3,27 @@ import subprocess
 
 from tests.utils.local import root
 from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
+from tests.utils.local import read_yaml
 from tests.utils.local import parse_key_value_file
 
 
 ## ------------------------------------------------------------------------------------
-## Tower Config keys
+## Tower Config File Checks
 ## ------------------------------------------------------------------------------------
 # NOTE: To avoid creating VPC assets, use an existing VPC in the account the AWS provider is configured to use.
 
 
 @pytest.mark.local
-@pytest.mark.config_keyss
+@pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.quick
 def test_default_config_tower_env(backup_tfvars, config_baseline_settings_default):  # teardown_tf_state_all):
     """
-    Test the target folder generated from default test terraform.tfvars and base-override.auto.tfvars.
+    Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars.
     """
 
     # Given
-    print("Testing target/ folder generated from default settings.")
+    print("Testing tower.env generated from default settings.")
 
     # When
     outputs = config_baseline_settings_default["planned_values"]["outputs"]
@@ -252,3 +253,83 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
             assert tower_env_file[key] == value
         else:
             assert key not in keys
+
+
+@pytest.mark.local
+@pytest.mark.config_keys
+@pytest.mark.vpc_existing
+@pytest.mark.quick
+def test_default_config_tower_yml(backup_tfvars, config_baseline_settings_default):  # teardown_tf_state_all):
+    """
+    Test the target tower.yml generated from default test terraform.tfvars and base-override.auto.tfvars.
+    """
+
+    # Given
+    print("Testing tower.yml generated from default settings.")
+
+    # When
+    outputs = config_baseline_settings_default["planned_values"]["outputs"]
+    variables = config_baseline_settings_default["variables"]
+
+    tower_yml_file = read_yaml(f"{root}/assets/target/tower_config/tower.yml")
+
+    """
+    WARNING!!!!!!
+      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
+            AFFECTS: `outputs` and `variables`
+      - tower_env_file values are directly cracked from HCL so they are "true".
+    """
+
+    # ------------------------------------------------------------------------------------
+    # Test tower.yml
+    # ------------------------------------------------------------------------------------
+    key = tower_yml_file["mail"]["smtp"]["auth"]
+    value = variables["tower_smtp_auth"]["value"]
+    assert key == value
+
+    key = tower_yml_file["mail"]["smtp"]["starttls"]["enable"]
+    value = variables["tower_smtp_starttls_enable"]["value"]
+    assert key == value
+
+    key = tower_yml_file["mail"]["smtp"]["starttls"]["required"]
+    value = variables["tower_smtp_starttls_required"]["value"]
+    assert key == value
+
+    key = tower_yml_file["mail"]["smtp"]["ssl"]["protocols"]
+    value = variables["tower_smtp_ssl_protocols"]["value"]
+    assert key == value
+
+    key = tower_yml_file["micronaut"]["application"]["name"]
+    value = variables["app_name"]["value"]
+    assert key == value
+
+    if variables["flag_disable_email_login"]["value"]:
+        key = tower_yml_file["tower"]["auth"]["disable-email"]
+        assert key
+    else:
+        assert "auth" not in tower_yml_file["tower"].keys()
+
+    # Note this has time segment at end.
+    key = tower_yml_file["tower"]["cron"]["audit-log"]["clean-up"]["time-offset"]
+    value = variables["tower_audit_retention_days"]["value"]
+    assert key == f"{value}d"
+
+    # TODO verify why I did this in the template
+    flag_enable_data_studio = variables["flag_enable_data_studio"]["value"]
+    flag_limit_data_studio_to_some_workspaces = variables["flag_limit_data_studio_to_some_workspaces"]["value"]
+    if flag_enable_data_studio and flag_limit_data_studio_to_some_workspaces:
+        key = tower_yml_file["tower"]["data-studio"]["allowed-workspaces"]
+        assert key == None
+    else:
+        assert "data-studio" not in tower_yml_file["tower"].keys()
+
+    # Remove middle whitespace from vars since it seems to be stripped from the template interpolation.
+    key = tower_yml_file["tower"]["trustedEmails"]
+    tower_root_users = variables["tower_root_users"]["value"].replace(" ", "")
+    tower_email_trusted_orgs = variables["tower_email_trusted_orgs"]["value"].replace(" ", "")
+    tower_email_trusted_users = variables["tower_email_trusted_users"]["value"].replace(" ", "")
+
+    # assert all(val in key for val in [tower_root_users, tower_email_trusted_orgs, tower_email_trusted_users])
+    assert tower_root_users in key
+    assert tower_email_trusted_orgs in key
+    assert tower_email_trusted_users in key

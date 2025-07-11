@@ -13,6 +13,9 @@ import re
 import subprocess
 import json
 
+
+import yaml
+
 from scripts.installer.utils.purge_folders import delete_pycache_folders
 
 
@@ -75,6 +78,12 @@ def read_json(file_path: str) -> dict:
         return json.load(f)
 
 
+def read_yaml(file_path: str) -> Any:
+    """Read a JSON plan file."""
+    with open(file_path, "r") as f:
+        return yaml.safe_load(f)
+
+
 def read_file(file_path: str) -> str:
     """Read a file."""
     with open(file_path, "r") as f:
@@ -118,9 +127,7 @@ def get_cache_key(override_data: str, qualifier: str = "") -> str:
     tfvars_content = read_file(tfvars_path).strip()
 
     # Create combined cache key
-    combined_content = (
-        f"{override_data}\n---TFVARS---\n{qualifier}\n---QUALIFIER---\n{tfvars_content}"
-    )
+    combined_content = f"{override_data}\n---TFVARS---\n{qualifier}\n---QUALIFIER---\n{tfvars_content}"
     return hashlib.sha256(combined_content.encode("utf-8")).hexdigest()[:16]
 
 
