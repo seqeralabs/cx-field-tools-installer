@@ -85,6 +85,27 @@ pytest -m "db" -v
 pytest -m "redis" -v
 ```
 
+### Testing with Structured Logging
+```bash
+# View structured test results
+python tests/utils/log_parser.py summarize
+
+# Extract failed tests for LLM analysis
+python tests/utils/log_parser.py extract-failures
+
+# View pytest logs for debugging
+tail -f tests/logs/pytest_structured.log
+
+# Parse logs for LLM analysis
+python tests/utils/log_parser.py llm-format --recent 100
+
+# Validate log format
+python tests/utils/log_parser.py validate
+
+# Export logs as JSON for programmatic analysis
+python tests/utils/log_parser.py export-json
+```
+
 ## Project Structure
 
 ### Core Infrastructure (`*.tf` files)
@@ -106,8 +127,11 @@ Sequential numbered files defining infrastructure resources in dependency order.
 
 ### Tests (`tests/`)
 - `tests/unit/` - Unit tests for modules
+- `tests/integration/` - Integration tests for end-to-end workflows
 - `tests/datafiles/` - Test data generation
-- Pytest markers: `local`, `db`, `db_new`, `db_existing`, `redis`, `urls`, `urls_insecure`
+- `tests/logs/` - Structured pytest logs for LLM analysis
+- `tests/utils/` - Test utilities including log parsing and formatting
+- Pytest markers: `local`, `db`, `db_new`, `db_existing`, `redis`, `urls`, `urls_insecure`, `log_enabled`
 
 ## Configuration Files
 
