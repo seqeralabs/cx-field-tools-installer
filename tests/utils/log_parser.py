@@ -7,7 +7,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 from tests.utils.log_formatter import PytestLogFormatter
 
@@ -15,7 +15,7 @@ from tests.utils.log_formatter import PytestLogFormatter
 class PytestLogParser:
     """Parser for pytest structured logs with LLM-friendly output."""
 
-    def __init__(self, log_file: str = None):
+    def __init__(self, log_file: Optional[str] = None):
         self.formatter = PytestLogFormatter(log_file)
 
     def validate_log_format(self) -> bool:
@@ -40,12 +40,13 @@ class PytestLogParser:
             print("✅ All entries have required fields")
         else:
             print(f"⚠️  {len(entries) - valid_entries} entries missing required fields")
+            return False
 
         # Check event types
+        # TODO: Validation missing. Maybe extend once enum is implemented?
         event_types = set()
         for entry in entries:
             event_types.add(entry.get("event_type"))
-
         print(f"✅ Event types found: {sorted(event_types)}")
 
         # Check for session boundaries
@@ -56,10 +57,12 @@ class PytestLogParser:
             print("✅ Session boundaries found")
         else:
             print(f"⚠️  Missing session boundaries (start: {has_session_start}, end: {has_session_end})")
+            return False
 
-        return valid_entries > 0
+        # return valid_entries > 0
+        return True
 
-    def summarize_tests(self, recent: int = None) -> str:
+    def summarize_tests(self, recent: int = 0) -> str:
         """Generate human-readable test summary."""
         entries = self.formatter.read_log_entries(max_entries=recent)
         return self.formatter.format_human_readable(entries)

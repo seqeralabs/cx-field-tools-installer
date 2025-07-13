@@ -25,3 +25,9 @@ tests/.plan_cache/
 AGENTS.md
 hcl2json
 BACKUP_*
+
+CLAUDE.local.md
+.ai/
+.claude/
+
+tests/logs/*
