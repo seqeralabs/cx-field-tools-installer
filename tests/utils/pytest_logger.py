@@ -39,7 +39,7 @@ class PytestStructuredLogger:
         self.log_file.parent.mkdir(parents=True, exist_ok=True)
 
         # Session tracking
-        self.session_id = str(uuid.uuid4())
+        self.session_id = str(uuid.uuid4())[:8]
         self.session_start_time = time.time()
 
         # Setup file handler
@@ -64,7 +64,8 @@ class PytestStructuredLogger:
         """
         return {
             # "timestamp": datetime.utcnow().isoformat() + "Z",
-            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+            # "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             "test_session_id": self.session_id,
             "event_type": event_type,
             **kwargs,

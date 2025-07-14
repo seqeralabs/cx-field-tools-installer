@@ -51,7 +51,7 @@ class TestPytestStructuredLogger:
         assert logger.enabled is True
         assert logger.log_file == self.log_file
         assert logger.session_id is not None
-        assert len(logger.session_id) == 36  # UUID length
+        assert len(logger.session_id) == 8  # UUID length
         assert logger.session_start_time > 0
 
     def test_logger_disabled(self):

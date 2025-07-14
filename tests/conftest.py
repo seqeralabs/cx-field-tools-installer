@@ -196,12 +196,16 @@ def pytest_sessionfinish(session, exitstatus):
     """Log session end information with summary."""
     logger = get_logger()
 
-    # Get test results summary
-    if hasattr(session, "testsfailed"):
-        failed = session.testsfailed
-        passed = session.testscollected - session.testsfailed
-        skipped = 0
-        errors = 0
+    # Get test results summary from terminalreporter
+    reporter = session.config.pluginmanager.get_plugin('terminalreporter')
+    if reporter:
+        passed = len(reporter.stats.get('passed', []))
+        failed = len(reporter.stats.get('failed', []))
+        skipped = len(reporter.stats.get('skipped', []))
+        errors = len(reporter.stats.get('error', []))
+    else:
+        # Fallback if terminalreporter is not available
+        passed = failed = skipped = errors = 0
 
     # Calculate session duration
     duration = time.time() - logger.session_start_time
