@@ -3,17 +3,29 @@ Testing framework implement via Python and Bash (_leveraging native Terraform ca
 
 
 ## Necessary packages for testing
-- pip install pytest
-- pip install pyyaml
+- `pip install pytest`
+- `pip install pyyaml`
 
 
-## Local Testing (Plan-Only)
+## Testing Scopes
+###  Local Testing (Plan-Only)
+Run tests as far left as possible (_e.g. no reliance on spawned infrastructure_). Cache results for faster `n+1` iterations. Idea is to run this suite often (_to validate bother human- and agent-generated code_), so they need to be comprehensive and execute quickly.
 
+Currently used for:
 
-## Minimal Deployment Testing (Targeted Apply)
+- `tests/unit/test_module_connection_strings`: Generate values entirely from `terraform.tfvars` / SSM secrets / mocks only.
+- `tests/unit/test_logging`: Ensure pytest testcases are logging to an LLM-friendly centralized log file.
 
+### Minimal Deployment Testing (Targeted Apply)
+Run tests which have a minor dependency on infrastructure (_e.g. existence of a VPC_) but do not require heavier deployments like EICE & RDS.
 
-## Full Deployment Testing
+Currently used for:
+
+- `tests/unit/config_files`: Generate templated config file with minimum dependency on infrastructure.
+
+### Full Deployment Testing
+Run full-sized deployments to validate permutations. TBD how to implement but current thinking supports GHA Matrix operation.
+
 
 ## Structured Logging for LLM Analysis
 

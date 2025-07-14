@@ -131,39 +131,65 @@ def teardown_tf_state_all():
 ## ------------------------------------------------------------------------------------
 ## Pytest Structured Logging Hooks
 ## ------------------------------------------------------------------------------------
+# Hooks are native pytest mechanisms that execute at specific points in the test lifecycle.
+# They are defined in this file and are called by pytest at the appropriate time.
+# See: https://docs.pytest.org/en/stable/reference/reference.html#hooks
+
+"""
+As per ChatGPT: Pytest Lifecycle (Simplified)
+1.Session Start
+  - pytest_sessionstart hook is called.
+2. Collection Phase
+  - Pytest discovers and collects all test files, classes, and functions.
+  - The list of tests is built and stored (e.g., in session.items and session.testscollected).
+3. Setup Phase
+  - Fixtures and setup code are prepared.
+4. Test Execution Phase
+  - Tests are executed.
+5. Teardown Phase
+  - Cleanup and fixture teardown.
+6. Session Finish
+  - pytest_sessionfinish hook is called.
+
+Key Point
+- Test collection happens after pytest_sessionstart but before tests are executed.
+- At the time pytest_sessionstart runs, session.testscollected is already set, so you can access the total number of collected tests in this hook.
+"""
+
 
 def pytest_configure(config):
     """Configure pytest structured logging."""
     # Initialize logger at session start
     get_logger()
-    
+
     # Add command line option for controlling logging
-    config.addinivalue_line(
-        "markers", "log_enabled: mark test to explicitly enable structured logging"
-    )
+    config.addinivalue_line("markers", "log_enabled: mark test to explicitly enable structured logging")
 
 
 def pytest_sessionstart(session):
     """Log session start information."""
     logger = get_logger()
-    
+
     # Count total tests
-    total_tests = session.testscollected if hasattr(session, 'testscollected') else 0
-    
+    print(f"{session=}")
+    total_tests = session.testscollected if hasattr(session, "testscollected") else 0
+
     # Extract markers from config
+    # Checks if the session config has an option attribute, and - if present - that has
+    # an `m`` attribute (where pytest stores marker expressions from the command line, e.g., -m "slow").
     markers = []
-    if hasattr(session.config, 'option') and hasattr(session.config.option, 'm'):
+    if hasattr(session.config, "option") and hasattr(session.config.option, "m"):
         markers = session.config.option.m or []
-    
+
     logger.log_session_start(total_tests=total_tests, markers=markers)
 
 
 def pytest_sessionfinish(session, exitstatus):
     """Log session end information with summary."""
     logger = get_logger()
-    
+
     # Get test results summary
-    if hasattr(session, 'testsfailed'):
+    if hasattr(session, "testsfailed"):
         failed = session.testsfailed
         passed = session.testscollected - session.testsfailed
         skipped = 0
@@ -174,99 +200,86 @@ def pytest_sessionfinish(session, exitstatus):
         passed = 0
         skipped = 0
         errors = 0
-    
+
     # Calculate session duration
     duration = time.time() - logger.session_start_time
-    
-    logger.log_session_end(
-        passed=passed, failed=failed, skipped=skipped, 
-        errors=errors, duration=duration
-    )
+
+    logger.log_session_end(passed=passed, failed=failed, skipped=skipped, errors=errors, duration=duration)
 
 
 def pytest_runtest_setup(item):
     """Log test setup/start."""
     logger = get_logger()
-    
+
     # Extract test information
     test_path = str(item.fspath) + "::" + item.name
-    
+
     # Get markers
     markers = [mark.name for mark in item.iter_markers()]
-    
+
     # Get fixtures
-    fixtures = list(item.fixturenames) if hasattr(item, 'fixturenames') else []
-    
+    fixtures = list(item.fixturenames) if hasattr(item, "fixturenames") else []
+
     # Get parametrize info
     parametrize = None
-    if hasattr(item, 'callspec') and item.callspec:
+    if hasattr(item, "callspec") and item.callspec:
         parametrize = str(item.callspec.params)
-    
-    logger.log_test_start(
-        test_path=test_path,
-        markers=markers,
-        fixtures=fixtures,
-        parametrize=parametrize or ""
-    )
+
+    logger.log_test_start(test_path=test_path, markers=markers, fixtures=fixtures, parametrize=parametrize or "")
 
 
 def pytest_runtest_teardown(item, nextitem):
     """Log test teardown/end."""
     logger = get_logger()
-    
+
     test_path = str(item.fspath) + "::" + item.name
-    
+
     # Calculate duration if available
     duration = 0.0
-    if hasattr(item, 'duration'):
+    if hasattr(item, "duration"):
         duration = item.duration
-    
+
     logger.log_test_end(test_path=test_path, duration=duration)
 
 
 def pytest_runtest_logreport(report):
     """Log test results with captured output."""
     logger = get_logger()
-    
+
     # Only log on call phase (not setup/teardown)
     if report.when != "call":
         return
-    
-    test_path = str(report.fspath) + "::" + report.head_line if hasattr(report, 'head_line') else str(report.nodeid)
-    
+
+    test_path = str(report.fspath) + "::" + report.head_line if hasattr(report, "head_line") else str(report.nodeid)
+
     # Map pytest outcomes to our status
-    status_map = {
-        "passed": "PASSED",
-        "failed": "FAILED", 
-        "skipped": "SKIPPED",
-        "error": "ERROR"
-    }
+    status_map = {"passed": "PASSED", "failed": "FAILED", "skipped": "SKIPPED", "error": "ERROR"}
     status = status_map.get(report.outcome, "UNKNOWN")
-    
+
     # Get captured output
     stdout = ""
     stderr = ""
-    if hasattr(report, 'capstdout'):
+    if hasattr(report, "capstdout"):
         stdout = report.capstdout
-    if hasattr(report, 'capstderr'):
+    if hasattr(report, "capstderr"):
         stderr = report.capstderr
-    
+
     # Get failure reason
     failure_reason = ""
-    if report.failed and hasattr(report, 'longrepr'):
+    if report.failed and hasattr(report, "longrepr"):
         failure_reason = str(report.longrepr)
-    
+
     # Get test metadata
     markers = []
     fixtures = []
     parametrize = None
-    
-    if hasattr(report, 'item'):
+
+    if hasattr(report, "item"):
         markers = [mark.name for mark in report.item.iter_markers()]
-        fixtures = list(report.item.fixturenames) if hasattr(report.item, 'fixturenames') else []
-        if hasattr(report.item, 'callspec') and report.item.callspec:
+        fixtures = list(report.item.fixturenames) if hasattr(report.item, "fixturenames") else []
+        if hasattr(report.item, "callspec") and report.item.callspec:
             parametrize = str(report.item.callspec.params)
-    
+
     logger.log_test_result(
         test_path=test_path,
         status=status,
@@ -276,5 +289,5 @@ def pytest_runtest_logreport(report):
         failure_reason=failure_reason,
         markers=markers,
         fixtures=fixtures,
-        parametrize=parametrize or ""
+        parametrize=parametrize or "",
     )
