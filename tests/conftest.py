@@ -151,9 +151,10 @@ As per ChatGPT: Pytest Lifecycle (Simplified)
 6. Session Finish
   - pytest_sessionfinish hook is called.
 
-Key Point
-- Test collection happens after pytest_sessionstart but before tests are executed.
-- At the time pytest_sessionstart runs, session.testscollected is already set, so you can access the total number of collected tests in this hook.
+Key Point:
+- Test collection happens after pytest_sessionstart.
+- The pytest_sessionstart hook is called before test collection, so you cannot reliably access the total number of tests at this point.
+- The correct place to access the number of collected tests is in the pytest_collection_finish hook, which runs after collection is complete.
 """
 
 
@@ -171,7 +172,6 @@ def pytest_sessionstart(session):
     logger = get_logger()
 
     # Count total tests
-    print(f"{session=}")
     total_tests = session.testscollected if hasattr(session, "testscollected") else 0
 
     # Extract markers from config
@@ -181,7 +181,15 @@ def pytest_sessionstart(session):
     if hasattr(session.config, "option") and hasattr(session.config.option, "m"):
         markers = session.config.option.m or []
 
-    logger.log_session_start(total_tests=total_tests, markers=markers)
+    # logger.log_session_start(total_tests=total_tests, markers=markers)
+    logger.log_session_start(markers=markers)
+
+
+def pytest_collection_modifyitems(session, config, items):
+    """Log number of tests found once collected."""
+    logger = get_logger()
+    total_tests = len(items)
+    logger.log_collection_modifyitems(total_tests=total_tests)
 
 
 def pytest_sessionfinish(session, exitstatus):
@@ -192,12 +200,6 @@ def pytest_sessionfinish(session, exitstatus):
     if hasattr(session, "testsfailed"):
         failed = session.testsfailed
         passed = session.testscollected - session.testsfailed
-        skipped = 0
-        errors = 0
-    else:
-        # Fallback for older pytest versions
-        failed = 0
-        passed = 0
         skipped = 0
         errors = 0
 

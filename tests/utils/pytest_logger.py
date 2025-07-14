@@ -70,16 +70,27 @@ class PytestStructuredLogger:
             **kwargs,
         }
 
-    def log_session_start(self, total_tests: int, markers: List[str] = []):
+    def log_session_start(self, markers: List[str] = []):
         """Log test session start."""
         if not self.enabled:
             return
 
         entry = self._create_base_entry(
             "session_start",
-            total_tests=total_tests,
             markers=markers,
             python_version=sys.version,
+            working_directory=str(Path.cwd()),
+        )
+        self.logger.info(json.dumps(entry))
+
+    def log_collection_modifyitems(self, total_tests: int):
+        """Log test session start."""
+        if not self.enabled:
+            return
+
+        entry = self._create_base_entry(
+            "collection_modifyitems",
+            total_tests=total_tests,
             working_directory=str(Path.cwd()),
         )
         self.logger.info(json.dumps(entry))

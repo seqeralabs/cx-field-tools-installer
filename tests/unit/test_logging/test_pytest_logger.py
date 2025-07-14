@@ -61,21 +61,20 @@ class TestPytestStructuredLogger:
         assert logger.enabled is False
 
         # Should not create log file when disabled
-        logger.log_session_start(5, ["test"])
+        logger.log_session_start(["test"])
         assert not self.log_file.exists()
 
     def test_log_session_start(self):
         """Test session start logging."""
         logger = PytestStructuredLogger(str(self.log_file))
 
-        logger.log_session_start(total_tests=10, markers=["local", "db"])
+        logger.log_session_start(markers=["local", "db"])
 
         entries = self.read_log_entries()
         assert len(entries) == 1
 
         entry = entries[0]
         assert entry["event_type"] == "session_start"
-        assert entry["total_tests"] == 10
         assert entry["markers"] == ["local", "db"]
         assert entry["test_session_id"] == logger.session_id
         assert "timestamp" in entry
@@ -208,7 +207,7 @@ class TestPytestStructuredLogger:
         """Test multiple log entries in sequence."""
         logger = PytestStructuredLogger(str(self.log_file))
 
-        logger.log_session_start(2, ["test"])
+        logger.log_session_start(["test"])
         logger.log_test_start("test1", ["marker1"], ["fixture1"])
         logger.log_test_result("test1", "PASSED", 1.0, "", "", "", ["marker1"], ["fixture1"])
         logger.log_test_end("test1", 1.0)
