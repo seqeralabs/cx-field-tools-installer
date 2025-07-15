@@ -98,6 +98,19 @@ class PytestStructuredLogger:
         )
         self.logger.info(json.dumps(entry))
 
+    def log_deselected(self, deselected_count: int, reasons: List[str] = []):
+        """Log information about tests that were deselected (filtered out)."""
+        if not self.enabled:
+            return
+
+        entry = self._create_base_entry(
+            "deselected",
+            deselected_count=deselected_count,
+            reasons=reasons,
+            working_directory=str(Path.cwd()),
+        )
+        self.logger.info(json.dumps(entry))
+
     def log_session_end(self, passed: int, failed: int, skipped: int, errors: int, duration: float):
         """Log test session end with summary."""
         if not self.enabled:

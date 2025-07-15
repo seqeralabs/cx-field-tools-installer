@@ -7,6 +7,10 @@ Testing framework implement via Python and Bash (_leveraging native Terraform ca
 - `pip install pyyaml`
 
 
+## WARNING
+If you have pytest enabled in VSCode (_via `.vscode.settings.json` > `"python.testing.pytestEnabled": true`), the lifecycle hooks present in `tests/conftest.py` while pick up the test [collection process VSCode runs in the background](https://stackoverflow.com/questions/75481879/multiple-pytest-sessions-during-tests-run), making it look like TWO pytest sessions are running (_instead of the expected one_).
+This took MANY hours to figure out. Don't get caught by it too.
+
 ## Testing Scopes
 ###  Local Testing (Plan-Only)
 Run tests as far left as possible (_e.g. no reliance on spawned infrastructure_). Cache results for faster `n+1` iterations. Idea is to run this suite often (_to validate bother human- and agent-generated code_), so they need to be comprehensive and execute quickly.

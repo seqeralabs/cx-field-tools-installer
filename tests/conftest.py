@@ -158,6 +158,7 @@ Key Point:
 - The pytest_sessionstart hook is called before test collection, so you cannot reliably access the total number of tests at this point.
 - The correct place to access the number of collected tests is in the pytest_collection_finish hook, which runs after collection is complete.
 """
+global_marker_expression = []
 
 
 def pytest_sessionstart(session):
@@ -175,6 +176,9 @@ def pytest_sessionstart(session):
             # This is a simplified approach - marker expressions can be complex
             markers = [marker_expr]  # Store as list with the full expression
 
+            global global_marker_expression
+            global_marker_expression = [marker_expr]
+
     logger.log_session_start(markers=markers)
 
 
@@ -183,6 +187,28 @@ def pytest_collection_modifyitems(session, config, items):
     logger = get_logger()
     total_tests = len(items)
     logger.log_collection_modifyitems(total_tests=total_tests)
+
+
+def pytest_deselected(items):
+    """Log information about tests that were deselected (filtered out)."""
+    logger = get_logger()
+
+    # Count deselected tests by reason
+    deselected_count = len(items)
+
+    # Try to determine the reason for deselection
+    deselection_reasons = []
+    for item in items:
+        if hasattr(item, "deselected_reason"):
+            deselection_reasons.append(item.deselected_reason)
+
+    # Add identifier for the marker expression used to deselect tests.
+    global global_marker_expression
+    if len(global_marker_expression) > 0:
+        deselection_reasons.append(f"Presence of marker: {global_marker_expression[0]}")
+
+    # Log deselection information
+    logger.log_deselected(deselected_count=deselected_count, reasons=deselection_reasons)
 
 
 def pytest_sessionfinish(session, exitstatus):
