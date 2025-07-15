@@ -279,7 +279,7 @@ class TestLoggerGlobals:
         assert session_id1 != session_id2
 
 
-@pytest.mark.log_enabled
+@pytest.mark.logger
 class TestLoggerIntegration:
     """Integration tests for logger with pytest."""
 

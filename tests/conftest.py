@@ -17,10 +17,12 @@ from tests.utils.local import test_tfvars_source, test_tfvars_target
 from tests.utils.local import test_tfvars_override_source, test_tfvars_override_target
 from tests.utils.local import test_case_override_target
 
+from tests.utils.local import root
 from tests.utils.local import copy_file, move_file
 from tests.utils.local import prepare_plan
 from tests.utils.local import run_terraform_apply, run_terraform_destroy
 from tests.utils.local import execute_subprocess
+
 from tests.utils.pytest_logger import get_logger
 
 
@@ -158,30 +160,21 @@ Key Point:
 """
 
 
-def pytest_configure(config):
-    """Configure pytest structured logging."""
-    # Initialize logger at session start
-    get_logger()
-
-    # Add command line option for controlling logging
-    config.addinivalue_line("markers", "log_enabled: mark test to explicitly enable structured logging")
-
-
 def pytest_sessionstart(session):
     """Log session start information."""
     logger = get_logger()
 
-    # Count total tests
-    total_tests = session.testscollected if hasattr(session, "testscollected") else 0
-
     # Extract markers from config
-    # Checks if the session config has an option attribute, and - if present - that has
-    # an `m`` attribute (where pytest stores marker expressions from the command line, e.g., -m "slow").
+    # WARNING: Originally looked for `session.config.option.m` but this is not set in the config.
+    # Instead, we use `session.config.option.markexpr` which is set in the config.
     markers = []
-    if hasattr(session.config, "option") and hasattr(session.config.option, "m"):
-        markers = session.config.option.m or []
+    if hasattr(session.config, "option") and hasattr(session.config.option, "markexpr"):
+        marker_expr = session.config.option.markexpr
+        if marker_expr:
+            # Convert marker expression to list format for logging
+            # This is a simplified approach - marker expressions can be complex
+            markers = [marker_expr]  # Store as list with the full expression
 
-    # logger.log_session_start(total_tests=total_tests, markers=markers)
     logger.log_session_start(markers=markers)
 
 
@@ -197,12 +190,12 @@ def pytest_sessionfinish(session, exitstatus):
     logger = get_logger()
 
     # Get test results summary from terminalreporter
-    reporter = session.config.pluginmanager.get_plugin('terminalreporter')
+    reporter = session.config.pluginmanager.get_plugin("terminalreporter")
     if reporter:
-        passed = len(reporter.stats.get('passed', []))
-        failed = len(reporter.stats.get('failed', []))
-        skipped = len(reporter.stats.get('skipped', []))
-        errors = len(reporter.stats.get('error', []))
+        passed = len(reporter.stats.get("passed", []))
+        failed = len(reporter.stats.get("failed", []))
+        skipped = len(reporter.stats.get("skipped", []))
+        errors = len(reporter.stats.get("error", []))
     else:
         # Fallback if terminalreporter is not available
         passed = failed = skipped = errors = 0
@@ -236,16 +229,17 @@ def pytest_runtest_setup(item):
 
 def pytest_runtest_teardown(item, nextitem):
     """Log test teardown/end."""
-    logger = get_logger()
+    # logger = get_logger()
 
-    test_path = str(item.fspath) + "::" + item.name
+    # test_path = str(item.fspath) + "::" + item.name
 
-    # Calculate duration if available
-    duration = 0.0
-    if hasattr(item, "duration"):
-        duration = item.duration
+    # # Calculate duration if available
+    # duration = 0.0
+    # if hasattr(item, "duration"):
+    #     duration = item.duration
 
-    logger.log_test_end(test_path=test_path, duration=duration)
+    # logger.log_test_end(test_path=test_path, duration=duration)
+    pass
 
 
 def pytest_runtest_logreport(report):

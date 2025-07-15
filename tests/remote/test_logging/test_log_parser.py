@@ -297,7 +297,7 @@ class TestPytestLogParser:
         assert "No log entries found for testing" in llm_test_output
 
 
-@pytest.mark.log_enabled
+@pytest.mark.logger
 class TestLogParserIntegration:
     """Integration tests for log parser."""
 

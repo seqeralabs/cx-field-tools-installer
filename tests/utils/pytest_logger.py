@@ -13,6 +13,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
+from tests.utils.local import root
+
 
 class LogLevel(Enum):
     DEBUG = logging.DEBUG
@@ -121,6 +123,7 @@ class PytestStructuredLogger:
 
         entry = self._create_base_entry(
             "test_start",
+            # test_path=test_path.replace(root, "<PROJECT_ROOT>"),
             test_path=test_path,
             metadata={"markers": markers, "fixtures": fixtures, "parametrize": parametrize},
         )
@@ -160,7 +163,8 @@ class PytestStructuredLogger:
 
         entry = self._create_base_entry(
             "test_result",
-            test_path=test_path,
+            # test_path=test_path,
+            test_path=f"{root}/tests/{test_path}",
             status=status,
             duration=duration,
             stdout=stdout,
