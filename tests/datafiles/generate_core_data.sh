@@ -1,13 +1,19 @@
 #!/bin/bash
 
 # NOTE: This script expects to be run from ROOT/tests/datafiles/
+# Ensure we are in that folder.
+echo $(dirname $0)
+cd $(dirname $0)
 
 echo "generate_core_data.sh: Current directory is $PWD"
 
-# Generate core data
+# Removing existing files
+echo "Removing existing files."
+rm -f *.tfvars
+rm -f ssm_sensitive_values_*_testing.json
+
+# Generate core terraform.tfvars file from template
 echo "Generating base terraform.tfvars file from templates/TEMPLATE_terraform.tfvars"
-
-
 cp ../../templates/TEMPLATE_terraform.tfvars terraform.tfvars
 
 
@@ -25,6 +31,13 @@ use_mocks = true
 ## ------------------------------------------------------------------------------------
 ## Testing - Core Override
 ## ------------------------------------------------------------------------------------
+app_name = "tower-testing"
+
+secrets_bootstrap_tower       = "/seqera/sensitive-values/tower-testing/tower"
+secrets_bootstrap_seqerakit   = "/seqera/sensitive-values/tower-testing/seqerakit"
+secrets_bootstrap_groundswell = "/seqera/sensitive-values/tower-testing/groundswell"
+secrets_bootstrap_wave_lite   = "/seqera/sensitive-values/tower-testing/wave-lite"
+
 aws_account = "128997144437"
 aws_region  = "us-east-1"
 aws_profile = "development"
@@ -216,3 +229,39 @@ seqerakit_flag_credential_create_codecommit = false
 seqerakit_flag_credential_use_aws_role           = true
 seqerakit_flag_credential_use_codecommit_baseurl = false
 EOF
+
+
+# # Move override file to PROJ_ROOT
+# echo "Relocating terraform test files to PROJ_ROOT."
+# cp ../../templates/TEMPLATE_terraform.tfvars terraform.tfvars
+
+
+## ------------------------------------------------------------------------------------
+## WRITE TESTING SECRETS TO SSM
+## ------------------------------------------------------------------------------------
+echo "Creating omnibus testing secrets."
+python3 generate_testing_secrets.py
+
+aws ssm put-parameter \
+  --name "/seqera/sensitive-values/tower-testing/tower" \
+  --value "$(cat ssm_sensitive_values_tower_testing.json)" \
+  --type "SecureString" \
+  --overwrite
+
+aws ssm put-parameter \
+  --name "/seqera/sensitive-values/tower-testing/groundswell" \
+  --value "$(cat ssm_sensitive_values_groundswell_testing.json)" \
+  --type "SecureString" \
+  --overwrite
+
+aws ssm put-parameter \
+  --name "/seqera/sensitive-values/tower-testing/seqerakit" \
+  --value "$(cat ssm_sensitive_values_seqerakit_testing.json)" \
+  --type "SecureString" \
+  --overwrite
+
+aws ssm put-parameter \
+  --name "/seqera/sensitive-values/tower-testing/wave-lite" \
+  --value "$(cat ssm_sensitive_values_wave_lite_testing.json)" \
+  --type "SecureString" \
+  --overwrite

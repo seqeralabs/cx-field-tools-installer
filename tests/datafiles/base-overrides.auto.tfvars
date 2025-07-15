@@ -8,6 +8,13 @@ use_mocks = true
 ## ------------------------------------------------------------------------------------
 ## Testing - Core Override
 ## ------------------------------------------------------------------------------------
+app_name = "tower-testing"
+
+secrets_bootstrap_tower       = "/seqera/sensitive-values/tower-testing/tower"
+secrets_bootstrap_seqerakit   = "/seqera/sensitive-values/tower-testing/seqerakit"
+secrets_bootstrap_groundswell = "/seqera/sensitive-values/tower-testing/groundswell"
+secrets_bootstrap_wave_lite   = "/seqera/sensitive-values/tower-testing/wave-lite"
+
 aws_account = "128997144437"
 aws_region  = "us-east-1"
 aws_profile = "development"
