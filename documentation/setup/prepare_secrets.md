@@ -19,7 +19,7 @@ If you do not intend to use a specific feature, we suggest simply retaining the 
 
 1. Modify the [`ssm_sensitive_values_tower.json`](../../templates/ssm_sensitive_values_tower.json) in the `templates` folder:
 
-    1. Perform a find-and-replace on `tower-dev` if you select a different application name.
+    1. Perform a find-and-replace on `tower-template` if you select a different application name.
 
     2. Replace every instance of `CHANGE_ME` in the file with the values supplied to you during your Seqera onboarding.
 
@@ -40,7 +40,7 @@ If you do not intend to use a specific feature, we suggest simply retaining the 
 
 1. Modify the [`ssm_sensitive_values_seqerakit.json`](templates/ssm_sensitive_values_seqerakit.json) in the `templates` folder:
 
-    1. Execute a find-and-replace on `tower-dev` if you select a different application name.
+    1. Execute a find-and-replace on `tower-template` if you select a different application name.
 
     2. Replace every instance of `CHANGE_ME` in the file with the [values appropriate for your organization](https://github.com/seqeralabs/nf-tower-aws).
 
@@ -57,7 +57,7 @@ If you do not intend to use a specific feature, we suggest simply retaining the 
 
 1. Modify the [`ssm_sensitive_values_groundswell.json`](templates/ssm_sensitive_values_groundswell.json) in the `templates` folder:
 
-    1. Execute a find-and-replace on `tower-dev` if you select a different application name.
+    1. Execute a find-and-replace on `tower-template` if you select a different application name.
 
     2. Replace default values if necessary.
 
@@ -66,7 +66,7 @@ If you do not intend to use a specific feature, we suggest simply retaining the 
 
 1. Modify the [`ssm_sensitive_values_wave_lite.json`](../../templates/ssm_sensitive_values_wave_lite.json) in the `templates` folder:
 
-    1. Perform a find-and-replace on `tower-dev` if you select a different application name.
+    1. Perform a find-and-replace on `tower-template` if you select a different application name.
 
     2. Replace every instance of `CHANGE_ME_SEE_SEQERA_DOCS` with your own values. 
     
