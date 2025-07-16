@@ -1,11 +1,12 @@
 import pytest
 import subprocess
+import json
 
-from tests.utils.local import root
+from tests.utils.local import root, test_tfvars_target, test_tfvars_override_target, test_case_override_target
 from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
-from tests.utils.local import read_yaml
-from tests.utils.local import parse_key_value_file
+from tests.utils.local import parse_key_value_file, read_file, read_yaml, read_json
 
+from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
 
 ## ------------------------------------------------------------------------------------
 ## Tower Config File Checks
@@ -407,3 +408,52 @@ def test_default_config_data_studios_env(backup_tfvars, config_baseline_settings
         assert key2 not in keys
     else:
         assert key2 in keys
+
+
+@pytest.mark.local
+@pytest.mark.config_keys
+@pytest.mark.vpc_existing
+@pytest.mark.quick
+def test_default_config_tower_sql(backup_tfvars, config_baseline_settings_default):
+    """
+    Test the target tower.sql generated from default test terraform.tfvars and base-override.auto.tfvars.
+    """
+
+    # Given
+    print("Testing tower.sql generated from default settings.")
+
+    # Get all tfvars files and create omnibus document
+    tfvars = parse_key_value_file(test_tfvars_target)
+    base_overrides = parse_key_value_file(test_tfvars_override_target)
+    try:
+        test_overrides = parse_key_value_file(test_case_override_target)
+    except FileNotFoundError:
+        test_overrides = {}
+
+    tfvars.update({k: base_overrides[k] for k in base_overrides.keys()})
+    tfvars.update({k: test_overrides[k] for k in test_overrides.keys()})
+
+    # Get values for comparison
+    db_database_name = tfvars["db_database_name"]
+    ssm_data = read_json(ssm_tower)
+    sql_content = read_file(f"{root}/assets/target/tower_config/tower.sql")
+
+    # Remove quotes from database name if present
+    expected_db_name = db_database_name.strip('"')
+    expected_user = ssm_data["TOWER_DB_USER"]["value"]
+    expected_password = ssm_data["TOWER_DB_PASSWORD"]["value"]
+
+    # ------------------------------------------------------------------------------------
+    # Test tower.sql - validate all interpolated variables are properly replaced
+    # ------------------------------------------------------------------------------------
+    assert f"CREATE DATABASE {expected_db_name};" in sql_content
+    assert f"ALTER DATABASE {expected_db_name} CHARACTER SET utf8 COLLATE utf8_bin;" in sql_content
+    assert f'GRANT ALL PRIVILEGES ON {expected_db_name}.* TO {expected_user}@"%";' in sql_content
+
+    # Test that user credentials are properly interpolated
+    assert f'CREATE USER "{expected_user}" IDENTIFIED BY "{expected_password}";' in sql_content
+
+    # Additional validation: ensure no template variables remain
+    assert "${db_database_name}" not in sql_content
+    assert "${db_tower_user}" not in sql_content
+    assert "${db_tower_password}" not in sql_content

@@ -61,6 +61,11 @@ test_tfvars_override_target = f"{root}/base-overrides.auto.tfvars"
 
 test_case_override_target = f"{root}/override.auto.tfvars"
 
+# SSM (testing) secrets
+ssm_tower = f"{root}/tests/datafiles/ssm_sensitive_values_tower_testing.json"
+ssm_groundswell = f"{root}/tests/datafiles/ssm_sensitive_values_groundswell_testing.json"
+ssm_seqerakit = f"{root}/tests/datafiles/ssm_sensitive_values_seqerakit_testing.json"
+ssm_wave_lite = f"{root}/tests/datafiles/ssm_sensitive_values_wave_lite_testing.json"
 
 # Tfplan files and caching folder
 plan_cache_dir = f"{root}/tests/.plan_cache"
