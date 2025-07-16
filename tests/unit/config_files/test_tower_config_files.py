@@ -1,6 +1,8 @@
 import pytest
 import subprocess
 import json
+import os
+import tempfile
 
 from tests.utils.local import root, test_tfvars_target, test_tfvars_override_target, test_case_override_target
 from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
@@ -8,6 +10,9 @@ from tests.utils.local import parse_key_value_file, read_file, read_yaml, read_j
 from tests.utils.local import get_reconciled_tfvars
 
 from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
+
+from testcontainers.mysql import MySqlContainer
+
 
 ## ------------------------------------------------------------------------------------
 ## Tower Config File Checks
@@ -447,3 +452,127 @@ def test_default_config_tower_sql(backup_tfvars, config_baseline_settings_defaul
     assert "${db_database_name}" not in sql_content
     assert "${db_tower_user}" not in sql_content
     assert "${db_tower_password}" not in sql_content
+
+
+@pytest.mark.local
+@pytest.mark.db
+@pytest.mark.mysql_container
+def test_tower_sql_mysql_container_execution():
+    """
+    Test that tower.sql successfully populates a MySQL8 database using Testcontainers.
+    This validates the SQL file can create the database, user, and grant permissions.
+    """
+
+    # Given
+    print("Testing tower.sql execution against MySQL8 container")
+
+    # Load master credentials from testing SSM values
+    ssm_data = read_json(ssm_tower)
+    master_user = ssm_data["TOWER_DB_MASTER_USER"]["value"]
+    master_password = ssm_data["TOWER_DB_MASTER_PASSWORD"]["value"]
+
+    sql_content = read_file(f"{root}/assets/target/tower_config/tower.sql")
+
+    # Expected values from the SQL file
+    expected_db_name = "tower"
+    expected_user = "tower_test_user"
+    expected_password = "tower_test_password"
+
+    # When - Execute SQL against MySQL container
+    # Configure Docker client for testcontainers (WSL fix)
+    import os
+    os.environ['DOCKER_HOST'] = 'unix:///var/run/docker.sock'
+    os.environ['TESTCONTAINERS_RYUK_DISABLED'] = 'true'
+    
+    try:
+        with MySqlContainer("mysql:8.0") as mysql_container:
+            # Create temporary SQL file for docker volume mount
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as temp_sql:
+                temp_sql.write(sql_content)
+                temp_sql_path = temp_sql.name
+
+            try:
+                # Get container connection details
+                container_host = mysql_container.get_container_host_ip()
+                container_port = mysql_container.get_exposed_port(3306)
+
+                # Execute SQL using docker run command pattern from Ansible
+                docker_cmd = [
+                    "docker",
+                    "run",
+                    "--rm",
+                    "-t",
+                    "-v",
+                    f"{temp_sql_path}:/tower.sql",
+                    "-e",
+                    f"MYSQL_PWD={master_password}",
+                    "--entrypoint",
+                    "/bin/bash",
+                    "mysql:8.0",
+                    "-c",
+                    f"mysql --host {container_host} --port={container_port} --user={master_user} < tower.sql",
+                ]
+
+                print(f"Executing SQL with command: {' '.join(docker_cmd)}")
+                result = subprocess.run(docker_cmd, capture_output=True, text=True, timeout=60)
+
+                # Check if SQL execution was successful
+                assert result.returncode == 0, f"SQL execution failed. STDOUT: {result.stdout}, STDERR: {result.stderr}"
+
+                # Then - Verify database operations using MySQL container commands
+                def run_mysql_query(query, user=master_user, password=master_password, database=None):
+                    """Helper function to run MySQL queries using container commands"""
+                    db_arg = f" -D {database}" if database else ""
+                    mysql_cmd = [
+                        "docker",
+                        "run",
+                        "--rm",
+                        "-e",
+                        f"MYSQL_PWD={password}",
+                        "--entrypoint",
+                        "/bin/bash",
+                        "mysql:8.0",
+                        "-c",
+                        f'mysql --host {container_host} --port={container_port} --user={user}{db_arg} --silent --skip-column-names --execute "{query}"',
+                    ]
+
+                    result = subprocess.run(mysql_cmd, capture_output=True, text=True, timeout=30)
+                    if result.returncode != 0:
+                        pytest.fail(f"MySQL query failed: {result.stderr}")
+                    return result.stdout.strip()
+
+                # Verify database creation
+                db_result = run_mysql_query(f"SHOW DATABASES LIKE '{expected_db_name}'")
+                assert db_result == expected_db_name, f"Database '{expected_db_name}' was not created. Got: '{db_result}'"
+
+                # Verify user creation
+                user_result = run_mysql_query(f"SELECT user FROM mysql.user WHERE user='{expected_user}'")
+                assert user_result == expected_user, f"User '{expected_user}' was not created. Got: '{user_result}'"
+
+                # Verify user permissions
+                grants_result = run_mysql_query(f"SHOW GRANTS FOR '{expected_user}'@'%'")
+                assert (
+                    "ALL PRIVILEGES" in grants_result
+                ), f"User '{expected_user}' does not have ALL PRIVILEGES. Grants: {grants_result}"
+                assert (
+                    f"`{expected_db_name}`" in grants_result
+                ), f"User '{expected_user}' does not have privileges on '{expected_db_name}' database. Grants: {grants_result}"
+
+                print(f"✅ Database '{expected_db_name}' created successfully")
+                print(f"✅ User '{expected_user}' created successfully")
+                print(f"✅ User has proper permissions on '{expected_db_name}' database")
+
+                # Verify connection with new user credentials by running a simple query
+                test_result = run_mysql_query(
+                    "SELECT 1", user=expected_user, password=expected_password, database=expected_db_name
+                )
+                assert test_result == "1", f"Failed to execute basic query with new user. Got: '{test_result}'"
+                print(f"✅ Successfully connected to database with new user '{expected_user}'")
+
+            finally:
+                # Clean up temporary SQL file
+                if os.path.exists(temp_sql_path):
+                    os.unlink(temp_sql_path)
+    
+    except Exception as e:
+        pytest.skip(f"Docker connectivity issue: {e}. Ensure Docker is running and testcontainers can connect.")

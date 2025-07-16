@@ -3,8 +3,12 @@ Testing framework implement via Python and Bash (_leveraging native Terraform ca
 
 
 ## Necessary packages for testing
-- `pip install pytest`
-- `pip install pyyaml`
+```bash
+pip install pytest
+pip install pyyaml
+pip install testcontainers
+pip install testcontainers[postgres]
+```
 
 
 ## WARNING
