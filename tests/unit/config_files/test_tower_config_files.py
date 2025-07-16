@@ -397,7 +397,7 @@ def test_default_config_data_studios_env(backup_tfvars, config_baseline_settings
     assert ds_env_file[key] == str(value)
 
     key = "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN"
-    value = '"ipsemlorem"'  # TODO: Find better solution for this. Hacky.
+    value = "ipsemlorem"
     assert key in keys
     assert ds_env_file[key] == value
 
@@ -420,9 +420,6 @@ def test_default_config_tower_sql(backup_tfvars, config_baseline_settings_defaul
     """
 
     # Given
-    print("Testing tower.sql generated from default settings.")
-
-    # Get all tfvars files and create omnibus document
     tfvars = parse_key_value_file(test_tfvars_target)
     base_overrides = parse_key_value_file(test_tfvars_override_target)
     try:
@@ -439,7 +436,7 @@ def test_default_config_tower_sql(backup_tfvars, config_baseline_settings_defaul
     sql_content = read_file(f"{root}/assets/target/tower_config/tower.sql")
 
     # Remove quotes from database name if present
-    expected_db_name = db_database_name.strip('"')
+    expected_db_name = db_database_name
     expected_user = ssm_data["TOWER_DB_USER"]["value"]
     expected_password = ssm_data["TOWER_DB_PASSWORD"]["value"]
 
