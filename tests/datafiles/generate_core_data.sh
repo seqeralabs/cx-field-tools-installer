@@ -242,26 +242,49 @@ EOF
 echo "Creating omnibus testing secrets."
 python3 generate_testing_secrets.py
 
-aws ssm put-parameter \
-  --name "/seqera/sensitive-values/tower-testing/tower" \
-  --value "$(cat ssm_sensitive_values_tower_testing.json)" \
-  --type "SecureString" \
-  --overwrite
+# Function to create or update SSM parameter with hash comparison
+update_ssm_parameter() {
+    local param_name="$1"
+    local local_file="$2"
+    
+    echo "Processing parameter: $param_name"
+    
+    # Try to get current value (single call)
+    current_value=$(aws ssm get-parameter --name "$param_name" --with-decryption --query 'Parameter.Value' --output text 2>/dev/null)
+    
+    if [ $? -eq 0 ]; then
+        echo "Parameter $param_name exists, checking if update is needed..."
+        
+        # Hash the current value
+        current_hash=$(echo -n "$current_value" | sha256sum | cut -d' ' -f1)
+        
+        # Get local file content and hash it
+        local_content=$(cat "$local_file")
+        local_hash=$(echo -n "$local_content" | sha256sum | cut -d' ' -f1)
+        
+        # Compare hashes
+        if [ "$current_hash" = "$local_hash" ]; then
+            echo "Parameter $param_name is up to date (hash match)"
+            return 0
+        else
+            echo "Parameter $param_name needs update (hash mismatch)"
+        fi
+    else
+        echo "Parameter $param_name does not exist, creating..."
+    fi
+    
+    # Create or update parameter
+    aws ssm put-parameter \
+        --name "$param_name" \
+        --value "$(cat "$local_file")" \
+        --type "SecureString" \
+        --overwrite
+        
+    echo "Parameter $param_name updated successfully"
+}
 
-aws ssm put-parameter \
-  --name "/seqera/sensitive-values/tower-testing/groundswell" \
-  --value "$(cat ssm_sensitive_values_groundswell_testing.json)" \
-  --type "SecureString" \
-  --overwrite
-
-aws ssm put-parameter \
-  --name "/seqera/sensitive-values/tower-testing/seqerakit" \
-  --value "$(cat ssm_sensitive_values_seqerakit_testing.json)" \
-  --type "SecureString" \
-  --overwrite
-
-aws ssm put-parameter \
-  --name "/seqera/sensitive-values/tower-testing/wave-lite" \
-  --value "$(cat ssm_sensitive_values_wave_lite_testing.json)" \
-  --type "SecureString" \
-  --overwrite
+# Update all SSM parameters
+update_ssm_parameter "/seqera/sensitive-values/tower-testing/tower" "ssm_sensitive_values_tower_testing.json"
+update_ssm_parameter "/seqera/sensitive-values/tower-testing/groundswell" "ssm_sensitive_values_groundswell_testing.json"
+update_ssm_parameter "/seqera/sensitive-values/tower-testing/seqerakit" "ssm_sensitive_values_seqerakit_testing.json"
+update_ssm_parameter "/seqera/sensitive-values/tower-testing/wave-lite" "ssm_sensitive_values_wave_lite_testing.json"
