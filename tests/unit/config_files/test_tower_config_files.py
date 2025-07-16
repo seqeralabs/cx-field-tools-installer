@@ -5,6 +5,7 @@ import json
 from tests.utils.local import root, test_tfvars_target, test_tfvars_override_target, test_case_override_target
 from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
 from tests.utils.local import parse_key_value_file, read_file, read_yaml, read_json
+from tests.utils.local import get_reconciled_tfvars
 
 from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
 
@@ -420,15 +421,7 @@ def test_default_config_tower_sql(backup_tfvars, config_baseline_settings_defaul
     """
 
     # Given
-    tfvars = parse_key_value_file(test_tfvars_target)
-    base_overrides = parse_key_value_file(test_tfvars_override_target)
-    try:
-        test_overrides = parse_key_value_file(test_case_override_target)
-    except FileNotFoundError:
-        test_overrides = {}
-
-    tfvars.update({k: base_overrides[k] for k in base_overrides.keys()})
-    tfvars.update({k: test_overrides[k] for k in test_overrides.keys()})
+    tfvars = get_reconciled_tfvars()
 
     # Get values for comparison
     db_database_name = tfvars["db_database_name"]

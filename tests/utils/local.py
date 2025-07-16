@@ -287,3 +287,25 @@ def parse_key_value_file(file_path: str) -> Dict[str, Any]:
             result[key.strip()] = value.strip()
 
     return result
+
+
+def get_reconciled_tfvars() -> Dict[str, Any]:
+    """
+    Return single consolidated file comprising:
+
+    - test_tfvars_target
+    - (updated by) test_tfvars_override_target
+    - (updated by) test_case_override_target
+    """
+    tfvars = parse_key_value_file(test_tfvars_target)
+    base_overrides = parse_key_value_file(test_tfvars_override_target)
+    try:
+        # Test case override file may not exist.
+        test_overrides = parse_key_value_file(test_case_override_target)
+    except FileNotFoundError:
+        test_overrides = {}
+
+    tfvars.update({k: base_overrides[k] for k in base_overrides.keys()})
+    tfvars.update({k: test_overrides[k] for k in test_overrides.keys()})
+
+    return tfvars
