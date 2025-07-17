@@ -473,26 +473,20 @@ def test_tower_sql_mysql_container_execution(backup_tfvars, config_baseline_sett
 
     # Given
     tfvars = get_reconciled_tfvars()
+    ssm_data = read_json(ssm_tower)
+    sql_content = read_file(f"{root}/assets/target/tower_config/tower.sql")
 
+    # Note: Hack to emulate RDS master user / password.
+    # TODO: Use the master user / password from the SSM values.
     mock_master_user = "root"
     mock_master_password = "test"
     mock_db_name = "test"
 
-    # Load master credentials from testing SSM values
-    ssm_data = read_json(ssm_tower)
     tower_db_user = ssm_data["TOWER_DB_USER"]["value"]
     tower_db_password = ssm_data["TOWER_DB_PASSWORD"]["value"]
     tower_db_name = tfvars["db_database_name"]
 
-    sql_content = read_file(f"{root}/assets/target/tower_config/tower.sql")
-
     # When - Execute SQL against MySQL container
-    # Configure Docker client for testcontainers (WSL fix)
-    import os
-
-    # os.environ["DOCKER_HOST"] = "unix:///var/run/docker.sock"
-    # os.environ["TESTCONTAINERS_RYUK_DISABLED"] = "true"
-
     with (
         MySqlContainer("mysql:8.0", root_password=mock_master_password)
         .with_env("MYSQL_USER", mock_master_user)
@@ -505,51 +499,36 @@ def test_tower_sql_mysql_container_execution(backup_tfvars, config_baseline_sett
             temp_sql.write(sql_content)
             temp_sql_path = temp_sql.name
 
-        # import time
-        # time.sleep(300)
-
         try:
-            # Execute SQL using docker run command pattern from Ansible
-            docker_cmd = (
-                f"docker run --rm -t -v {temp_sql_path}:/tower.sql "
-                + f"-e MYSQL_PWD={mock_master_password} --entrypoint /bin/bash "
-                + f"--add-host host.docker.internal:host-gateway mysql:8.0 "
-                + f"-c 'mysql --host host.docker.internal --port=3306 --user={mock_master_user} < tower.sql'"
-            )
-
-            # docker_cmd = (
-            #     f"docker run --rm -t -v {temp_sql_path}:/tower.sql "
-            #     + f"-e MYSQL_PWD={mock_master_password} --entrypoint /bin/sleep "
-            #     + f"--add-host host.docker.internal:host-gateway mysql:8.0 300 "
-            # )
-
+            # Emulate execution of RDS prepping script in Ansilble.
+            # NOTE: Since we cant change the container master user from 'root', fudging login with another "master" user.
+            #   This is a hack, but it serves its purpose given the constraints.
+            docker_cmd = f"""
+                docker run --rm -t -v {temp_sql_path}:/tower.sql \
+                  -e MYSQL_PWD={mock_master_password} --entrypoint /bin/bash \
+                  --add-host host.docker.internal:host-gateway mysql:8.0 \
+                  -c 'mysql --host host.docker.internal --port=3306 --user={mock_master_user} < tower.sql'
+            """
             result = subprocess.run(docker_cmd, shell=True, capture_output=True, text=True, timeout=60)
-            assert result.returncode == 0, f"SQL execution failed. STDOUT: {result.stdout}, STDERR: {result.stderr}"
-
-            # import time
-
-            # time.sleep(300)
+            assert result.returncode == 0
 
             # Then - Verify database operations using MySQL container commands
             def run_mysql_query(query, user=mock_master_user, password=mock_master_password, database=None):
                 """Helper function to run MySQL queries using container commands"""
+
+                # Create temporary SQL file for docker volume mount (avoids nested quotes nightmare)
                 with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as query_sql:
-                    print(f"SQL query is: {query}")
                     query_sql.write(query)
                     query_sql_path = query_sql.name
 
-                mysql_cmd = (
-                    f"docker run --rm -t -v {query_sql_path}:/query.sql "
-                    + f"-e MYSQL_PWD={password} --entrypoint /bin/bash "
-                    + "--add-host host.docker.internal:host-gateway mysql:8.0 "
-                    # + f"-c 'mysql --host host.docker.internal --port=3306 --user={user} --silent --skip-column-names --execute \"{query}\"'"
-                    + f"-c 'mysql --host host.docker.internal --port=3306 --user={user} --silent --skip-column-names < query.sql'"
-                )
+                mysql_cmd = f"""
+                    docker run --rm -t -v {query_sql_path}:/query.sql \
+                      -e MYSQL_PWD={password} --entrypoint /bin/bash \
+                      --add-host host.docker.internal:host-gateway mysql:8.0 \
+                      -c 'mysql --host host.docker.internal --port=3306 --user={user} --silent --skip-column-names < query.sql'
+                """
                 result = subprocess.run(mysql_cmd, shell=True, capture_output=True, text=True, timeout=30)
-                if result.returncode != 0:
-                    pytest.fail(f"MySQL query failed: {result.stderr}")
-                else:
-                    print(f"✅ MySQL query succeeded: {result.stdout}")
+                assert result.returncode == 0
                 return result.stdout.strip()
 
             # Verify database creation
@@ -565,16 +544,11 @@ def test_tower_sql_mysql_container_execution(backup_tfvars, config_baseline_sett
             assert "ALL PRIVILEGES" in grants_result
             assert f"`{tower_db_name}`" in grants_result
 
-            print(f"✅ Database '{tower_db_name}' created successfully")
-            print(f"✅ User '{tower_db_user}' created successfully")
-            print(f"✅ User has proper permissions on '{tower_db_name}' database")
-
             # Verify connection with new user credentials by running a simple query
             test_result = run_mysql_query(
                 "SELECT 1;", user=tower_db_user, password=tower_db_password, database=tower_db_name
             )
-            assert test_result == "1", f"Failed to execute basic query with new user. Got: '{test_result}'"
-            print(f"✅ Successfully connected to database with new user '{tower_db_user}'")
+            assert test_result == "1"
 
         finally:
             # Clean up temporary SQL file
