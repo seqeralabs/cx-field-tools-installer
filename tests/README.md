@@ -8,6 +8,10 @@ pip install pytest
 pip install pyyaml
 pip install testcontainers
 pip install testcontainers[postgres]
+
+# Note: Requests 2.32.1+ causes problems with `docker-py` and Testcontainer (e.g. "Not supported URL scheme http+docker").
+# Resolve by downgrading requests
+pip install requests=2.31.0
 ```
 
 
