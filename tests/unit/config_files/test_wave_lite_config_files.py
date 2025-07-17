@@ -18,7 +18,7 @@ from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wav
 @pytest.mark.local
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
-@pytest.mark.quick
+@pytest.mark.long
 def test_default_config_wave_lite_container_1_sql(backup_tfvars, config_baseline_settings_default):
     """
     Test the target wave-lite-container-1.sql generated from default test terraform.tfvars and base-override.auto.tfvars.
@@ -55,7 +55,7 @@ def test_default_config_wave_lite_container_1_sql(backup_tfvars, config_baseline
 @pytest.mark.local
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
-@pytest.mark.quick
+@pytest.mark.long
 def test_default_config_wave_lite_container_2_sql(backup_tfvars, config_baseline_settings_default):
     """
     Test the target wave-lite-container-2.sql generated from default test terraform.tfvars and base-override.auto.tfvars.
@@ -92,7 +92,7 @@ def test_default_config_wave_lite_container_2_sql(backup_tfvars, config_baseline
 @pytest.mark.local
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
-@pytest.mark.quick
+@pytest.mark.long
 def test_default_config_wave_lite_rds_sql(backup_tfvars, config_baseline_settings_default):
     """
     Test the target wave-lite-rds.sql generated from default test terraform.tfvars and base-override.auto.tfvars.
@@ -140,7 +140,7 @@ def test_default_config_wave_lite_rds_sql(backup_tfvars, config_baseline_setting
 @pytest.mark.local
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
-@pytest.mark.quick
+@pytest.mark.long
 def test_default_config_wave_lite_yml(backup_tfvars, config_baseline_settings_default):
     """
     Test the target wave-lite.yml generated from default test terraform.tfvars and base-override.auto.tfvars.

@@ -23,7 +23,7 @@ from testcontainers.mysql import MySqlContainer
 @pytest.mark.local
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
-@pytest.mark.quick
+@pytest.mark.long
 def test_default_config_tower_env(backup_tfvars, config_baseline_settings_default):  # teardown_tf_state_all):
     """
     Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars.
@@ -265,7 +265,7 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
 @pytest.mark.local
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
-@pytest.mark.quick
+@pytest.mark.long
 def test_default_config_tower_yml(backup_tfvars, config_baseline_settings_default):  # teardown_tf_state_all):
     """
     Test the target tower.yml generated from default test terraform.tfvars and base-override.auto.tfvars.
@@ -345,7 +345,7 @@ def test_default_config_tower_yml(backup_tfvars, config_baseline_settings_defaul
 @pytest.mark.local
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
-@pytest.mark.quick
+@pytest.mark.long
 def test_default_config_data_studios_env(backup_tfvars, config_baseline_settings_default):
     """
     Test the target data-studio.env generated from default test terraform.tfvars and base-override.auto.tfvars.
@@ -419,7 +419,7 @@ def test_default_config_data_studios_env(backup_tfvars, config_baseline_settings
 @pytest.mark.local
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
-@pytest.mark.quick
+@pytest.mark.long
 def test_default_config_tower_sql(backup_tfvars, config_baseline_settings_default):
     """
     Test the target tower.sql generated from default test terraform.tfvars and base-override.auto.tfvars.
@@ -457,6 +457,7 @@ def test_default_config_tower_sql(backup_tfvars, config_baseline_settings_defaul
 @pytest.mark.local
 @pytest.mark.db
 @pytest.mark.mysql_container
+@pytest.mark.long
 def test_tower_sql_mysql_container_execution(backup_tfvars, config_baseline_settings_default):
     """
     Test that tower.sql successfully populates a MySQL8 database using Testcontainers.
