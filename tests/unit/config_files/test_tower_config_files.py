@@ -513,51 +513,67 @@ def test_tower_sql_mysql_container_execution(backup_tfvars, config_baseline_sett
                 f"docker run --rm -t -v {temp_sql_path}:/tower.sql "
                 + f"-e MYSQL_PWD={mock_master_password} --entrypoint /bin/bash "
                 + f"--add-host host.docker.internal:host-gateway mysql:8.0 "
-                + f"-c 'mysql --host host.docker.internal --port=3306 --user={mock_master_user} --password={mock_master_password} < tower.sql'"
+                + f"-c 'mysql --host host.docker.internal --port=3306 --user={mock_master_user} < tower.sql'"
             )
+
+            # docker_cmd = (
+            #     f"docker run --rm -t -v {temp_sql_path}:/tower.sql "
+            #     + f"-e MYSQL_PWD={mock_master_password} --entrypoint /bin/sleep "
+            #     + f"--add-host host.docker.internal:host-gateway mysql:8.0 300 "
+            # )
+
             result = subprocess.run(docker_cmd, shell=True, capture_output=True, text=True, timeout=60)
             assert result.returncode == 0, f"SQL execution failed. STDOUT: {result.stdout}, STDERR: {result.stderr}"
 
+            # import time
+
+            # time.sleep(300)
+
             # Then - Verify database operations using MySQL container commands
-            def run_mysql_query(query, user=tower_db_user, password=tower_db_password, database=tower_db_name):
+            def run_mysql_query(query, user=mock_master_user, password=mock_master_password, database=None):
                 """Helper function to run MySQL queries using container commands"""
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as query_sql:
+                    print(f"SQL query is: {query}")
+                    query_sql.write(query)
+                    query_sql_path = query_sql.name
+
                 mysql_cmd = (
-                    f"docker run --rm -e MYSQL_PWD={password} --entrypoint /bin/bash "
-                    + f"--add-host host.docker.internal:host-gateway mysql:8.0 "
-                    + f"-c 'mysql --host host.docker.internal --port=3306 --user={user} --silent --skip-column-names --execute \"{query}\"'"
+                    f"docker run --rm -t -v {query_sql_path}:/query.sql "
+                    + f"-e MYSQL_PWD={password} --entrypoint /bin/bash "
+                    + "--add-host host.docker.internal:host-gateway mysql:8.0 "
+                    # + f"-c 'mysql --host host.docker.internal --port=3306 --user={user} --silent --skip-column-names --execute \"{query}\"'"
+                    + f"-c 'mysql --host host.docker.internal --port=3306 --user={user} --silent --skip-column-names < query.sql'"
                 )
                 result = subprocess.run(mysql_cmd, shell=True, capture_output=True, text=True, timeout=30)
                 if result.returncode != 0:
                     pytest.fail(f"MySQL query failed: {result.stderr}")
+                else:
+                    print(f"✅ MySQL query succeeded: {result.stdout}")
                 return result.stdout.strip()
 
             # Verify database creation
-            db_result = run_mysql_query(f"SHOW DATABASES LIKE '{tower_db_name}'")
-            assert db_result == tower_db_name, f"Database '{tower_db_name}' was not created. Got: '{db_result}'"
+            db_result = run_mysql_query(f"SHOW DATABASES LIKE '{tower_db_name}';")
+            assert db_result == tower_db_name
 
             # Verify user creation
-            user_result = run_mysql_query(f"SELECT user FROM mysql.user WHERE user='{expected_user}'")
-            assert user_result == expected_user, f"User '{expected_user}' was not created. Got: '{user_result}'"
+            user_result = run_mysql_query(f"SELECT user FROM mysql.user WHERE user='{tower_db_user}';")
+            assert user_result == tower_db_user
 
             # Verify user permissions
-            grants_result = run_mysql_query(f"SHOW GRANTS FOR '{expected_user}'@'%'")
-            assert (
-                "ALL PRIVILEGES" in grants_result
-            ), f"User '{expected_user}' does not have ALL PRIVILEGES. Grants: {grants_result}"
-            assert (
-                f"`{expected_db_name}`" in grants_result
-            ), f"User '{expected_user}' does not have privileges on '{expected_db_name}' database. Grants: {grants_result}"
+            grants_result = run_mysql_query(f"SHOW GRANTS FOR '{tower_db_user}'@'%';")
+            assert "ALL PRIVILEGES" in grants_result
+            assert f"`{tower_db_name}`" in grants_result
 
-            print(f"✅ Database '{expected_db_name}' created successfully")
-            print(f"✅ User '{expected_user}' created successfully")
-            print(f"✅ User has proper permissions on '{expected_db_name}' database")
+            print(f"✅ Database '{tower_db_name}' created successfully")
+            print(f"✅ User '{tower_db_user}' created successfully")
+            print(f"✅ User has proper permissions on '{tower_db_name}' database")
 
             # Verify connection with new user credentials by running a simple query
             test_result = run_mysql_query(
-                "SELECT 1", user=expected_user, password=expected_password, database=expected_db_name
+                "SELECT 1;", user=tower_db_user, password=tower_db_password, database=tower_db_name
             )
             assert test_result == "1", f"Failed to execute basic query with new user. Got: '{test_result}'"
-            print(f"✅ Successfully connected to database with new user '{expected_user}'")
+            print(f"✅ Successfully connected to database with new user '{tower_db_user}'")
 
         finally:
             # Clean up temporary SQL file
