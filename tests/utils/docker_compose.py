@@ -29,19 +29,30 @@ def prepare_wave_only_docker_compose(root: str) -> dict[str, Any]:
 
     retained_content["networks"] = docker_compose_data["networks"]
 
-    # The docker-commpose template file uses $HOME for its filemount roots. Change $HOME to `PROJECT_ROOT/assets/`
-    #  /var/lib/postgresql/data    (postgres)
-    #  /data                       (redis)
+    # Purge volumes (DB)
+    indices_to_purge = []
+    for i, volume in enumerate(retained_content["services"]["wave-db"]["volumes"]):
+        if ":/var/lib/postgresql/data" in volume:
+            indices_to_purge.append(i)
+    for i in reversed(indices_to_purge):
+        retained_content["services"]["wave-db"]["volumes"].pop(i)
+    if len(retained_content["services"]["wave-db"]["volumes"]) == 0:
+        retained_content["services"]["wave-db"].pop("volumes")
+
+    # Purge volumes (Redis)
+    indices_to_purge = []
+    for i, volume in enumerate(retained_content["services"]["wave-redis"]["volumes"]):
+        if ":/data" in volume:
+            indices_to_purge.append(i)
+    for i in reversed(indices_to_purge):
+        retained_content["services"]["wave-redis"]["volumes"].pop(i)
+    if len(retained_content["services"]["wave-redis"]["volumes"]) == 0:
+        retained_content["services"]["wave-redis"].pop("volumes")
+
+    # The docker-commpose template file uses $HOME for its filemount roots.
+    # 2. Change $HOME to `PROJECT_ROOT/assets/`
+
     text = yaml.dump(retained_content)
-    text = text.replace("$HOME", f"{root}/assets/")
-    # Dont want stateful containers - purge volume mount for:
-    text = text.replace("  - $HOME/.wave/db/postgresql:/var/lib/postgresql/data", "")
-    text = text.replace("  - $HOME/.wave/db/wave-lite-redis:/data", "")
+    text = text.replace("$HOME", f"{root}/assets")
 
-    # Let the testcases write these out to temporary file.
-    # Write the docker-compose.yml file
-    # write_file(f"{root}/assets/target/docker_compose/docker-compose-wave-only.yml", yaml.dump(docker_compose_data))
-
-    print(f"retained_content: {retained_content}")
     write_file(test_docker_compose_file, text)
-    # return retained_content

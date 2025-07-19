@@ -3,7 +3,10 @@ import subprocess
 import json
 import tempfile
 import os
+import time
 import yaml
+import urllib.request
+import urllib.error
 
 from tests.utils.local import root, test_tfvars_target, test_tfvars_override_target, test_case_override_target
 from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
@@ -12,7 +15,11 @@ from tests.utils.local import get_reconciled_tfvars
 
 from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
 
+from testcontainers.compose import DockerCompose
 from testcontainers.postgres import PostgresContainer
+
+from tests.utils.docker_compose import prepare_wave_only_docker_compose
+from tests.utils.local import test_docker_compose_file
 
 ## ------------------------------------------------------------------------------------
 ## Wave Lite Config File Checks
@@ -257,14 +264,6 @@ def test_wave_lite_sql_files_with_postgres_container(backup_tfvars, config_basel
         assert "DROP TABLE" in create_table_test
 
 
-from testcontainers.compose import ComposeContainer
-from tests.utils.docker_compose import prepare_wave_only_docker_compose
-
-from testcontainers.compose import DockerCompose
-import os
-from tests.utils.local import root, test_docker_compose_file
-
-
 @pytest.mark.local
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
@@ -272,6 +271,8 @@ from tests.utils.local import root, test_docker_compose_file
 def test_wave_lite_compose_deployment(backup_tfvars, config_baseline_settings_default):
     """
     Test Wave containers (x4) in local docker-compose deployment.
+    Creates a cut-down version of the full docker-compose.yml file generated for the EC2.
+    Compose file is run and we ensure the service-info endpoint (via reverse proxy) is available.
     """
 
     # Prepare docker-compose file
@@ -280,16 +281,26 @@ def test_wave_lite_compose_deployment(backup_tfvars, config_baseline_settings_de
     filename = os.path.basename(test_docker_compose_file)
 
     # Start docker-compose deployment
-    # with ComposeContainer(compose_file_path) as compose:
-    # compose = ComposeContainer(compose_file_path)
-    # compose.start()
     with DockerCompose(context=folder_path, compose_file_name=filename, pull=True) as compose:
-        import time
+        # Test wave-lite service-info endpoint
+        service_url = "http://localhost:9099/service-info"
+        max_retries = 10
+        delay = 3
 
-        time.sleep(300)
+        for attempt in range(max_retries):
+            try:
+                with urllib.request.urlopen(service_url, timeout=10) as response:
+                    assert response.status == 200, f"Expected HTTP 200, got {response.status}"
+                    response_data = json.loads(response.read().decode("utf-8"))
 
-    # Get service-info on wave
-    #         result = subprocess.run(postgres_cmd, shell=True, capture_output=True, text=True, timeout=30)
-    #         assert result.returncode == 0
-    #         print(f"result: {result.stdout.strip()}")
-    #         return result.stdout.strip()
+                assert "serviceInfo" in response_data
+                service_info = response_data["serviceInfo"]
+                assert "version" in service_info
+                assert "commitId" in service_info
+
+            except (urllib.error.URLError, json.JSONDecodeError, AssertionError) as e:
+                if attempt == max_retries:
+                    pytest.fail(
+                        f"Failed to connect to wave-lite service at {service_url} after {max_retries} retries: {e}"
+                    )
+                time.sleep(delay)
