@@ -61,6 +61,8 @@ test_tfvars_override_target = f"{root}/base-overrides.auto.tfvars"
 
 test_case_override_target = f"{root}/override.auto.tfvars"
 
+test_docker_compose_file = f"/tmp/cx-testing-docker-compose.yml"
+
 # SSM (testing) secrets
 ssm_tower = f"{root}/tests/datafiles/ssm_sensitive_values_tower_testing.json"
 ssm_groundswell = f"{root}/tests/datafiles/ssm_sensitive_values_groundswell_testing.json"

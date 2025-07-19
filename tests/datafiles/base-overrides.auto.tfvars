@@ -39,6 +39,9 @@ flag_use_existing_vpc                   = true
 ## ------------------------------------------------------------------------------------
 ## Wave Service
 ## ------------------------------------------------------------------------------------
+flag_use_wave          = false
+flag_use_wave_lite     = true
+num_wave_lite_replicas = 2
 wave_server_url        = "https://wave.stage-seqera.io"
 wave_lite_server_url   = "https://wave.autodc.dev-seqera.net"
 
@@ -76,13 +79,13 @@ vpc_existing_alb_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
 ## ------------------------------------------------------------------------------------
 ## Groundswell
 ## ------------------------------------------------------------------------------------
-flag_enable_groundswell = false
+flag_enable_groundswell = true
 
 
 ## ------------------------------------------------------------------------------------
 ## Data Studio - Feature Gated (24.1.0+)
 ## ------------------------------------------------------------------------------------
-flag_enable_data_studio = false
+flag_enable_data_studio = true
 
 
 ## ------------------------------------------------------------------------------------

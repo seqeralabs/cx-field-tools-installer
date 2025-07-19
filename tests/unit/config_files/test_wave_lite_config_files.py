@@ -3,6 +3,7 @@ import subprocess
 import json
 import tempfile
 import os
+import yaml
 
 from tests.utils.local import root, test_tfvars_target, test_tfvars_override_target, test_case_override_target
 from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
@@ -254,3 +255,41 @@ def test_wave_lite_sql_files_with_postgres_container(backup_tfvars, config_basel
         # Test limited user can create tables (verifying ALL privileges)
         create_table_test = run_psql_query("CREATE TABLE test_table (id INT); DROP TABLE test_table;")
         assert "DROP TABLE" in create_table_test
+
+
+from testcontainers.compose import ComposeContainer
+from tests.utils.docker_compose import prepare_wave_only_docker_compose
+
+from testcontainers.compose import DockerCompose
+import os
+from tests.utils.local import root, test_docker_compose_file
+
+
+@pytest.mark.local
+@pytest.mark.config_keys
+@pytest.mark.vpc_existing
+@pytest.mark.long
+def test_wave_lite_compose_deployment(backup_tfvars, config_baseline_settings_default):
+    """
+    Test Wave containers (x4) in local docker-compose deployment.
+    """
+
+    # Prepare docker-compose file
+    prepare_wave_only_docker_compose(root)
+    folder_path = os.path.dirname(test_docker_compose_file)
+    filename = os.path.basename(test_docker_compose_file)
+
+    # Start docker-compose deployment
+    # with ComposeContainer(compose_file_path) as compose:
+    # compose = ComposeContainer(compose_file_path)
+    # compose.start()
+    with DockerCompose(context=folder_path, compose_file_name=filename, pull=True) as compose:
+        import time
+
+        time.sleep(300)
+
+    # Get service-info on wave
+    #         result = subprocess.run(postgres_cmd, shell=True, capture_output=True, text=True, timeout=30)
+    #         assert result.returncode == 0
+    #         print(f"result: {result.stdout.strip()}")
+    #         return result.stdout.strip()
