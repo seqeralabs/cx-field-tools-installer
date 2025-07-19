@@ -204,30 +204,18 @@ def test_wave_lite_sql_files_with_postgres_container(backup_tfvars, config_basel
     limited_password = ssm_data["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]
 
     # Read SQL files that will be executed
-    sql_container_1_path = f"{root}/assets/target/wave_lite_config/wave-lite-container-1a.sql"
-    sql_container_2_path = f"{root}/assets/target/wave_lite_config/wave-lite-container-2.sql"
-    sql_container_3_path = f"{root}/assets/target/wave_lite_config/wave-lite-rds.sql"
+    sql_container_init_path = f"{root}/assets/target/wave_lite_config/wave-lite-rds.sql"
 
     # Start PostgreSQL container with same config as docker-compose wave-db service
     with (
-        # THIS WORKS
+        # Reference connection string.
         # `PGPASSWORD=abc123 psql --host localhost --port 5432 --user root -d wave`
-        # PostgresContainer("postgres:latest", username="root", password="abc123", dbname="wave")
         PostgresContainer("postgres:latest", username=master_user, password=master_password, dbname="test")
-        # PostgresContainer("postgres:latest")
-        # # .with_env("POSTGRES_USER", master_user)
-        # # .with_env("POSTGRES_PASSWORD", master_password)
-        # # .with_env("POSTGRES_DB", "wave")
-        # .with_env("POSTGRES_USER", "graham")
-        # .with_env("POSTGRES_PASSWORD", "graham")
-        # .with_env("POSTGRES_DB", "wave")
-        # .with_env("GRAHAM", "wave")
+        .with_env("GRAHAM", "graham")
         .with_bind_ports(5432, 5432)
-        # .with_volume_mapping(sql_container_1_path, "/docker-entrypoint-initdb.d/01-init.sql")
-        # .with_volume_mapping(sql_container_2_path, "/docker-entrypoint-initdb.d/02-permissions.sql")
-        .with_volume_mapping(sql_container_3_path, "/docker-entrypoint-initdb.d/01-init.sql")
+        .with_volume_mapping(sql_container_init_path, "/docker-entrypoint-initdb.d/01-init.sql")
     ) as postgres_container:
-        # Create psql-running function
+
         def run_psql_query(query, user=limited_user, password=limited_password, database="wave"):
             """Helper function to run psql queries using container commands"""
 
@@ -249,153 +237,20 @@ def test_wave_lite_sql_files_with_postgres_container(backup_tfvars, config_basel
             print(f"result: {result.stdout.strip()}")
             return result.stdout.strip()
 
-        # import time
-
-        # time.sleep(600)
         # Test master user connection to wave database
         master_conn_test = run_psql_query(
             "SELECT current_database();", user=master_user, password=master_password, database="test"
         )
-        # assert "wave" in master_conn_test.output.decode()
         assert master_conn_test == "test"
 
         # Test limited user connection to wave database
-        #     limited_conn_test = container.exec_run(
-        #         ["psql", "-U", limited_user, "-d", "wave", "-c", "SELECT current_database();"],
-        #         environment={"PGPASSWORD": limited_password},
-        #     )
-        #     assert (
-        #         limited_conn_test.exit_code == 0
-        #     ), f"Limited user connection failed: {limited_conn_test.output.decode()}"
-        #     assert "wave" in limited_conn_test.output.decode()
+        limited_conn_test = run_psql_query("SELECT current_database();")
+        assert limited_conn_test == "wave"
 
-        #     # Verify limited user has expected permissions
-        #     permissions_test = container.exec_run(
-        #         [
-        #             "psql",
-        #             "-U",
-        #             limited_user,
-        #             "-d",
-        #             "wave",
-        #             "-c",
-        #             "SELECT has_database_privilege(current_user, 'wave', 'CREATE');",
-        #         ],
-        #         environment={"PGPASSWORD": limited_password},
-        #     )
-        #     assert permissions_test.exit_code == 0, f"Permissions test failed: {permissions_test.output.decode()}"
-        #     assert "t" in permissions_test.output.decode()  # 't' means true in PostgreSQL
+        # Verify limited user has expected permissions
+        permissions_test = run_psql_query("SELECT has_database_privilege(current_user, 'wave', 'CREATE');")
+        assert "t" in permissions_test  # 't' means true in PostgreSQL
 
-        #     # Test limited user can create tables (verifying ALL privileges)
-        #     create_table_test = container.exec_run(
-        #         [
-        #             "psql",
-        #             "-U",
-        #             limited_user,
-        #             "-d",
-        #             "wave",
-        #             "-c",
-        #             "CREATE TABLE test_table (id INT); DROP TABLE test_table;",
-        #         ],
-        #         environment={"PGPASSWORD": limited_password},
-        #     )
-        #     assert create_table_test.exit_code == 0, f"Create table test failed: {create_table_test.output.decode()}"
-
-        # finally:
-        #     # Clean up temporary files
-        #     os.unlink(temp_sql_1_path)
-        #     os.unlink(temp_sql_2_path)
-
-
-# @pytest.mark.local
-# @pytest.mark.config_keys
-# @pytest.mark.vpc_existing
-# @pytest.mark.long
-# def test_wave_lite_sql_files_with_postgres_container(backup_tfvars, config_baseline_settings_default):
-#     """
-#     Test that the wave_lite_config SQL files successfully populate a PostgreSQL container.
-#     Uses testcontainers to spin up a local PostgreSQL instance with the same configuration
-#     as the wave-db service in docker-compose.yml.tpl.
-#     """
-
-#     # Get values from SSM test data
-#     ssm_data = read_json(ssm_wave_lite)
-#     master_user = ssm_data["WAVE_LITE_DB_MASTER_USER"]["value"]
-#     master_password = ssm_data["WAVE_LITE_DB_MASTER_PASSWORD"]["value"]
-#     limited_user = ssm_data["WAVE_LITE_DB_LIMITED_USER"]["value"]
-#     limited_password = ssm_data["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]
-
-#     # Read SQL files that will be executed
-#     sql_container_1 = read_file(f"{root}/assets/target/wave_lite_config/wave-lite-container-1.sql")
-#     sql_container_2 = read_file(f"{root}/assets/target/wave_lite_config/wave-lite-container-2.sql")
-
-#     # Start PostgreSQL container with same config as docker-compose wave-db service
-#     with (
-#         PostgresContainer("postgres:latest")
-#         .with_env("POSTGRES_USER", master_user)
-#         .with_env("POSTGRES_PASSWORD", master_password)
-#         .with_env("POSTGRES_DB", "wave")
-#         .with_bind_ports(5432, 5432)
-#         .with_volume_mapping(sql_container_1, "/docker-entrypoint-initdb.d/01-init.sql")
-#         .with_volume_mapping(sql_container_2, "/docker-entrypoint-initdb.d/02-permissions.sql")
-#     ) as postgres_container:
-#         try:
-
-#             docker_cmd = f"""
-#                 docker run --rm -t  \
-#                   -e MYSQL_PWD={mock_master_password} --entrypoint /bin/bash \
-#                   --add-host host.docker.internal:host-gateway mysql:8.0 \
-#                   -c 'mysql --host host.docker.internal --port=3306 --user={mock_master_user} < tower.sql'
-#             """
-
-#             # Test master user connection to wave database
-#             master_conn_test = container.exec_run(
-#                 ["psql", "-U", master_user, "-d", "wave", "-c", "SELECT current_database();"]
-#             )
-#             assert master_conn_test.exit_code == 0, f"Master user connection failed: {master_conn_test.output.decode()}"
-#             assert "wave" in master_conn_test.output.decode()
-
-#             # Test limited user connection to wave database
-#             limited_conn_test = container.exec_run(
-#                 ["psql", "-U", limited_user, "-d", "wave", "-c", "SELECT current_database();"],
-#                 environment={"PGPASSWORD": limited_password},
-#             )
-#             assert (
-#                 limited_conn_test.exit_code == 0
-#             ), f"Limited user connection failed: {limited_conn_test.output.decode()}"
-#             assert "wave" in limited_conn_test.output.decode()
-
-#             # Verify limited user has expected permissions
-#             permissions_test = container.exec_run(
-#                 [
-#                     "psql",
-#                     "-U",
-#                     limited_user,
-#                     "-d",
-#                     "wave",
-#                     "-c",
-#                     "SELECT has_database_privilege(current_user, 'wave', 'CREATE');",
-#                 ],
-#                 environment={"PGPASSWORD": limited_password},
-#             )
-#             assert permissions_test.exit_code == 0, f"Permissions test failed: {permissions_test.output.decode()}"
-#             assert "t" in permissions_test.output.decode()  # 't' means true in PostgreSQL
-
-#             # Test limited user can create tables (verifying ALL privileges)
-#             create_table_test = container.exec_run(
-#                 [
-#                     "psql",
-#                     "-U",
-#                     limited_user,
-#                     "-d",
-#                     "wave",
-#                     "-c",
-#                     "CREATE TABLE test_table (id INT); DROP TABLE test_table;",
-#                 ],
-#                 environment={"PGPASSWORD": limited_password},
-#             )
-#             assert create_table_test.exit_code == 0, f"Create table test failed: {create_table_test.output.decode()}"
-
-#         finally:
-#             # Clean up temporary files
-#             os.unlink(temp_sql_1_path)
-#             os.unlink(temp_sql_2_path)
+        # Test limited user can create tables (verifying ALL privileges)
+        create_table_test = run_psql_query("CREATE TABLE test_table (id INT); DROP TABLE test_table;")
+        assert "DROP TABLE" in create_table_test
