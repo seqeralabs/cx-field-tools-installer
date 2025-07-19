@@ -292,3 +292,7 @@ if [ "$CX_SKIP_SSM" != "true" ]; then
 else
     echo "Skipping SSM parameter updates (CX_SKIP_SSM=true)"
 fi
+
+
+# Delete test log file
+echo '{"message": "Cleansing content for new test loop."}' > ../logs/pytest_structured.log || true

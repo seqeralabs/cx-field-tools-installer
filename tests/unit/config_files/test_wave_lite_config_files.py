@@ -210,10 +210,18 @@ def test_wave_lite_sql_files_with_postgres_container(backup_tfvars, config_basel
 
     # Start PostgreSQL container with same config as docker-compose wave-db service
     with (
-        PostgresContainer("postgres:latest")
-        .with_env("POSTGRES_USER", master_user)
-        .with_env("POSTGRES_PASSWORD", master_password)
-        .with_env("POSTGRES_DB", "wave")
+        # THIS WORKS
+        # `PGPASSWORD=abc123 psql --host localhost --port 5432 --user root -d wave`
+        # PostgresContainer("postgres:latest", username="root", password="abc123", dbname="wave")
+        PostgresContainer("postgres:latest", username=master_user, password=master_password, dbname="test")
+        # PostgresContainer("postgres:latest")
+        # # .with_env("POSTGRES_USER", master_user)
+        # # .with_env("POSTGRES_PASSWORD", master_password)
+        # # .with_env("POSTGRES_DB", "wave")
+        # .with_env("POSTGRES_USER", "graham")
+        # .with_env("POSTGRES_PASSWORD", "graham")
+        # .with_env("POSTGRES_DB", "wave")
+        # .with_env("GRAHAM", "wave")
         .with_bind_ports(5432, 5432)
         # .with_volume_mapping(sql_container_1_path, "/docker-entrypoint-initdb.d/01-init.sql")
         # .with_volume_mapping(sql_container_2_path, "/docker-entrypoint-initdb.d/02-permissions.sql")
@@ -228,22 +236,28 @@ def test_wave_lite_sql_files_with_postgres_container(backup_tfvars, config_basel
                 query_sql.write(query)
                 query_sql_path = query_sql.name
 
+            # -t — Tuples only (removes headers and footers)
+            # -A — Unaligned output (removes column formatting, outputs plain text)
             postgres_cmd = f"""
                 docker run --rm -t -v {query_sql_path}:/query.sql \
-                  -e POSTGRES_PWD={master_password} --entrypoint /bin/bash \
+                  -e PGPASSWORD={password} --entrypoint /bin/bash \
                   --add-host host.docker.internal:host-gateway postgres:latest \
-                  -c 'PGPASSWORD={password} psql --host host.docker.internal --port=5432 --user={user} < query.sql'
+                  -c 'PGPASSWORD={password} psql --host host.docker.internal --port=5432 --user={user} -d {database} -t -A < query.sql'
             """
             result = subprocess.run(postgres_cmd, shell=True, capture_output=True, text=True, timeout=30)
             assert result.returncode == 0
+            print(f"result: {result.stdout.strip()}")
             return result.stdout.strip()
 
+        # import time
+
+        # time.sleep(600)
         # Test master user connection to wave database
         master_conn_test = run_psql_query(
-            "SELECT current_database();", user=master_user, password=master_password, database="wave"
+            "SELECT current_database();", user=master_user, password=master_password, database="test"
         )
-        assert master_conn_test.exit_code == 0
-        assert "wave" in master_conn_test.output.decode()
+        # assert "wave" in master_conn_test.output.decode()
+        assert master_conn_test == "test"
 
         # Test limited user connection to wave database
         #     limited_conn_test = container.exec_run(
