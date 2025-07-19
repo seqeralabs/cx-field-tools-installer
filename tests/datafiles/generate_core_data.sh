@@ -284,7 +284,11 @@ update_ssm_parameter() {
 }
 
 # Update all SSM parameters
-update_ssm_parameter "/seqera/sensitive-values/tower-testing/tower" "ssm_sensitive_values_tower_testing.json"
-update_ssm_parameter "/seqera/sensitive-values/tower-testing/groundswell" "ssm_sensitive_values_groundswell_testing.json"
-update_ssm_parameter "/seqera/sensitive-values/tower-testing/seqerakit" "ssm_sensitive_values_seqerakit_testing.json"
-update_ssm_parameter "/seqera/sensitive-values/tower-testing/wave-lite" "ssm_sensitive_values_wave_lite_testing.json"
+if [ "$CX_SKIP_SSM" != "true" ]; then
+    update_ssm_parameter "/seqera/sensitive-values/tower-testing/tower" "ssm_sensitive_values_tower_testing.json"
+    update_ssm_parameter "/seqera/sensitive-values/tower-testing/groundswell" "ssm_sensitive_values_groundswell_testing.json"
+    update_ssm_parameter "/seqera/sensitive-values/tower-testing/seqerakit" "ssm_sensitive_values_seqerakit_testing.json"
+    update_ssm_parameter "/seqera/sensitive-values/tower-testing/wave-lite" "ssm_sensitive_values_wave_lite_testing.json"
+else
+    echo "Skipping SSM parameter updates (CX_SKIP_SSM=true)"
+fi
