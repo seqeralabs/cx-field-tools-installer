@@ -1,9 +1,5 @@
 # Tower settings
-%{ if flag_use_container_db == false && startswith(db_engine_version, "8") == false ~}
-TOWER_DB_URL=jdbc:mysql://${tower_db_url}/${db_database_name}
-%{~ else ~}
-TOWER_DB_URL=jdbc:mysql://${tower_db_url}
-%{ endif }
+TOWER_DB_URL=${tower_db_url}
 TOWER_DB_USER=${db_tower_user}
 TOWER_DB_PASSWORD=${db_tower_password}
 
