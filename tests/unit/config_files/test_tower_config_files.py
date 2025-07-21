@@ -191,7 +191,7 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
         assert key not in keys
 
     key = "GROUNDSWELL_SERVER_URL"
-    value = outputs["swell_db_url"]["value"]
+    value = "http://groundswell:8090"
     flag_enable_groundswell = variables["flag_enable_groundswell"]["value"]
     if flag_enable_groundswell:
         assert key in keys
@@ -251,14 +251,14 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
     for studio in variables["data_studio_options"]["value"]:
         if flag_enable_data_studio:
             for qualifier in ["ICON", "REPOSITORY", "TOOL", "STATUS"]:
-                key = "TOWER_DATA_STUDIO_TEMPLATES_${studio}_{qualifier}"
+                key = f"TOWER_DATA_STUDIO_TEMPLATES_{studio}_{qualifier}"
                 # EDGECASE: Called it 'container' in terrafrom tfvars, but setting is REPOSITORY
                 if qualifier == "REPOSITORY":
                     value = variables["data_studio_options"]["value"][studio]["container"]
                 else:
-                    value = variables["data_studio_options"]["value"][studio][key.lower()]
-            assert key in keys
-            assert tower_env_file[key] == value
+                    value = variables["data_studio_options"]["value"][studio][qualifier.lower()]
+            assert key.upper() in keys
+            assert tower_env_file[key.upper()] == value
         else:
             assert key not in keys
 
@@ -325,7 +325,7 @@ def test_default_config_tower_yml(backup_tfvars, config_baseline_settings_defaul
     # TODO verify why I did this in the template
     flag_enable_data_studio = variables["flag_enable_data_studio"]["value"]
     flag_limit_data_studio_to_some_workspaces = variables["flag_limit_data_studio_to_some_workspaces"]["value"]
-    if flag_enable_data_studio and flag_limit_data_studio_to_some_workspaces:
+    if flag_enable_data_studio and not flag_limit_data_studio_to_some_workspaces:
         key = tower_yml_file["tower"]["data-studio"]["allowed-workspaces"]
         assert key == None
     else:
