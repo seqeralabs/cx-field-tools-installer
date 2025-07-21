@@ -139,9 +139,10 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
     assert tower_env_file[key] == ("true" if value else "false")
 
     key = "TOWER_ENABLE_WAVE"
-    value = variables["flag_use_wave"]["value"]
+    value1 = variables["flag_use_wave"]["value"]
+    value2 = variables["flag_use_wave_lite"]["value"]
     assert key in keys
-    assert tower_env_file[key] == ("true" if value else "false")
+    assert tower_env_file[key] == ("true" if value1 or value2 else "false")
 
     key = "TOWER_ENABLE_GROUNDSWELL"
     value = variables["flag_enable_groundswell"]["value"]
@@ -458,6 +459,7 @@ def test_default_config_tower_sql(backup_tfvars, config_baseline_settings_defaul
 @pytest.mark.db
 @pytest.mark.mysql_container
 @pytest.mark.long
+@pytest.mark.testcontainer
 def test_tower_sql_mysql_container_execution(backup_tfvars, config_baseline_settings_default):
     """
     Test that tower.sql successfully populates a MySQL8 database using Testcontainers.

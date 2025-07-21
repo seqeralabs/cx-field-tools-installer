@@ -197,6 +197,7 @@ def test_default_config_wave_lite_yml(backup_tfvars, config_baseline_settings_de
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
+@pytest.mark.testcontainer
 def test_wave_lite_sql_files_with_postgres_container(backup_tfvars, config_baseline_settings_default):
     """
     Test that the wave_lite_config SQL files successfully populate a PostgreSQL container.
@@ -268,6 +269,7 @@ def test_wave_lite_sql_files_with_postgres_container(backup_tfvars, config_basel
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
+@pytest.mark.testcontainer
 def test_wave_lite_compose_deployment(backup_tfvars, config_baseline_settings_default):
     """
     Test Wave containers (x4) in local docker-compose deployment.
