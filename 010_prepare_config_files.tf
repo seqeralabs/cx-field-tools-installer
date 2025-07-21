@@ -81,8 +81,11 @@ resource "null_resource" "generate_independent_config_files" {
 resource "null_resource" "generate_config_files_with_dependencies" {
 
   # depends_on          = [ null_resource.purge_and_clone_local_target_folder ]
-  depends_on = [aws_ec2_instance_connect_endpoint.example]
-  triggers   = { always_run = "${timestamp()}" }
+  depends_on = [
+    aws_ec2_instance_connect_endpoint.example,
+    null_resource.generate_independent_config_files
+  ]
+  triggers = { always_run = "${timestamp()}" }
 
   provisioner "local-exec" {
     working_dir = path.module
@@ -109,8 +112,11 @@ resource "null_resource" "generate_config_files_with_dependencies" {
 resource "null_resource" "aws_batch_manual" {
   count = var.seqerakit_aws_use_forge == false && var.seqerakit_aws_use_batch == true ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
-  depends_on = [null_resource.generate_config_files_with_dependencies]
+  triggers = { always_run = "${timestamp()}" }
+  depends_on = [
+    null_resource.generate_config_files_with_dependencies,
+    null_resource.generate_independent_config_files
+  ]
 
   provisioner "local-exec" {
     command     = <<-EOT
@@ -124,8 +130,11 @@ resource "null_resource" "aws_batch_manual" {
 resource "null_resource" "aws_batch_forge" {
   count = var.seqerakit_aws_use_forge == true && var.seqerakit_aws_use_batch == true ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
-  depends_on = [null_resource.generate_config_files_with_dependencies]
+  triggers = { always_run = "${timestamp()}" }
+  depends_on = [
+    null_resource.generate_config_files_with_dependencies,
+    null_resource.generate_independent_config_files
+  ]
 
   provisioner "local-exec" {
     command     = <<-EOT
@@ -143,6 +152,7 @@ resource "null_resource" "allow_file_copy_to_start" {
   triggers = { always_run = "${timestamp()}" }
 
   depends_on = [
+    null_resource.generate_independent_config_files,
     null_resource.generate_config_files_with_dependencies,
     null_resource.aws_batch_manual,
     null_resource.aws_batch_forge,

@@ -56,8 +56,9 @@ locals {
   tower_db_remote_reconciled     = join("", [local.tower_db_remote_existing, local.tower_db_remote_new_reconciled])
   tower_db_root                  = local.tower_db_remote_reconciled != "" ? local.tower_db_remote_reconciled : local.tower_db_local
 
+  # NOTE! DO NOT ADD '?' -- already applied by data.external.generate_db_connection_string.result.value
   tower_db_url = format(
-    "jdbc:mysql://%s/%s?%s",
+    "jdbc:mysql://%s/%s%s",
     local.tower_db_root,
     var.db_database_name,
     data.external.generate_db_connection_string.result.value,
