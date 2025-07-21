@@ -91,7 +91,7 @@ def test_default_config_wave_lite_container_2_sql(backup_tfvars, config_baseline
     assert f"GRANT ALL PRIVILEGES ON DATABASE wave TO {expected_user}" in sql_content
     assert f"GRANT ALL ON SCHEMA public TO {expected_user}" in sql_content
     assert f"GRANT ALL ON ALL TABLES IN SCHEMA public TO {expected_user}" in sql_content
-    assert f"GRANT ALL ON ALL PRIVILEGES IN SCHEMA public TO {expected_user}" in sql_content
+    assert f"GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO {expected_user}" in sql_content
 
     # Verify database connection command
     assert "\\c wave" in sql_content
