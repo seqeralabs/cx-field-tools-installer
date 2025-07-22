@@ -36,6 +36,12 @@ variable "flag_use_wave_lite" {
   type        = bool
 }
 
+variable "flag_studio_dont_use_subdomain" {
+  description = "Whether Studio should use favoured subdomain approach or workaround pathing approach."
+  type        = bool
+  default     = false
+}
+
 ## ------------------------------------------------------------------------------------
 ## Tower Core Configuration
 ## ------------------------------------------------------------------------------------

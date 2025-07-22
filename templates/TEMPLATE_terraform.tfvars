@@ -39,7 +39,7 @@ aws_account = "REPLACE_ME"
 aws_region  = "REPLACE_ME"
 aws_profile = "REPLACE_ME"
 
-tower_container_version = "v25.1.1"
+tower_container_version = "v25.2.0"
 
 
 /*
@@ -422,8 +422,9 @@ Must use numeric id of target workspaces when populating `data_studio_eligible_w
 NOTE: If upgrading from a pre-24.1 installation, it is likely the existing certificate arn 
 provided to the `alb_certificate_arn` entry needs to be replaced with a new cert with more entries. 
 */
-flag_enable_data_studio       = true
-data_studio_container_version = "0.8.0"
+flag_enable_data_studio        = true
+flag_studio_dont_use_subdomain = false
+data_studio_container_version  = "0.8.2"
 
 flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""
@@ -439,33 +440,10 @@ data_studio_eligible_workspaces           = ""
 #   4. For the use of custom data studio images, ensure flag_use_wave = true. 
 
 data_studio_options = {
-  # DEPRECATION NOTICE: Future versions of the installer will no longer include entries for connect-client v0.7.1. Please update entries accordingly ahead of the a future version where the commented content will be removed. The most up-to-date version of connect-client is v0.8.0.
+  # DEPENDENCY
+  # DEPRECATION NOTICE (July 22/25): Future versions of the installer will no longer include entries for connect-client v0.8.0. 
+  #  Please update entries accordingly ahead of the a future version where the commented content will be removed. The most up-to-date version of connect-client is v0.8.0.
 
-  # vscode1_83_0 = {
-  #       qualifier = "VSCODE-1-83-0"
-  #       icon = "vscode"
-  #       container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.7.1"
-  # },
-  # jupyter4_1_5 = {
-  #       qualifier = "JUPYTER-4-1-5"
-  #       icon = "jupyter"
-  #       container = "public.cr.seqera.io/platform/data-studio-jupyter:4.1.5-0.7.1"
-  # },
-  # rstudio4_0_0 = {
-  #       qualifier = "RSTUDIO-4-0-0"
-  #       icon = "rstudio"
-  #       container = "public.cr.seqera.io/platform/data-studio-rstudio:4.0.0-0.7.1"
-  # },
-  # rstudio4_4_1 = {
-  #       qualifier = "RSTUDIO-4-4-1"
-  #       icon = "rstudio"
-  #       container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.7.1"
-  # },
-  # xpra6_0_r0 = {
-  #       qualifier = "XPRA-6-0-R0"
-  #       icon = "xpra"
-  #       container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.7.1"
-  # },
   vscode-1-83-0-0-8-0 = {
     qualifier = "VSCODE-1-83-0-0-8-0"
     icon      = "vscode"
@@ -493,7 +471,28 @@ data_studio_options = {
     tool      = "xpra"
     status    = "recommended"
     container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.8.0"
-  }
+  },
+  vscode1-101-2-0-8-4 = {
+    qualifier = "VSCODE-1-101-2-0-8-4"
+    icon      = "vscode"
+    tool      = "vscode"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.8.4"
+  },
+  jupyter4-2-5-0-8-4 = {
+    qualifier = "JUPYTER-4-2-5-0-8-4"
+    icon      = "jupyter"
+    tool      = "jupyter"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.4"
+  },
+  rstudio2025-04-1-0-8-4 = {
+    qualifier = "RSTUDIO-2025-04-1-0-8-4"
+    icon      = "rstudio"
+    tool      = "rstudio"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.8.4"
+  },
 }
 
 /*
