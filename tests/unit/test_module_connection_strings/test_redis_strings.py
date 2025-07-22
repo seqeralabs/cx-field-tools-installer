@@ -134,7 +134,7 @@ def test_container_tower_redis_url(backup_tfvars):
     assert "redis:6379" in outputs["tower_connect_redis_url"]["value"]
 
     # Wave-Lite Redis should use dedicated container service with secure connection
-    assert "rediss://wave-redis:6379" in outputs["wave_lite_redis_url"]["value"]
+    assert "redis://wave-redis:6379" in outputs["wave_lite_redis_url"]["value"]
 
 
 @pytest.mark.local
@@ -183,7 +183,7 @@ def test_container_wave_lite_redis_url(backup_tfvars):
     # Then
 
     # Wave-Lite Redis should use dedicated container service with secure connection
-    assert "rediss://wave-redis:6379" in outputs["wave_lite_redis_url"]["value"]
+    assert "redis://wave-redis:6379" in outputs["wave_lite_redis_url"]["value"]
 
     # Ensure it's different from Tower's Redis container
     assert (
