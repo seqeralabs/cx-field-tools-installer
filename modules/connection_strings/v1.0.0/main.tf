@@ -129,6 +129,6 @@ locals {
   wl_redis_remote_mock       = "mock-new-wave-lite-redis.example.com"
   wl_redis_remote_reconciled = local.use_mocks ? local.wl_redis_remote_mock : local.wl_redis_remote_new
   wl_redis_url_reconciled    = var.flag_create_external_redis ? local.wl_redis_remote_reconciled : local.wl_redis_local
-  wave_lite_redis_url        = "rediss://${local.wl_redis_url_reconciled}"
+  wave_lite_redis_url        = var.flag_create_external_redis ? "rediss://${local.wl_redis_url_reconciled}" : "redis://${local.wl_redis_url_reconciled}"
 }
 
