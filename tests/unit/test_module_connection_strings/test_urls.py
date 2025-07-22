@@ -127,6 +127,7 @@ def test_connect_alb_dns(backup_tfvars):
         tower_server_url                                = "tower.example.com"
         flag_create_load_balancer                       = true
         flag_do_not_use_https                           = false
+        flag_studio_dont_use_subdomain                  = false
     """
 
     # When
@@ -139,6 +140,29 @@ def test_connect_alb_dns(backup_tfvars):
 
 @pytest.mark.local
 @pytest.mark.urls
+@pytest.mark.connect
+def test_connect_alb_dns_no_subdomain(backup_tfvars):
+    """Test Tower Connect DNS construction for ALB host-matching.
+    NOTE: Ensure 'connect.' is not present when path-based routing is specified.
+    """
+    # Given
+    connect_dns_override_data = """
+        tower_server_url                                = "tower.example.com"
+        flag_create_load_balancer                       = true
+        flag_do_not_use_https                           = false
+        flag_studio_dont_use_subdomain                  = true
+    """
+
+    # When
+    plan = prepare_plan(connect_dns_override_data)
+    outputs = plan["planned_values"]["outputs"]
+
+    # Then
+    assert "connect." not in outputs["tower_connect_dns"]["value"]
+
+
+@pytest.mark.local
+@pytest.mark.urlsg
 @pytest.mark.connect
 def test_connect_wildcard_dns(backup_tfvars):
     """Test Tower Connect wildcard DNS construction for ALB host-matching."""
