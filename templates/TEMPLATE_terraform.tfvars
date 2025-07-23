@@ -419,8 +419,13 @@ Please check Release Notes and documentation to ensure this its your regulatory 
 
 Must use numeric id of target workspaces when populating `data_studio_eligible_workspaces`.
 
-NOTE: If upgrading from a pre-24.1 installation, it is likely the existing certificate arn 
-provided to the `alb_certificate_arn` entry needs to be replaced with a new cert with more entries. 
+NOTES: 
+
+1. If upgrading from a pre-24.1 installation, it is likely the existing certificate arn 
+  provided to the `alb_certificate_arn` entry needs to be replaced with a new cert with more entries. 
+
+2. If path-based routing (available as of v25.2.0), your ensure you certificate supports the domain
+  specified in `data_studio_path_routing_url`.
 */
 flag_enable_data_studio         = true
 flag_studio_enable_path_routing = false
@@ -440,6 +445,7 @@ data_studio_eligible_workspaces           = ""
 #     - Preference for clients v0.7 with a sliding patch version can be achieved by omitting the patch (e.g., use "0.7" instead of "0.7.1") to always get the latest patch update.
 #   4. For the use of custom data studio images, ensure flag_use_wave = true. 
 #   5. Acceptable status values are: "recommended", "deprecated", and "experimental". Anything will be displayed as "unsupported".
+#   6. Current as of Platform v25.2.0, only VSCode, Jupyter, and R will work with path-based Studio routing (not Xpra). This must also be the 0.8.4 client version.
 
 data_studio_options = {
   # DEPENDENCY
