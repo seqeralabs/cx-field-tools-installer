@@ -493,6 +493,8 @@ def verify_data_studio(data: SimpleNamespace):
                 )
 
             if len(data.data_studio_path_routing_url) ==  0:
+                # Note: This isn't super but better than nothing.
+                # TODO: Find package to validate it's a legit domain.
                 log_error_and_exit(
                 "When `flag_studio_enable_path_routing` is true, `data_studio_path_routing_url` must be set."
                 )
