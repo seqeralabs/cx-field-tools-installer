@@ -132,6 +132,9 @@ The following configuration actions are encouraged but not mandatory.
 #### 03: Update your Git repo settings
 1. Follow the instructions in [Update Githooks Settings](./documentation/setup/optional_githook.md).
 
+#### 04: Initiate Crypto secret rotation (ADVANCED)
+1. Follow the instructions in [Crypto Secret Rotation](./documentation/setup/optional_crypto_secret_rotation.md).
+
 <br />
 
 ## Execution Steps
