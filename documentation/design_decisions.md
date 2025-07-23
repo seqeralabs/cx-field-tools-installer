@@ -188,3 +188,9 @@ In addition to the general design decisions noted above, there are a few decisio
         - We could use a "poor man's K8s Service" and introduce a reverse proxy container into the deployment which would accept all Wave-related traffic and then round-robin the calls to the downstream containers.
 
     The decision was made to implement the reverse proxy solution. We introduced an brand new instance rather than repurposing the existing proxy using for private certs. This was done to minimize the mixing of concerns and simplify implementation. We may choose to rationalize this deployment in a future release (TBD).
+
+14. **Subdomain routing favoured over path-based routing**
+
+    Seqera Platform v25.2.0 introduces path-based routing for Studios instances. This exists as a workaround for sites who are unable to use the default `*.YOUR_PLATFORM_DOMAIN` DNS sub-domanin approach.
+    
+    Path-based routing has limitations, however, (_TODO: Add link to official docs outlining_) so the project favours use of the subdomains by default.
