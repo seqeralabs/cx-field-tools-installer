@@ -472,22 +472,22 @@ data_studio_options = {
     status    = "recommended"
     container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.8.0"
   },
-  vscode1-101-2-0-8-4 = {
+  vscode-1-101-2-0-8-4 = {
     qualifier = "VSCODE-1-101-2-0-8-4"
     icon      = "vscode"
     tool      = "vscode"
     status    = "recommended"
     container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.8.4"
   },
-  jupyter4-2-5-0-8-4 = {
+  jupyter-4-2-5-0-8-4 = {
     qualifier = "JUPYTER-4-2-5-0-8-4"
     icon      = "jupyter"
     tool      = "jupyter"
     status    = "recommended"
     container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.4"
   },
-  rstudio2025-04-1-0-8-4 = {
-    qualifier = "RSTUDIO-2025-04-1-0-8-4"
+  ride-2025-04-1-0-8-4 = {
+    qualifier = "RIDE-2025-04-1-0-8-4"
     icon      = "rstudio"
     tool      = "rstudio"
     status    = "recommended"

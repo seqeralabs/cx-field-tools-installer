@@ -213,6 +213,12 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
     # ------------------------------------------------------------------------------------
     # All keys locked behind the `flag_enable_data_studio` flag.
     flag_enable_data_studio = variables["flag_enable_data_studio"]["value"]
+    flag_studio_dont_use_subdomain = variables["flag_studio_dont_use_subdomain"]["value"]
+
+    key = "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"
+    if flag_enable_data_studio and not flag_studio_dont_use_subdomain:
+        assert key in keys
+        assert tower_env_file[key] == "false"
 
     key = "TOWER_DATA_STUDIO_ALLOWED_WORKSPACES"
     value = variables["data_studio_eligible_workspaces"]["value"]
@@ -228,6 +234,7 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
     if flag_enable_data_studio:
         assert key in keys
         assert tower_env_file[key] == value
+        assert "connect." in tower_env_file[key]
     else:
         assert key not in keys
 
@@ -392,6 +399,7 @@ def test_default_config_data_studios_env(backup_tfvars, config_baseline_settings
     value = outputs["tower_connect_server_url"]["value"]
     assert key in keys
     assert ds_env_file[key] == value
+    assert "connect." in ds_env_file[key]
 
     key = "CONNECT_REDIS_ADDRESS"
     value = outputs["tower_redis_url"]["value"]
@@ -556,3 +564,88 @@ def test_tower_sql_mysql_container_execution(backup_tfvars, config_baseline_sett
             # Clean up temporary SQL file
             if os.path.exists(temp_sql_path):
                 os.unlink(temp_sql_path)
+
+
+
+# ----------------------------------- NON-DEFAULT TESTS
+@pytest.mark.local
+@pytest.mark.config_keys
+@pytest.mark.vpc_existing
+@pytest.mark.long
+def test_custom_config_tower_env(backup_tfvars, config_baseline_settings_custom):  # teardown_tf_state_all):
+    """
+    Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars,
+    PLUS custom overrides.
+    """
+
+    # When
+    outputs = config_baseline_settings_custom["planned_values"]["outputs"]
+    variables = config_baseline_settings_custom["variables"]
+
+    tower_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/tower.env")
+    keys = tower_env_file.keys()
+
+    """
+    WARNING!!!!!!
+      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
+            AFFECTS: `outputs` and `variables`
+      - tower_env_file values are directly cracked from HCL so they are "true".
+    """
+
+# ------------------------------------------------------------------------------------
+    # Test sometimes-present conditionals - Data studio
+    # ------------------------------------------------------------------------------------
+    # All keys locked behind the `flag_enable_data_studio` flag.
+    flag_enable_data_studio = variables["flag_enable_data_studio"]["value"]
+    flag_studio_dont_use_subdomain = variables["flag_studio_dont_use_subdomain"]["value"]
+
+    key = "TOWER_DATA_STUDIO_CONNECT_URL"
+    value = outputs["tower_connect_server_url"]["value"]
+    if flag_enable_data_studio:
+        assert key in keys
+        assert tower_env_file[key] == value
+        assert "connect." not in tower_env_file[key]
+    else:
+        assert key not in keys
+
+    key = "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"
+    if flag_enable_data_studio and flag_studio_dont_use_subdomain:
+        assert key in keys
+        assert tower_env_file[key] == "true"
+        assert "connect." not in tower_env_file[key]
+    else:
+        assert "connect." in tower_env_file[key]
+
+
+@pytest.mark.local
+@pytest.mark.config_keys
+@pytest.mark.vpc_existing
+@pytest.mark.long
+def test_custom_config_data_studios_env(backup_tfvars, config_baseline_settings_custom):
+    """
+    Test the target data-studio.env generated from default test terraform.tfvars and base-override.auto.tfvars,
+    PLUS custom overrides.
+    """
+
+    # When
+    outputs = config_baseline_settings_custom["planned_values"]["outputs"]
+    variables = config_baseline_settings_custom["variables"]
+
+    ds_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/data-studios.env")
+    keys = ds_env_file.keys()
+
+    """
+    WARNING!!!!!!
+      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
+            AFFECTS: `outputs` and `variables`
+      - tower_env_file values are directly cracked from HCL so they are "true".
+    """
+
+    # ------------------------------------------------------------------------------------
+    # Test data-studios.env - assert all core keys exist
+    # ------------------------------------------------------------------------------------
+    key = "CONNECT_PROXY_URL"
+    value = outputs["tower_connect_server_url"]["value"]
+    assert key in keys
+    assert ds_env_file[key] == value
+    assert "connect." not in ds_env_file[key]

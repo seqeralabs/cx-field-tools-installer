@@ -210,6 +210,9 @@ services:
 %{ if flag_use_container_redis == true ~}
     depends_on:
       - redis
+    volumes:
+      # DEPENDENCY: July 22/25 -- remove in subsequent release when fixed upstream in Studios.
+      - $HOME/.tower/connect:/data
 %{endif ~}
 
   connect-server:
