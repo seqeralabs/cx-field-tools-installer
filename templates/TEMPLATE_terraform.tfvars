@@ -422,9 +422,10 @@ Must use numeric id of target workspaces when populating `data_studio_eligible_w
 NOTE: If upgrading from a pre-24.1 installation, it is likely the existing certificate arn 
 provided to the `alb_certificate_arn` entry needs to be replaced with a new cert with more entries. 
 */
-flag_enable_data_studio        = true
-flag_studio_dont_use_subdomain = false
-data_studio_container_version  = "0.8.2"
+flag_enable_data_studio         = true
+flag_studio_enable_path_routing = false
+data_studio_path_routing_url    = "REPLACE_ME_IF_NECESSARY"
+data_studio_container_version   = "0.8.2"
 
 flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""

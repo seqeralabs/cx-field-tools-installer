@@ -45,8 +45,8 @@ locals {
       data_studio_eligible_workspaces           = var.data_studio_eligible_workspaces,
       tower_connect_server_url                  = module.connection_strings.tower_connect_server_url,
 
-      data_studio_options            = var.data_studio_options,
-      flag_studio_dont_use_subdomain = var.flag_studio_dont_use_subdomain
+      data_studio_options             = var.data_studio_options,
+      flag_studio_enable_path_routing = var.flag_studio_enable_path_routing
     }
   )
 

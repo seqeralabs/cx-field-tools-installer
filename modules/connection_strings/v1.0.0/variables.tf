@@ -36,10 +36,16 @@ variable "flag_use_wave_lite" {
   type        = bool
 }
 
-variable "flag_studio_dont_use_subdomain" {
+variable "flag_studio_enable_path_routing" {
   description = "Whether Studio should use favoured subdomain approach or workaround pathing approach."
   type        = bool
   default     = false
+}
+
+variable "data_studio_path_routing_url" {
+  type        = string
+  description = "Domain where Connect Proxy is available."
+  default     = ""
 }
 
 ## ------------------------------------------------------------------------------------

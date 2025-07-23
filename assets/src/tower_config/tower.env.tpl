@@ -113,7 +113,7 @@ TOWER_DATA_EXPLORER_ENABLED=false
 # ------------------------------------------------
 %{ if flag_enable_data_studio == true ~}
 
-%{ if flag_studio_dont_use_subdomain == true ~}
+%{ if flag_studio_enable_path_routing == true ~}
 TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING=true
 %{ else ~}
 TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING=false

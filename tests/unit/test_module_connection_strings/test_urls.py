@@ -127,7 +127,7 @@ def test_connect_alb_dns(backup_tfvars):
         tower_server_url                                = "tower.example.com"
         flag_create_load_balancer                       = true
         flag_do_not_use_https                           = false
-        flag_studio_dont_use_subdomain                  = false
+        flag_studio_enable_path_routing                  = false
     """
 
     # When
@@ -150,7 +150,7 @@ def test_connect_alb_dns_no_subdomain(backup_tfvars):
         tower_server_url                                = "tower.example.com"
         flag_create_load_balancer                       = true
         flag_do_not_use_https                           = false
-        flag_studio_dont_use_subdomain                  = true
+        flag_studio_enable_path_routing                  = true
     """
 
     # When

@@ -90,7 +90,7 @@ locals {
   # ---------------------------------------------------------------------------------------
   # Connect needs Redis but not its own database.
   # DNS needs host-matching in the ALB (e.g.): studio.TOWER_DOMAIN, 123.TOWER_DOMAIN, 456.TOWER_DOMAIN
-  tower_connect_dns          = var.flag_studio_dont_use_subdomain ? "${var.tower_server_url}" : "connect.${var.tower_server_url}"
+  tower_connect_dns          = var.flag_studio_enable_path_routing ? "${var.data_studio_path_routing_url}" : "connect.${var.tower_server_url}"
   tower_connect_wildcard_dns = "*.${var.tower_server_url}"
 
   # TODO: July 22/25 -- Figure out if path-based routing affects this.

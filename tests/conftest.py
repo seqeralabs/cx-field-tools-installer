@@ -148,7 +148,8 @@ def config_baseline_settings_custom():
     """
 
     override_data = """
-        flag_studio_dont_use_subdomain = true
+        flag_studio_enable_path_routing = true
+        data_studio_path_routing_url    = "connect.example.com"
     """
     print("ipsem lorem")
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
