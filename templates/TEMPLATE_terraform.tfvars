@@ -439,6 +439,7 @@ data_studio_eligible_workspaces           = ""
 #     - Major and minor versions are pinned explicitly (e.g., `1.83.0-0.7.1` and `1.83.0-0.8.0`).  
 #     - Preference for clients v0.7 with a sliding patch version can be achieved by omitting the patch (e.g., use "0.7" instead of "0.7.1") to always get the latest patch update.
 #   4. For the use of custom data studio images, ensure flag_use_wave = true. 
+#   5. Acceptable status values are: "recommended", "deprecated", and "experimental". Anything will be displayed as "unsupported".
 
 data_studio_options = {
   # DEPENDENCY
@@ -449,21 +450,21 @@ data_studio_options = {
     qualifier = "VSCODE-1-83-0-0-8-0"
     icon      = "vscode"
     tool      = "vscode"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.8.0"
   },
   jupyter-4-2-5-0-8-0 = {
     qualifier = "JUPYTER-4-2-5-0-8-0"
     icon      = "jupyter"
     tool      = "jupyter"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.0"
   },
   rstudio-4-4-1-0-8-0 = {
     qualifier = "RSTUDIO-4-4-1-0-8-0"
     icon      = "rstudio"
     tool      = "rstudio"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.8.0"
   },
   xpra-6-0-R0-0-8-0 = {

@@ -162,7 +162,7 @@ def test_connect_alb_dns_no_subdomain(backup_tfvars):
 
 
 @pytest.mark.local
-@pytest.mark.urlsg
+@pytest.mark.urls
 @pytest.mark.connect
 def test_connect_wildcard_dns(backup_tfvars):
     """Test Tower Connect wildcard DNS construction for ALB host-matching."""
