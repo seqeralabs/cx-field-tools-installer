@@ -16,14 +16,14 @@ This page describes how to rotate the crypto secret of an already-deployed Seqer
 2. **Prepare Keys in SSM**
 
     1. In the omnibus file:
-        1. In line with the other keys, add an entry that holds the previous key value:
+        1. In line with all the other keys, add an entry that holds the previous key value (_i.e. the value currently defined in the `TOWER_CRYPTO_SECRET` block_):
             ```json
             "TOWER_CRYPTO_PREVIOUS_SECRET": {
 		        "ssm_key": "/config/<YOUR_APP_NAME>/tower/secret-rotation/secretKey",
 		        "value": "POPULATE_WITH_CURRENT_VALUE_OF_SSM_KEY: /config/tower-template/tower/crypto/secretKey"
 	        },
             ```
-        1. In line with the other keys, add an entry activating the key rotation:
+        1. In line with all the other keys, add an entry activating the key rotation:
             ```json
             "TOWER_CRYPTO_ROTATE_KEYS": {
 		        "ssm_key": "/config/<YOUR_APP_NAME>/tower/secret-rotation/enabled",
