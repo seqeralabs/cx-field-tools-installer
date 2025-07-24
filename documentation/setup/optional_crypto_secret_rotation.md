@@ -19,7 +19,7 @@ This page describes how to rotate the crypto secret of an already-deployed Seqer
         1. In line with all the other keys, add an entry that holds the previous key value (_i.e. the value currently defined in the `TOWER_CRYPTO_SECRET` block_):
             ```json
             "TOWER_CRYPTO_PREVIOUS_SECRET": {
-		        "ssm_key": "/config/<YOUR_APP_NAME>/tower/secret-rotation/secretKey",
+		        "ssm_key": "/config/<YOUR_APP_NAME>/tower/secret-rotation/previous-key",
 		        "value": "POPULATE_WITH_CURRENT_VALUE_OF_SSM_KEY: /config/tower-template/tower/crypto/secretKey"
 	        },
             ```
