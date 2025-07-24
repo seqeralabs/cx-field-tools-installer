@@ -19,8 +19,8 @@ This page describes how to rotate the crypto secret of an already-deployed Seqer
         1. In line with all the other keys, add an entry that holds the previous key value (_i.e. the value currently defined in the `TOWER_CRYPTO_SECRET` block_):
             ```json
             "TOWER_CRYPTO_PREVIOUS_SECRET": {
-		        "ssm_key": "/config/<YOUR_APP_NAME>/tower/secret-rotation/previous-key",
-		        "value": "POPULATE_WITH_CURRENT_VALUE_OF_SSM_KEY: /config/tower-template/tower/crypto/secretKey"
+		        "ssm_key": "/config/<REPLACE_ME_WITH_YOUR_APP_NAME>/tower/secret-rotation/previous-key",
+		        "value": "<POPULATE_WITH_CURRENT_VALUE_OF_SSM_KEY: /config/tower-template/tower/crypto/secretKey>"
 	        },
             ```
         1. In line with all the other keys, add an entry activating the key rotation:
@@ -35,14 +35,15 @@ This page describes how to rotate the crypto secret of an already-deployed Seqer
             ```json
             "TOWER_CRYPTO_ROTATE_CHUNK_SIZE": {
 		        "ssm_key": "/config/<YOUR_APP_NAME>/tower/secret-rotation/chunk-size",
-		        "value": "50"
+		        "value": "50",
                 "description": "The number of records to extract in chunks until all secrets and credentials are processed. Only applied if key rotation is enabled."
 	        },
             ```
 
+        1. Double-check that you updated `<YOUR_APP_NAME>` to your own installation's name.
         1. Update `TOWER_CRYPTO_SECRET` entry's `value` to new desired key.
 
-    2. Delete the standalone crypto secret key:
+    2. Delete the standalone SSM crypto secret key:
         1. Delete `/config/<YOUR_APP_NAME>/tower/crypto/secretKey`
 
             This ensures the key will be recreated with the new value.
@@ -63,10 +64,12 @@ This page describes how to rotate the crypto secret of an already-deployed Seqer
     1. In the omnibus file:
         1. Delete entry `TOWER_CRYPTO_PREVIOUS_SECRET`.
         1. Delete entry `TOWER_CRYPTO_ROTATE_KEYS`.
+        1. Delete entry `TOWER_CRYPTO_ROTATE_CHUNK_SIZE`.
 
     1. Delete standalone SSM keys:
         1. Delete SSM key `/config/<YOUR_APP_NAME>/tower/secret-rotation/secretKey`.
         1. Delete SSM key `/config/<YOUR_APP_NAME>/tower/secret-rotation/enabled`.
+        1. Delete SSM key `/config/<YOUR_APP_NAME>/tower/secret-rotation/chunk-size`.
 
 5. **Restart Seqera Platform**
 
