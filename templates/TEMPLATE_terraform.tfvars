@@ -427,7 +427,7 @@ NOTES:
 2. If path-based routing (available as of v25.2.0), your ensure you certificate supports the domain
   specified in `data_studio_path_routing_url`.
 
-3. The `data_studio_path_routing_url` should be a **bare domain or subdomain** — do **not** include 
+3. The `data_studio_path_routing_url` should be a **bare domain** — do not include 
    protocol prefixes like `https://` or path components. Example: `autoconnect.autodc.dev-seqera.net`  
 */
 flag_enable_data_studio         = true
