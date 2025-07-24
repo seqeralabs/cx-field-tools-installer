@@ -210,10 +210,11 @@ services:
 %{ if flag_use_container_redis == true ~}
     depends_on:
       - redis
+%{endif ~}
     volumes:
       # DEPENDENCY: July 22/25 -- remove in subsequent release when fixed upstream in Studios.
       - $HOME/.tower/connect:/data
-%{endif ~}
+
 
   connect-server:
     image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-server:${data_studio_container_version}
