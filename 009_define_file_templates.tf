@@ -326,6 +326,8 @@ locals {
       app_name = var.app_name
       #db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"]
       #db_tower_password = local.tower_secrets["TOWER_DB_PASSWORD"]["value"]
+      wave_lite_server_url = var.flag_use_wave_lite ? var.wave_lite_server_url : ""
+      tower_connect_dns    = var.flag_enable_data_studio ? module.connection_strings.tower_connect_dns : ""
     }
   )
 
@@ -403,4 +405,19 @@ locals {
 resource "tls_private_key" "connect_pem" {
   algorithm = "RSA"
   rsa_bits  = 4096
+}
+
+
+## ------------------------------------------------------------------------------------
+## Private CA Config
+## ------------------------------------------------------------------------------------
+locals {
+  private_ca_conf = templatefile("assets/src/customcerts/custom_default.conf.tpl",
+    {
+      flag_enable_data_studio  = var.flag_enable_data_studio,
+      flag_use_wave_lite       = var.flag_use_wave_lite,
+      tower_connect_server_url = module.connection_strings.tower_connect_server_url,
+      tower_wave_url           = module.connection_strings.tower_wave_url
+    }
+  )
 }

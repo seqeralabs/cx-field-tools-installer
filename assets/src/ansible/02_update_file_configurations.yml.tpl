@@ -135,7 +135,7 @@
           rm cert.conf  || true
 
           chmod u+x create_self_signed_cert.sh
-          ./create_self_signed_cert.sh $TOWER_BASE_URL
+          ./create_self_signed_cert.sh $TOWER_BASE_URL ${tower_connect_dns} ${wave_lite_server_url}
 
           sleep 5
 

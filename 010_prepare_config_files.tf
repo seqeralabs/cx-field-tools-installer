@@ -74,6 +74,9 @@ resource "null_resource" "generate_independent_config_files" {
       # Generate Bash files for remote execution
       echo '${local.cleanse_and_configure_host}' > ${path.module}/assets/target/bash/remote/cleanse_and_configure_host.sh
 
+      # Emit customized custom cert config
+      echo '${local.private_ca_conf}' > ${path.module}/assets/target/customcerts/custom_default.conf
+
     EOT
   }
 }
