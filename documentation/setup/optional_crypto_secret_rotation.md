@@ -31,6 +31,15 @@ This page describes how to rotate the crypto secret of an already-deployed Seqer
 	        },
             ```
 
+        1. In line with all the other keys, add an entry specifying how many :
+            ```json
+            "TOWER_CRYPTO_ROTATE_CHUNK_SIZE": {
+		        "ssm_key": "/config/<YOUR_APP_NAME>/tower/secret-rotation/chunk-size",
+		        "value": "50"
+                "description": "The number of records to extract in chunks until all secrets and credentials are processed. Only applied if key rotation is enabled."
+	        },
+            ```
+
         1. Update `TOWER_CRYPTO_SECRET` entry's `value` to new desired key.
 
     2. Delete the standalone crypto secret key:
