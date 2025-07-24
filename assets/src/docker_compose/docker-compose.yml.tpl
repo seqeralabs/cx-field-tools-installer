@@ -244,6 +244,7 @@ services:
     container_name: reverseproxy
     networks:
       - frontend
+      - backend
     ports:
       - 80:80
       - 443:443
@@ -252,6 +253,11 @@ services:
       - $HOME/target/customcerts/REPLACE_CUSTOM_CRT:/etc/ssl/certs/REPLACE_CUSTOM_CRT
       - $HOME/target/customcerts/REPLACE_CUSTOM_KEY:/etc/ssl/private/REPLACE_CUSTOM_KEY
     restart: always
+    depends_on:
+      - wave-lite
+      - wave-lite-reverse-proxy
+      - connect-proxy
+      - frontend
 %{ endif ~}
 
 %{ if flag_use_wave_lite == true ~}

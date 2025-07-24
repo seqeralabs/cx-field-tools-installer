@@ -414,10 +414,12 @@ resource "tls_private_key" "connect_pem" {
 locals {
   private_ca_conf = templatefile("assets/src/customcerts/custom_default.conf.tpl",
     {
-      flag_enable_data_studio  = var.flag_enable_data_studio,
-      flag_use_wave_lite       = var.flag_use_wave_lite,
-      tower_connect_server_url = module.connection_strings.tower_connect_server_url,
-      tower_wave_url           = module.connection_strings.tower_wave_url
+      flag_enable_data_studio = var.flag_enable_data_studio,
+      flag_use_wave_lite      = var.flag_use_wave_lite,
+
+      tower_base_url    = module.connection_strings.tower_base_url
+      tower_connect_dns = module.connection_strings.tower_connect_dns
+      tower_wave_dns    = module.connection_strings.tower_wave_dns
     }
   )
 }

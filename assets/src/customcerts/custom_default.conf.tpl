@@ -3,11 +3,19 @@ upstream frontend {
     server frontend:80;
 }
 
+upstream connect-proxy {
+    server connect-proxy:9090;
+}
+
+upstream wave-lite-reverse-proxy {
+    server wave-lite-reverse-proxy:80;
+}
+
 server {
     listen       80;
     listen  [::]:80;
 
-    server_name  REPLACE_TOWER_URL;
+    server_name  {tower_base_url};
 
     location / {
         proxy_pass http://frontend;
@@ -22,10 +30,10 @@ server {
 server {
     listen 443 ssl;
 
-    server_name REPLACE_TOWER_URL;
+    server_name {tower_base_url};
 
-    ssl_certificate /etc/ssl/certs/PLACEHOLDER_CRT;
-    ssl_certificate_key /etc/ssl/private/PLACEHOLDER_KEY;
+    ssl_certificate /etc/ssl/certs/{tower_base_url}.crt;
+    ssl_certificate_key /etc/ssl/private/{tower_base_url}.key;
 
     location / {
         proxy_pass http://frontend;
@@ -45,13 +53,14 @@ server {
 server {
     listen 443 ssl;
 
-    server_name ${tower_connect_server_url};
+    server_name ${tower_connect_dns};
 
-    ssl_certificate /etc/ssl/certs/PLACEHOLDER_CRT;
-    ssl_certificate_key /etc/ssl/private/PLACEHOLDER_KEY;
+    ssl_certificate /etc/ssl/certs/{tower_base_url}.crt;
+    ssl_certificate_key /etc/ssl/private/{tower_base_url}.key;
 
     location / {
-        proxy_pass http://connect-proxy:9090;
+        proxy_pass http://connect-proxy;
+
         proxy_set_header        Host $host;
         proxy_set_header        X-Real-IP $remote_addr;
         proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -69,13 +78,14 @@ server {
 server {
     listen 443 ssl;
 
-    server_name ${tower_wave_url};
+    server_name ${tower_wave_dns};
 
-    ssl_certificate /etc/ssl/certs/PLACEHOLDER_CRT;
-    ssl_certificate_key /etc/ssl/private/PLACEHOLDER_KEY;
+    ssl_certificate /etc/ssl/certs/{tower_base_url}.crt;
+    ssl_certificate_key /etc/ssl/private/{tower_base_url}.key;
 
     location / {
-        proxy_pass http://wave-lite-reverse-proxy:9099;
+        proxy_pass http://wave-lite-reverse-proxy;
+
         proxy_set_header        Host $host;
         proxy_set_header        X-Real-IP $remote_addr;
         proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
