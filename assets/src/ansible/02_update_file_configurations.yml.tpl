@@ -43,7 +43,7 @@
         chown ec2-user:ec2-user data-studios.env
         chown ec2-user:ec2-user data-studios-rsa.pem
 
-    - name: Purge old files
+    - name: Populate SP env file with DB connection variables.
       become: true
       become_user: ec2-user
       # TO DO: Remove this step when migration script can pull directly from SSM.
@@ -140,76 +140,30 @@
 
         fi
 
-    - name: Add root CA cert to EC2 instance truststore if necessary (for tw use later)
-      # Unix socket error for some reason
+    - name: Update entities dependent on private CA cert
       become: true
       become_user: ec2-user
       ansible.builtin.shell: |
-        cd /home/ec2-user/target/customcerts && source ~/.bashrc
+        # Add root CA cert to EC2 instance truststore. ASSUMPTION -- Root CA cert (new or existing) is called rootCA.crt
 
-        # NOTE: Expect that any Root CA cert (new or existing) is called "rootCA.crt"
         if [[ $CACERT_GENERATE_PRIVATE == "true" || $CACERT_USE_EXISTING_PRIVATE == "true" ]]; then
 
+          cd /home/ec2-user/target/customcerts
           echo "Adding RootCA EC2 truststore"
-          ROOT_CA="rootCA.crt"
-
-          sudo keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file $ROOT_CA
-          sudo cp $ROOT_CA /etc/pki/ca-trust/source/anchors/
+          sudo keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file rootCA.crt
+          sudo cp rootCA.crt /etc/pki/ca-trust/source/anchors/
           sudo update-ca-trust
 
-        fi
-
-    - name: Patch docker-compose reverseproxy if custom cert being served up by instance.
-      become: true
-      become_user: ec2-user
-      ansible.builtin.shell: |
-        cd /home/ec2-user/target/customcerts && source ~/.bashrc
-
-        if [[ $CACERT_GENERATE_PRIVATE == "true" ]]; then
-
-          # New CA, use the domain name as the file name.
-
-          export CACERT_NEW_CRT="${tower_base_url}.crt"
-          export CACERT_NEW_KEY="${tower_base_url}.key"
-
-          sed -i "s/REPLACE_TOWER_URL/${tower_base_url}/g" custom_default.conf
-          sed -i "s/PLACEHOLDER_CRT/$CACERT_NEW_CRT/g" custom_default.conf
-          sed -i "s/PLACEHOLDER_KEY/$CACERT_NEW_KEY/g" custom_default.conf
-
-          sed -i "s/REPLACE_CUSTOM_CRT/$CACERT_NEW_CRT/g" /home/ec2-user/docker-compose.yml
-          sed -i "s/REPLACE_CUSTOM_KEY/$CACERT_NEW_KEY/g" /home/ec2-user/docker-compose.yml
-
-        fi
-
-        if [[ $CACERT_USE_EXISTING_PRIVATE == "true" ]]; then
-
-          # Using environment variables pushed to ~/.bashrc via Terraform
-
-          sed -i "s/REPLACE_TOWER_URL/$TOWER_BASE_URL/g" custom_default.conf
-          sed -i "s/PLACEHOLDER_CRT/$CACERT_EXISTING_CA_CRT/g" custom_default.conf
-          sed -i "s/PLACEHOLDER_KEY/$CACERT_EXISTING_CA_KEY/g" custom_default.conf
-
-          sed -i "s/REPLACE_CUSTOM_CRT/$CACERT_EXISTING_CA_CRT/g" /home/ec2-user/docker-compose.yml
-          sed -i "s/REPLACE_CUSTOM_KEY/$CACERT_EXISTING_CA_KEY/g" /home/ec2-user/docker-compose.yml
-
-        fi
-
-    - name: Update seqerakit prerun script to pull private cert if active.
-      become: true
-      become_user: ec2-user
-      ansible.builtin.shell: |
-        cd /home/ec2-user/target/seqerakit && source ~/.bashrc
-
-        if [[ $CACERT_GENERATE_PRIVATE == "true" || $CACERT_USE_EXISTING_PRIVATE == "true" ]]; then
-
-          # Update the seqerakit pre-run script to pull the cert from the server
+          # Update seqerakit prerun script to pull private cert
           # https://help.tower.nf/23.2/enterprise/configuration/ssl_tls/
           # Note: This approach works for most clients but there can be occasional problems due to chains.
+
+          cd /home/ec2-user/target/seqerakit
 
           {
             echo -e "\\n"
 
-            echo "keytool -printcert -rfc -sslserver $TOWER_BASE_URL:443  >  /PRIVATE_CERT.pem"
+            echo "keytool -printcert -rfc -sslserver ${tower_base_url}:443  >  /PRIVATE_CERT.pem"
             echo "keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file /PRIVATE_CERT.pem"
             echo "cp /PRIVATE_CERT.pem /etc/pki/ca-trust/source/anchors/PRIVATE_CERT.pem"
             echo "update-ca-trust"

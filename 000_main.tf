@@ -204,6 +204,18 @@ locals {
   wave_lite_db_container    = var.flag_use_wave_lite == true && var.flag_create_external_db == true ? false : true
 
 
+  # Private CA Files
+  # ---------------------------------------------------------------------------------------
+  private_ca_cert_new = var.flag_generate_private_cacert ? "${module.connection_strings.tower_base_url}.crt" : ""
+  private_ca_key_new  = var.flag_generate_private_cacert ? "${module.connection_strings.tower_base_url}.key" : ""
+
+  private_ca_cert_existing = var.flag_use_existing_private_cacert ? var.existing_ca_cert_file : ""
+  private_ca_key_existing  = var.flag_use_existing_private_cacert ? var.existing_ca_key_file : ""
+
+  private_ca_cert = join("", [local.private_ca_cert_new, local.private_ca_cert_existing])
+  private_ca_key  = join("", [local.private_ca_key_new, local.private_ca_key_existing])
+
+
   # Miscellaneous
   # ---------------------------------------------------------------------------------------
   # These are needed to handle templatefile rendering to Bash echoing to file craziness.

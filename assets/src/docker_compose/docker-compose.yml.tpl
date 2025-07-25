@@ -250,8 +250,8 @@ services:
       - 443:443
     volumes:
       - $HOME/target/customcerts/custom_default.conf:/etc/nginx/conf.d/default.conf
-      - $HOME/target/customcerts/REPLACE_CUSTOM_CRT:/etc/ssl/certs/REPLACE_CUSTOM_CRT
-      - $HOME/target/customcerts/REPLACE_CUSTOM_KEY:/etc/ssl/private/REPLACE_CUSTOM_KEY
+      - $HOME/target/customcerts/${private_ca_cert}:/etc/ssl/certs/${private_ca_cert}
+      - $HOME/target/customcerts/${private_ca_key}:/etc/ssl/private/${private_ca_key}
     restart: always
     depends_on:
       - wave-lite

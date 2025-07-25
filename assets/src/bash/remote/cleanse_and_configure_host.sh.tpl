@@ -33,7 +33,6 @@ rm -rf $HOME_PATH/data-studios-rsa.pem || true
   echo -e "export WAVE_LITE_ACTIVATED=${use_wave_lite}"
   echo -e "export WAVE_LITE_DB_URL=${wave_lite_db_url}"
 
-  echo -e "export TOWER_BASE_URL=${tower_base_url}"
   echo -e "export TOWER_SERVER_URL=${tower_server_url}"
   echo -e "export TOWER_API_ENDPOINT=${tower_api_endpoint}"
   echo -e "export SEQERAKIT_USE_HOSTS_FILE=${flag_create_hosts_file_entry}"

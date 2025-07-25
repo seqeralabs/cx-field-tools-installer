@@ -190,7 +190,10 @@ locals {
 
       wave_lite_db_master_user     = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_USER"]["value"]
       wave_lite_db_master_password = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_PASSWORD"]["value"],
-      wave_lite_redis_auth         = local.wave_lite_secrets["WAVE_LITE_REDIS_AUTH"]["value"]
+      wave_lite_redis_auth         = local.wave_lite_secrets["WAVE_LITE_REDIS_AUTH"]["value"],
+
+      private_ca_cert = local.private_ca_cert,
+      private_ca_key  = local.private_ca_key
     }
   )
 }
@@ -417,9 +420,12 @@ locals {
       flag_enable_data_studio = var.flag_enable_data_studio,
       flag_use_wave_lite      = var.flag_use_wave_lite,
 
-      tower_base_url    = module.connection_strings.tower_base_url
-      tower_connect_dns = module.connection_strings.tower_connect_dns
-      tower_wave_dns    = module.connection_strings.tower_wave_dns
+      tower_base_url    = module.connection_strings.tower_base_url,
+      tower_connect_dns = module.connection_strings.tower_connect_dns,
+      tower_wave_dns    = module.connection_strings.tower_wave_dns,
+
+      private_ca_cert = local.private_ca_cert,
+      private_ca_key  = local.private_ca_key
     }
   )
 }
