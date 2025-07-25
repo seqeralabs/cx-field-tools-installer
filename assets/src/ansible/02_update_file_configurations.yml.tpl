@@ -135,12 +135,13 @@
           rm cert.conf  || true
 
           chmod u+x create_self_signed_cert.sh
-          ./create_self_signed_cert.sh $TOWER_BASE_URL ${tower_connect_dns} ${wave_lite_server_url}
+          ./create_self_signed_cert.sh ${tower_base_url} ${tower_connect_dns} ${tower_wave_dns}
 
           sleep 5
 
           # Write root cert out and push to S3 bucket for programmatic retrieval
-          cat rootCA.crt >> "$TOWER_BASE_URL.crt"
+          # Mixes up root crt with leaf cert
+          # cat rootCA.crt >> "${tower_base_url}.crt"
           aws s3 cp rootCA.crt $CACERT_S3_PREFIX/rootCA.crt
 
         fi
@@ -155,11 +156,11 @@
         if [[ $CACERT_GENERATE_PRIVATE == "true" || $CACERT_USE_EXISTING_PRIVATE == "true" ]]; then
 
           echo "Adding custom cert to EC2 truststore"
-          env | grep -i TOWER
+          # env | grep -i TOWER
 
-          export crt=".crt"
-          export tower_cert=$TOWER_BASE_URL$crt
-          echo $tower_cert
+          # export crt=".crt"
+          export tower_cert=${tower_base_url}.crt
+          # echo $tower_cert
 
           sudo keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file $tower_cert
           sudo cp $tower_cert /etc/pki/ca-trust/source/anchors/$tower_cert
@@ -177,10 +178,10 @@
 
           # New CA, use the domain name as the file name.
 
-          export CACERT_NEW_CRT="$TOWER_BASE_URL.crt"
-          export CACERT_NEW_KEY="$TOWER_BASE_URL.key"
+          export CACERT_NEW_CRT="${tower_base_url}.crt"
+          export CACERT_NEW_KEY="${tower_base_url}.key"
 
-          sed -i "s/REPLACE_TOWER_URL/$TOWER_BASE_URL/g" custom_default.conf
+          sed -i "s/REPLACE_TOWER_URL/${tower_base_url}/g" custom_default.conf
           sed -i "s/PLACEHOLDER_CRT/$CACERT_NEW_CRT/g" custom_default.conf
           sed -i "s/PLACEHOLDER_KEY/$CACERT_NEW_KEY/g" custom_default.conf
 

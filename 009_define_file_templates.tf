@@ -324,10 +324,10 @@ locals {
   ansible_02_update_file_configurations = templatefile("assets/src/ansible/02_update_file_configurations.yml.tpl",
     {
       app_name = var.app_name
-      #db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"]
-      #db_tower_password = local.tower_secrets["TOWER_DB_PASSWORD"]["value"]
-      wave_lite_server_url = var.flag_use_wave_lite ? var.wave_lite_server_url : ""
-      tower_connect_dns    = var.flag_enable_data_studio ? module.connection_strings.tower_connect_dns : ""
+
+      tower_base_url    = module.connection_strings.tower_base_url,
+      tower_wave_dns    = var.flag_use_wave_lite ? module.connection_strings.tower_wave_dns : "",
+      tower_connect_dns = var.flag_enable_data_studio ? module.connection_strings.tower_connect_dns : ""
     }
   )
 
@@ -409,7 +409,7 @@ resource "tls_private_key" "connect_pem" {
 
 
 ## ------------------------------------------------------------------------------------
-## Private CA Config
+## Local Server With Private CA Config
 ## ------------------------------------------------------------------------------------
 locals {
   private_ca_conf = templatefile("assets/src/customcerts/custom_default.conf.tpl",

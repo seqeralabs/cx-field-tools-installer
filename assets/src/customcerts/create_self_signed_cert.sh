@@ -1,36 +1,39 @@
-#! /bin/bash
+#!/bin/bash
 
-# SOurce: https://devopscube.com/create-self-signed-certificates-openssl/
-# July 24/25: Updated with Claude.ai help to support multiple domains
-# Execute with: `./create_self_signed_cert.sh SP_URL OTHER_URL(s)...
+# Source: https://devopscube.com/create-self-signed-certificates-openssl/
+# Execute with: `./create_self_signed_cert.sh DOMAIN1 [DOMAIN2] [DOMAIN3] ...`
+# Example: ./create_self_signed_cert.sh autodc.dev-seqera.net autoconnect.dev-seqera.net autowave.dev-seqera.net
 
-if [ "$#" -eq 0 ]
+if [ "$#" -lt 1 ]
 then
   echo "Error: No domain name argument provided"
-  echo "Usage: Provide a domain name as an argument"
+  echo "Usage: Provide one or more domain names as arguments"
+  echo "Example: ./create_self_signed_cert.sh autodc.dev-seqera.net autoconnect.dev-seqera.net autowave.dev-seqera.net"
   exit 1
 fi
 
-# DOMAIN=$1
-DOMAINS=("$@")
-# Use the first domain as the primary domain for file naming
-PRIMARY_DOMAIN=${DOMAINS[0]}
+PRIMARY_DOMAIN=$1
+CERT_NAME=${PRIMARY_DOMAIN}
 
-# Create root CA & Private key
+# Create root CA private key (separate from certificate)
+echo "Creating root CA private key..."
+openssl genrsa -out rootCA.key 2048
 
+# Create root CA certificate using the existing private key
+echo "Creating root CA certificate..."
 openssl req -x509 \
-            -sha256 -days 356 \
+            -new \
+            -key rootCA.key \
+            -sha256 -days 365 \
             -nodes \
-            -newkey rsa:2048 \
-            -subj "/CN=${PRIMARY_DOMAIN}/C=CX/L=Barcelona" \
-            -keyout rootCA.key -out rootCA.crt 
+            -subj "/CN=Root CA/C=ES/ST=Catalan/L=Barcelona/O=Seqera/OU=Seqera CX" \
+            -out rootCA.crt
 
-# Generate Private key 
+# Generate private key for the domain certificate
+echo "Generating private key for ${PRIMARY_DOMAIN}..."
+openssl genrsa -out ${CERT_NAME}.key 2048
 
-openssl genrsa -out ${PRIMARY_DOMAIN}.key 2048
-
-# Create csf conf
-
+# Create CSR configuration with multiple domains
 cat > csr.conf <<EOF
 [ req ]
 default_bits = 2048
@@ -49,27 +52,30 @@ CN = ${PRIMARY_DOMAIN}
 
 [ req_ext ]
 subjectAltName = @alt_names
+
+[ alt_names ]
 EOF
 
-# Add all domains to the alt_names section
-for i in "${!DOMAINS[@]}"; do
-    echo "DNS.$((i+1)) = ${DOMAINS[i]}" >> csr.conf
+# Add all provided domains to the alt_names section
+DNS_COUNT=1
+for domain in "$@"; do
+    echo "DNS.${DNS_COUNT} = ${domain}" >> csr.conf
+    echo "DNS.$((DNS_COUNT + 1)) = www.${domain}" >> csr.conf
+    DNS_COUNT=$((DNS_COUNT + 2))
 done
 
-# Add the IP addresses
+# Add IP addresses
 cat >> csr.conf <<EOF
 IP.1 = 192.168.1.5 
 IP.2 = 192.168.1.6
 EOF
 
-# create CSR request using private key
+echo "Creating certificate signing request..."
+# Create CSR request using private key
+openssl req -new -key ${CERT_NAME}.key -out ${CERT_NAME}.csr -config csr.conf
 
-openssl req -new -key ${PRIMARY_DOMAIN}.key -out ${PRIMARY_DOMAIN}.csr -config csr.conf
-
-# Create a external config file for the certificate
-
+# Create external config file for the certificate with all domains
 cat > cert.conf <<EOF
-
 authorityKeyIdentifier=keyid,issuer
 basicConstraints=CA:FALSE
 keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
@@ -78,20 +84,38 @@ subjectAltName = @alt_names
 [alt_names]
 EOF
 
-# Add all domains to the cert.conf alt_names section
-for i in "${!DOMAINS[@]}"; do
-    echo "DNS.$((i+1)) = ${DOMAINS[i]}" >> cert.conf
+# Add all domains to cert.conf as well
+DNS_COUNT=1
+for domain in "$@"; do
+    echo "DNS.${DNS_COUNT} = ${domain}" >> cert.conf
+    echo "DNS.$((DNS_COUNT + 1)) = www.${domain}" >> cert.conf
+    DNS_COUNT=$((DNS_COUNT + 2))
 done
 
-# Create SSl with self signed CA
+# Add IP addresses to cert.conf
+cat >> cert.conf <<EOF
+IP.1 = 192.168.1.5
+IP.2 = 192.168.1.6
+EOF
+
+echo "Creating SSL certificate with self-signed CA..."
+# Create SSL certificate with self signed CA
 openssl x509 -req \
-    -in ${PRIMARY_DOMAIN}.csr \
+    -in ${CERT_NAME}.csr \
     -CA rootCA.crt -CAkey rootCA.key \
-    -CAcreateserial -out ${PRIMARY_DOMAIN}.crt \
+    -CAcreateserial -out ${CERT_NAME}.crt \
     -days 365 \
     -sha256 -extfile cert.conf
 
-echo "The certificate supports the following domains:"
-for domain in "${DOMAINS[@]}"; do
+echo "Certificate creation complete!"
+echo "Files created:"
+echo "  - rootCA.key (Root CA private key)"
+echo "  - rootCA.crt (Root CA certificate)"
+echo "  - ${CERT_NAME}.key (Domain private key)"
+echo "  - ${CERT_NAME}.crt (Domain certificate)"
+echo ""
+echo "Domains included in certificate:"
+for domain in "$@"; do
     echo "  - ${domain}"
+    echo "  - www.${domain}"
 done

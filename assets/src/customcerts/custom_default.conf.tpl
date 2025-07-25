@@ -15,7 +15,7 @@ server {
     listen       80;
     listen  [::]:80;
 
-    server_name  {tower_base_url};
+    server_name  ${tower_base_url};
 
     location / {
         proxy_pass http://frontend;
@@ -30,10 +30,10 @@ server {
 server {
     listen 443 ssl;
 
-    server_name {tower_base_url};
+    server_name ${tower_base_url};
 
-    ssl_certificate /etc/ssl/certs/{tower_base_url}.crt;
-    ssl_certificate_key /etc/ssl/private/{tower_base_url}.key;
+    ssl_certificate /etc/ssl/certs/${tower_base_url}.crt;
+    ssl_certificate_key /etc/ssl/private/${tower_base_url}.key;
 
     location / {
         proxy_pass http://frontend;
@@ -55,8 +55,8 @@ server {
 
     server_name ${tower_connect_dns};
 
-    ssl_certificate /etc/ssl/certs/{tower_base_url}.crt;
-    ssl_certificate_key /etc/ssl/private/{tower_base_url}.key;
+    ssl_certificate /etc/ssl/certs/${tower_base_url}.crt;
+    ssl_certificate_key /etc/ssl/private/${tower_base_url}.key;
 
     location / {
         proxy_pass http://connect-proxy;
@@ -80,8 +80,8 @@ server {
 
     server_name ${tower_wave_dns};
 
-    ssl_certificate /etc/ssl/certs/{tower_base_url}.crt;
-    ssl_certificate_key /etc/ssl/private/{tower_base_url}.key;
+    ssl_certificate /etc/ssl/certs/${tower_base_url}.crt;
+    ssl_certificate_key /etc/ssl/private/${tower_base_url}.key;
 
     location / {
         proxy_pass http://wave-lite-reverse-proxy;
