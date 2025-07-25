@@ -88,8 +88,6 @@
           export wave_lite_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/wave-lite/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
           export wave_lite_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/wave-lite/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
 
-          # Modified command used to populate mysql
-          # Using `postgres` since this is the default database created when Postgres RDS first spun up.
           docker run --rm -t -v $(pwd)/target/wave_lite_config/wave-lite-rds.sql:/tmp/wave.sql -e \
           POSTGRES_PASSWORD=$wave_lite_master_password --entrypoint /bin/bash postgres:latest \
           -c "PGPASSWORD=$wave_lite_master_password psql -h $WAVE_LITE_DB_URL -p 5432 -U $wave_lite_master_user -d postgres < /tmp/wave.sql"
@@ -109,8 +107,6 @@
           export db_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
           export db_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
 
-          # mysql --host $DB_URL --port=3306 --user=$db_master_user --password=$db_master_password < target/groundswell_config/groundswell.sql  || true
-          
           docker run --rm -t -v $(pwd)/target/groundswell_config/groundswell.sql:/groundswell.sql -e \
           MYSQL_PWD=$db_master_password --entrypoint /bin/bash mysql:8.0 \
           -c "mysql --host $DB_URL --port=3306 --user=$db_master_user < groundswell.sql" || true
@@ -140,30 +136,25 @@
           sleep 5
 
           # Write root cert out and push to S3 bucket for programmatic retrieval
-          # Mixes up root crt with leaf cert
-          # cat rootCA.crt >> "${tower_base_url}.crt"
           aws s3 cp rootCA.crt $CACERT_S3_PREFIX/rootCA.crt
 
         fi
 
-    - name: Add custom cert to EC2 instance truststore if necessary (for tw use later)
+    - name: Add root CA cert to EC2 instance truststore if necessary (for tw use later)
       # Unix socket error for some reason
       become: true
       become_user: ec2-user
       ansible.builtin.shell: |
         cd /home/ec2-user/target/customcerts && source ~/.bashrc
 
+        # NOTE: Expect that any Root CA cert (new or existing) is called "rootCA.crt"
         if [[ $CACERT_GENERATE_PRIVATE == "true" || $CACERT_USE_EXISTING_PRIVATE == "true" ]]; then
 
-          echo "Adding custom cert to EC2 truststore"
-          # env | grep -i TOWER
+          echo "Adding RootCA EC2 truststore"
+          ROOT_CA="rootCA.crt"
 
-          # export crt=".crt"
-          export tower_cert=${tower_base_url}.crt
-          # echo $tower_cert
-
-          sudo keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file $tower_cert
-          sudo cp $tower_cert /etc/pki/ca-trust/source/anchors/$tower_cert
+          sudo keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file $ROOT_CA
+          sudo cp $ROOT_CA /etc/pki/ca-trust/source/anchors/
           sudo update-ca-trust
 
         fi
@@ -189,7 +180,6 @@
           sed -i "s/REPLACE_CUSTOM_KEY/$CACERT_NEW_KEY/g" /home/ec2-user/docker-compose.yml
 
         fi
-
 
         if [[ $CACERT_USE_EXISTING_PRIVATE == "true" ]]; then
 
