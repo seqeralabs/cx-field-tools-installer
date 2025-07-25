@@ -117,16 +117,29 @@
       become: true
       become_user: ec2-user
       ansible.builtin.shell: |
-        # Add root CA cert to EC2 instance truststore. 
-        # ASSUMPTION -- Root CA cert (new or existing) is called rootCA.crt
+        # Pull pre-loaded certificates from S3 Bucket and stash in necessary locations.
+        # Only do so if rootCA.crt is not yet present in trust anchors
 
-        if [[ $CACERT_GENERATE_PRIVATE == "true" || $CACERT_USE_EXISTING_PRIVATE == "true" ]]; then
+        if [[ $CACERT_PRIVATE_ACTIVE == true ]]; then
 
+          if [[ ! -f "/etc/pki/ca-trust/source/anchors/rootCA.crt" ]]; then
+
+            # Add root CA cert to EC2 instance truststore. 
+            # ASSUMPTION -- Root CA cert (new or existing) is called rootCA.crt
+            cd /tmp
+            aws s3 cp ${bucket_prefix_for_new_private_ca_cert}/rootCA.crt .
+            
+            sudo keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file rootCA.crt
+            sudo cp rootCA.crt /etc/pki/ca-trust/source/anchors/
+            sudo update-ca-trust
+
+            rm rootCA.crt
+          fi
+
+          # Grab leaf cert and stash in target/ folder
           cd /home/ec2-user/target/customcerts
-          echo "Adding RootCA EC2 truststore"
-          sudo keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file rootCA.crt
-          sudo cp rootCA.crt /etc/pki/ca-trust/source/anchors/
-          sudo update-ca-trust
+          aws s3 cp ${bucket_prefix_for_new_private_ca_cert}/${tower_base_url}.crt ${tower_base_url}.crt 
+          aws s3 cp ${bucket_prefix_for_new_private_ca_cert}/${tower_base_url}.key ${tower_base_url}.key
 
         fi
 

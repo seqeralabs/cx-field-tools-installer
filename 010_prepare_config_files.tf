@@ -17,59 +17,6 @@ resource "null_resource" "generate_independent_config_files" {
       #  - DO NOT `cd <PATH>` or else that will set very subsequent path.module to folder cd-ed to.
       #  - DONT be clever. Leave paths long, dumb, and relative to PROJECT_ROOT (unless absoutely necessary like certs)
 
-      # WARNING: 
-      # Upon further reflection, leaving the keys within the project is not secure:
-      #  - Keys must be available in the event of loss / new administrators.
-      #  - Keys cant be checked into git due to their sensitivity. But if I put the keys on the .gitignore
-           list, I havent solved the distribution problem.
-      #
-      # I can think of two solutions:
-      # 1) SSM
-      #   - PROs: 
-      #     - We already use this mechanism for other secrets and it's easily adopted.
-      #   - CONS:
-      #     - The idea of properly pasting .crt/.key data into the JSON fills me with dread.
-      #     - Distribution not simple - you need to download string from SSM then convert into file 
-      #       with proper structure. Likely painful.
-      #     - Different flow nuances for a newly-created cert vs pre-existing.
-      #
-      # 2) S3 Bucket
-      #  - PROs:
-      #    - Well-understood pattern.
-      #    - File(ish) storage.
-      #    - Easy to implement
-      #    - Minimal deltas between new cert creation and use of pre-existing.
-      #    - Works well in context of wider Seqera ecosystem (Nextflow pipelines, Studios, etc.)
-      #  - CONs:
-      #    - Introduces a 3rd pillar to state storage (git + SSM + S3)
-      #    - Minor AWS IAM permissions creep
-      #
-      # Idea:
-      #  - Make generation of certificate a one-time non-automated step.
-      #  - Regardless of how cert generated, administrator manually loads cert & key (new or existing)
-           into bucket.
-      #  - If private cert must be used, flag will direct Ansible to pull target files onto EC2, in 
-           a way that allows them to be mounted to the reverseproxy.
-
-
-      #  New Private CA generation must happen BEFORE the purge/recreate step since the generation of a new private CA should
-      # not be happening every run. This creates once on the first deploy and lives in project source.
-      # Generate new private certificates (if necessary)
-      if [[ "${var.flag_generate_private_cacert}" == "true" ]]; then
-
-        # !!! DANGER !!! See note at top about relative paths and cd.
-        cd "${path.module}/assets/src/customcerts"
-        if [[ -f "rootCA.crt" ]]; then
-          echo "Not regenerating CA files."
-        else
-          ./create_self_signed_cert.sh ${module.connection_strings.tower_base_url} ${module.connection_strings.tower_connect_dns} ${module.connection_strings.tower_wave_dns}
-          
-          # Write root cert out and push to S3 bucket for programmatic retrieval
-          aws s3 cp rootCA.crt "${var.bucket_prefix_for_new_private_ca_cert}/rootCA.crt"
-        fi
-        cd "../../.."
-      fi
-
       # Purge local folder & recreate / copy some materials directly into target/
       ${path.module}/assets/src/bash/local/purge_local_target.sh
 

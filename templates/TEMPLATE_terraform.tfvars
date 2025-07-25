@@ -135,6 +135,9 @@ flag_create_external_redis = false
 flag_use_container_redis   = true
 
 # Only one of these can true.
+# July 25/25: Given recent refacotring of certificate generation, there is no differnce between 
+#  `flag_generate_private_cacert` and `flag_use_existing_private_cacert`. Certs must now be generated
+#  ahead of a deployment. To use a private cert on your EC2, you may make either one "true".
 flag_create_load_balancer        = true
 flag_generate_private_cacert     = false
 flag_use_existing_private_cacert = false

@@ -215,6 +215,8 @@ locals {
   private_ca_cert = join("", [local.private_ca_cert_new, local.private_ca_cert_existing])
   private_ca_key  = join("", [local.private_ca_key_new, local.private_ca_key_existing])
 
+  cacert_private_active = var.flag_generate_private_cacert || var.flag_use_existing_private_cacert ? true : false
+
 
   # Miscellaneous
   # ---------------------------------------------------------------------------------------
