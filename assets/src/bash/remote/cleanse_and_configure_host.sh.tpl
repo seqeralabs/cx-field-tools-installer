@@ -22,7 +22,6 @@ rm -rf $HOME_PATH/data-studios-rsa.pem || true
   echo -e "export CACERT_GENERATE_PRIVATE=${flag_generate_private_cacert}"
   echo -e "export CACERT_USE_EXISTING_PRIVATE=${flag_use_existing_private_cacert}"
   echo -e "export CACERT_DO_NOT_USE_HTTPS=${flag_do_not_use_https}"
-  echo -e "export CACERT_S3_PREFIX=${bucket_prefix_for_new_private_ca_cert}"
   echo -e "export CACERT_EXISTING_CA_CRT=${existing_ca_cert_file}"
   echo -e "export CACERT_EXISTING_CA_KEY=${existing_ca_key_file}"
 

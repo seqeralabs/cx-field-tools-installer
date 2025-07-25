@@ -113,38 +113,12 @@
 
         fi
 
-    - name: Generate PrivateCA artefacts if necessary
-      become: true
-      become_user: ec2-user
-      # This step only runs if we need a private CA
-      ansible.builtin.shell: |
-        cd /home/ec2-user/target/customcerts && source ~/.bashrc
-
-        if [[ $CACERT_GENERATE_PRIVATE == "true" ]]; then 
-
-          echo "Generating Private CA cert"
-
-          # Clean-up prior to regeneration
-          rm *.crt || true
-          rm *.csr || true
-          rm *.key || true
-          rm cert.conf  || true
-
-          chmod u+x create_self_signed_cert.sh
-          ./create_self_signed_cert.sh ${tower_base_url} ${tower_connect_dns} ${tower_wave_dns}
-
-          sleep 5
-
-          # Write root cert out and push to S3 bucket for programmatic retrieval
-          aws s3 cp rootCA.crt $CACERT_S3_PREFIX/rootCA.crt
-
-        fi
-
     - name: Update entities dependent on private CA cert
       become: true
       become_user: ec2-user
       ansible.builtin.shell: |
-        # Add root CA cert to EC2 instance truststore. ASSUMPTION -- Root CA cert (new or existing) is called rootCA.crt
+        # Add root CA cert to EC2 instance truststore. 
+        # ASSUMPTION -- Root CA cert (new or existing) is called rootCA.crt
 
         if [[ $CACERT_GENERATE_PRIVATE == "true" || $CACERT_USE_EXISTING_PRIVATE == "true" ]]; then
 
@@ -153,22 +127,6 @@
           sudo keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file rootCA.crt
           sudo cp rootCA.crt /etc/pki/ca-trust/source/anchors/
           sudo update-ca-trust
-
-          # Update seqerakit prerun script to pull private cert
-          # https://help.tower.nf/23.2/enterprise/configuration/ssl_tls/
-          # Note: This approach works for most clients but there can be occasional problems due to chains.
-
-          cd /home/ec2-user/target/seqerakit
-
-          {
-            echo -e "\\n"
-
-            echo "keytool -printcert -rfc -sslserver ${tower_base_url}:443  >  /PRIVATE_CERT.pem"
-            echo "keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file /PRIVATE_CERT.pem"
-            echo "cp /PRIVATE_CERT.pem /etc/pki/ca-trust/source/anchors/PRIVATE_CERT.pem"
-            echo "update-ca-trust"
-
-          } >> pipelines/pre_run.txt
 
         fi
 
