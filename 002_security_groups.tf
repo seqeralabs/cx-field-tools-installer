@@ -64,18 +64,32 @@ module "sg_ec2_core" {
 # May 15/2025
 # Keeping these three rules separate so that we dont unnecessarily open Ports if they aren't needed.
 # This means the code is a bit more complicated than I would like, but seems worth it for security.
-module "sg_ec2_noalb" {
+module "sg_ec2_noalb_with_private_certificate" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "5.1.0"
 
-  count = var.flag_create_load_balancer == false ? 1 : 0
+  count = var.flag_create_load_balancer == false && local.cacert_private_active ? 1 : 0
 
-  name        = "${local.global_prefix}_ec2_direct"
-  description = "Direct HTTP (80, 443, and 8000) traffic to EC2."
+  name        = "${local.global_prefix}_ec2_direct_with_private_certificate"
+  description = "Direct HTTP (80 & 443) traffic to EC2."
 
   vpc_id              = local.vpc_id
   ingress_cidr_blocks = var.sg_ingress_cidrs
-  ingress_rules       = ["https-443-tcp", "http-80-tcp", "splunk-web-tcp"]
+  ingress_rules       = ["https-443-tcp", "http-80-tcp"]
+}
+
+module "sg_ec2_noalb_no_https" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.1.0"
+
+  count = var.flag_create_load_balancer == false && var.flag_do_not_use_https ? 1 : 0
+
+  name        = "${local.global_prefix}_ec2_direct_no_https"
+  description = "Direct HTTP (8000) traffic to EC2."
+
+  vpc_id              = local.vpc_id
+  ingress_cidr_blocks = var.sg_ingress_cidrs
+  ingress_rules       = ["splunk-web-tcp"]
 }
 
 

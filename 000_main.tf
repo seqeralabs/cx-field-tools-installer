@@ -119,16 +119,18 @@ locals {
   # ---------------------------------------------------------------------------------------
   # All module values wrapped in [] to make concat work.
   # NOTE: If you add a new entry, dont forget to add it to the concat block too!
-  sg_ec2_core          = [module.sg_ec2_core.security_group_id]
-  sg_ec2_noalb         = try([module.sg_ec2_noalb[0].security_group_id], [])
-  sg_ec2_noalb_connect = try([module.sg_ec2_noalb_connect[0].security_group_id], [])
-  sg_from_alb_core     = try([module.sg_from_alb_core[0].security_group_id], [])
-  sg_from_alb_connect  = try([module.sg_from_alb_connect[0].security_group_id], [])
-  sg_from_alb_wave     = try([module.sg_from_alb_wave[0].security_group_id], [])
+  sg_ec2_core                           = [module.sg_ec2_core.security_group_id]
+  sg_ec2_noalb_with_private_certificate = try([module.sg_ec2_noalb_with_private_certificate[0].security_group_id], [])
+  sg_ec2_noalb_no_https                 = try([module.sg_ec2_noalb_no_https[0].security_group_id], [])
+  sg_ec2_noalb_connect                  = try([module.sg_ec2_noalb_connect[0].security_group_id], [])
+  sg_from_alb_core                      = try([module.sg_from_alb_core[0].security_group_id], [])
+  sg_from_alb_connect                   = try([module.sg_from_alb_connect[0].security_group_id], [])
+  sg_from_alb_wave                      = try([module.sg_from_alb_wave[0].security_group_id], [])
 
   sg_ec2_final = concat(
     local.sg_ec2_core,
-    local.sg_ec2_noalb,
+    local.sg_ec2_noalb_with_private_certificate,
+    local.sg_ec2_noalb_no_https,
     local.sg_ec2_noalb_connect,
     local.sg_from_alb_core,
     local.sg_from_alb_connect,
