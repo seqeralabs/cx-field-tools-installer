@@ -503,6 +503,10 @@ def verify_data_studio(data: SimpleNamespace):
                 "Reminder: Studios path-based routing will ony work for VSCode / R / Jupyter with Connect client >= 0.8.4"
             )
 
+            logger.warning(
+                "Reminder: Studios path-based routing may require your TLS certificate domains."
+            )
+
 
 def verify_not_v24_1_0(data: SimpleNamespace):
     """Verify that user has not selected Tower v24.1.0 (due to serialization bug)."""
