@@ -34,7 +34,7 @@ In this flow, we create a new self-signed Certificate Authority and issue a leaf
         1. The value specified in _terraform.tfvars_ `tower_server_url`. 
 
     1. Studios (_optional_)
-        1. If using subdomain routing, the value will be `connect.<VALUE_OF_tower_server_url>`
+        1. If using subdomain routing, the value will be `*.<VALUE_OF_tower_server_url>`<br />(_Project hardcodes `connect.<VALUE_OF_tower_server_url>` and actual Studios use `<RANDOM_ALPHANUMERIC>.<VALUE_OF_tower_server_url>`_).<br /><br />
         2. If using path-based routing (available v25.2.0+), it is the value specified in _terraform.tfvars_ `data_studio_path_routing_url`.
 
     1. Wave-Lite (_optional_)
@@ -98,6 +98,12 @@ Manually update the IAM permissions granted to the EC2 instance so it can access
 1. Update `assets/src/aws/iam_role_policy_ec2.json.tpl`:
     
     1. Modify Sid `AllObjectActions`, adding another ARN entry for your S3 prefix (_e.g. `arn:aws:s3::example_bucket/sp_cert_files/*`).
+
+
+## Prepare Compute Assets
+- TODO: Update pre-run script for Nextflow head job to trust SP & Wave-Lite endpoints.
+- TODO: Bake cert into Studios images.
+- TODO: Bake cert into Nextflow worker nodes using Wave-Lite.
 
 
 ## Runtime
