@@ -191,6 +191,10 @@ In addition to the general design decisions noted above, there are a few decisio
 
 14. **Subdomain routing favoured over path-based routing**
 
-    Seqera Platform v25.2.0 introduces path-based routing for Studios instances. This exists as a workaround for sites who are unable to use the default `*.YOUR_PLATFORM_DOMAIN` DNS sub-domanin approach.
+    Seqera Platform v25.2.0 introduces path-based routing for Studios instances. This exists as a workaround for sites who are unable to use the default `*.YOUR_PLATFORM_DOMAIN` DNS sub-domanin approach. Path-based routing works only for the following images:
+
+    - [VSCode (0.8.4)](https://public.cr.seqera.io/repo/platform/data-studio-vscode)
+    - [RIDE (0.8.4)](https://public.cr.seqera.io/repo/platform/data-studio-ride)
+    - [Jupyter (0.8.4)](https://public.cr.seqera.io/repo/platform/data-studio-jupyter)
     
     Path-based routing has limitations, however, (_TODO: Add link to official docs outlining_) so the project favours use of the subdomains by default.
