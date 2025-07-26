@@ -171,15 +171,6 @@ locals {
   populate_external_db = var.flag_create_external_db == true || var.flag_use_existing_external_db == true ? "true" : "false"
 
 
-  # Docker-Compose
-  # ---------------------------------------------------------------------------------------
-  docker_compose_file = (
-    var.flag_use_custom_docker_compose_file == false && var.flag_use_container_db == true ? "dc_with_db.yml" :
-    var.flag_use_custom_docker_compose_file == false && var.flag_use_container_db == false ? "dc_without_db.yml" :
-    var.flag_use_custom_docker_compose_file == true ? "dc_custom.yml" : "No_Match_Found"
-  )
-
-
   # OIDC
   # ---------------------------------------------------------------------------------------
   # If flags are set, populate local with keyword for MICRONAUT_ENVIRONMENTS inclusion. If not, blank string.

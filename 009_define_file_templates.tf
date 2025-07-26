@@ -166,9 +166,9 @@ locals {
       db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"],
       db_tower_password = local.tower_secrets["TOWER_DB_PASSWORD"]["value"],
 
-      flag_use_container_db               = var.flag_use_container_db,
-      flag_use_container_redis            = var.flag_use_container_redis,
-      flag_use_custom_docker_compose_file = var.flag_use_custom_docker_compose_file,
+      flag_use_container_db    = var.flag_use_container_db,
+      flag_use_container_redis = var.flag_use_container_redis,
+      cacert_private_active    = local.cacert_private_active,
 
       flag_enable_groundswell = var.flag_enable_groundswell,
       swell_container_version = var.swell_container_version,
@@ -303,8 +303,6 @@ locals {
 
       use_wave_lite    = var.flag_use_wave_lite,
       wave_lite_db_url = module.connection_strings.wave_lite_db_url,
-
-      docker_compose_file = local.docker_compose_file,
 
       tower_base_url     = module.connection_strings.tower_base_url,
       tower_server_url   = module.connection_strings.tower_server_url,

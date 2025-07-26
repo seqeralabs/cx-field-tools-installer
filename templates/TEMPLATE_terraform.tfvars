@@ -205,6 +205,7 @@ flag_private_tower_without_eice              = false
 flag_vm_copy_files_to_instance = true
 
 # Indicate whether custom section of the docker-compose template file should be included in final render.
+# July 26/25: DEPRECATED in Releases > 1.5.0. Value no longer used, but do not remove.
 flag_use_custom_docker_compose_file = false
 
 
@@ -291,8 +292,9 @@ flag is set to true.
 bucket_prefix_for_new_private_ca_cert = "REPLACE_ME_IF_NEEDED"
 
 # If using a preexisting key/cert, populate these with filename (stored in `assets/src/customcerts`).
-existing_ca_cert_file = "REPLACE_ME_IF_NEEDED"
-existing_ca_key_file  = "REPLACE_ME_IF_NEEDED"
+# July 26/25: DEPRECATED in releases > 1.5.0
+existing_ca_cert_file = "DO_NOT_USE_OR_DELETE_THIS_VALUE"
+existing_ca_key_file  = "DO_NOT_USE_OR_DELETE_THIS_VALUE"
 
 
 /*

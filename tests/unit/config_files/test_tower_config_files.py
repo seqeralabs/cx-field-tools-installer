@@ -615,3 +615,61 @@ def test_custom_config_data_studios_env(backup_tfvars, config_baseline_settings_
     value = outputs["tower_connect_server_url"]["value"]
     assert ds_env_file[key] == value
     assert data_studio_path_routing_url in ds_env_file[key]
+
+
+@pytest.mark.local
+@pytest.mark.config_keys
+@pytest.mark.vpc_existing
+@pytest.mark.long
+def test_custom_config_docker_compose_with_reverse_proxy(backup_tfvars, config_baseline_settings_custom_docker_compose_reverse_proxy):
+    """
+    Test the target docker-compose.yml generated from default test terraform.tfvars and base-override.auto.tfvars,
+    PLUS custom overrides.
+    """
+
+    # When
+    outputs = config_baseline_settings_custom_docker_compose_reverse_proxy["planned_values"]["outputs"]
+    variables = config_baseline_settings_custom_docker_compose_reverse_proxy["variables"]
+
+    dc_file = read_yaml(f"{root}/assets/target/docker_compose/docker-compose.yml")
+
+    """
+    WARNING!!!!!!
+      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
+            AFFECTS: `outputs` and `variables`
+      - tower_env_file values are directly cracked from HCL so they are "true".
+    """
+
+    # ------------------------------------------------------------------------------------
+    # Test data-studios.env - assert all core keys exist
+    # ------------------------------------------------------------------------------------
+    assert "reverseproxy" in dc_file["services"].keys()
+
+
+@pytest.mark.local
+@pytest.mark.config_keys
+@pytest.mark.vpc_existing
+@pytest.mark.long
+def test_custom_config_docker_compose_with_no_https(backup_tfvars, config_baseline_settings_custom_docker_compose_no_https):
+    """
+    Test the target docker-compose.yml generated from default test terraform.tfvars and base-override.auto.tfvars,
+    PLUS custom overrides.
+    """
+
+    # When
+    outputs = config_baseline_settings_custom_docker_compose_no_https["planned_values"]["outputs"]
+    variables = config_baseline_settings_custom_docker_compose_no_https["variables"]
+
+    dc_file = read_yaml(f"{root}/assets/target/docker_compose/docker-compose.yml")
+
+    """
+    WARNING!!!!!!
+      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
+            AFFECTS: `outputs` and `variables`
+      - tower_env_file values are directly cracked from HCL so they are "true".
+    """
+
+    # ------------------------------------------------------------------------------------
+    # Test data-studios.env - assert all core keys exist
+    # ------------------------------------------------------------------------------------
+    assert "reverseproxy" not in dc_file["services"].keys()

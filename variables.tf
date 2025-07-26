@@ -105,7 +105,10 @@ variable "flag_private_tower_without_eice" { type = bool }
 
 variable "flag_vm_copy_files_to_instance" { type = bool }
 
-variable "flag_use_custom_docker_compose_file" { type = bool }
+variable "flag_use_custom_docker_compose_file" { 
+  type = bool 
+  description = "DEPRECATED in Releases > 1.5.0."
+}
 
 
 # ------------------------------------------------------------------------------------
@@ -140,8 +143,14 @@ variable "existing_route53_private_zone_name" { type = string }
 
 variable "bucket_prefix_for_new_private_ca_cert" { type = string }
 
-variable "existing_ca_cert_file" { type = string }
-variable "existing_ca_key_file" { type = string }
+variable "existing_ca_cert_file" { 
+  type = string 
+  description = "DEPRECATED in releases > 1.5.0"
+}
+variable "existing_ca_key_file" { 
+  type = string
+  description = "DEPRECATED in releases > 1.5.0" 
+}
 
 
 # ------------------------------------------------------------------------------------

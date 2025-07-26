@@ -173,10 +173,7 @@ def verify_tower_self_signed_certs(data: SimpleNamespace):
 
     if data.flag_use_existing_private_cacert:
         logger.info(
-            "[REMINDER]: Ensure you have added your private .crt and .key files to `assets/customcerts`."
-        )
-        logger.info(
-            "[REMINDER]: Ensure you have updated tfvars `existing_ca_cert_file` and `existing_ca_key_file`."
+            "[REMINDER]: Ensure you have have pre-loaded your S3 Bucket with necessary certificates."
         )
 
 
@@ -471,9 +468,9 @@ def verify_data_studio(data: SimpleNamespace):
                     "`data_studio_eligible_workspaces may only be populated by digits and commas."
                 )
 
-        if data.flag_generate_private_cacert:
-            log_error_and_exit(
-                "The custom Private CA option has not been configured to support Data Studio. Please set `flag_enable_data_studio` to false or find another way to serve your TLS certificate."
+        if data.flag_generate_private_cacert or data.flag_use_existing_private_cacert:
+            logger.warning(
+                "Please see documentation to understand how to make private certs work with Studios images."
             )
 
         # Deferred until better solution comes along to get TF locals
@@ -565,11 +562,11 @@ def verify_connect_version_tls(data: SimpleNamespace):
 def verify_alb_settings(data: SimpleNamespace):
     """Verify that user does not have contradictory settings in case of ALB vs. no ALB."""
     if (
-        data.flag_use_custom_docker_compose_file
+        ( data.flag_generate_private_cacert or data.flag_use_existing_private_cacert)
         and data.flag_make_instance_private_behind_public_alb
     ):
         log_error_and_exit(
-            "Use of a reverse proxy (`flag_use_custom_docker_compose_file = true`, cannot be combined with `flag_make_instance_private_behind_alb = true`. Please set only one of the options to true."
+            "Use of private cert on EC2 cannot work with `flag_make_instance_private_behind_alb = true`. Please set only one of the options to true."
         )
 
 
@@ -610,6 +607,11 @@ def verify_wave(data: SimpleNamespace):
         if data.wave_lite_server_url in ['https://wave.seqera.io']:
             log_error_and_exit(
             "`Your Wave Lite URL is pointing to the Seqera-hosted Wave service. Please modify `wave_server_url`."
+            )
+
+        if data.flag_generate_private_cacert or data.flag_use_existing_private_cacert:
+            logger.warning(
+                "Please see documentation to understand how to make private certs work with Wave-Lite."
             )
 
     if (data.flag_use_wave_lite == True) and (data.flag_create_load_balancer == False):
@@ -761,7 +763,6 @@ if __name__ == "__main__":
 #  - `tower_root_user` values are valid email format and comma-delimited.
 #  - Custom OIDC
 #  - SEQERAKIT
-#  - Custom docker-compose file `flag_use_custom_docker_compose_file``
 #  - DNS Reminder `flag_create_route53_record`
 #  - Add proper email string check
 # - Non-EC2 Subnets in VPC CIDR
