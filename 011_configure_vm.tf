@@ -52,27 +52,6 @@ resource "null_resource" "copy_files_to_vm" {
 
 
 ## ------------------------------------------------------------------------------------
-## Custom CA edge-case
-## ------------------------------------------------------------------------------------
-# If new private CA on VM, get generated CA cert back to local machine for local browser use.
-resource "null_resource" "copy_private_ca_cert" {
-  count = var.flag_generate_private_cacert == true ? 1 : 0
-
-  triggers   = { always_run = "${timestamp()}" }
-  depends_on = [null_resource.copy_files_to_vm]
-
-  provisioner "local-exec" {
-    command     = <<-EOT
-      rm assets/target/customcerts/rootCA.crt || true
-      aws s3 cp ${var.bucket_prefix_for_new_private_ca_cert}/rootCA.crt assets/target/customcerts/rootCA.crt || true
-      chmod 777 assets/target/customcerts/rootCA.crt || true
-    EOT
-    interpreter = ["/bin/bash", "-c"]
-  }
-}
-
-
-## ------------------------------------------------------------------------------------
 ## Run Seqerakit (if allowed)
 ## ------------------------------------------------------------------------------------
 resource "null_resource" "run_seqerkit" {
