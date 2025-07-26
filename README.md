@@ -26,6 +26,8 @@ The Seqera CX team has developed a field tool to simplify deployment in two ways
   - [01: Review your Terraform state storage strategy](#01-review-your-terraform-state-storage-strategy)
   - [02: Fusion Binary Vendoring](#02-fusion-binary-vendoring)
   - [03: Update your Git repo settings](#03-update-your-git-repo-settings)
+  - [04: Initiate Crypto secret rotation](#04-initiate-crypto-secret-rotation-advanced)
+  - [05: Using a Private Certificate Authority](#05-using-a-private-certificate-authority-advanced)
 - [Execution Steps](#execution-steps)
   - [Deployment](#deployment)
   - [Teardown](#teardown)
@@ -134,6 +136,9 @@ The following configuration actions are encouraged but not mandatory.
 
 #### 04: Initiate Crypto secret rotation (ADVANCED)
 1. Follow the instructions in [Crypto Secret Rotation](./documentation/setup/optional_crypto_secret_rotation.md).
+
+#### 05: Using a Private Certificate Authority (ADVANCED)
+1. Follow the instructions in [Private Certificates](./documentation/setup/optional_private_certificates.md)
 
 <br />
 
