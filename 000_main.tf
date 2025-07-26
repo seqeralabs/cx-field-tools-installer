@@ -213,12 +213,14 @@ locals {
   # Migrate-DB Flag
   # ---------------------------------------------------------------------------------------
   # Migrate-db only available for 23.4.1+ or higher. Check to ensure we don't include for 23.3.x or below. 
+  # TODO: Rationalize this to a single regex (July 26/25)
   flag_new_enough_for_migrate_db = (
     tonumber(length(regexall("^v23.4.[1-9]", var.tower_container_version))) >= 1 ||
     tonumber(length(regexall("^v2[4-9]", var.tower_container_version))) >= 1 ? true : false
   )
 
   # Account for changes in tower.yml due to Micronaut 4
+  # TODO: Rationalize this to a single regex (July 26/25)
   flag_using_micronaut_4 = (
     tonumber(length(regexall("^v24.[0-9]", var.tower_container_version))) >= 1 ||
     tonumber(length(regexall("^v2[5-9]", var.tower_container_version))) >= 1 ? true : false
