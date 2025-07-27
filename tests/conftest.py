@@ -194,8 +194,7 @@ def config_baseline_settings_custom_docker_compose_reverse_proxy():
 
     override_data = """
         flag_create_load_balancer        = false
-        flag_generate_private_cacert     = false
-        flag_use_existing_private_cacert = true
+        flag_use_private_cacert          = true
         flag_do_not_use_https            = false
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
@@ -240,8 +239,7 @@ def config_baseline_settings_custom_docker_compose_no_https():
 
     override_data = """
         flag_create_load_balancer        = false
-        flag_generate_private_cacert     = false
-        flag_use_existing_private_cacert = false
+        flag_use_private_cacert          = false
         flag_do_not_use_https            = true
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.

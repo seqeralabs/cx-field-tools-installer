@@ -107,4 +107,4 @@ Manually update the IAM permissions granted to the EC2 instance so it can access
 
 
 ## Runtime
-At runtime, if you make either `flag_generate_private_cacert = true` or `flag_use_existing_private_cacert = true`, the preloaded certificate files will be pulled during the deployment and made available to your SP instance.
+At runtime, if you make `flag_use_private_cacert = true`, the preloaded certificate files will be pulled during the deployment and made available to your SP instance.

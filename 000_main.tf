@@ -201,7 +201,6 @@ locals {
   # ---------------------------------------------------------------------------------------
   private_ca_cert       = "${module.connection_strings.tower_base_url}.crt"
   private_ca_key        = "${module.connection_strings.tower_base_url}.key"
-  cacert_private_active = var.flag_generate_private_cacert || var.flag_use_existing_private_cacert ? true : false
 
 
   # Miscellaneous

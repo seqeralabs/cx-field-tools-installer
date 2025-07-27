@@ -168,7 +168,7 @@ locals {
 
       flag_use_container_db    = var.flag_use_container_db,
       flag_use_container_redis = var.flag_use_container_redis,
-      cacert_private_active    = local.cacert_private_active,
+      flag_use_private_cacert  = var.flag_use_private_cacert,
 
       flag_enable_groundswell = var.flag_enable_groundswell,
       swell_container_version = var.swell_container_version,
@@ -292,8 +292,8 @@ locals {
     {
       app_name = var.app_name,
 
-      cacert_private_active = tostring(local.cacert_private_active),
-      flag_do_not_use_https = tostring(var.flag_do_not_use_https),
+      flag_use_private_cacert = tostring(var.flag_use_private_cacert),
+      flag_do_not_use_https   = tostring(var.flag_do_not_use_https),
 
       bucket_prefix_for_new_private_ca_cert = var.bucket_prefix_for_new_private_ca_cert,
 

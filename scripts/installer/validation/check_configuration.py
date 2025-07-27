@@ -76,8 +76,7 @@ def verify_only_one_true_set(data: SimpleNamespace):
     only_one_true_set(
         [
             data.flag_create_load_balancer,
-            data.flag_generate_private_cacert,
-            data.flag_use_existing_private_cacert,
+            data.flag_use_private_cacert,
             data.flag_do_not_use_https,
         ]
     )
@@ -165,16 +164,11 @@ def verify_tower_root_users(data: SimpleNamespace):
 
 def verify_tower_self_signed_certs(data: SimpleNamespace):
     """Check self-signed certificate settings (if necessary)."""
-    if data.flag_generate_private_cacert:
+    if data.flag_use_private_cacert:
         if not data.bucket_prefix_for_new_private_ca_cert.startswith("s3://"):
             log_error_and_exit(
                 " Field `bucket_prefix_for_new_private_ca_cert` must start with `s3://`"
             )
-
-    if data.flag_use_existing_private_cacert:
-        logger.info(
-            "[REMINDER]: Ensure you have have pre-loaded your S3 Bucket with necessary certificates."
-        )
 
 
 def verify_tower_groundswell(data: SimpleNamespace):
@@ -468,7 +462,7 @@ def verify_data_studio(data: SimpleNamespace):
                     "`data_studio_eligible_workspaces may only be populated by digits and commas."
                 )
 
-        if data.flag_generate_private_cacert or data.flag_use_existing_private_cacert:
+        if data.flag_use_private_cacert:
             logger.warning(
                 "Please see documentation to understand how to make private certs work with Studios images."
             )
@@ -561,10 +555,7 @@ def verify_connect_version_tls(data: SimpleNamespace):
 
 def verify_alb_settings(data: SimpleNamespace):
     """Verify that user does not have contradictory settings in case of ALB vs. no ALB."""
-    if (
-        ( data.flag_generate_private_cacert or data.flag_use_existing_private_cacert)
-        and data.flag_make_instance_private_behind_public_alb
-    ):
+    if data.flag_use_private_cacert and data.flag_make_instance_private_behind_public_alb:
         log_error_and_exit(
             "Use of private cert on EC2 cannot work with `flag_make_instance_private_behind_alb = true`. Please set only one of the options to true."
         )
@@ -609,15 +600,10 @@ def verify_wave(data: SimpleNamespace):
             "`Your Wave Lite URL is pointing to the Seqera-hosted Wave service. Please modify `wave_server_url`."
             )
 
-        if data.flag_generate_private_cacert or data.flag_use_existing_private_cacert:
+        if data.flag_use_private_cacert:
             logger.warning(
                 "Please see documentation to understand how to make private certs work with Wave-Lite."
             )
-
-    if (data.flag_use_wave_lite == True) and (data.flag_create_load_balancer == False):
-        log_error_and_exit(
-            "Wave Lite is only supported by deployments fronted by an ALB. Please set `flag_create_load_balancer = true`."
-        )
 
 
 def verify_ssh_access(data: SimpleNamespace):

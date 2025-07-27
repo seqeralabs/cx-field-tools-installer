@@ -86,7 +86,7 @@ resource "null_resource" "generate_independent_config_files" {
       # Note: This approach works for most clients but there can be occasional problems due to chains.
 
       # Update assets depenent
-      if [[ "${var.flag_generate_private_cacert}" == "true" || "${var.flag_use_existing_private_cacert}" == "true" ]]; then
+      if [[ "${var.flag_use_private_cacert}" == "true" ]]; then
 
         {
             echo -e "\\n"

@@ -120,7 +120,7 @@
         # Pull pre-loaded certificates from S3 Bucket and stash in necessary locations.
         # Only do so if rootCA.crt is not yet present in trust anchors
 
-        if [[ $CACERT_PRIVATE_ACTIVE == true ]]; then
+        if [[ $FLAG_USE_PRIVATE_CACERT == true ]]; then
 
           if [[ ! -f "/etc/pki/ca-trust/source/anchors/rootCA.crt" ]]; then
 

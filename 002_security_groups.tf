@@ -68,7 +68,7 @@ module "sg_ec2_noalb_with_private_certificate" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "5.1.0"
 
-  count = var.flag_create_load_balancer == false && local.cacert_private_active ? 1 : 0
+  count = var.flag_create_load_balancer == false && var.flag_use_private_cacert ? 1 : 0
 
   name        = "${local.global_prefix}_ec2_direct_with_private_certificate"
   description = "Direct HTTP (80 & 443) traffic to EC2."

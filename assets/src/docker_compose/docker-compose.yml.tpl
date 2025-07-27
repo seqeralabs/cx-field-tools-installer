@@ -235,7 +235,7 @@ services:
     restart: always
 %{ endif ~}
 
-%{ if cacert_private_active == true ~}
+%{ if flag_use_private_cacert == true ~}
   # Expectations: 
   #   - docker-compose.yml in `/home/ec2-user/``
   #   - All custom cert files present / generated in `/home/ec2-user/customcerts``

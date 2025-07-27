@@ -51,9 +51,6 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
         - (Testing) -- Added Pytest marks to allow for targeted test runs.
         - (Testing) -- Added `terraform plan` caching mechanism to speed up n+1 tests.
 
-    - **Validations**
-
-    - **Tests**
 
 ### Configuration File Changes
 #### `terraform.tfvars`
@@ -65,10 +62,12 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
 | New | Wave-Lite | `flag_use_wave_lite` | Enables/Disables Wave-Lite. |
 | New | Wave-Lite | `num_wave_lite_replicas` | Number of Wave-Lite relicas to run. |
 | New | Wave-Lite | `wave_lite_server_url` | The URL to use to check the Wave-Lite endpoint. |
+| New | Private Certificate | `flag_use_private_cacert` | Single flag replacing `flag_generate_private_cacert` & `flag_use_existing_private_cacert` |
 | | | | |
 | Changed | Studios | `data_studio_options` | Removed deprecated entries. Added `0.8.4` options. |  <!-- TODO: ADD the merged field here -->
 | | | | |
-| Removed | Private Certificate | ipsem | lorem |
+| Deleted | Private Certificate | `flag_generate_private_cacert` | Deleted in favour of unified `flag_use_private_cacert` |
+| Deleted | Private Certificate | `flag_use_existing_private_cacert` | Deleted in favour of unified `flag_use_private_cacert` |
 
 
 #### SSM Secrets
