@@ -140,7 +140,7 @@ variable "existing_route53_private_zone_name" { type = string }
 # Custom Private CA
 # ------------------------------------------------------------------------------------
 
-variable "bucket_prefix_for_new_private_ca_cert" { type = string }
+variable "private_cacert_bucket_prefix" { type = string }
 
 
 # ------------------------------------------------------------------------------------

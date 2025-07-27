@@ -65,6 +65,7 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
 | New | Private Certificate | `flag_use_private_cacert` | Single flag replacing `flag_generate_private_cacert` & `flag_use_existing_private_cacert` |
 | | | | |
 | Modified | Studios | `data_studio_options` | Removed deprecated entries. Added `0.8.4` options. |
+| Modified | Private Certificate | `bucket_prefix_for_new_private_ca_cert` | Renamed to `private_cacert_bucket_prefix`. |
 | | | | |
 | Deleted | Private Certificate | `flag_generate_private_cacert` | Deleted in favour of unified `flag_use_private_cacert` |
 | Deleted | Private Certificate | `flag_use_existing_private_cacert` | Deleted in favour of unified `flag_use_private_cacert` |

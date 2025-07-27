@@ -75,7 +75,7 @@ In this flow, we create a new self-signed Certificate Authority and issue a leaf
         - `cert.conf`
         - `csr.conf`
 
-1. Update _terraform.tfvars_ `bucket_prefix_for_new_private_ca_cert` with the S3 prefix (_e.g. s3://example_bucket/sp_cert_files_).
+1. Update _terraform.tfvars_ `private_cacert_bucket_prefix` with the S3 prefix (_e.g. s3://example_bucket/sp_cert_files_).
 
 
 #### Using a certificate from an existing CA
@@ -89,7 +89,7 @@ In this flow, you use a leaf certificate issued by an existing private CA manage
         - `autodc.dev-seqera.net.crt`
         - `autodc.dev-seqera.net.key`
 
-1. Update _terraform.tfvars_ `bucket_prefix_for_new_private_ca_cert` with the S3 prefix (_e.g. s3://example_bucket/sp_cert_files_).
+1. Update _terraform.tfvars_ `private_cacert_bucket_prefix` with the S3 prefix (_e.g. s3://example_bucket/sp_cert_files_).
 
 
 ### Update permissions granted to EC2 instance created by Terraform

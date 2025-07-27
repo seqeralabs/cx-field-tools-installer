@@ -295,7 +295,7 @@ locals {
       flag_use_private_cacert = tostring(var.flag_use_private_cacert),
       flag_do_not_use_https   = tostring(var.flag_do_not_use_https),
 
-      bucket_prefix_for_new_private_ca_cert = var.bucket_prefix_for_new_private_ca_cert,
+      private_cacert_bucket_prefix = var.private_cacert_bucket_prefix,
 
       populate_external_db = local.populate_external_db,
       tower_db_url         = module.connection_strings.tower_db_root,
@@ -323,8 +323,8 @@ locals {
     {
       app_name = var.app_name
 
-      tower_base_url                        = module.connection_strings.tower_base_url,
-      bucket_prefix_for_new_private_ca_cert = var.bucket_prefix_for_new_private_ca_cert
+      tower_base_url               = module.connection_strings.tower_base_url,
+      private_cacert_bucket_prefix = var.private_cacert_bucket_prefix
     }
   )
 

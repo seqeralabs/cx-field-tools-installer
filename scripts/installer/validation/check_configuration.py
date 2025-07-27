@@ -165,9 +165,9 @@ def verify_tower_root_users(data: SimpleNamespace):
 def verify_tower_self_signed_certs(data: SimpleNamespace):
     """Check self-signed certificate settings (if necessary)."""
     if data.flag_use_private_cacert:
-        if not data.bucket_prefix_for_new_private_ca_cert.startswith("s3://"):
+        if not data.private_cacert_bucket_prefix.startswith("s3://"):
             log_error_and_exit(
-                " Field `bucket_prefix_for_new_private_ca_cert` must start with `s3://`"
+                " Field `private_cacert_bucket_prefix` must start with `s3://`"
             )
 
 

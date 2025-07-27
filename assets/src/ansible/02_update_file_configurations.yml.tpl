@@ -127,7 +127,7 @@
             # Add root CA cert to EC2 instance truststore. 
             # ASSUMPTION -- Root CA cert (new or existing) is called rootCA.crt
             cd /tmp
-            aws s3 cp ${bucket_prefix_for_new_private_ca_cert}/rootCA.crt .
+            aws s3 cp ${private_cacert_bucket_prefix}/rootCA.crt .
             
             sudo keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file rootCA.crt
             sudo cp rootCA.crt /etc/pki/ca-trust/source/anchors/
@@ -138,8 +138,8 @@
 
           # Grab leaf cert and stash in target/ folder
           cd /home/ec2-user/target/customcerts
-          aws s3 cp ${bucket_prefix_for_new_private_ca_cert}/${tower_base_url}.crt ${tower_base_url}.crt 
-          aws s3 cp ${bucket_prefix_for_new_private_ca_cert}/${tower_base_url}.key ${tower_base_url}.key
+          aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.crt ${tower_base_url}.crt 
+          aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.key ${tower_base_url}.key
 
         fi
 

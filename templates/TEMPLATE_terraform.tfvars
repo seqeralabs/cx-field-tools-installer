@@ -285,7 +285,7 @@ flag is set to true.
 */
 
 # Include s3:// and omit trailing slash
-bucket_prefix_for_new_private_ca_cert = "REPLACE_ME_IF_NEEDED"
+private_cacert_bucket_prefix = "REPLACE_ME_IF_NEEDED"
 
 
 /*

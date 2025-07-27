@@ -82,7 +82,7 @@ existing_route53_public_zone_name  = "dev-seqera.net"
 ## ------------------------------------------------------------------------------------
 # IF creating a new Private CA, stash generated cert to accessible S3 bucket.
 # Include s3:// and omit trailing slash
-bucket_prefix_for_new_private_ca_cert = "s3://nf-nvirginia/seqerakittesting"
+private_cacert_bucket_prefix = "s3://nf-nvirginia/seqerakittesting"
 
 
 ## ------------------------------------------------------------------------------------
