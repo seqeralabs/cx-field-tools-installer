@@ -287,11 +287,6 @@ flag is set to true.
 # Include s3:// and omit trailing slash
 bucket_prefix_for_new_private_ca_cert = "REPLACE_ME_IF_NEEDED"
 
-# If using a preexisting key/cert, populate these with filename (stored in `assets/src/customcerts`).
-# July 26/25: DEPRECATED in releases > 1.5.0
-existing_ca_cert_file = "DO_NOT_USE_OR_DELETE_THIS_VALUE"
-existing_ca_key_file  = "DO_NOT_USE_OR_DELETE_THIS_VALUE"
-
 
 /*
 ## ------------------------------------------------------------------------------------

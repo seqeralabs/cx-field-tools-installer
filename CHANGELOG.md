@@ -64,10 +64,12 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
 | New | Wave-Lite | `wave_lite_server_url` | The URL to use to check the Wave-Lite endpoint. |
 | New | Private Certificate | `flag_use_private_cacert` | Single flag replacing `flag_generate_private_cacert` & `flag_use_existing_private_cacert` |
 | | | | |
-| Changed | Studios | `data_studio_options` | Removed deprecated entries. Added `0.8.4` options. |  <!-- TODO: ADD the merged field here -->
+| Modified | Studios | `data_studio_options` | Removed deprecated entries. Added `0.8.4` options. |
 | | | | |
 | Deleted | Private Certificate | `flag_generate_private_cacert` | Deleted in favour of unified `flag_use_private_cacert` |
 | Deleted | Private Certificate | `flag_use_existing_private_cacert` | Deleted in favour of unified `flag_use_private_cacert` |
+| Deleted | Private Certificate | `existing_ca_cert_file` | Deleted since not required after S3 Bucket pre-load flow change. |
+| Deleted | Private Certificate | `existing_ca_key_file` | Deleted since not required after S3 Bucket pre-load flow change. |
 
 
 #### SSM Secrets
