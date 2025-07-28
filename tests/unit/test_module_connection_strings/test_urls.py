@@ -128,6 +128,7 @@ def test_connect_alb_dns(backup_tfvars):
         flag_create_load_balancer                       = true
         flag_do_not_use_https                           = false
         flag_studio_enable_path_routing                  = false
+
     """
 
     # When

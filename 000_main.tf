@@ -259,6 +259,7 @@ module "connection_strings" {
   flag_use_wave_lite              = var.flag_use_wave_lite
   flag_studio_enable_path_routing = var.flag_studio_enable_path_routing
 
+
   # Tower Configuration
   tower_server_url = var.tower_server_url
   tower_db_url     = var.flag_use_existing_external_db == true ? var.tower_db_url : ""
@@ -271,6 +272,7 @@ module "connection_strings" {
   wave_server_url              = var.flag_use_wave ? var.wave_server_url : "https://wave.seqera.io"
   wave_lite_server_url         = var.flag_use_wave_lite ? var.wave_lite_server_url : ""
   data_studio_path_routing_url = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : ""
+
 
   # External Resource References
   rds_tower             = var.flag_create_external_db ? try(module.rds[0], null) : null

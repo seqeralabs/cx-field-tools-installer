@@ -531,7 +531,6 @@ def test_tower_sql_mysql_container_execution(backup_tfvars, config_baseline_sett
                 os.unlink(temp_sql_path)
 
 
-
 # ----------------------------------- NON-DEFAULT TESTS
 @pytest.mark.local
 @pytest.mark.config_keys
