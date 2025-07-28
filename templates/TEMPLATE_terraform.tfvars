@@ -27,19 +27,19 @@ for any notable breaking change.
 */
 
 # Use hyphen as separator or else some AWS resource nameing breaks (e.g. ALB)
-app_name                                = "tower-dev"
+app_name = "tower-template"
 
-secrets_bootstrap_tower                 = "/seqera/sensitive-values/tower-dev/tower"
-secrets_bootstrap_seqerakit             = "/seqera/sensitive-values/tower-dev/seqerakit"
-secrets_bootstrap_groundswell           = "/seqera/sensitive-values/tower-dev/groundswell"
-secrets_bootstrap_wave_lite             = "/seqera/sensitive-values/tower-dev/wave-lite"
+secrets_bootstrap_tower       = "/seqera/sensitive-values/tower-template/tower"
+secrets_bootstrap_seqerakit   = "/seqera/sensitive-values/tower-template/seqerakit"
+secrets_bootstrap_groundswell = "/seqera/sensitive-values/tower-template/groundswell"
+secrets_bootstrap_wave_lite   = "/seqera/sensitive-values/tower-template/wave-lite"
 
 
-aws_account                             = "REPLACE_ME"
-aws_region                              = "REPLACE_ME"
-aws_profile                             = "REPLACE_ME"
+aws_account = "REPLACE_ME"
+aws_region  = "REPLACE_ME"
+aws_profile = "REPLACE_ME"
 
-tower_container_version                 = "v25.1.1"
+tower_container_version = "v25.1.1"
 
 
 /*
@@ -57,7 +57,7 @@ Note!
  - 2) Setting this value to `false` will not prevent overrwrites if SSM entries are
   tracked within your own project state.
 */
-flag_overwrite_ssm_keys                     = true
+flag_overwrite_ssm_keys = true
 
 
 /*
@@ -66,9 +66,9 @@ flag_overwrite_ssm_keys                     = true
 ## ------------------------------------------------------------------------------------
 Default tags to put on every generated resource.
 */
-default_tags  = {
-      Terraform                     = "true"
-      Environment                   = "dev"
+default_tags = {
+  Terraform   = "true"
+  Environment = "dev"
 }
 
 
@@ -119,26 +119,26 @@ assumptions we have made while building the tool. Please note:
 */
 
 # Only one of these can true.
-flag_create_new_vpc                     = true
-flag_use_existing_vpc                   = false
+flag_create_new_vpc   = true
+flag_use_existing_vpc = false
 
 # Only one of these can be true.
 # NOTE: If using pre-existing RDS instance, ensure it accepts traffic from whole VPC on 3306.
-flag_create_external_db                 = false
-flag_use_existing_external_db           = false
-flag_use_container_db                   = true
+flag_create_external_db       = false
+flag_use_existing_external_db = false
+flag_use_container_db         = true
 
 # Only one of these can be true.
 # NOTE: Redis versions and ports are hard-coded in their respective files (docker-compose.yaml &
 #  003-database.tf)
-flag_create_external_redis              = false
-flag_use_container_redis                = true
+flag_create_external_redis = false
+flag_use_container_redis   = true
 
 # Only one of these can true.
-flag_create_load_balancer               = true
-flag_generate_private_cacert            = false
-flag_use_existing_private_cacert        = false
-flag_do_not_use_https                   = false
+flag_create_load_balancer        = true
+flag_generate_private_cacert     = false
+flag_use_existing_private_cacert = false
+flag_do_not_use_https            = false
 
 
 /*
@@ -193,16 +193,16 @@ decisions:
 # Only one of these can true.
 # flag_make_instance_private or flag_private_tower_without_eice = true makes ALB internal-facing
 # flag_make_instance_private_behind_public_alb = true makes ALB internet-facing
-flag_make_instance_public                       = false
-flag_make_instance_private                      = false
-flag_make_instance_private_behind_public_alb    = true
-flag_private_tower_without_eice                 = false
+flag_make_instance_public                    = false
+flag_make_instance_private                   = false
+flag_make_instance_private_behind_public_alb = true
+flag_private_tower_without_eice              = false
 
 # Manage how to talk to VM for config file transfer.
-flag_vm_copy_files_to_instance                  = true
+flag_vm_copy_files_to_instance = true
 
 # Indicate whether custom section of the docker-compose template file should be included in final render.
-flag_use_custom_docker_compose_file             = false
+flag_use_custom_docker_compose_file = false
 
 
 /*
@@ -227,11 +227,11 @@ to work. e.g:
     - mywavelite.example.com
 
 */
-flag_use_wave                           = false
-flag_use_wave_lite                      = false
-num_wave_lite_replicas                  = 2
-wave_server_url                         = "https://wave.seqera.io"
-wave_lite_server_url                    = "https://REPLACE_ME_IF_NEEDED"
+flag_use_wave          = false
+flag_use_wave_lite     = false
+num_wave_lite_replicas = 2
+wave_server_url        = "https://wave.seqera.io"
+wave_lite_server_url   = "https://REPLACE_ME_IF_NEEDED"
 
 /*
 ## ------------------------------------------------------------------------------------
@@ -252,17 +252,17 @@ Choose the option that is appropriate for you.
 */
 
 # Only one can be true
-flag_create_route53_private_zone        = true
-flag_use_existing_route53_public_zone   = false
-flag_use_existing_route53_private_zone  = false
-flag_create_hosts_file_entry            = false
+flag_create_route53_private_zone       = true
+flag_use_existing_route53_public_zone  = false
+flag_use_existing_route53_private_zone = false
+flag_create_hosts_file_entry           = false
 
 # Populate this field if creating a new private hosted zone
-new_route53_private_zone_name           = "REPLACE_ME_IF_NEEDED"
+new_route53_private_zone_name = "REPLACE_ME_IF_NEEDED"
 
 # Only populate if flag set above to use existing hosted zone.
-existing_route53_public_zone_name       = "REPLACE_ME_IF_NEEDED"
-existing_route53_private_zone_name      = "REPLACE_ME_IF_NEEDED"
+existing_route53_public_zone_name  = "REPLACE_ME_IF_NEEDED"
+existing_route53_private_zone_name = "REPLACE_ME_IF_NEEDED"
 
 
 /*
@@ -285,11 +285,11 @@ flag is set to true.
 */
 
 # Include s3:// and omit trailing slash
-bucket_prefix_for_new_private_ca_cert   = "REPLACE_ME_IF_NEEDED"
+bucket_prefix_for_new_private_ca_cert = "REPLACE_ME_IF_NEEDED"
 
 # If using a preexisting key/cert, populate these with filename (stored in `assets/src/customcerts`).
-existing_ca_cert_file                   = "REPLACE_ME_IF_NEEDED"
-existing_ca_key_file                    = "REPLACE_ME_IF_NEEDED"
+existing_ca_cert_file = "REPLACE_ME_IF_NEEDED"
+existing_ca_key_file  = "REPLACE_ME_IF_NEEDED"
 
 
 /*
@@ -304,24 +304,24 @@ NOTES:
   - There must only be a single EC2 subnet (to align with EICE quota limitations)
 */
 
-vpc_new_cidr_range                      = "10.0.0.0/16"
-vpc_new_azs                             = [ "REPLACE_ME_IF_NEEDED-1a", "REPLACE_ME_IF_NEEDED-1b" ]
+vpc_new_cidr_range = "10.0.0.0/16"
+vpc_new_azs        = ["REPLACE_ME_IF_NEEDED-1a", "REPLACE_ME_IF_NEEDED-1b"]
 
-vpc_new_public_subnets                  = [ "10.0.1.0/24", "10.0.2.0/24" ]
-vpc_new_private_subnets                 = [ "10.0.3.0/24", "10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24" ]
+vpc_new_public_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]
+vpc_new_private_subnets = ["10.0.3.0/24", "10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
 
 # Ensure these subnet ranges align to what's created above. 
-vpc_new_ec2_subnets                     = [ "10.0.3.0/24" ]  # Can only 1 for EICE to work.
-vpc_new_batch_subnets                   = [ "10.0.3.0/24" ]
-vpc_new_db_subnets                      = [ "10.0.3.0/24", "10.0.4.0/24" ]
-vpc_new_redis_subnets                   = [ "10.0.5.0/24" ]
+vpc_new_ec2_subnets   = ["10.0.3.0/24"] # Can only 1 for EICE to work.
+vpc_new_batch_subnets = ["10.0.3.0/24"]
+vpc_new_db_subnets    = ["10.0.3.0/24", "10.0.4.0/24"]
+vpc_new_redis_subnets = ["10.0.5.0/24"]
 
 
 # Must be >= 2, in different AZs. Ensure only public subnets (nothing needs to be in these).
-vpc_new_alb_subnets                     = [ "10.0.1.0/24", "10.0.2.0/24" ]
+vpc_new_alb_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
 
 # Specify is VPC flow logs should be enabled or not. Have cost implication.
-enable_vpc_flow_logs                    = false
+enable_vpc_flow_logs = false
 
 
 /*
@@ -337,14 +337,14 @@ NOTES:
   - There must only be a single EC2 subnet (to align with EICE quota limitations)
 */
 
-vpc_existing_id                         = "REPLACE_ME_IF_NEEDED"
-vpc_existing_ec2_subnets                = [ "10.0.1.0/24" ]
-vpc_existing_batch_subnets              = [ "10.0.2.0/24", "10.0.3.0/24" ]
-vpc_existing_db_subnets                 = [ "10.0.4.0/24", "10.0.5.0/24" ]
-vpc_existing_redis_subnets              = [ "10.0.6.0/24" ]
+vpc_existing_id            = "REPLACE_ME_IF_NEEDED"
+vpc_existing_ec2_subnets   = ["10.0.1.0/24"]
+vpc_existing_batch_subnets = ["10.0.2.0/24", "10.0.3.0/24"]
+vpc_existing_db_subnets    = ["10.0.4.0/24", "10.0.5.0/24"]
+vpc_existing_redis_subnets = ["10.0.6.0/24"]
 
 # Must be >= 2, in different AZs. Ensure only public subnets (nothing needs to be in these).
-vpc_existing_alb_subnets                = [ "10.0.1.0/24", "10.0.2.0/24" ]
+vpc_existing_alb_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
 
 /*
 ## ------------------------------------------------------------------------------------
@@ -354,10 +354,10 @@ All endpoint options can be found here: https://docs.aws.amazon.com/vpc/latest/p
 Only include the service-specific portion of the name. 
 Eg. For EC2, use "ec2" rather than `com.amazonaws.region.ec2`
 */
-vpc_gateway_endpoints_all                 = ["s3"]
+vpc_gateway_endpoints_all = ["s3"]
 
-vpc_interface_endpoints_tower             = []
-vpc_interface_endpoints_batch             = []
+vpc_interface_endpoints_tower = []
+vpc_interface_endpoints_batch = []
 
 
 /*
@@ -376,13 +376,13 @@ Egress is open by default given variability of client implementations. Can be ti
 See: https://github.com/terraform-aws-modules/terraform-aws-security-group/blob/master/rules.tf
 */
 
-sg_ingress_cidrs                        = ["0.0.0.0/0"]
-sg_ssh_cidrs                            = ["0.0.0.0/0"]
+sg_ingress_cidrs = ["0.0.0.0/0"]
+sg_ssh_cidrs     = ["0.0.0.0/0"]
 
-sg_egress_eice = ["all-all"]
-sg_egress_tower_ec2 = ["all-all"]
-sg_egress_tower_alb = ["all-all"]
-sg_egress_batch_ec2 = ["all-all"]
+sg_egress_eice               = ["all-all"]
+sg_egress_tower_ec2          = ["all-all"]
+sg_egress_tower_alb          = ["all-all"]
+sg_egress_batch_ec2          = ["all-all"]
 sg_egress_interface_endpoint = ["all-all"]
 
 /*
@@ -392,10 +392,10 @@ sg_egress_interface_endpoint = ["all-all"]
 Enable to allow pipeline optimization.
 */
 
-flag_enable_groundswell                 = true
+flag_enable_groundswell = true
 
-swell_container_version                 = "0.4.0"
-swell_database_name                     = "swell"
+swell_container_version = "0.4.0"
+swell_database_name     = "swell"
 ## swell_db_user                        = "DO_NOT_UNCOMMENT_ME"
 ## swell_db_password                    = "DO_NOT_UNCOMMENT_ME"
 
@@ -406,8 +406,8 @@ swell_database_name                     = "swell"
 ## ------------------------------------------------------------------------------------
 Enable to allow Data Explorer functionality. See https://docs.seqera.io/platform/latest/data/data-explorer for details.
 */
-flag_data_explorer_enabled                = true
-data_explorer_disabled_workspaces         = ""
+flag_data_explorer_enabled        = true
+data_explorer_disabled_workspaces = ""
 
 
 /*
@@ -422,8 +422,8 @@ Must use numeric id of target workspaces when populating `data_studio_eligible_w
 NOTE: If upgrading from a pre-24.1 installation, it is likely the existing certificate arn 
 provided to the `alb_certificate_arn` entry needs to be replaced with a new cert with more entries. 
 */
-flag_enable_data_studio                   = true
-data_studio_container_version             = "0.8.0"
+flag_enable_data_studio       = true
+data_studio_container_version = "0.8.0"
 
 flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""
@@ -439,61 +439,61 @@ data_studio_eligible_workspaces           = ""
 #   4. For the use of custom data studio images, ensure flag_use_wave = true. 
 
 data_studio_options = {
-      # DEPRECATION NOTICE: Future versions of the installer will no longer include entries for connect-client v0.7.1. Please update entries accordingly ahead of the a future version where the commented content will be removed. The most up-to-date version of connect-client is v0.8.0.
+  # DEPRECATION NOTICE: Future versions of the installer will no longer include entries for connect-client v0.7.1. Please update entries accordingly ahead of the a future version where the commented content will be removed. The most up-to-date version of connect-client is v0.8.0.
 
-      # vscode1_83_0 = {
-      #       qualifier = "VSCODE-1-83-0"
-      #       icon = "vscode"
-      #       container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.7.1"
-      # },
-      # jupyter4_1_5 = {
-      #       qualifier = "JUPYTER-4-1-5"
-      #       icon = "jupyter"
-      #       container = "public.cr.seqera.io/platform/data-studio-jupyter:4.1.5-0.7.1"
-      # },
-      # rstudio4_0_0 = {
-      #       qualifier = "RSTUDIO-4-0-0"
-      #       icon = "rstudio"
-      #       container = "public.cr.seqera.io/platform/data-studio-rstudio:4.0.0-0.7.1"
-      # },
-      # rstudio4_4_1 = {
-      #       qualifier = "RSTUDIO-4-4-1"
-      #       icon = "rstudio"
-      #       container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.7.1"
-      # },
-      # xpra6_0_r0 = {
-      #       qualifier = "XPRA-6-0-R0"
-      #       icon = "xpra"
-      #       container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.7.1"
-      # },
-      vscode1_83_0-0_8_0 = {
-            qualifier = "VSCODE-1-83-0-0-8-0"
-            icon = "vscode"
-            tool = "vscode"
-            status = "recommended"
-            container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.8.0"
-      },
-      jupyter4_2_5-0_8_0 = {
-            qualifier = "JUPYTER-4-2-5-0-8-0"
-            icon = "jupyter"
-            tool = "jupyter"
-            status = "recommended"
-            container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.0"
-      },
-      rstudio4_4_1-0_8_0 = {
-            qualifier = "RSTUDIO-4-4-1-0-8-0"
-            icon = "rstudio"
-            tool = "rstudio"
-            status = "recommended"
-            container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.8.0"
-      },
-      xpra6_0_r0-0_8_0 = {
-            qualifier = "XPRA-6-0-R0-0-8-0"
-            icon = "xpra"
-            tool = "xpra"
-            status = "recommended"
-            container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.8.0"
-      }
+  # vscode1_83_0 = {
+  #       qualifier = "VSCODE-1-83-0"
+  #       icon = "vscode"
+  #       container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.7.1"
+  # },
+  # jupyter4_1_5 = {
+  #       qualifier = "JUPYTER-4-1-5"
+  #       icon = "jupyter"
+  #       container = "public.cr.seqera.io/platform/data-studio-jupyter:4.1.5-0.7.1"
+  # },
+  # rstudio4_0_0 = {
+  #       qualifier = "RSTUDIO-4-0-0"
+  #       icon = "rstudio"
+  #       container = "public.cr.seqera.io/platform/data-studio-rstudio:4.0.0-0.7.1"
+  # },
+  # rstudio4_4_1 = {
+  #       qualifier = "RSTUDIO-4-4-1"
+  #       icon = "rstudio"
+  #       container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.7.1"
+  # },
+  # xpra6_0_r0 = {
+  #       qualifier = "XPRA-6-0-R0"
+  #       icon = "xpra"
+  #       container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.7.1"
+  # },
+  vscode-1-83-0-0-8-0 = {
+    qualifier = "VSCODE-1-83-0-0-8-0"
+    icon      = "vscode"
+    tool      = "vscode"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.8.0"
+  },
+  jupyter-4-2-5-0-8-0 = {
+    qualifier = "JUPYTER-4-2-5-0-8-0"
+    icon      = "jupyter"
+    tool      = "jupyter"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.0"
+  },
+  rstudio-4-4-1-0-8-0 = {
+    qualifier = "RSTUDIO-4-4-1-0-8-0"
+    icon      = "rstudio"
+    tool      = "rstudio"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.8.0"
+  },
+  xpra-6-0-R0-0-8-0 = {
+    qualifier = "XPRA-6-0-R0-0-8-0"
+    icon      = "xpra"
+    tool      = "xpra"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.8.0"
+  }
 }
 
 /*
@@ -511,7 +511,7 @@ WARNING:
   - You must supply your own backup solution.
 */
 
-db_database_name                        = "tower"
+db_database_name = "tower"
 
 
 /*
@@ -521,8 +521,8 @@ db_database_name                        = "tower"
 ## ------------------------------------------------------------------------------------
 This section added to handle new connection string requirements for Tower v24.1.0+
 */
-db_container_engine                               = "mysql"
-db_container_engine_version                       = "8.0"
+db_container_engine         = "mysql"
+db_container_engine_version = "8.0"
 
 /*
 ## ------------------------------------------------------------------------------------
@@ -545,29 +545,29 @@ WARNING:
   - You must supply your own backup solution.
 */
 
-db_engine                                         = "mysql"
-db_engine_version                                 = "8.0"
-db_param_group                                    = "mysql8.0"
-db_instance_class                                 = "db.m5.large"
-db_allocated_storage                              = 30
+db_engine            = "mysql"
+db_engine_version    = "8.0"
+db_param_group       = "mysql8.0"
+db_instance_class    = "db.m5.large"
+db_allocated_storage = 30
 
-db_deletion_protection                            = true
-skip_final_snapshot                               = false
+db_deletion_protection = true
+skip_final_snapshot    = false
 
-db_backup_retention_period                        = 7
-db_enable_storage_encrypted                       = true
+db_backup_retention_period  = 7
+db_enable_storage_encrypted = true
 
 
-wave_lite_db_engine                               = "postgres"
-wave_lite_db_engine_version                       = "17.5"
-wave_lite_db_param_group                          = "postgres17"
-wave_lite_db_instance_class                       = "db.t4g.micro"   #"db.m5.large"
-wave_lite_db_allocated_storage                    = 10
+wave_lite_db_engine            = "postgres"
+wave_lite_db_engine_version    = "17.5"
+wave_lite_db_param_group       = "postgres17"
+wave_lite_db_instance_class    = "db.t4g.micro" #"db.m5.large"
+wave_lite_db_allocated_storage = 10
 
-wave_lite_db_deletion_protection                  = false
-wave_lite_skip_final_snapshot                     = true
-wave_lite_db_backup_retention_period              = 7
-wave_lite_db_enable_storage_encrypted             = true
+wave_lite_db_deletion_protection      = false
+wave_lite_skip_final_snapshot         = true
+wave_lite_db_backup_retention_period  = 7
+wave_lite_db_enable_storage_encrypted = true
 
 
 /*
@@ -588,16 +588,16 @@ Unclustered & clustered modes are mutually exclusive; if the `unclustered` block
 wave_lite_elasticache = {
   apply_immediately = true
 
-  engine                        = "redis"
-  engine_version                = "7.1"
-  node_type                     = "cache.t4g.micro"
-  port                          = 6379
+  engine         = "redis"
+  engine_version = "7.1"
+  node_type      = "cache.t4g.micro"
+  port           = 6379
 
-  security_group_ids            = [] # Leave blank to use TF-generated SG.
-  subnet_ids                    = [] # Leave blank to use all private subnets.
+  security_group_ids = [] # Leave blank to use TF-generated SG.
+  subnet_ids         = [] # Leave blank to use all private subnets.
 
   unclustered = {
-    num_cache_nodes             = 1
+    num_cache_nodes = 1
   }
 
   clustered = {
@@ -628,8 +628,8 @@ may override this process and supply a pre-generated entity.
 NOTE: Remember that this is an INSTANCE role arn, not a normal Role.
 */
 
-flag_iam_use_prexisting_role_arn        = false
-iam_prexisting_instance_role_arn        = "REPLACE_ME_IF_NEEDED"
+flag_iam_use_prexisting_role_arn = false
+iam_prexisting_instance_role_arn = "REPLACE_ME_IF_NEEDED"
 
 
 /*
@@ -646,8 +646,8 @@ CONFIGURATION section below.
 */
 
 # Only one of these can true.
-flag_use_aws_ses_iam_integration        = true
-flag_use_existing_smtp                  = false
+flag_use_aws_ses_iam_integration = true
+flag_use_existing_smtp           = false
 
 
 /*
@@ -661,16 +661,16 @@ Some Amazon Linux 2023 AMIs (e.g. minimal) changed default boot size in late 202
 disk size can now be explicitly specified (in GiB).
 */
 
-ec2_host_instance_type                  = "c5.2xlarge"
+ec2_host_instance_type = "c5.2xlarge"
 
-flag_encrypt_ebs                        = true
-flag_use_kms_key                        = true
-ec2_ebs_kms_key                         = "REPLACE_ME_IF_NEEDED"
-ec2_root_volume_size                    = 8
+flag_encrypt_ebs     = true
+flag_use_kms_key     = true
+ec2_ebs_kms_key      = "REPLACE_ME_IF_NEEDED"
+ec2_root_volume_size = 8
 
-ec2_require_imds_token                  = true
+ec2_require_imds_token = true
 
-ec2_update_ami_if_available             = true
+ec2_update_ami_if_available = true
 
 
 /* 
@@ -688,7 +688,7 @@ provided must be replaced with a new cert with more entries.
 Please see https://docs.seqera.io for specific Data Studio cert guidance. 
 */
 
-alb_certificate_arn                     = "REPLACE_ME_IF_NEEDED"
+alb_certificate_arn = "REPLACE_ME_IF_NEEDED"
 
 
 /*
@@ -701,12 +701,12 @@ detailed configuration guidance.
 
 # Ensure this aligns with the values specified in `Flags - DNS` section above.
 # Do not include http prefix. e.g. `autodc.dev-seqera.net`. 
-tower_server_url                        = "REPLACE_ME"
-tower_server_port                       = "8000"
+tower_server_url  = "REPLACE_ME"
+tower_server_port = "8000"
 
 # This must be a verified identity / domain.
-tower_contact_email                     = "REPLACE_ME"
-tower_enable_platforms                  = "awsbatch-platform,k8s-platform,slurm-platform"
+tower_contact_email    = "REPLACE_ME"
+tower_enable_platforms = "awsbatch-platform,k8s-platform,slurm-platform"
 
 ## tower_jwt_secret                      = "DO_NOT_UNCOMMENT_ME"
 ## tower_crypto_secretkey                = "DO_NOT_UNCOMMENT_ME"
@@ -715,33 +715,33 @@ tower_enable_platforms                  = "awsbatch-platform,k8s-platform,slurm-
 # Do not include 'jdbc:mysql://`. 
 # If using container db: use `db:3306`
 # If using pre-existing external RDS instance, include the RDS Endpoint string only (no port or /xxx... URI modifier)
-tower_db_url                            = "db:3306"
-tower_db_driver                         = "org.mariadb.jdbc.Driver"
-tower_db_dialect                        = "io.seqera.util.MySQL55DialectCollateBin"
-tower_db_min_pool_size                  = 5
-tower_db_max_pool_size                  = 10
-tower_db_max_lifetime                   = 18000000
-flyway_locations                        = "classpath:db-schema/mysql"
+tower_db_url           = "db:3306"
+tower_db_driver        = "org.mariadb.jdbc.Driver"
+tower_db_dialect       = "io.seqera.util.MySQL55DialectCollateBin"
+tower_db_min_pool_size = 5
+tower_db_max_pool_size = 10
+tower_db_max_lifetime  = 18000000
+flyway_locations       = "classpath:db-schema/mysql"
 ## tower_db_user                         = "DO_NOT_UNCOMMENT_ME"
 ## tower_db_password                     = "DO_NOT_UNCOMMENT_ME"
 
 ## tower_redis_url                       = "DO_NOT_UNCOMMENT_ME"
 ## tower_redis_password                  = "DO_NOT_UNCOMMENT_ME"
 
-tower_smtp_host                         = "REPLACE_ME"
-tower_smtp_port                         = "REPLACE_ME"
+tower_smtp_host = "REPLACE_ME"
+tower_smtp_port = "REPLACE_ME"
 ## tower_smtp_user                      = "REPLACE_ME_IF_NEEDED"
 ## tower_smtp_password                  = "REPLACE_ME_IF_NEEDED"
-tower_smtp_auth                         = true
-tower_smtp_starttls_enable              = true
-tower_smtp_starttls_required            = true
-tower_smtp_ssl_protocols                = "TLSv1.2"
+tower_smtp_auth              = true
+tower_smtp_starttls_enable   = true
+tower_smtp_starttls_required = true
+tower_smtp_ssl_protocols     = "TLSv1.2"
 
-tower_root_users                        = "REPLACE_ME"
-tower_email_trusted_orgs                = "REPLACE_ME"
-tower_email_trusted_users               = "REPLACE_ME"
+tower_root_users          = "REPLACE_ME"
+tower_email_trusted_orgs  = "REPLACE_ME"
+tower_email_trusted_users = "REPLACE_ME"
 
-tower_audit_retention_days              = 1095      # 3 years (value in days)
+tower_audit_retention_days = 1095 # 3 years (value in days)
 
 
 /*
@@ -754,11 +754,11 @@ Please note that you must supply your OIDC secrets in the `ssm_sensitive_values_
 and have a pre-configured OIDC IDP ready to accept requests.
 */
 
-flag_oidc_use_generic                  = false
-flag_oidc_use_google                   = false
-flag_oidc_use_github                   = false
+flag_oidc_use_generic = false
+flag_oidc_use_google  = false
+flag_oidc_use_github  = false
 
-flag_disable_email_login               = false
+flag_disable_email_login = false
 
 
 /*
@@ -774,11 +774,11 @@ https://www.heuristic42.com/blog/59/on-docker-stealing-routes-and-breaking-the-i
 more details.
 */
 
-flag_docker_logging_local              = false
-flag_docker_logging_journald           = true
-flag_docker_logging_jsonfile           = false
+flag_docker_logging_local    = false
+flag_docker_logging_journald = true
+flag_docker_logging_jsonfile = false
 
-docker_cidr_range                      = "172.80.0.0/16"
+docker_cidr_range = "172.80.0.0/16"
 
 
 /*
@@ -799,34 +799,34 @@ WARNING:
     complete successfully. 
 */
 
-flag_run_seqerakit                      = false
+flag_run_seqerakit = false
 
-seqerakit_org_name                      = "SampleOrg"
-seqerakit_org_fullname                  = "SampleOrgFullName"
-seqerakit_org_url                       = "https://www.example.com"
+seqerakit_org_name     = "SampleOrg"
+seqerakit_org_fullname = "SampleOrgFullName"
+seqerakit_org_url      = "https://www.example.com"
 
-seqerakit_team_name                     = "SampleTeam"
-seqerakit_team_members                  = "REPLACE_ME,REPLACE_ME"
+seqerakit_team_name    = "SampleTeam"
+seqerakit_team_members = "REPLACE_ME,REPLACE_ME"
 
-seqerakit_workspace_name                = "SampleWorkspace"
-seqerakit_workspace_fullname            = "SampleWorkspaceFullName"
+seqerakit_workspace_name     = "SampleWorkspace"
+seqerakit_workspace_fullname = "SampleWorkspaceFullName"
 
-seqerakit_compute_env_name              = "MyComputeEnvironment"
-seqerakit_compute_env_region            = "REPLACE_ME"
+seqerakit_compute_env_name   = "MyComputeEnvironment"
+seqerakit_compute_env_region = "REPLACE_ME"
 
-seqerakit_root_bucket                   = "s3://REPLACE_ME"
-seqerakit_workdir                       = "s3://REPLACE_ME"
-seqerakit_outdir                        = "s3://REPLACE_ME"
+seqerakit_root_bucket = "s3://REPLACE_ME"
+seqerakit_workdir     = "s3://REPLACE_ME"
+seqerakit_outdir      = "s3://REPLACE_ME"
 
-seqerakit_aws_use_fusion_v2             = true
-seqerakit_aws_use_forge                 = true
-seqerakit_aws_use_batch                 = true
+seqerakit_aws_use_fusion_v2 = true
+seqerakit_aws_use_forge     = true
+seqerakit_aws_use_batch     = true
 
-seqerakit_aws_fusion_instances          = "c6id,r6id,m6id"
-seqerakit_aws_normal_instances          = "optimal"
+seqerakit_aws_fusion_instances = "c6id,r6id,m6id"
+seqerakit_aws_normal_instances = "optimal"
 
-seqerakit_aws_manual_head_queue         = "REPLACE_ME_IF_NEEDED"
-seqerakit_aws_manual_compute_queue      = "REPLACE_ME_IF_NEEDED"
+seqerakit_aws_manual_head_queue    = "REPLACE_ME_IF_NEEDED"
+seqerakit_aws_manual_compute_queue = "REPLACE_ME_IF_NEEDED"
 
 
 /*
@@ -843,5 +843,5 @@ seqerakit_flag_credential_create_github     = true
 seqerakit_flag_credential_create_docker     = true
 seqerakit_flag_credential_create_codecommit = false
 
-seqerakit_flag_credential_use_aws_role      = true
+seqerakit_flag_credential_use_aws_role           = true
 seqerakit_flag_credential_use_codecommit_baseurl = true

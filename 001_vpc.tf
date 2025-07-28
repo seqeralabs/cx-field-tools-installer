@@ -25,42 +25,31 @@ module "vpc" {
 
   # Flow log config
   # Config taken from here: https://github.com/terraform-aws-modules/terraform-aws-vpc/blob/master/examples/vpc-flow-logs/main.tf
-  enable_flow_log = var.enable_vpc_flow_logs
-  create_flow_log_cloudwatch_log_group = true
-  create_flow_log_cloudwatch_iam_role  = true
+  enable_flow_log                           = var.enable_vpc_flow_logs
+  create_flow_log_cloudwatch_log_group      = true
+  create_flow_log_cloudwatch_iam_role       = true
   flow_log_max_aggregation_interval         = 60
   flow_log_cloudwatch_log_group_name_prefix = "/${local.global_prefix}/vpc-flow-logs/"
   flow_log_cloudwatch_log_group_name_suffix = "platform"
   # flow_log_cloudwatch_log_group_class       = "INFREQUENT_ACCESS"
 }
 
-
-# https://stackoverflow.com/questions/67562197/terraform-loop-through-ids-list-and-generate-data-blocks-from-it-and-access-it
-data "aws_subnet" "existing" {
-  # Creates a map with the keys being the CIDRs --  e.g. `data.aws_subnet.public["10.0.0.0/20"].id
-  # Only make a data query if we are using an existing VPC
-  for_each = var.flag_use_existing_vpc == true ? toset(local.subnets_all) : []
-
-  vpc_id     = local.vpc_id
-  cidr_block = each.key
-}
-
-
 # Needed to add this to get existing CIDR range to limit ALB listeners
 data "aws_vpc" "preexisting" {
-  id = local.vpc_id
+  count = var.flag_use_existing_vpc == true ? 1 : 0
+  id    = local.vpc_id
 }
 
 # Needed to grab route tables from pre-existing VPC to create VPC endpoints.
 data "aws_route_tables" "preexisting" {
+  count  = var.flag_use_existing_vpc == true ? 1 : 0
   vpc_id = local.vpc_id
 
   filter {
-    name = "tag:Name"
+    name   = "tag:Name"
     values = ["*private*"]
   }
 }
-
 
 resource "aws_vpc_endpoint" "global_endpoints" {
   for_each = toset(var.vpc_gateway_endpoints_all)
@@ -68,21 +57,18 @@ resource "aws_vpc_endpoint" "global_endpoints" {
   vpc_id            = local.vpc_id
   vpc_endpoint_type = "Gateway"
   service_name      = "com.amazonaws.${var.aws_region}.${each.key}"
-  # route_table_ids   = module.vpc[0].private_route_table_ids
-  route_table_ids = local.vpc_private_route_table_ids
-
+  route_table_ids   = local.vpc_private_route_table_ids
 
   tags = {
     Name = "${local.global_prefix}-global-${each.key}"
   }
 }
 
-
 resource "aws_vpc_endpoint" "tower_endpoints" {
   for_each = toset(var.vpc_interface_endpoints_tower)
 
   vpc_id             = local.vpc_id
-  subnet_ids         = [local.subnet_ids_ec2[0]]
+  subnet_ids         = [module.subnet_collector.subnet_ids_ec2[0]]
   vpc_endpoint_type  = "Interface"
   service_name       = "com.amazonaws.${var.aws_region}.${each.key}"
   security_group_ids = [module.sg_vpc_endpoint.security_group_id]
@@ -99,7 +85,7 @@ resource "aws_vpc_endpoint" "batch_endpoints" {
   for_each = toset(var.vpc_interface_endpoints_batch)
 
   vpc_id             = local.vpc_id
-  subnet_ids         = local.subnet_ids_batch
+  subnet_ids         = module.subnet_collector.subnet_ids_batch
   vpc_endpoint_type  = "Interface"
   service_name       = "com.amazonaws.${var.aws_region}.${each.key}"
   security_group_ids = [module.sg_vpc_endpoint.security_group_id]

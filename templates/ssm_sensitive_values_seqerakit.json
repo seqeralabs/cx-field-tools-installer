@@ -1,42 +1,42 @@
 {
-    "TOWER_AWS_USER": { 
-		"ssm_key": 	"/seqera/tower-dev/seqerakit/aws-user",
-		"value": 	"CHANGE_ME"
+	"TOWER_AWS_USER": {
+		"ssm_key": "/seqera/tower-template/seqerakit/aws-user",
+		"value": "CHANGE_ME"
 	},
-    "TOWER_AWS_PASSWORD": { 
-		"ssm_key": 	"/seqera/tower-dev/seqerakit/aws-password",
-		"value": 	"CHANGE_ME"
+	"TOWER_AWS_PASSWORD": {
+		"ssm_key": "/seqera/tower-template/seqerakit/aws-password",
+		"value": "CHANGE_ME"
 	},
-    "TOWER_AWS_ROLE": { 
-		"ssm_key": 	"/seqera/tower-dev/seqerakit/aws-role",
-		"value": 	"arn:aws:iam::CHANGE_ME_IF_NECESSARY"
+	"TOWER_AWS_ROLE": {
+		"ssm_key": "/seqera/tower-template/seqerakit/aws-role",
+		"value": "arn:aws:iam::CHANGE_ME_IF_NECESSARY"
 	},
-	"TOWER_GITHUB_USER": { 
-		"ssm_key": 	"/seqera/tower-dev/seqerakit/github-user",
-		"value": 	"CHANGE_ME_IF_NECESSARY"
+	"TOWER_GITHUB_USER": {
+		"ssm_key": "/seqera/tower-template/seqerakit/github-user",
+		"value": "CHANGE_ME_IF_NECESSARY"
 	},
-    "TOWER_GITHUB_TOKEN": { 
-		"ssm_key": 	"/seqera/tower-dev/seqerakit/github-token",
+	"TOWER_GITHUB_TOKEN": {
+		"ssm_key": "/seqera/tower-template/seqerakit/github-token",
 		"value": "ghp_CHANGE_ME_IF_NECESSARY"
 	},
-    "TOWER_DOCKER_USER": { 
-		"ssm_key": 	"/seqera/tower-dev/seqerakit/docker-user",
-		"value": 	"CHANGE_ME_IF_NECESSARY"
+	"TOWER_DOCKER_USER": {
+		"ssm_key": "/seqera/tower-template/seqerakit/docker-user",
+		"value": "CHANGE_ME_IF_NECESSARY"
 	},
-    "TOWER_DOCKER_TOKEN": { 
-		"ssm_key": 	"/seqera/tower-dev/seqerakit/docker-token",
-		"value": 	"dckr_pat_CHANGE_ME_IF_NECESSARY"
+	"TOWER_DOCKER_TOKEN": {
+		"ssm_key": "/seqera/tower-template/seqerakit/docker-token",
+		"value": "dckr_pat_CHANGE_ME_IF_NECESSARY"
 	},
-	"TOWER_CODECOMMIT_USER": { 
-		"ssm_key": 	"/seqera/tower-dev/seqerakit/codecommit-user",
-		"value": 	"CHANGE_ME_IF_NECESSARY"
+	"TOWER_CODECOMMIT_USER": {
+		"ssm_key": "/seqera/tower-template/seqerakit/codecommit-user",
+		"value": "CHANGE_ME_IF_NECESSARY"
 	},
-    "TOWER_CODECOMMIT_PASSWORD": { 
-		"ssm_key": 	"/seqera/tower-dev/seqerakit/codecommit-password",
-		"value": 	"CHANGE_ME_IF_NECESSARY"
+	"TOWER_CODECOMMIT_PASSWORD": {
+		"ssm_key": "/seqera/tower-template/seqerakit/codecommit-password",
+		"value": "CHANGE_ME_IF_NECESSARY"
 	},
-    "TOWER_CODECOMMIT_BASEURL": { 
-		"ssm_key": 	"/seqera/tower-dev/seqerakit/codecommit-baseurl",
-		"value": 	"CHANGE_ME_IF_NECESSARY"
+	"TOWER_CODECOMMIT_BASEURL": {
+		"ssm_key": "/seqera/tower-template/seqerakit/codecommit-baseurl",
+		"value": "CHANGE_ME_IF_NECESSARY"
 	}
 }

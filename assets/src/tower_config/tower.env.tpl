@@ -19,7 +19,7 @@ TOWER_ROOT_USERS=${tower_root_users}
 # ------------------------------------------------
 # DB settings
 # ------------------------------------------------
-TOWER_DB_URL=jdbc:mysql://${tower_db_url}
+TOWER_DB_URL=${tower_db_url}
 
 TOWER_DB_DRIVER=${tower_db_driver}
 TOWER_DB_DIALECT=${tower_db_dialect}
@@ -86,7 +86,7 @@ TOWER_ENABLE_WAVE=false
 GROUNDSWELL_SERVER_URL="http://groundswell:8090"
 TOWER_ENABLE_GROUNDSWELL=true
 %{ else ~}
-# Groundswell is not activated.
+TOWER_ENABLE_GROUNDSWELL=false
 %{ endif ~}
 
 
@@ -95,10 +95,11 @@ TOWER_ENABLE_GROUNDSWELL=true
 # ------------------------------------------------
 %{ if flag_data_explorer_enabled == true ~}
 TOWER_DATA_EXPLORER_ENABLED=true
+TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES="${data_explorer_disabled_workspaces}"
 %{ else ~}
 TOWER_DATA_EXPLORER_ENABLED=false
 %{ endif ~}
-TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES="${data_explorer_disabled_workspaces}"
+
 
 
 # ------------------------------------------------
@@ -119,10 +120,10 @@ TOWER_OIDC_PEM_PATH=/data-studios-rsa.pem
 TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN="ipsemlorem"
 
 %{ for ds in data_studio_options ~}
-TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_ICON: "${ds.icon}"
-TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_REPOSITORY: "${ds.container}"
-TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_TOOL: "${ds.tool != null ? ds.tool : ""}"
-TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_STATUS: "${ds.status != null ? ds.status : ""}"
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_ICON="${ds.icon}"
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_REPOSITORY="${ds.container}"
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_TOOL="${ds.tool != null ? ds.tool : ""}"
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_STATUS="${ds.status != null ? ds.status : ""}"
 %{ endfor ~}
 
 %{ endif }

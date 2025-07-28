@@ -3,11 +3,9 @@
 ## Note: Must use `null_resource` instead of `local_file` because `local_file generates
 ##       files every-other-time (due to state checking PRIOR to deletion)
 ## ------------------------------------------------------------------------------------
-resource "null_resource" "regenerate_config_files_from_data" {
+resource "null_resource" "generate_independent_config_files" {
 
-  # depends_on          = [ null_resource.purge_and_clone_local_target_folder ]
-  depends_on = [aws_ec2_instance_connect_endpoint.example]
-  triggers   = { always_run = "${timestamp()}" }
+  triggers = { always_run = "${timestamp()}" }
 
   provisioner "local-exec" {
     working_dir = path.module
@@ -25,7 +23,7 @@ resource "null_resource" "regenerate_config_files_from_data" {
 
       # Generate Wave config files
       echo '${local.wave_lite_yml}' > ${path.module}/assets/target/wave_lite_config/wave-lite.yml
-      
+
       # THIS IS A TOTAL HACK (Wave-Lite)
       # Using this technique so postgres can get config files with single quotes only.
       # Terraform templatefile (.tpl) abandoned and we use real SQL with placeholders-to-be-replaced-by-sed
@@ -45,7 +43,6 @@ resource "null_resource" "regenerate_config_files_from_data" {
       python3 $SALT replace_me_wave_lite_db_limited_password ${local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]} ${path.module}/assets/target/wave_lite_config/wave-lite-container-2.sql
       python3 $SALT replace_me_wave_lite_db_limited_password ${local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]} ${path.module}/assets/target/wave_lite_config/wave-lite-rds.sql
 
-
       # Generate Groundswell config files
       echo '${local.groundswell_env}' > ${path.module}/assets/target/groundswell_config/groundswell.env
       echo '${local.groundswell_sql}' > ${path.module}/assets/target/groundswell_config/groundswell.sql
@@ -56,8 +53,12 @@ resource "null_resource" "regenerate_config_files_from_data" {
       # Generate Seqerakit
       echo '${local.seqerakit_yml}' > ${path.module}/assets/target/seqerakit/setup.yml
 
-      # Generate Bash files for remote execution
-      echo '${local.cleanse_and_configure_host}' > ${path.module}/assets/target/bash/remote/cleanse_and_configure_host.sh
+      # Generate Tower Connect files
+      echo '${local.data_studios_env}' > ${path.module}/assets/target/tower_config/data-studios.env
+      echo '${tls_private_key.connect_pem.private_key_pem}' > ${path.module}/assets/target/tower_config/data-studios-rsa.pem
+
+      # Generate Docker Logging Configuration
+      echo '${local.docker_logging}' > ${path.module}/assets/target/docker_logging/daemon.json
 
       # Generate Ansible files
       echo '${local.ansible_02_update_file_configurations}' > ${path.module}/assets/target/ansible/02_update_file_configurations.yml
@@ -66,20 +67,35 @@ resource "null_resource" "regenerate_config_files_from_data" {
       echo '${local.ansible_06_run_seqerakit}' > ${path.module}/assets/target/ansible/06_run_seqerakit.yml
       echo '${local.codecommit_seqerakit}' > ${path.module}/assets/target/bash/remote/codecommit_set_workspace_id.sh
 
-      # Generate SSH_Config
-      echo '${local.ssh_config}' > ${path.module}/ssh_config
-      chmod 644 ${path.module}/ssh_config
-
-      # Generate Docker Logging Configuration
-      echo '${local.docker_logging}' > ${path.module}/assets/target/docker_logging/daemon.json
-
-      # Generate Tower Connect files
-      echo '${local.data_studios_env}' > ${path.module}/assets/target/tower_config/data-studios.env
-      echo '${tls_private_key.connect_pem.private_key_pem}' > ${path.module}/assets/target/tower_config/data-studios-rsa.pem
-
       # Generate EC2 PEM
       echo "${tls_private_key.ec2_ssh_key.private_key_pem}" > ${path.module}/${local.ssh_key_name}
       chmod 400 ${path.module}/${local.ssh_key_name}
+
+      # Generate Bash files for remote execution
+      echo '${local.cleanse_and_configure_host}' > ${path.module}/assets/target/bash/remote/cleanse_and_configure_host.sh
+
+    EOT
+  }
+}
+
+resource "null_resource" "generate_config_files_with_dependencies" {
+
+  # depends_on          = [ null_resource.purge_and_clone_local_target_folder ]
+  depends_on = [
+    aws_ec2_instance_connect_endpoint.example,
+    null_resource.generate_independent_config_files
+  ]
+  triggers = { always_run = "${timestamp()}" }
+
+  provisioner "local-exec" {
+    working_dir = path.module
+    command     = <<-EOT
+
+      set -e
+
+      # Generate SSH_Config
+      echo '${local.ssh_config}' > ${path.module}/ssh_config
+      chmod 644 ${path.module}/ssh_config
 
     EOT
     interpreter = ["/bin/bash", "-c"]
@@ -96,8 +112,11 @@ resource "null_resource" "regenerate_config_files_from_data" {
 resource "null_resource" "aws_batch_manual" {
   count = var.seqerakit_aws_use_forge == false && var.seqerakit_aws_use_batch == true ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
-  depends_on = [null_resource.regenerate_config_files_from_data]
+  triggers = { always_run = "${timestamp()}" }
+  depends_on = [
+    null_resource.generate_config_files_with_dependencies,
+    null_resource.generate_independent_config_files
+  ]
 
   provisioner "local-exec" {
     command     = <<-EOT
@@ -111,8 +130,11 @@ resource "null_resource" "aws_batch_manual" {
 resource "null_resource" "aws_batch_forge" {
   count = var.seqerakit_aws_use_forge == true && var.seqerakit_aws_use_batch == true ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
-  depends_on = [null_resource.regenerate_config_files_from_data]
+  triggers = { always_run = "${timestamp()}" }
+  depends_on = [
+    null_resource.generate_config_files_with_dependencies,
+    null_resource.generate_independent_config_files
+  ]
 
   provisioner "local-exec" {
     command     = <<-EOT
@@ -130,7 +152,8 @@ resource "null_resource" "allow_file_copy_to_start" {
   triggers = { always_run = "${timestamp()}" }
 
   depends_on = [
-    null_resource.regenerate_config_files_from_data,
+    null_resource.generate_independent_config_files,
+    null_resource.generate_config_files_with_dependencies,
     null_resource.aws_batch_manual,
     null_resource.aws_batch_forge,
   ]

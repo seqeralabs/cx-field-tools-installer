@@ -12,4 +12,4 @@ GRANT ALL PRIVILEGES ON DATABASE wave TO replace_me_wave_lite_db_limited_user;
 -- Grant usage and privileges on schemas/tables
 GRANT ALL ON SCHEMA public TO replace_me_wave_lite_db_limited_user;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO replace_me_wave_lite_db_limited_user;
-GRANT ALL ON ALL PRIVILEGES IN SCHEMA public TO replace_me_wave_lite_db_limited_user;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO replace_me_wave_lite_db_limited_user;

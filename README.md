@@ -93,7 +93,7 @@ See [Configuration Files](./documentation/setup/configuration_files.md) for file
 
 
 #### 02: Prepare Configuration Files
-1. Select a name for your Seqera Platform application (_default: `tower-dev`_).
+1. Select a name for your Seqera Platform application (_default: `tower-template`_).
     
     _This is a namespace isolator which prevents concurrent instances (e.g., `dev` and `prod`) from accidentally sharing configurations._
 

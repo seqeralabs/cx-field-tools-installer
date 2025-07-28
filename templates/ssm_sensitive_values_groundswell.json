@@ -1,10 +1,10 @@
 {
-	"SWELL_DB_USER": { 
-		"ssm_key": 	"/seqera/tower-dev/groundswell/user",
-		"value": 	"swell"
+	"SWELL_DB_USER": {
+		"ssm_key": "/seqera/tower-template/groundswell/user",
+		"value": "swell"
 	},
-	"SWELL_DB_PASSWORD": { 
-		"ssm_key": 	"/seqera/tower-dev/groundswell/password",
-		"value": 	"swell"
+	"SWELL_DB_PASSWORD": {
+		"ssm_key": "/seqera/tower-template/groundswell/password",
+		"value": "swell"
 	}
 }

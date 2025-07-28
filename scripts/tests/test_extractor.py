@@ -7,4 +7,4 @@ data = SimpleNamespace(**data_dictionary)
 
 
 def test_tfvars_app_name():
-    assert data.app_name == "tower-dev"
+    assert data.app_name == "tower-template"

@@ -222,7 +222,7 @@
         # Note: This approach works for most clients but there can be occasional problems due to chains.
 
         {
-          echo -e "\n"
+          echo -e "\\n"
 
           echo "keytool -printcert -rfc -sslserver $TOWER_BASE_URL:443  >  /PRIVATE_CERT.pem"
           echo "keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file /PRIVATE_CERT.pem"
