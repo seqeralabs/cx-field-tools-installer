@@ -199,8 +199,8 @@ locals {
 
   # Private CA Files
   # ---------------------------------------------------------------------------------------
-  private_ca_cert       = "${module.connection_strings.tower_base_url}.crt"
-  private_ca_key        = "${module.connection_strings.tower_base_url}.key"
+  private_ca_cert = "${module.connection_strings.tower_base_url}.crt"
+  private_ca_key  = "${module.connection_strings.tower_base_url}.key"
 
 
   # Miscellaneous
@@ -222,6 +222,10 @@ locals {
     tonumber(length(regexall("^v24.[0-9]", var.tower_container_version))) >= 1 ||
     tonumber(length(regexall("^v2[5-9]", var.tower_container_version))) >= 1 ? true : false
   )
+
+  # Ansible
+  # ---------------------------------------------------------------------------------------
+  playbook_dir = "/home/ec2-user/target/ansible"
 
 }
 

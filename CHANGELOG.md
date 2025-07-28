@@ -36,6 +36,8 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
         - (Architecture) -- Refactored `assets/src/customcerts/`: Generation script supports multiple domains & removed placeholder files.
         - (Architecture) -- Modified security groups `sg_ec2_noalb` & `sg_ec2_noalb_connect` for tighter scoping.
         - (Architecture) -- Refactored when most `assets/target/` files are produced. Rather than waiting for all infrastructure to be created, we now create files as soon as minimal dependencies are met (_to facilitate testing_).
+        - (Architecture) -- Created Ansible inventory & modify `ansible playbook` commands to resolve localhost warnings during deployment.
+        - (Architecture) -- Disaggregated `null_resource.copy_files_to_vm` for better granularity and isolation.
         <br /><br />
         - (Documentation) -- Changed `TEMPLATE_terraform.tfvars` application name from `tower-dev` to `tower-template`.
         - (Documentation) -- Added Design Decision explaining why Studio subdomain routing is the default over path-based routing.
