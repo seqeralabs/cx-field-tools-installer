@@ -65,9 +65,9 @@ resource "aws_route53_record" "alb_connect" {
   count = local.dns_create_alb_record == true ? 1 : 0
 
   zone_id = local.dns_zone_id
-  # name    = local.tower_connect_dns
-  name    = module.connection_strings.tower_connect_wildcard_dns
-  type    = "A"
+  name = var.flag_studio_enable_path_routing ? module.connection_strings.tower_connect_dns : module.connection_strings.tower_connect_wildcard_dns
+
+  type = "A"
 
   alias {
     name                   = module.alb[0].lb_dns_name
@@ -81,9 +81,8 @@ resource "aws_route53_record" "ec2_connect" {
   count = local.dns_create_ec2_record == true ? 1 : 0
 
   zone_id = local.dns_zone_id
-  # name    = local.tower_connect_dns
-  name    = module.connection_strings.tower_connect_wildcard_dns
-  type    = "A"
+  name = module.connection_strings.tower_connect_wildcard_dns
+  type = "A"
 
   ttl     = "5"
   records = [local.dns_instance_ip]
@@ -94,9 +93,8 @@ resource "aws_route53_record" "alb_wave" {
   count = local.dns_create_alb_record == true && var.flag_use_wave_lite == true ? 1 : 0
 
   zone_id = local.dns_zone_id
-  # name    = local.tower_connect_dns
-  name    = module.connection_strings.tower_wave_dns
-  type    = "A"
+  name = module.connection_strings.tower_wave_dns
+  type = "A"
 
   alias {
     name                   = module.alb[0].lb_dns_name

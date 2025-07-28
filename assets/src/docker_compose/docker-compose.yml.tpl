@@ -66,7 +66,7 @@ services:
     restart: always
 %{ if flag_use_container_db == true ~}
     depends_on:
-      - db
+      - backend
 %{ endif ~}
 %{ endif ~}
 
@@ -211,6 +211,10 @@ services:
     depends_on:
       - redis
 %{endif ~}
+    volumes:
+      # DEPENDENCY: July 22/25 -- remove in subsequent release when fixed upstream in Studios.
+      - $HOME/.tower/connect:/data
+
 
   connect-server:
     image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-server:${data_studio_container_version}

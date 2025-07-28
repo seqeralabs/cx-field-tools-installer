@@ -137,6 +137,14 @@ tower:
       - label: "Docs"
         url: "https://docs.seqera.io"
 
+  # Key rotation feature available as of 25.2.0. For more details please see:
+  #    1. Official Seqera documentation (TODO: Add official link)
+  #    2. How to (manually) engage this feature within the `cx-field-tools-installer` project: 
+  #        documentation/setup/optional_crypto_secret_rotation.md
+  # secret-rotation:
+    # enabled:      "DO_NOT_UNCOMMENT. KEY MUST BE SET IN SSM."
+    # previous-key: "DO_NOT_UNCOMMENT. KEY MUST BE SET IN SSM."
+
   trustedEmails:
     - "'${tower_root_users}'"
     - "'${tower_email_trusted_orgs}'"

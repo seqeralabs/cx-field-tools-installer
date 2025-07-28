@@ -39,7 +39,7 @@ aws_account = "REPLACE_ME"
 aws_region  = "REPLACE_ME"
 aws_profile = "REPLACE_ME"
 
-tower_container_version = "v25.1.1"
+tower_container_version = "v25.2.0"
 
 
 /*
@@ -419,11 +419,21 @@ Please check Release Notes and documentation to ensure this its your regulatory 
 
 Must use numeric id of target workspaces when populating `data_studio_eligible_workspaces`.
 
-NOTE: If upgrading from a pre-24.1 installation, it is likely the existing certificate arn 
-provided to the `alb_certificate_arn` entry needs to be replaced with a new cert with more entries. 
+NOTES: 
+
+1. If upgrading from a pre-24.1 installation, it is likely the existing certificate arn 
+  provided to the `alb_certificate_arn` entry needs to be replaced with a new cert with more entries. 
+
+2. If path-based routing (available as of v25.2.0), your ensure you certificate supports the domain
+  specified in `data_studio_path_routing_url`.
+
+3. The `data_studio_path_routing_url` should be a **bare domain** — do not include 
+   protocol prefixes like `https://` or path components. Example: `autoconnect.autodc.dev-seqera.net`  
 */
-flag_enable_data_studio       = true
-data_studio_container_version = "0.8.0"
+flag_enable_data_studio         = true
+flag_studio_enable_path_routing = false
+data_studio_path_routing_url    = "REPLACE_ME_IF_NECESSARY"
+data_studio_container_version   = "0.8.2"
 
 flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""
@@ -437,54 +447,33 @@ data_studio_eligible_workspaces           = ""
 #     - Major and minor versions are pinned explicitly (e.g., `1.83.0-0.7.1` and `1.83.0-0.8.0`).  
 #     - Preference for clients v0.7 with a sliding patch version can be achieved by omitting the patch (e.g., use "0.7" instead of "0.7.1") to always get the latest patch update.
 #   4. For the use of custom data studio images, ensure flag_use_wave = true. 
+#   5. Acceptable status values are: "recommended", "deprecated", and "experimental". Anything will be displayed as "unsupported".
+#   6. Current as of Platform v25.2.0, only VSCode, Jupyter, and R will work with path-based Studio routing (not Xpra). This must also be the 0.8.4 client version.
 
 data_studio_options = {
-  # DEPRECATION NOTICE: Future versions of the installer will no longer include entries for connect-client v0.7.1. Please update entries accordingly ahead of the a future version where the commented content will be removed. The most up-to-date version of connect-client is v0.8.0.
+  # DEPENDENCY
+  # DEPRECATION NOTICE (July 22/25): Future versions of the installer will no longer include entries for connect-client v0.8.0. 
+  #  Please update entries accordingly ahead of the a future version where the commented content will be removed. The most up-to-date version of connect-client is v0.8.0.
 
-  # vscode1_83_0 = {
-  #       qualifier = "VSCODE-1-83-0"
-  #       icon = "vscode"
-  #       container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.7.1"
-  # },
-  # jupyter4_1_5 = {
-  #       qualifier = "JUPYTER-4-1-5"
-  #       icon = "jupyter"
-  #       container = "public.cr.seqera.io/platform/data-studio-jupyter:4.1.5-0.7.1"
-  # },
-  # rstudio4_0_0 = {
-  #       qualifier = "RSTUDIO-4-0-0"
-  #       icon = "rstudio"
-  #       container = "public.cr.seqera.io/platform/data-studio-rstudio:4.0.0-0.7.1"
-  # },
-  # rstudio4_4_1 = {
-  #       qualifier = "RSTUDIO-4-4-1"
-  #       icon = "rstudio"
-  #       container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.7.1"
-  # },
-  # xpra6_0_r0 = {
-  #       qualifier = "XPRA-6-0-R0"
-  #       icon = "xpra"
-  #       container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.7.1"
-  # },
   vscode-1-83-0-0-8-0 = {
     qualifier = "VSCODE-1-83-0-0-8-0"
     icon      = "vscode"
     tool      = "vscode"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.8.0"
   },
   jupyter-4-2-5-0-8-0 = {
     qualifier = "JUPYTER-4-2-5-0-8-0"
     icon      = "jupyter"
     tool      = "jupyter"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.0"
   },
   rstudio-4-4-1-0-8-0 = {
     qualifier = "RSTUDIO-4-4-1-0-8-0"
     icon      = "rstudio"
     tool      = "rstudio"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.8.0"
   },
   xpra-6-0-R0-0-8-0 = {
@@ -493,7 +482,28 @@ data_studio_options = {
     tool      = "xpra"
     status    = "recommended"
     container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.8.0"
-  }
+  },
+  vscode-1-101-2-0-8-4 = {
+    qualifier = "VSCODE-1-101-2-0-8-4"
+    icon      = "vscode"
+    tool      = "vscode"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.8.4"
+  },
+  jupyter-4-2-5-0-8-4 = {
+    qualifier = "JUPYTER-4-2-5-0-8-4"
+    icon      = "jupyter"
+    tool      = "jupyter"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.4"
+  },
+  ride-2025-04-1-0-8-4 = {
+    qualifier = "RIDE-2025-04-1-0-8-4"
+    icon      = "rstudio"
+    tool      = "rstudio"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.8.4"
+  },
 }
 
 /*
@@ -705,7 +715,9 @@ tower_server_url  = "REPLACE_ME"
 tower_server_port = "8000"
 
 # This must be a verified identity / domain.
-tower_contact_email    = "REPLACE_ME"
+tower_contact_email = "REPLACE_ME"
+
+# See full list of compute environment options at: https://docs.seqera.io/platform-enterprise/latest/enterprise/configuration/overview#compute-environments
 tower_enable_platforms = "awsbatch-platform,k8s-platform,slurm-platform"
 
 ## tower_jwt_secret                      = "DO_NOT_UNCOMMENT_ME"

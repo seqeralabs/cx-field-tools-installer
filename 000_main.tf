@@ -193,7 +193,7 @@ locals {
   # TODO: Refactor in v2.
   studio_uses_distroless = (
     tonumber(length(regexall("^0.7.[8-9]", var.data_studio_container_version))) >= 1 ||
-    tonumber(length(regexall("^0.8.[0-9]", var.data_studio_container_version))) >= 1 ? true : false
+    tonumber(length(regexall("^0.[8-9].[0-9]", var.data_studio_container_version))) >= 1 ? true : false
   )
 
 
@@ -213,12 +213,14 @@ locals {
   # Migrate-DB Flag
   # ---------------------------------------------------------------------------------------
   # Migrate-db only available for 23.4.1+ or higher. Check to ensure we don't include for 23.3.x or below. 
+  # TODO: Rationalize this to a single regex (July 26/25)
   flag_new_enough_for_migrate_db = (
     tonumber(length(regexall("^v23.4.[1-9]", var.tower_container_version))) >= 1 ||
     tonumber(length(regexall("^v2[4-9]", var.tower_container_version))) >= 1 ? true : false
   )
 
   # Account for changes in tower.yml due to Micronaut 4
+  # TODO: Rationalize this to a single regex (July 26/25)
   flag_using_micronaut_4 = (
     tonumber(length(regexall("^v24.[0-9]", var.tower_container_version))) >= 1 ||
     tonumber(length(regexall("^v2[5-9]", var.tower_container_version))) >= 1 ? true : false
@@ -248,13 +250,15 @@ module "connection_strings" {
   source = "./modules/connection_strings/v1.0.0"
 
   # Feature Flags
-  flag_create_load_balancer     = var.flag_create_load_balancer
-  flag_do_not_use_https         = var.flag_do_not_use_https
-  flag_create_external_db       = var.flag_create_external_db
-  flag_use_existing_external_db = var.flag_use_existing_external_db
-  flag_create_external_redis    = var.flag_create_external_redis
-  flag_use_wave                 = var.flag_use_wave
-  flag_use_wave_lite            = var.flag_use_wave_lite
+  flag_create_load_balancer       = var.flag_create_load_balancer
+  flag_do_not_use_https           = var.flag_do_not_use_https
+  flag_create_external_db         = var.flag_create_external_db
+  flag_use_existing_external_db   = var.flag_use_existing_external_db
+  flag_create_external_redis      = var.flag_create_external_redis
+  flag_use_wave                   = var.flag_use_wave
+  flag_use_wave_lite              = var.flag_use_wave_lite
+  flag_studio_enable_path_routing = var.flag_studio_enable_path_routing
+
 
   # Tower Configuration
   tower_server_url = var.tower_server_url
@@ -265,8 +269,10 @@ module "connection_strings" {
   swell_database_name = var.swell_database_name
 
   # Wave Configuration
-  wave_server_url      = var.flag_use_wave ? var.wave_server_url : "https://wave.seqera.io"
-  wave_lite_server_url = var.flag_use_wave_lite ? var.wave_lite_server_url : ""
+  wave_server_url              = var.flag_use_wave ? var.wave_server_url : "https://wave.seqera.io"
+  wave_lite_server_url         = var.flag_use_wave_lite ? var.wave_lite_server_url : ""
+  data_studio_path_routing_url = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : ""
+
 
   # External Resource References
   rds_tower             = var.flag_create_external_db ? try(module.rds[0], null) : null

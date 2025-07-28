@@ -480,6 +480,33 @@ def verify_data_studio(data: SimpleNamespace):
         # - Add check that CONNECT_PROXY_URL and TOWER_DATA_STUDIO_CONNECT_URL are the same.
         # - Add check that CONNECT_PROXY_URL and TOWER_DATA_STUDIO_CONNECT_URL are only one subdomain deeper than Tower server URL
 
+        if data.flag_studio_enable_path_routing:
+
+            if data.tower_container_version < "v25.2.0":
+                log_error_and_exit(
+                "To use Studios path-based routing, `tower_container_version` must be at least '25.2.0'."
+                )
+
+            if data.data_studio_container_version < "0.8.2":
+                log_error_and_exit(
+                "To use Studios path-based routing, `data_studio_container_version` must be at least '0.8.2'."
+                )
+
+            if len(data.data_studio_path_routing_url) ==  0:
+                # Note: This isn't super but better than nothing.
+                # TODO: Find package to validate it's a legit domain.
+                log_error_and_exit(
+                "When `flag_studio_enable_path_routing` is true, `data_studio_path_routing_url` must be set."
+                )
+
+            logger.warning(
+                "Reminder: Studios path-based routing will ony work for VSCode / R / Jupyter with Connect client >= 0.8.4"
+            )
+
+            logger.warning(
+                "Reminder: Studios path-based routing may require your TLS certificate domains."
+            )
+
 
 def verify_not_v24_1_0(data: SimpleNamespace):
     """Verify that user has not selected Tower v24.1.0 (due to serialization bug)."""

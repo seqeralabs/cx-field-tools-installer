@@ -112,9 +112,17 @@ TOWER_DATA_EXPLORER_ENABLED=false
 # DATA STUDIO
 # ------------------------------------------------
 %{ if flag_enable_data_studio == true ~}
+
+%{ if flag_studio_enable_path_routing == true ~}
+TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING=true
+%{ else ~}
+TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING=false
+%{ endif }
+
 %{ if flag_limit_data_studio_to_some_workspaces == true ~}
 TOWER_DATA_STUDIO_ALLOWED_WORKSPACES="${data_studio_eligible_workspaces}"
 %{ endif }
+
 TOWER_DATA_STUDIO_CONNECT_URL=${tower_connect_server_url}
 TOWER_OIDC_PEM_PATH=/data-studios-rsa.pem
 TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN="ipsemlorem"

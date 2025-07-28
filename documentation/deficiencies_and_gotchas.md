@@ -77,10 +77,16 @@ This page lists to-be-built-in-future functionality and various oddities you may
 
 - Data Studio Certificate
 
-    If activating the Data Studio feature available in v24.1, you may need to acquire a new certificate which supports to SANs. For example, if your Tower instance was available at `https://mytower.com`, the two SANs your new certificate must support at:
+    If activating the Data Studio feature available in v24.1, you may need to acquire a new certificate which supports Subject Alternative Names (SANs). For example, if your Tower instance was available at `https://mytower.com`, the two SANs your new certificate must support at:
 
     - `mytower.com`
     - `*.mytower.com`
+
+    Seqera Platform v25.2.0 introduces a path-based routing option for Studios. This is meant for installations unable to use the recommended subdomain approach:
+
+    Examples:
+    - Subdomain : `connect.mytower.com`
+    - Path-routing: `peer-to-mytower.com`
 
 - Private Certificate Option does not support Data Studio
 
