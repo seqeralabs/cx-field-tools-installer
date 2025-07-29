@@ -50,12 +50,8 @@ In this flow, we create a new self-signed Certificate Authority and issue a leaf
         
         - `rootCA.crt`
         - `rootCA.key`
-        - `rootCA.srl`
         - `autodc.dev-seqera.net.crt`
-        - `autodc.dev-seqera.net.csr`
         - `autodc.dev-seqera.net.key`
-        - `cert.conf`
-        - `csr.conf`
 
     1. Copy the following files to the chosen S3 prefix (_e.g. s3://example_bucket/sp_cert_files_):
 
@@ -68,12 +64,8 @@ In this flow, we create a new self-signed Certificate Authority and issue a leaf
 
         - `rootCA.crt`
         - `rootCA.key`
-        - `rootCA.srl`
         - `autodc.dev-seqera.net.crt`
-        - `autodc.dev-seqera.net.csr`
         - `autodc.dev-seqera.net.key`
-        - `cert.conf`
-        - `csr.conf`
 
 1. Update _terraform.tfvars_ `private_cacert_bucket_prefix` with the S3 prefix (_e.g. s3://example_bucket/sp_cert_files_).
 
@@ -101,8 +93,47 @@ Manually update the IAM permissions granted to the EC2 instance so it can access
 
 
 ## Prepare Compute Assets
-- TODO: Update pre-run script for Nextflow head job to trust SP & Wave-Lite endpoints.
-- TODO: Bake cert into Studios images.
+### Studios Custom Images with Private Certificates
+When using private certificates with Studios, you must create custom container images that include your root CA certificate. This project provides a helper script to automate this process.
+
+**Prerequisites:**
+- Docker installed and running
+- AWS CLI configured with appropriate permissions
+- An AWS ECR repository created for your custom Studios images
+
+**Process:**
+1. Navigate to the certificate assets directory:
+   ```bash
+   cd assets/src/customcerts
+   ```
+
+2. Use the provided helper script to bake your root CA certificate into the Studios image:
+   ```bash
+   ./studios-private-cert-helper.sh <base-image> <cert-file> [new-tag] [alias] [ecr-uri]
+   ```
+
+   **Examples:**
+   - **Local build only:**
+     ```bash
+     ./studios-private-cert-helper.sh public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.8 ./rootCA.crt
+     ```
+
+   - **Build and push to ECR:**
+     ```bash
+     ./studios-private-cert-helper.sh \
+       public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.8 \
+       ./rootCA.crt \
+       seqera/xpra:with-ca \
+       corp_ca \
+       123456789012.dkr.ecr.eu-west-1.amazonaws.com/xpra:with-ca
+     ```
+
+**Important Notes:**
+- **ECR Support Only:** The script currently supports AWS ECR repositories only. You must create an ECR repository before using the push functionality.
+- **Custom Image Configuration:** After creating your custom image, you'll need to configure Studios to use it. See the [Seqera Platform Enterprise documentation on custom containers](https://docs.seqera.io/platform-enterprise/25.1/studios/custom-envs#custom-containers) for detailed instructions.
+- **Multiple Image Types:** You may need to create custom images for different Studios environments (e.g., Jupyter, RStudio, VSCode) if you use multiple types.
+
+### Other Compute Assets
 - TODO: Bake cert into Nextflow worker nodes using Wave-Lite.
 
 

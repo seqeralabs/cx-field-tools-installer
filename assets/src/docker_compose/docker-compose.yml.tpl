@@ -66,7 +66,7 @@ services:
     restart: always
 %{ if flag_use_container_db == true ~}
     depends_on:
-      - db
+      - backend
 %{ endif ~}
 %{ endif ~}
 

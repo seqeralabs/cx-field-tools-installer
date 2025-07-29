@@ -227,7 +227,7 @@ In addition to the general design decisions noted above, there are a few decisio
             - Introduces a 3rd pillar to state storage (git + SSM + S3)
             - Minor AWS IAM permissions creep
 
-      DECISION:
-        - Make generation of certificate a one-time non-automated step.
-        - Regardless of how cert generated, administrator manually loads cert & key (new or existing) into S3 Bucket.
-        - If private cert necessary, Ansible pulls target files onto EC2 and makes availabe to trust store and reverseproxy.
+    DECISION:
+      - Make generation of certificate a one-time non-automated step.
+      - Regardless of how cert generated, administrator manually loads cert & key (new or existing) into S3 Bucket.
+      - If private cert necessary, Ansible pulls target files onto EC2 and makes availabe to trust store and reverseproxy.

@@ -26,7 +26,7 @@ openssl req -x509 \
             -key rootCA.key \
             -sha256 -days 365 \
             -nodes \
-            -subj "/CN=Root CA/C=ES/ST=Catalan/L=Barcelona/O=Seqera/OU=Seqera CX" \
+            -subj "/CN=rootCA/C=ES/ST=Catalan/L=Barcelona/O=Seqera/OU=Seqera CX" \
             -out rootCA.crt
 
 # Generate private key for the domain certificate
@@ -106,6 +106,14 @@ openssl x509 -req \
     -CAcreateserial -out ${CERT_NAME}.crt \
     -days 365 \
     -sha256 -extfile cert.conf
+
+# Create full chain domain cert
+# To successfully use keytool commands from pre-run script to retrieve server's private cert, Nextflow requires that the server's private cert contains the full chain (w/ rootCA)
+cat ${CERT_NAME}.crt rootCA.crt > ${CERT_NAME}.fullchain.crt
+mv ${CERT_NAME}.fullchain.crt ${CERT_NAME}.crt
+
+# Clean up outputs
+rm *.conf *.csr *.srl
 
 echo "Certificate creation complete!"
 echo "Files created:"

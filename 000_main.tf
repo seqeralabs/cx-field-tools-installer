@@ -200,7 +200,13 @@ locals {
   # Private CA Files
   # ---------------------------------------------------------------------------------------
   private_ca_cert       = "${module.connection_strings.tower_base_url}.crt"
-  private_ca_key        = "${module.connection_strings.tower_base_url}.key"
+  private_ca_key        = "${module.connection_strings.tower_base_url}.key
+
+
+  # Private CA Files
+  # ---------------------------------------------------------------------------------------
+  private_ca_cert = "${module.connection_strings.tower_base_url}.crt"
+  private_ca_key  = "${module.connection_strings.tower_base_url}.key"
 
 
   # Miscellaneous
@@ -209,9 +215,11 @@ locals {
   dollar      = "$"
   singlequote = "'"
 
+    
   # Migrate-DB Flag
   # ---------------------------------------------------------------------------------------
   # Migrate-db only available for 23.4.1+ or higher. Check to ensure we don't include for 23.3.x or below. 
+  # TODO: Rationalize this to a single regex (July 26/25)
   flag_new_enough_for_migrate_db = (
     tonumber(length(regexall("^v23.4.[1-9]", var.tower_container_version))) >= 1 ||
     tonumber(length(regexall("^v2[4-9]", var.tower_container_version))) >= 1 ? true : false
