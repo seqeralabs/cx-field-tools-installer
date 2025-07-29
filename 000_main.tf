@@ -119,16 +119,18 @@ locals {
   # ---------------------------------------------------------------------------------------
   # All module values wrapped in [] to make concat work.
   # NOTE: If you add a new entry, dont forget to add it to the concat block too!
-  sg_ec2_core          = [module.sg_ec2_core.security_group_id]
-  sg_ec2_noalb         = try([module.sg_ec2_noalb[0].security_group_id], [])
-  sg_ec2_noalb_connect = try([module.sg_ec2_noalb_connect[0].security_group_id], [])
-  sg_from_alb_core     = try([module.sg_from_alb_core[0].security_group_id], [])
-  sg_from_alb_connect  = try([module.sg_from_alb_connect[0].security_group_id], [])
-  sg_from_alb_wave     = try([module.sg_from_alb_wave[0].security_group_id], [])
+  sg_ec2_core                           = [module.sg_ec2_core.security_group_id]
+  sg_ec2_noalb_with_private_certificate = try([module.sg_ec2_noalb_with_private_certificate[0].security_group_id], [])
+  sg_ec2_noalb_no_https                 = try([module.sg_ec2_noalb_no_https[0].security_group_id], [])
+  sg_ec2_noalb_connect                  = try([module.sg_ec2_noalb_connect[0].security_group_id], [])
+  sg_from_alb_core                      = try([module.sg_from_alb_core[0].security_group_id], [])
+  sg_from_alb_connect                   = try([module.sg_from_alb_connect[0].security_group_id], [])
+  sg_from_alb_wave                      = try([module.sg_from_alb_wave[0].security_group_id], [])
 
   sg_ec2_final = concat(
     local.sg_ec2_core,
-    local.sg_ec2_noalb,
+    local.sg_ec2_noalb_with_private_certificate,
+    local.sg_ec2_noalb_no_https,
     local.sg_ec2_noalb_connect,
     local.sg_from_alb_core,
     local.sg_from_alb_connect,
@@ -169,15 +171,6 @@ locals {
   populate_external_db = var.flag_create_external_db == true || var.flag_use_existing_external_db == true ? "true" : "false"
 
 
-  # Docker-Compose
-  # ---------------------------------------------------------------------------------------
-  docker_compose_file = (
-    var.flag_use_custom_docker_compose_file == false && var.flag_use_container_db == true ? "dc_with_db.yml" :
-    var.flag_use_custom_docker_compose_file == false && var.flag_use_container_db == false ? "dc_without_db.yml" :
-    var.flag_use_custom_docker_compose_file == true ? "dc_custom.yml" : "No_Match_Found"
-  )
-
-
   # OIDC
   # ---------------------------------------------------------------------------------------
   # If flags are set, populate local with keyword for MICRONAUT_ENVIRONMENTS inclusion. If not, blank string.
@@ -203,6 +196,11 @@ locals {
   wave_lite_redis_container = var.flag_use_wave_lite == true && var.flag_create_external_redis == true ? false : true
   wave_lite_db_container    = var.flag_use_wave_lite == true && var.flag_create_external_db == true ? false : true
 
+
+  # Private CA Files
+  # ---------------------------------------------------------------------------------------
+  private_ca_cert = "${module.connection_strings.tower_base_url}.crt"
+  private_ca_key  = "${module.connection_strings.tower_base_url}.key"
 
   # Miscellaneous
   # ---------------------------------------------------------------------------------------
@@ -258,8 +256,7 @@ module "connection_strings" {
   flag_use_wave                   = var.flag_use_wave
   flag_use_wave_lite              = var.flag_use_wave_lite
   flag_studio_enable_path_routing = var.flag_studio_enable_path_routing
-
-
+  
   # Tower Configuration
   tower_server_url = var.tower_server_url
   tower_db_url     = var.flag_use_existing_external_db == true ? var.tower_db_url : ""
@@ -272,7 +269,6 @@ module "connection_strings" {
   wave_server_url              = var.flag_use_wave ? var.wave_server_url : "https://wave.seqera.io"
   wave_lite_server_url         = var.flag_use_wave_lite ? var.wave_lite_server_url : ""
   data_studio_path_routing_url = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : ""
-
 
   # External Resource References
   rds_tower             = var.flag_create_external_db ? try(module.rds[0], null) : null

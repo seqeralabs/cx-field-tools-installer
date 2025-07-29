@@ -19,12 +19,8 @@ rm -rf $HOME_PATH/data-studios-rsa.pem || true
 {
   echo -e "\n\n# CONFIG ADDED BY TERRAFORM INSTALLER ON: $(date)"
   echo -e "export APP_NAME=${app_name}"
-  echo -e "export CACERT_GENERATE_PRIVATE=${flag_generate_private_cacert}"
-  echo -e "export CACERT_USE_EXISTING_PRIVATE=${flag_use_existing_private_cacert}"
+  echo -e "export FLAG_USE_PRIVATE_CACERT=${flag_use_private_cacert}"
   echo -e "export CACERT_DO_NOT_USE_HTTPS=${flag_do_not_use_https}"
-  echo -e "export CACERT_S3_PREFIX=${bucket_prefix_for_new_private_ca_cert}"
-  echo -e "export CACERT_EXISTING_CA_CRT=${existing_ca_cert_file}"
-  echo -e "export CACERT_EXISTING_CA_KEY=${existing_ca_key_file}"
 
   echo -e "export DB_POPULATE_EXTERNAL_INSTANCE=${populate_external_db}"
   echo -e "export DB_URL=\"${tower_db_url}\""
@@ -33,7 +29,6 @@ rm -rf $HOME_PATH/data-studios-rsa.pem || true
   echo -e "export WAVE_LITE_ACTIVATED=${use_wave_lite}"
   echo -e "export WAVE_LITE_DB_URL=${wave_lite_db_url}"
 
-  echo -e "export TOWER_BASE_URL=${tower_base_url}"
   echo -e "export TOWER_SERVER_URL=${tower_server_url}"
   echo -e "export TOWER_API_ENDPOINT=${tower_api_endpoint}"
   echo -e "export SEQERAKIT_USE_HOSTS_FILE=${flag_create_hosts_file_entry}"

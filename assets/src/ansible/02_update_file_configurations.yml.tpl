@@ -43,7 +43,7 @@
         chown ec2-user:ec2-user data-studios.env
         chown ec2-user:ec2-user data-studios-rsa.pem
 
-    - name: Purge old files
+    - name: Populate SP env file with DB connection variables.
       become: true
       become_user: ec2-user
       # TO DO: Remove this step when migration script can pull directly from SSM.
@@ -88,8 +88,6 @@
           export wave_lite_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/wave-lite/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
           export wave_lite_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/wave-lite/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
 
-          # Modified command used to populate mysql
-          # Using `postgres` since this is the default database created when Postgres RDS first spun up.
           docker run --rm -t -v $(pwd)/target/wave_lite_config/wave-lite-rds.sql:/tmp/wave.sql -e \
           POSTGRES_PASSWORD=$wave_lite_master_password --entrypoint /bin/bash postgres:latest \
           -c "PGPASSWORD=$wave_lite_master_password psql -h $WAVE_LITE_DB_URL -p 5432 -U $wave_lite_master_user -d postgres < /tmp/wave.sql"
@@ -109,121 +107,39 @@
           export db_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
           export db_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
 
-          # mysql --host $DB_URL --port=3306 --user=$db_master_user --password=$db_master_password < target/groundswell_config/groundswell.sql  || true
-          
           docker run --rm -t -v $(pwd)/target/groundswell_config/groundswell.sql:/groundswell.sql -e \
           MYSQL_PWD=$db_master_password --entrypoint /bin/bash mysql:8.0 \
           -c "mysql --host $DB_URL --port=3306 --user=$db_master_user < groundswell.sql" || true
 
         fi
 
-    - name: Generate PrivateCA artefacts if necessary
-      become: true
-      become_user: ec2-user
-      # This step only runs if we need a private CA
-      ansible.builtin.shell: |
-        cd /home/ec2-user/target/customcerts && source ~/.bashrc
-
-        if [[ $CACERT_GENERATE_PRIVATE == "true" ]]; then 
-
-          echo "Generating Private CA cert"
-
-          # Clean-up prior to regeneration
-          rm *.crt || true
-          rm *.csr || true
-          rm *.key || true
-          rm cert.conf  || true
-
-          chmod u+x create_self_signed_cert.sh
-          ./create_self_signed_cert.sh $TOWER_BASE_URL
-
-          sleep 5
-
-          # Write root cert out and push to S3 bucket for programmatic retrieval
-          cat rootCA.crt >> "$TOWER_BASE_URL.crt"
-          aws s3 cp rootCA.crt $CACERT_S3_PREFIX/rootCA.crt
-
-        fi
-
-    - name: Add custom cert to EC2 instance truststore if necessary (for tw use later)
-      # Unix socket error for some reason
+    - name: Update entities dependent on private CA cert
       become: true
       become_user: ec2-user
       ansible.builtin.shell: |
-        cd /home/ec2-user/target/customcerts && source ~/.bashrc
+        # Pull pre-loaded certificates from S3 Bucket and stash in necessary locations.
+        # Only do so if rootCA.crt is not yet present in trust anchors
 
-        if [[ $CACERT_GENERATE_PRIVATE == "true" || $CACERT_USE_EXISTING_PRIVATE == "true" ]]; then
+        if [[ $FLAG_USE_PRIVATE_CACERT == true ]]; then
 
-          echo "Adding custom cert to EC2 truststore"
-          env | grep -i TOWER
+          if [[ ! -f "/etc/pki/ca-trust/source/anchors/rootCA.crt" ]]; then
 
-          export crt=".crt"
-          export tower_cert=$TOWER_BASE_URL$crt
-          echo $tower_cert
+            # Add root CA cert to EC2 instance truststore. 
+            # ASSUMPTION -- Root CA cert (new or existing) is called rootCA.crt
+            cd /tmp
+            aws s3 cp ${private_cacert_bucket_prefix}/rootCA.crt .
+            
+            sudo keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file rootCA.crt
+            sudo cp rootCA.crt /etc/pki/ca-trust/source/anchors/
+            sudo update-ca-trust
 
-          sudo keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file $tower_cert
-          sudo cp $tower_cert /etc/pki/ca-trust/source/anchors/$tower_cert
-          sudo update-ca-trust
+            rm rootCA.crt
+          fi
 
-        fi
-
-    - name: Patch docker-compose reverseproxy if custom cert being served up by instance.
-      become: true
-      become_user: ec2-user
-      ansible.builtin.shell: |
-        cd /home/ec2-user/target/customcerts && source ~/.bashrc
-
-        if [[ $CACERT_GENERATE_PRIVATE == "true" ]]; then
-
-          # New CA, use the domain name as the file name.
-
-          export CACERT_NEW_CRT="$TOWER_BASE_URL.crt"
-          export CACERT_NEW_KEY="$TOWER_BASE_URL.key"
-
-          sed -i "s/REPLACE_TOWER_URL/$TOWER_BASE_URL/g" custom_default.conf
-          sed -i "s/PLACEHOLDER_CRT/$CACERT_NEW_CRT/g" custom_default.conf
-          sed -i "s/PLACEHOLDER_KEY/$CACERT_NEW_KEY/g" custom_default.conf
-
-          sed -i "s/REPLACE_CUSTOM_CRT/$CACERT_NEW_CRT/g" /home/ec2-user/docker-compose.yml
-          sed -i "s/REPLACE_CUSTOM_KEY/$CACERT_NEW_KEY/g" /home/ec2-user/docker-compose.yml
-
-        fi
-
-
-        if [[ $CACERT_USE_EXISTING_PRIVATE == "true" ]]; then
-
-          # Using environment variables pushed to ~/.bashrc via Terraform
-
-          sed -i "s/REPLACE_TOWER_URL/$TOWER_BASE_URL/g" custom_default.conf
-          sed -i "s/PLACEHOLDER_CRT/$CACERT_EXISTING_CA_CRT/g" custom_default.conf
-          sed -i "s/PLACEHOLDER_KEY/$CACERT_EXISTING_CA_KEY/g" custom_default.conf
-
-          sed -i "s/REPLACE_CUSTOM_CRT/$CACERT_EXISTING_CA_CRT/g" /home/ec2-user/docker-compose.yml
-          sed -i "s/REPLACE_CUSTOM_KEY/$CACERT_EXISTING_CA_KEY/g" /home/ec2-user/docker-compose.yml
-
-        fi
-
-    - name: Update seqerakit prerun script to pull private cert if active.
-      become: true
-      become_user: ec2-user
-      ansible.builtin.shell: |
-        cd /home/ec2-user/target/seqerakit && source ~/.bashrc
-
-        if [[ $CACERT_GENERATE_PRIVATE == "true" || $CACERT_USE_EXISTING_PRIVATE == "true" ]]; then
-
-          # Update the seqerakit pre-run script to pull the cert from the server
-          # https://help.tower.nf/23.2/enterprise/configuration/ssl_tls/
-          # Note: This approach works for most clients but there can be occasional problems due to chains.
-
-          {
-            echo -e "\\n"
-
-            echo "keytool -printcert -rfc -sslserver $TOWER_BASE_URL:443  >  /PRIVATE_CERT.pem"
-            echo "keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file /PRIVATE_CERT.pem"
-            echo "cp /PRIVATE_CERT.pem /etc/pki/ca-trust/source/anchors/PRIVATE_CERT.pem"
-            echo "update-ca-trust"
-
-          } >> pipelines/pre_run.txt
+          # Grab leaf cert and stash in target/ folder
+          cd /home/ec2-user/target/customcerts
+          aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.crt ${tower_base_url}.crt 
+          aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.key ${tower_base_url}.key
 
         fi
 

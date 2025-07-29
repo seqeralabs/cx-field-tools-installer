@@ -42,7 +42,7 @@
 | <a name="input_aws_account"></a> [aws\_account](#input\_aws\_account) | n/a | `string` | n/a | yes |
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | n/a | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | n/a | `string` | n/a | yes |
-| <a name="input_bucket_prefix_for_new_private_ca_cert"></a> [bucket\_prefix\_for\_new\_private\_ca\_cert](#input\_bucket\_prefix\_for\_new\_private\_ca\_cert) | n/a | `string` | n/a | yes |
+| <a name="input_private_cacert_bucket_prefix"></a> [bucket\_prefix\_for\_new\_private\_ca\_cert](#input\_bucket\_prefix\_for\_new\_private\_ca\_cert) | n/a | `string` | n/a | yes |
 | <a name="input_custom_resource_naming_prefix"></a> [custom\_resource\_naming\_prefix](#input\_custom\_resource\_naming\_prefix) | n/a | `string` | n/a | yes |
 | <a name="input_data_explorer_disabled_workspaces"></a> [data\_explorer\_disabled\_workspaces](#input\_data\_explorer\_disabled\_workspaces) | n/a | `string` | n/a | yes |
 | <a name="input_data_studio_container_version"></a> [data\_studio\_container\_version](#input\_data\_studio\_container\_version) | n/a | `string` | n/a | yes |

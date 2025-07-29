@@ -13,7 +13,11 @@ resource "null_resource" "generate_independent_config_files" {
 
       set -e
 
-      # Purge local folder before recreating
+      # NOTE: 
+      #  - DO NOT `cd <PATH>` or else that will set very subsequent path.module to folder cd-ed to.
+      #  - DONT be clever. Leave paths long, dumb, and relative to PROJECT_ROOT (unless absoutely necessary like certs)
+
+      # Purge local folder & recreate / copy some materials directly into target/
       ${path.module}/assets/src/bash/local/purge_local_target.sh
 
       # Generate Tower config files
@@ -74,7 +78,30 @@ resource "null_resource" "generate_independent_config_files" {
       # Generate Bash files for remote execution
       echo '${local.cleanse_and_configure_host}' > ${path.module}/assets/target/bash/remote/cleanse_and_configure_host.sh
 
+      # Emit customized custom cert config
+      echo '${local.private_ca_conf}' > ${path.module}/assets/target/customcerts/custom_default.conf
+
+      # Update seqerakit prerun script to pull private cert
+      # https://help.tower.nf/23.2/enterprise/configuration/ssl_tls/
+      # Note: This approach works for most clients but there can be occasional problems due to chains.
+
+      # Update assets depenent
+      if [[ "${var.flag_use_private_cacert}" == "true" ]]; then
+
+        {
+            echo -e "\\n"
+
+            echo "keytool -printcert -rfc -sslserver ${module.connection_strings.tower_base_url}:443  >  /PRIVATE_CERT.pem"
+            echo "keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file /PRIVATE_CERT.pem"
+            echo "cp /PRIVATE_CERT.pem /etc/pki/ca-trust/source/anchors/PRIVATE_CERT.pem"
+            echo "update-ca-trust"
+
+        } >> ${path.module}/assets/target/seqerakit/pipelines/pre_run.txt
+
+      fi
+
     EOT
+    interpreter = ["/bin/bash", "-c"]
   }
 }
 

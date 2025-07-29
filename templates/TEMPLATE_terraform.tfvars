@@ -135,10 +135,10 @@ flag_create_external_redis = false
 flag_use_container_redis   = true
 
 # Only one of these can true.
-flag_create_load_balancer        = true
-flag_generate_private_cacert     = false
-flag_use_existing_private_cacert = false
-flag_do_not_use_https            = false
+# NOTE: If using `flag_use_private_cacert = true` flag, read Custom Private CA section for full instructions on private cert set-up.
+flag_create_load_balancer = true
+flag_use_private_cacert   = false
+flag_do_not_use_https     = false
 
 
 /*
@@ -200,9 +200,6 @@ flag_private_tower_without_eice              = false
 
 # Manage how to talk to VM for config file transfer.
 flag_vm_copy_files_to_instance = true
-
-# Indicate whether custom section of the docker-compose template file should be included in final render.
-flag_use_custom_docker_compose_file = false
 
 
 /*
@@ -273,23 +270,12 @@ Do not use this option unless absolutely necessary. In general, your pipeline ma
 obligations will be easier if you use a public certificate (e.g. issued by AWS) on an ALB.
 See: https://docs.seqera.io/platform/latest/enterprise/configuration/ssl_tls
 
-If you choose to generate a new private CA, the CA cert needs to be captured in a
-centrally-available solution so that Nextflow head jobs can pull it dynamically at run time.
-
-If you choose to use a pre-issued TLS certificate and not use an ALB, ensure the .crt and .key
-files are places in `assets/src/customcerts` and specify the filenames here. These names are
-automatically inserted into the generated configuration file.
-
-REMINDER: If you choose either of these options, ensure the `flag_use_custom_docker_compose_file` 
-flag is set to true.
+If you choose to generate a new private CA, please following the instructions in 
+`documentation/setup/optional_private_certificates.md`
 */
 
 # Include s3:// and omit trailing slash
-bucket_prefix_for_new_private_ca_cert = "REPLACE_ME_IF_NEEDED"
-
-# If using a preexisting key/cert, populate these with filename (stored in `assets/src/customcerts`).
-existing_ca_cert_file = "REPLACE_ME_IF_NEEDED"
-existing_ca_key_file  = "REPLACE_ME_IF_NEEDED"
+private_cacert_bucket_prefix = "REPLACE_ME_IF_NEEDED"
 
 
 /*

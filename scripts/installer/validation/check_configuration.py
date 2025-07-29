@@ -76,8 +76,7 @@ def verify_only_one_true_set(data: SimpleNamespace):
     only_one_true_set(
         [
             data.flag_create_load_balancer,
-            data.flag_generate_private_cacert,
-            data.flag_use_existing_private_cacert,
+            data.flag_use_private_cacert,
             data.flag_do_not_use_https,
         ]
     )
@@ -165,19 +164,11 @@ def verify_tower_root_users(data: SimpleNamespace):
 
 def verify_tower_self_signed_certs(data: SimpleNamespace):
     """Check self-signed certificate settings (if necessary)."""
-    if data.flag_generate_private_cacert:
-        if not data.bucket_prefix_for_new_private_ca_cert.startswith("s3://"):
+    if data.flag_use_private_cacert:
+        if not data.private_cacert_bucket_prefix.startswith("s3://"):
             log_error_and_exit(
-                " Field `bucket_prefix_for_new_private_ca_cert` must start with `s3://`"
+                " Field `private_cacert_bucket_prefix` must start with `s3://`"
             )
-
-    if data.flag_use_existing_private_cacert:
-        logger.info(
-            "[REMINDER]: Ensure you have added your private .crt and .key files to `assets/customcerts`."
-        )
-        logger.info(
-            "[REMINDER]: Ensure you have updated tfvars `existing_ca_cert_file` and `existing_ca_key_file`."
-        )
 
 
 def verify_tower_groundswell(data: SimpleNamespace):
@@ -471,9 +462,9 @@ def verify_data_studio(data: SimpleNamespace):
                     "`data_studio_eligible_workspaces may only be populated by digits and commas."
                 )
 
-        if data.flag_generate_private_cacert:
-            log_error_and_exit(
-                "The custom Private CA option has not been configured to support Data Studio. Please set `flag_enable_data_studio` to false or find another way to serve your TLS certificate."
+        if data.flag_use_private_cacert:
+            logger.warning(
+                "Please see documentation to understand how to make private certs work with Studios images."
             )
 
         # Deferred until better solution comes along to get TF locals
@@ -501,10 +492,6 @@ def verify_data_studio(data: SimpleNamespace):
 
             logger.warning(
                 "Reminder: Studios path-based routing will ony work for VSCode / R / Jupyter with Connect client >= 0.8.4"
-            )
-
-            logger.warning(
-                "Reminder: Studios path-based routing may require your TLS certificate domains."
             )
 
 
@@ -568,12 +555,9 @@ def verify_connect_version_tls(data: SimpleNamespace):
 
 def verify_alb_settings(data: SimpleNamespace):
     """Verify that user does not have contradictory settings in case of ALB vs. no ALB."""
-    if (
-        data.flag_use_custom_docker_compose_file
-        and data.flag_make_instance_private_behind_public_alb
-    ):
+    if data.flag_use_private_cacert and data.flag_make_instance_private_behind_public_alb:
         log_error_and_exit(
-            "Use of a reverse proxy (`flag_use_custom_docker_compose_file = true`, cannot be combined with `flag_make_instance_private_behind_alb = true`. Please set only one of the options to true."
+            "Use of private cert on EC2 cannot work with `flag_make_instance_private_behind_alb = true`. Please set only one of the options to true."
         )
 
 
@@ -616,10 +600,10 @@ def verify_wave(data: SimpleNamespace):
             "`Your Wave Lite URL is pointing to the Seqera-hosted Wave service. Please modify `wave_server_url`."
             )
 
-    if (data.flag_use_wave_lite == True) and (data.flag_create_load_balancer == False):
-        log_error_and_exit(
-            "Wave Lite is only supported by deployments fronted by an ALB. Please set `flag_create_load_balancer = true`."
-        )
+        if data.flag_use_private_cacert:
+            logger.warning(
+                "Please see documentation to understand how to make private certs work with Wave-Lite."
+            )
 
 
 def verify_ssh_access(data: SimpleNamespace):
@@ -765,7 +749,6 @@ if __name__ == "__main__":
 #  - `tower_root_user` values are valid email format and comma-delimited.
 #  - Custom OIDC
 #  - SEQERAKIT
-#  - Custom docker-compose file `flag_use_custom_docker_compose_file``
 #  - DNS Reminder `flag_create_route53_record`
 #  - Add proper email string check
 # - Non-EC2 Subnets in VPC CIDR

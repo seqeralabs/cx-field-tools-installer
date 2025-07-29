@@ -34,6 +34,7 @@ resource "aws_route53_zone" "private" {
 ## Route53 A Record Generation
 ##   Note: If no Route53 records are generated, an entry will be added to the EC2 hosts file
 ## ------------------------------------------------------------------------------------
+# Badly named resource -- this is the record need to reach SP via ALB.
 resource "aws_route53_record" "alb" {
   count = local.dns_create_alb_record == true ? 1 : 0
 
@@ -48,7 +49,7 @@ resource "aws_route53_record" "alb" {
   }
 }
 
-
+# Badly named resource -- this is the record need to reach SP directly via EC2.
 resource "aws_route53_record" "ec2" {
   count = local.dns_create_ec2_record == true ? 1 : 0
 
@@ -81,7 +82,7 @@ resource "aws_route53_record" "ec2_connect" {
   count = local.dns_create_ec2_record == true ? 1 : 0
 
   zone_id = local.dns_zone_id
-  name = module.connection_strings.tower_connect_wildcard_dns
+  name = var.flag_studio_enable_path_routing ? module.connection_strings.tower_connect_dns : module.connection_strings.tower_connect_wildcard_dns
   type = "A"
 
   ttl     = "5"
@@ -101,4 +102,17 @@ resource "aws_route53_record" "alb_wave" {
     zone_id                = module.alb[0].lb_zone_id
     evaluate_target_health = true
   }
+}
+
+resource "aws_route53_record" "ec2_wave" {
+  count = local.dns_create_ec2_record == true ? 1 : 0
+
+  zone_id = local.dns_zone_id
+  # name    = local.tower_connect_dns
+  # name = module.connection_strings.tower_connect_wildcard_dns
+  name = module.connection_strings.tower_wave_dns
+  type = "A"
+
+  ttl     = "5"
+  records = [local.dns_instance_ip]
 }

@@ -191,10 +191,43 @@ In addition to the general design decisions noted above, there are a few decisio
 
 14. **Subdomain routing favoured over path-based routing**
 
-    Seqera Platform v25.2.0 introduces path-based routing for Studios instances. This exists as a workaround for sites who are unable to use the default `*.YOUR_PLATFORM_DOMAIN` DNS sub-domanin approach. Path-based routing works only for the following images:
-
-    - [VSCode (0.8.4)](https://public.cr.seqera.io/repo/platform/data-studio-vscode)
-    - [RIDE (0.8.4)](https://public.cr.seqera.io/repo/platform/data-studio-ride)
-    - [Jupyter (0.8.4)](https://public.cr.seqera.io/repo/platform/data-studio-jupyter)
+    Seqera Platform v25.2.0 introduces path-based routing for Studios instances. This exists as a workaround for sites who are unable to use the default `*.YOUR_PLATFORM_DOMAIN` DNS sub-domanin approach.
     
     Path-based routing has limitations, however, (_TODO: Add link to official docs outlining_) so the project favours use of the subdomains by default.
+
+15. **Private Certificate Support Overhaul**
+
+    As of <TODO: RELEASE TIED TO v25.2.0>, private certificate support has been overhauled. 
+
+    The original solution used a convoluted mix of files added to the project, Bash, and Ansible to generate necessary files and updated configurations. This has been shifted left as much as possible into the build-time **Terraform templatefile** mechanism. The change was mostly beneficial in that it reduced complexity and brittle Ansible runtime execution, restricted unnecessary re-execution, and better aligned the paths required for net-new private CA creation vs. using certificates form preexisting CAs.
+
+    Unfortunately, the change also highlighted a potential maintenance / security vulnerability: what do do about sensitive key files stored within the git project?
+
+        - Keys must be available in the event of loss / new administrators.
+        - Keys cant be checked into git due to their sensitivity, but can't be on .gitignore since this doesn't solve the distribution problem.
+
+    Two solutions were mooted:
+
+    1. Use SSM
+        - PROs: 
+            - We already use this mechanism for other secrets and it's easily adopted.
+        - CONS:
+            - The idea of properly pasting .crt/.key data into the JSON fills me with dread.
+            - Distribution not simple; must download string from SSM then convert into properly formatted file. Likely painful.
+            - Different flow nuances for a newly-created cert vs pre-existing.
+
+    2. Use S3 Bucket
+        - PROs:
+            - Well-understood pattern.
+            - File(ish) storage.
+            - Easy to implement
+            - Minimal deltas between new cert creation and use of pre-existing.
+            - Works well in context of wider Seqera ecosystem (Nextflow pipelines, Studios, etc.)
+        - CONs:
+            - Introduces a 3rd pillar to state storage (git + SSM + S3)
+            - Minor AWS IAM permissions creep
+
+  DECISION:
+    - Make generation of certificate a one-time non-automated step.
+    - Regardless of how cert generated, administrator manually loads cert & key (new or existing) into S3 Bucket.
+    - If private cert necessary, Ansible pulls target files onto EC2 and makes availabe to trust store and reverseproxy.

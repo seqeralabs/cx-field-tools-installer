@@ -235,7 +235,7 @@ services:
     restart: always
 %{ endif ~}
 
-%{ if flag_use_custom_docker_compose_file == true ~}
+%{ if flag_use_private_cacert == true ~}
   # Expectations: 
   #   - docker-compose.yml in `/home/ec2-user/``
   #   - All custom cert files present / generated in `/home/ec2-user/customcerts``
@@ -244,14 +244,20 @@ services:
     container_name: reverseproxy
     networks:
       - frontend
+      - backend
     ports:
       - 80:80
       - 443:443
     volumes:
       - $HOME/target/customcerts/custom_default.conf:/etc/nginx/conf.d/default.conf
-      - $HOME/target/customcerts/REPLACE_CUSTOM_CRT:/etc/ssl/certs/REPLACE_CUSTOM_CRT
-      - $HOME/target/customcerts/REPLACE_CUSTOM_KEY:/etc/ssl/private/REPLACE_CUSTOM_KEY
+      - $HOME/target/customcerts/${private_ca_cert}:/etc/ssl/certs/${private_ca_cert}
+      - $HOME/target/customcerts/${private_ca_key}:/etc/ssl/private/${private_ca_key}
     restart: always
+    depends_on:
+      - wave-lite
+      - wave-lite-reverse-proxy
+      - connect-proxy
+      - frontend
 %{ endif ~}
 
 %{ if flag_use_wave_lite == true ~}

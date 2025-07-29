@@ -86,8 +86,7 @@ variable "flag_create_external_redis" { type = bool } # TO DO
 variable "flag_use_container_redis" { type = bool }
 
 variable "flag_create_load_balancer" { type = bool }
-variable "flag_generate_private_cacert" { type = bool }
-variable "flag_use_existing_private_cacert" { type = bool }
+variable "flag_use_private_cacert" { type = bool }
 variable "flag_do_not_use_https" { type = bool }
 
 variable "flag_use_aws_ses_iam_integration" { type = bool }
@@ -104,8 +103,6 @@ variable "flag_make_instance_private_behind_public_alb" { type = bool }
 variable "flag_private_tower_without_eice" { type = bool }
 
 variable "flag_vm_copy_files_to_instance" { type = bool }
-
-variable "flag_use_custom_docker_compose_file" { type = bool }
 
 
 # ------------------------------------------------------------------------------------
@@ -138,10 +135,7 @@ variable "existing_route53_private_zone_name" { type = string }
 # Custom Private CA
 # ------------------------------------------------------------------------------------
 
-variable "bucket_prefix_for_new_private_ca_cert" { type = string }
-
-variable "existing_ca_cert_file" { type = string }
-variable "existing_ca_key_file" { type = string }
+variable "private_cacert_bucket_prefix" { type = string }
 
 
 # ------------------------------------------------------------------------------------

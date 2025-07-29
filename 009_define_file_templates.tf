@@ -166,9 +166,9 @@ locals {
       db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"],
       db_tower_password = local.tower_secrets["TOWER_DB_PASSWORD"]["value"],
 
-      flag_use_container_db               = var.flag_use_container_db,
-      flag_use_container_redis            = var.flag_use_container_redis,
-      flag_use_custom_docker_compose_file = var.flag_use_custom_docker_compose_file,
+      flag_use_container_db    = var.flag_use_container_db,
+      flag_use_container_redis = var.flag_use_container_redis,
+      flag_use_private_cacert  = var.flag_use_private_cacert,
 
       flag_enable_groundswell = var.flag_enable_groundswell,
       swell_container_version = var.swell_container_version,
@@ -190,7 +190,10 @@ locals {
 
       wave_lite_db_master_user     = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_USER"]["value"]
       wave_lite_db_master_password = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_PASSWORD"]["value"],
-      wave_lite_redis_auth         = local.wave_lite_secrets["WAVE_LITE_REDIS_AUTH"]["value"]
+      wave_lite_redis_auth         = local.wave_lite_secrets["WAVE_LITE_REDIS_AUTH"]["value"],
+
+      private_ca_cert = local.private_ca_cert,
+      private_ca_key  = local.private_ca_key
     }
   )
 }
@@ -289,13 +292,10 @@ locals {
     {
       app_name = var.app_name,
 
-      flag_generate_private_cacert     = tostring(var.flag_generate_private_cacert),
-      flag_use_existing_private_cacert = tostring(var.flag_use_existing_private_cacert),
-      flag_do_not_use_https            = tostring(var.flag_do_not_use_https),
+      flag_use_private_cacert = tostring(var.flag_use_private_cacert),
+      flag_do_not_use_https   = tostring(var.flag_do_not_use_https),
 
-      bucket_prefix_for_new_private_ca_cert = var.bucket_prefix_for_new_private_ca_cert,
-      existing_ca_cert_file                 = var.existing_ca_cert_file,
-      existing_ca_key_file                  = var.existing_ca_key_file,
+      private_cacert_bucket_prefix = var.private_cacert_bucket_prefix,
 
       populate_external_db = local.populate_external_db,
       tower_db_url         = module.connection_strings.tower_db_root,
@@ -303,8 +303,6 @@ locals {
 
       use_wave_lite    = var.flag_use_wave_lite,
       wave_lite_db_url = module.connection_strings.wave_lite_db_url,
-
-      docker_compose_file = local.docker_compose_file,
 
       tower_base_url     = module.connection_strings.tower_base_url,
       tower_server_url   = module.connection_strings.tower_server_url,
@@ -324,8 +322,9 @@ locals {
   ansible_02_update_file_configurations = templatefile("assets/src/ansible/02_update_file_configurations.yml.tpl",
     {
       app_name = var.app_name
-      #db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"]
-      #db_tower_password = local.tower_secrets["TOWER_DB_PASSWORD"]["value"]
+
+      tower_base_url               = module.connection_strings.tower_base_url,
+      private_cacert_bucket_prefix = var.private_cacert_bucket_prefix
     }
   )
 
@@ -403,4 +402,24 @@ locals {
 resource "tls_private_key" "connect_pem" {
   algorithm = "RSA"
   rsa_bits  = 4096
+}
+
+
+## ------------------------------------------------------------------------------------
+## Local Server With Private CA Config
+## ------------------------------------------------------------------------------------
+locals {
+  private_ca_conf = templatefile("assets/src/customcerts/custom_default.conf.tpl",
+    {
+      flag_enable_data_studio = var.flag_enable_data_studio,
+      flag_use_wave_lite      = var.flag_use_wave_lite,
+
+      tower_base_url    = module.connection_strings.tower_base_url,
+      tower_connect_dns = module.connection_strings.tower_connect_dns,
+      tower_wave_dns    = module.connection_strings.tower_wave_dns,
+
+      private_ca_cert = local.private_ca_cert,
+      private_ca_key  = local.private_ca_key
+    }
+  )
 }
