@@ -37,6 +37,9 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
         - (Architecture) -- Modified security groups `sg_ec2_noalb` & `sg_ec2_noalb_connect` for tighter scoping.
         - (Architecture) -- Refactored when most `assets/target/` files are produced. Rather than waiting for all infrastructure to be created, we now create files as soon as minimal dependencies are met (_to facilitate testing_).
         <br /><br />
+        - (Security) -- Bumped `java-17-amazon-corretto-devel-1:17.0.14+7-1.amzn2023.1` to `1:17.0.15+6-1.amzn2023.1`.
+        - (Security) -- Bumped docker version from `28.1.1` --> `28.3.1`.
+        <br /><br />
         - (Documentation) -- Changed `TEMPLATE_terraform.tfvars` application name from `tower-dev` to `tower-template`.
         - (Documentation) -- Added Design Decision explaining why Studio subdomain routing is the default over path-based routing.
         - (Documentation) -- Added Setup guidance re: Platform crypto secret rotation.
@@ -71,6 +74,7 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
 | Deleted | Private Certificate | `flag_use_existing_private_cacert` | Deleted in favour of unified `flag_use_private_cacert` |
 | Deleted | Private Certificate | `existing_ca_cert_file` | Deleted since not required after S3 Bucket pre-load flow change. |
 | Deleted | Private Certificate | `existing_ca_key_file` | Deleted since not required after S3 Bucket pre-load flow change. |
+| Deleted | Private Certificate | `flag_use_custom_docker_compose_file` | Deleted since not required after S3 Bucket pre-load flow change. |
 
 
 #### SSM Secrets

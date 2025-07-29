@@ -104,11 +104,6 @@ variable "flag_private_tower_without_eice" { type = bool }
 
 variable "flag_vm_copy_files_to_instance" { type = bool }
 
-variable "flag_use_custom_docker_compose_file" {
-  type        = bool
-  description = "DEPRECATED in Releases > 1.5.0."
-}
-
 
 # ------------------------------------------------------------------------------------
 # Wave Service
