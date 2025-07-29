@@ -134,7 +134,6 @@ When using private certificates with Studios, you must create custom container i
 - **Multiple Image Types:** You may need to create custom images for different Studios environments (e.g., Jupyter, RStudio, VSCode) if you use multiple types.
 
 ### Other Compute Assets
-- TODO: Update pre-run script for Nextflow head job to trust SP & Wave-Lite endpoints.
 - TODO: Bake cert into Nextflow worker nodes using Wave-Lite.
 
 

@@ -199,8 +199,15 @@ locals {
 
   # Private CA Files
   # ---------------------------------------------------------------------------------------
+  private_ca_cert       = "${module.connection_strings.tower_base_url}.crt"
+  private_ca_key        = "${module.connection_strings.tower_base_url}.key
+
+
+  # Private CA Files
+  # ---------------------------------------------------------------------------------------
   private_ca_cert = "${module.connection_strings.tower_base_url}.crt"
   private_ca_key  = "${module.connection_strings.tower_base_url}.key"
+
 
   # Miscellaneous
   # ---------------------------------------------------------------------------------------
@@ -208,6 +215,7 @@ locals {
   dollar      = "$"
   singlequote = "'"
 
+    
   # Migrate-DB Flag
   # ---------------------------------------------------------------------------------------
   # Migrate-db only available for 23.4.1+ or higher. Check to ensure we don't include for 23.3.x or below. 
@@ -218,7 +226,6 @@ locals {
   )
 
   # Account for changes in tower.yml due to Micronaut 4
-  # TODO: Rationalize this to a single regex (July 26/25)
   flag_using_micronaut_4 = (
     tonumber(length(regexall("^v24.[0-9]", var.tower_container_version))) >= 1 ||
     tonumber(length(regexall("^v2[5-9]", var.tower_container_version))) >= 1 ? true : false
@@ -256,7 +263,7 @@ module "connection_strings" {
   flag_use_wave                   = var.flag_use_wave
   flag_use_wave_lite              = var.flag_use_wave_lite
   flag_studio_enable_path_routing = var.flag_studio_enable_path_routing
-  
+
   # Tower Configuration
   tower_server_url = var.tower_server_url
   tower_db_url     = var.flag_use_existing_external_db == true ? var.tower_db_url : ""

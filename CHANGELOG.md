@@ -77,6 +77,7 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
 | Deleted | Private Certificate | `flag_use_custom_docker_compose_file` | Deleted since not required after S3 Bucket pre-load flow change. |
 
 
+
 #### SSM Secrets
 - Added `templates/ssm_sensitivie_values_wave_lite.json`
 
