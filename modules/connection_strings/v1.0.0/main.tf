@@ -76,13 +76,12 @@ locals {
 
   # GROUNDSWELL
   # ---------------------------------------------------------------------------------------
-  # Uses a separate compartment in same DB as Tower uses.
+  # Uses a separate compartment in same DB as Tower uses. Do not add connection string or else it breaks lightbulb icon in app.
   # Does not need Redis.
   swell_db_url = format(
-    "%s/%s?%s",
+    "%s/%s",
     local.tower_db_root,
-    var.swell_database_name,
-    data.external.generate_db_connection_string.result.value
+    var.swell_database_name
   )
 
 

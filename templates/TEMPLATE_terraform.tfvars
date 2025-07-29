@@ -711,7 +711,9 @@ tower_server_url  = "REPLACE_ME"
 tower_server_port = "8000"
 
 # This must be a verified identity / domain.
-tower_contact_email    = "REPLACE_ME"
+tower_contact_email = "REPLACE_ME"
+
+# See full list of compute environment options at: https://docs.seqera.io/platform-enterprise/latest/enterprise/configuration/overview#compute-environments
 tower_enable_platforms = "awsbatch-platform,k8s-platform,slurm-platform"
 
 ## tower_jwt_secret                      = "DO_NOT_UNCOMMENT_ME"
