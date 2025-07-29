@@ -25,6 +25,8 @@ tests/.plan_cache/
 AGENTS.md
 hcl2json
 BACKUP_*
+*.crt
+*.key
 
 CLAUDE.local.md
 .ai/

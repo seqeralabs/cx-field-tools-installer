@@ -135,6 +135,7 @@ flag_create_external_redis = false
 flag_use_container_redis   = true
 
 # Only one of these can true.
+# NOTE: If using `flag_use_private_cacert = true` flag, read Custom Private CA section for full instructions on private cert set-up.
 flag_create_load_balancer = true
 flag_use_private_cacert   = false
 flag_do_not_use_https     = false

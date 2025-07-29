@@ -50,12 +50,8 @@ In this flow, we create a new self-signed Certificate Authority and issue a leaf
         
         - `rootCA.crt`
         - `rootCA.key`
-        - `rootCA.srl`
         - `autodc.dev-seqera.net.crt`
-        - `autodc.dev-seqera.net.csr`
         - `autodc.dev-seqera.net.key`
-        - `cert.conf`
-        - `csr.conf`
 
     1. Copy the following files to the chosen S3 prefix (_e.g. s3://example_bucket/sp_cert_files_):
 
@@ -68,12 +64,8 @@ In this flow, we create a new self-signed Certificate Authority and issue a leaf
 
         - `rootCA.crt`
         - `rootCA.key`
-        - `rootCA.srl`
         - `autodc.dev-seqera.net.crt`
-        - `autodc.dev-seqera.net.csr`
         - `autodc.dev-seqera.net.key`
-        - `cert.conf`
-        - `csr.conf`
 
 1. Update _terraform.tfvars_ `private_cacert_bucket_prefix` with the S3 prefix (_e.g. s3://example_bucket/sp_cert_files_).
 
