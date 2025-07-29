@@ -26,7 +26,7 @@ openssl req -x509 \
             -key rootCA.key \
             -sha256 -days 365 \
             -nodes \
-            -subj "/CN=Root CA/C=ES/ST=Catalan/L=Barcelona/O=Seqera/OU=Seqera CX" \
+            -subj "/CN=rootCA/C=ES/ST=Catalan/L=Barcelona/O=Seqera/OU=Seqera CX" \
             -out rootCA.crt
 
 # Generate private key for the domain certificate
