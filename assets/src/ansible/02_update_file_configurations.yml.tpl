@@ -72,7 +72,7 @@
           # https://unix.stackexchange.com/questions/205180/how-to-pass-password-to-mysql-command-line
           docker run --rm -t -v $(pwd)/target/tower_config/tower.sql:/tower.sql -e \
           MYSQL_PWD=$db_master_password --entrypoint /bin/bash mysql:8.0 \
-          -c "mysql --host $DB_URL --port=3306 --user=$db_master_user < tower.sql" || true
+          -c "mysql --host ${tower_db_dns} --port=3306 --user=$db_master_user < tower.sql" || true
 
         fi
 
@@ -90,7 +90,7 @@
 
           docker run --rm -t -v $(pwd)/target/wave_lite_config/wave-lite-rds.sql:/tmp/wave.sql -e \
           POSTGRES_PASSWORD=$wave_lite_master_password --entrypoint /bin/bash postgres:latest \
-          -c "PGPASSWORD=$wave_lite_master_password psql -h $WAVE_LITE_DB_URL -p 5432 -U $wave_lite_master_user -d postgres < /tmp/wave.sql"
+          -c "PGPASSWORD=$wave_lite_master_password psql -h ${wave_lite_db_dns}  -p 5432 -U $wave_lite_master_user -d postgres < /tmp/wave.sql"
 
         fi
 
@@ -109,7 +109,7 @@
 
           docker run --rm -t -v $(pwd)/target/groundswell_config/groundswell.sql:/groundswell.sql -e \
           MYSQL_PWD=$db_master_password --entrypoint /bin/bash mysql:8.0 \
-          -c "mysql --host $DB_URL --port=3306 --user=$db_master_user < groundswell.sql" || true
+          -c "mysql --host ${tower_db_dns} --port=3306 --user=$db_master_user < groundswell.sql" || true
 
         fi
 

@@ -27,7 +27,6 @@ rm -rf $HOME_PATH/data-studios-rsa.pem || true
   echo -e "export DB_NAME=${db_database_name}"
 
   echo -e "export WAVE_LITE_ACTIVATED=${use_wave_lite}"
-  echo -e "export WAVE_LITE_DB_URL=${wave_lite_db_url}"
 
   echo -e "export TOWER_SERVER_URL=${tower_server_url}"
   echo -e "export TOWER_API_ENDPOINT=${tower_api_endpoint}"

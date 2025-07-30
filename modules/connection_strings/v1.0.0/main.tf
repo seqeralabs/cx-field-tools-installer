@@ -17,19 +17,15 @@ locals {
   # This is useful for testing the connection strings without having to create the resources.
 
 
-  # Control Flags
-  # ---------------------------------------------------------------------------------------
-  # If no HTTPS and no load-balancer, use `http://` and expose port in URL. Otherwise, use `https` prefix and no port.
-  use_insecure_ec2 = var.flag_create_load_balancer == false && var.flag_do_not_use_https == true ? true : false
-
   # TOWER CORE
   # ---------------------------------------------------------------------------------------
   # Get the desired DNS name / IP from value user specified in terraform.tfvars 
   tower_base_url = var.tower_server_url
 
+  # If no HTTPS, use `http://` and expose port in URL. Otherwise, use `https` prefix and no port.
   tower_url_secure   = "https://${var.tower_server_url}"
   tower_url_insecure = "http://${var.tower_server_url}:8000"
-  tower_server_url   = local.use_insecure_ec2 ? local.tower_url_insecure : local.tower_url_secure
+  tower_server_url   = var.flag_do_not_use_https ? local.tower_url_insecure : local.tower_url_secure
 
   tower_api_endpoint = "${local.tower_server_url}/api"
 
@@ -42,7 +38,6 @@ locals {
   tower_db_dns               = join("", [local.tower_db_container, local.tower_db_external_mock, local.tower_db_external_new, local.tower_db_external_existing])
   tower_db_dns_with_port     = "${local.tower_db_dns}:3306"
   # NOTE! DO NOT ADD '?' -- already applied by data.external.generate_db_connection_string.result.value
-
   tower_db_url = format(
     "jdbc:mysql://%s/%s%s",
     local.tower_db_dns_with_port,
@@ -76,10 +71,7 @@ locals {
   tower_connect_dns          = var.flag_studio_enable_path_routing ? "${var.data_studio_path_routing_url}" : "connect.${var.tower_server_url}"
   tower_connect_wildcard_dns = var.flag_studio_enable_path_routing ? "${var.data_studio_path_routing_url}" : "*.${var.tower_server_url}"
 
-  connect_url_secure       = "https://${local.tower_connect_dns}"
-  connect_url_insecure     = "http://${var.tower_server_url}:9090"
-  tower_connect_server_url = local.use_insecure_ec2 ? local.connect_url_insecure : local.connect_url_secure
-
+  tower_connect_server_url = "https://${local.tower_connect_dns}"
 
   # DONT append `redis://` as prefix here. Studios does this itself. Breaks if we reuse `tower_redis_url`.
   # DNS and URL will be the same but harmonizing them for consistency with other outputs and to be positioned for eventual Studios change.
@@ -110,7 +102,7 @@ locals {
   # NOTE: Current as of July 29/25, Wave-Lite container redis doesn't support SSL
   wl_redis_container     = var.flag_use_container_redis ? "wave-redis" : ""
   wl_redis_external_mock = var.flag_create_external_redis && var.use_mocks ? "mock.wave-redis.com" : ""
-  wl_redis_external_new  = var.flag_create_external_redis && !var.use_mocks ? var.elasticache_wave_lite.url : ""
+  wl_redis_external_new  = var.flag_create_external_redis && !var.use_mocks ? var.elasticache_wave_lite.dns : ""
   wl_redis_prefixed      = var.flag_create_external_redis ? "rediss://${local.wave_lite_redis_dns}" : "redis://${local.wave_lite_redis_dns}"
   wave_lite_redis_dns    = local.wave_enabled ? join("", [local.wl_redis_container, local.wl_redis_external_mock, local.wl_redis_external_new]) : "N/A"
   wave_lite_redis_url    = local.wave_enabled ? "${local.wl_redis_prefixed}:6379" : "N/A"

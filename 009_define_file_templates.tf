@@ -325,6 +325,8 @@ locals {
 
       tower_base_url               = module.connection_strings.tower_base_url,
       private_cacert_bucket_prefix = var.private_cacert_bucket_prefix
+      tower_db_dns                 = module.connection_strings.tower_db_dns
+      wave_lite_db_dns             = module.connection_strings.wave_lite_db_dns
     }
   )
 
