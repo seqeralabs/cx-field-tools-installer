@@ -108,11 +108,20 @@ output "tower_wave_dns" {
   value       = module.connection_strings.tower_wave_dns
 }
 
+output "wave_lite_db_dns" {
+  description = "The database DNS for Wave-Lite"
+  value       = module.connection_strings.wave_lite_db_dns
+}
+
 output "wave_lite_db_url" {
   description = "The database URL for Wave-Lite"
   value       = module.connection_strings.wave_lite_db_url
 }
 
+output "wave_lite_redis_dns" {
+  description = "The Redis DNS for Wave-Lite"
+  value       = module.connection_strings.wave_lite_redis_dns
+}
 output "wave_lite_redis_url" {
   description = "The Redis URL for Wave-Lite"
   value       = module.connection_strings.wave_lite_redis_url

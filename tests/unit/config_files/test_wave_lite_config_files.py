@@ -176,7 +176,7 @@ def test_default_config_wave_lite_yml(backup_tfvars, config_baseline_settings_de
     assert wave_lite_yml_file["wave"]["server"]["url"] == outputs["tower_wave_url"]["value"]
 
     # Database configuration
-    expected_db_uri = f"jdbc:postgresql://{outputs['wave_lite_db_url']['value']}/wave"
+    expected_db_uri = f"jdbc:postgresql://{outputs['wave_lite_db_dns']['value']}/wave"
     assert wave_lite_yml_file["wave"]["db"]["uri"] == expected_db_uri
     assert wave_lite_yml_file["wave"]["db"]["user"] == ssm_data["WAVE_LITE_DB_LIMITED_USER"]["value"]
     assert wave_lite_yml_file["wave"]["db"]["password"] == ssm_data["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]

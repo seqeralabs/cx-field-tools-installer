@@ -40,7 +40,7 @@ locals {
   tower_db_local                 = "db:3306"
   tower_db_remote_existing       = var.flag_use_existing_external_db ? var.tower_db_url : ""
   tower_db_remote_new_real       = var.flag_create_external_db ? try(var.rds_tower.db_instance_address, "") : ""
-  tower_db_remote_new_mock       = var.flag_create_external_db ? "mock-new-tower-db.example.com" : ""
+  tower_db_remote_new_mock       = var.flag_create_external_db ? "mock.towerdb.com" : ""
   tower_db_remote_new_reconciled = var.use_mocks ? local.tower_db_remote_new_mock : local.tower_db_remote_new_real
   tower_db_remote_reconciled     = join("", [local.tower_db_remote_existing, local.tower_db_remote_new_reconciled])
   tower_db_root                  = local.tower_db_remote_reconciled != "" ? local.tower_db_remote_reconciled : local.tower_db_local
@@ -102,25 +102,24 @@ locals {
   # WAVE-LITE
   # ---------------------------------------------------------------------------------------
   # TODO: June 16/25 -- Consider if `rediss://` hardcode aligns with how config is presented.
-  # TODO: June 16/25 -- Consider if abbreviated variables make code more legible.
-
   wave_enabled = var.flag_use_wave || var.flag_use_wave_lite ? true : false
 
   tower_wave_dns = local.wave_enabled ? var.wave_server_url : "N/A"
   tower_wave_url = local.wave_enabled ? "https://${local.tower_wave_dns}" : "N/A"
 
   # NOTE: Current as of July 29/25, Wave-Lite cannot be deployed to a pre-existing RDS Postgres instance.
-  wl_db_container      = var.flag_use_container_db || var.flag_use_existing_external_db ? "wave-db:5432" : ""
-  wl_db_rds_mock       = var.flag_create_external_db && var.use_mocks ? "mock-new-wave-lite-db.example.com" : ""
-  wl_db_rds_new        = var.flag_create_external_db && !var.use_mocks ? var.rds_wave_lite.db_instance_address : ""
-  wl_db_url_reconciled = join("", [local.wl_db_container, local.wl_db_rds_mock, local.wl_db_rds_new])
-  wave_lite_db_url     = local.wave_enabled ? local.wl_db_url_reconciled : "N/A"
+  wl_db_container     = var.flag_use_container_db || var.flag_use_existing_external_db ? "wave-db:5432" : ""
+  wl_db_external_mock = var.flag_create_external_db && var.use_mocks ? "mock.wave-db.com" : ""
+  wl_db_external_new  = var.flag_create_external_db && !var.use_mocks ? var.rds_wave_lite.db_instance_address : ""
+  wave_lite_db_dns    = local.wave_enabled ? join("", [local.wl_db_container, local.wl_db_external_mock, local.wl_db_external_new]) : "N/A"
+  wave_lite_db_url    = local.wave_enabled ? "jdbc:postgresql://${local.wave_lite_db_dns}/wave" : "N/A"
 
-  wl_redis_local             = "wave-redis:6379"
-  wl_redis_remote_new        = try("${var.elasticache_wave_lite.url}", "abc")
-  wl_redis_remote_mock       = "mock-new-wave-lite-redis.example.com"
-  wl_redis_remote_reconciled = var.use_mocks ? local.wl_redis_remote_mock : local.wl_redis_remote_new
-  wl_redis_url_reconciled    = var.flag_create_external_redis ? local.wl_redis_remote_reconciled : local.wl_redis_local
-  wave_lite_redis_url        = var.flag_create_external_redis ? "rediss://${local.wl_redis_url_reconciled}" : "redis://${local.wl_redis_url_reconciled}"
+  # NOTE: Current as of July 29/25, Wave-Lite container redis doesn't support SSL
+  wl_redis_container     = var.flag_use_container_redis ? "wave-redis:6379" : ""
+  wl_redis_external_mock = var.flag_create_external_redis && var.use_mocks ? "mock.wave-redis.com" : ""
+  wl_redis_external_new  = var.flag_create_external_redis && !var.use_mocks ? var.elasticache_wave_lite.url : ""
+  wl_redis_prefixed      = var.flag_create_external_redis ? "rediss://${local.wave_lite_redis_dns}" : "redis://${local.wave_lite_redis_dns}"
+  wave_lite_redis_dns    = local.wave_enabled ? join("", [local.wl_redis_container, local.wl_redis_external_mock, local.wl_redis_external_new]) : "N/A"
+  wave_lite_redis_url    = local.wave_enabled ? local.wl_redis_prefixed : "N/A"
 }
 
