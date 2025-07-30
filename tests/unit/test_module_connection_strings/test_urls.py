@@ -138,9 +138,15 @@ def test_urls_no_https_all_ecoystem(backup_tfvars):
     tower_connect_dns          = outputs["tower_connect_dns"]["value"]
     tower_connect_wildcard_dns = outputs["tower_connect_wildcard_dns"]["value"]
     tower_connect_server_url   = outputs["tower_connect_server_url"]["value"]
+    tower_connect_redis_dns   = outputs["tower_connect_redis_dns"]["value"]
+    tower_connect_redis_url   = outputs["tower_connect_redis_url"]["value"]
 
     tower_wave_dns             = outputs["tower_wave_dns"]["value"]
     tower_wave_url             = outputs["tower_wave_url"]["value"]
+    wave_lite_db_dns           = outputs["wave_lite_db_dns"]["value"]
+    wave_lite_db_url           = outputs["wave_lite_db_url"]["value"]
+    wave_lite_redis_dns        = outputs["wave_lite_redis_dns"]["value"]
+    wave_lite_redis_url        = outputs["wave_lite_redis_url"]["value"]
 
     # Then
     assert "tower.example.com" == tower_base_url
@@ -150,9 +156,15 @@ def test_urls_no_https_all_ecoystem(backup_tfvars):
     assert "N/A" == tower_connect_dns
     assert "N/A" == tower_connect_wildcard_dns
     assert "N/A" == tower_connect_server_url
+    assert "N/A" == tower_connect_redis_dns
+    assert "N/A" == tower_connect_redis_url
 
     assert "N/A" == tower_wave_dns
     assert "N/A" == tower_wave_url
+    assert "N/A" == wave_lite_db_dns
+    assert "N/A" == wave_lite_db_url
+    assert "N/A" == wave_lite_redis_dns
+    assert "N/A" == wave_lite_redis_url
 
 
 @pytest.mark.local
@@ -186,9 +198,15 @@ def test_urls_no_https_no_ecoystem(backup_tfvars):
     tower_connect_dns          = outputs["tower_connect_dns"]["value"]
     tower_connect_wildcard_dns = outputs["tower_connect_wildcard_dns"]["value"]
     tower_connect_server_url   = outputs["tower_connect_server_url"]["value"]
+    tower_connect_redis_dns   = outputs["tower_connect_redis_dns"]["value"]
+    tower_connect_redis_url   = outputs["tower_connect_redis_url"]["value"]
 
     tower_wave_dns             = outputs["tower_wave_dns"]["value"]
     tower_wave_url             = outputs["tower_wave_url"]["value"]
+    wave_lite_db_dns           = outputs["wave_lite_db_dns"]["value"]
+    wave_lite_db_url           = outputs["wave_lite_db_url"]["value"]
+    wave_lite_redis_dns        = outputs["wave_lite_redis_dns"]["value"]
+    wave_lite_redis_url        = outputs["wave_lite_redis_url"]["value"]
 
     # Then
     assert "tower.example.com" == tower_base_url
@@ -198,9 +216,15 @@ def test_urls_no_https_no_ecoystem(backup_tfvars):
     assert "N/A" == tower_connect_dns
     assert "N/A" == tower_connect_wildcard_dns
     assert "N/A" == tower_connect_server_url
+    assert "N/A" == tower_connect_redis_dns
+    assert "N/A" == tower_connect_redis_url
 
     assert "N/A" == tower_wave_dns
     assert "N/A" == tower_wave_url
+    assert "N/A" == wave_lite_db_dns
+    assert "N/A" == wave_lite_db_url
+    assert "N/A" == wave_lite_redis_dns
+    assert "N/A" == wave_lite_redis_url
 
 
 ## ------------------------------------------------------------------------------------
