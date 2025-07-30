@@ -59,6 +59,10 @@ output "tower_db_url" {
   value       = module.connection_strings.tower_db_url
 }
 
+output "tower_redis_dns" {
+  description = "The Redis DNS for Tower"
+  value       = module.connection_strings.tower_redis_dns
+}
 output "tower_redis_url" {
   description = "The Redis URL for Tower"
   value       = module.connection_strings.tower_redis_url

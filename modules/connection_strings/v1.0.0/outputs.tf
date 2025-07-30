@@ -28,6 +28,11 @@ output "tower_db_url" {
   sensitive   = false
 }
 
+output "tower_redis_dns" {
+  description = "The Redis DNS for Tower"
+  value       = local.tower_redis_dns
+  sensitive   = false
+}
 output "tower_redis_url" {
   description = "The Redis URL for Tower"
   value       = local.tower_redis_url

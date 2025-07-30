@@ -10,8 +10,6 @@ data "external" "generate_db_connection_string" {
   #   }
 }
 
-# TODO: Harmonize all these keys (new_real; new_mock)
-
 locals {
   # Testing Mocks
   # ---------------------------------------------------------------------------------------
@@ -55,12 +53,13 @@ locals {
 
   # TODO: May 16/2025 -- This Redis is unsecured (unlike Wave). To be fixed in post-Wave-Lite Feature Release.
   # NOTE: Connect has same logic. I've duplicated to better handle divergence risk.
-  tower_redis_local             = "redis:6379"
-  tower_redis_remote_real       = try("${var.elasticache_tower.cache_nodes[0].address}:${var.elasticache_tower.cache_nodes[0].port}", "")
-  tower_redis_remote_mock       = "mock-new-tower-redis.example.com:6379"
-  tower_redis_remote_reconciled = var.use_mocks ? local.tower_redis_remote_mock : local.tower_redis_remote_real
-  tower_redis_url_reconciled    = var.flag_create_external_redis ? local.tower_redis_remote_reconciled : local.tower_redis_local
-  tower_redis_url               = "redis://${local.tower_redis_url_reconciled}"
+  tower_redis_container     = var.flag_use_container_redis ? "redis" : ""
+  tower_redis_external_mock = var.flag_create_external_redis && var.use_mocks ? "mock.tower-redis.com" : ""
+  tower_redis_external_new  = var.flag_create_external_redis && !var.use_mocks ? "${var.elasticache_tower.cache_nodes[0].address}" : ""
+  tower_redis_dns           = join("", [local.tower_redis_container, local.tower_redis_external_mock, local.tower_redis_external_new])
+
+  tower_redis_dns_with_port = var.flag_create_external_redis && !var.use_mocks ? "${local.tower_redis_dns}:${var.elasticache_tower.cache_nodes[0].port}" : "${local.tower_redis_dns}:6379"
+  tower_redis_url           = "redis://${local.tower_redis_dns_with_port}"
 
 
   # GROUNDSWELL
@@ -76,9 +75,9 @@ locals {
 
   # CONNECT (STUDIO)
   # ---------------------------------------------------------------------------------------
-  # Connect needs Redis but not its own database.
+  # Connect relies on the Seqera Platform Redis. It does not rely on any database.
   # DNS needs host-matching in the ALB (e.g.): studio.TOWER_DOMAIN, 123.TOWER_DOMAIN, 456.TOWER_DOMAIN
-  # NOTE: `tower_connect_Wildcard_dns` is misleading now since one of the options isn't actually a wildcard, but it means no changes in downstream DNS & ALB rules.
+  # NOTE: `tower_connect_wildcard_dns` is misleading now since one of the options isn't actually a wildcard, but it means no changes in downstream DNS & ALB rules.
   tower_connect_dns          = var.flag_studio_enable_path_routing ? "${var.data_studio_path_routing_url}" : "connect.${var.tower_server_url}"
   tower_connect_wildcard_dns = var.flag_studio_enable_path_routing ? "${var.data_studio_path_routing_url}" : "*.${var.tower_server_url}"
 
@@ -89,8 +88,9 @@ locals {
 
   # DONT append `redis://` as prefix here. Studios does this itself. Breaks if we reuse `tower_redis_url`.
   # DNS and URL will be the same but harmonizing them for consistency with other outputs and to be positioned for eventual Studios change.
+  # Using same mock as tower redis to make tests more realistic.
   connect_redis_container     = var.flag_use_container_redis ? "redis" : ""
-  connect_redis_external_mock = var.flag_create_external_redis && var.use_mocks ? "mock.connect-redis.com" : ""
+  connect_redis_external_mock = var.flag_create_external_redis && var.use_mocks ? "mock.tower-redis.com" : ""
   connect_redis_external_new  = var.flag_create_external_redis && !var.use_mocks ? "${var.elasticache_tower.cache_nodes[0].address}" : ""
   tower_connect_redis_dns     = var.flag_enable_data_studio ? join("", [local.connect_redis_container, local.connect_redis_external_mock, local.connect_redis_external_new]) : "N/A"
 

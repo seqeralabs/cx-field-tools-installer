@@ -27,6 +27,7 @@ def test_external_redis_url_full_ecosystem(backup_tfvars):
     plan         = prepare_plan(override_data)
     outputs                 = plan["planned_values"]["outputs"]
 
+    tower_redis_dns         = outputs["tower_redis_dns"]["value"]
     tower_redis_url         = outputs["tower_redis_url"]["value"]
     tower_connect_redis_dns = outputs["tower_connect_redis_dns"]["value"]
     tower_connect_redis_url = outputs["tower_connect_redis_url"]["value"]
@@ -34,9 +35,11 @@ def test_external_redis_url_full_ecosystem(backup_tfvars):
     wave_lite_redis_url     = outputs["wave_lite_redis_url"]["value"]
 
     # Then
-    assert "redis://mock-new-tower-redis.example.com:6379" == tower_redis_url
-    assert "mock.connect-redis.com" == tower_connect_redis_dns
-    assert "mock.connect-redis.com:6379" == tower_connect_redis_url
+    assert "mock.tower-redis.com" == tower_redis_dns
+    assert "redis://mock.tower-redis.com:6379" == tower_redis_url
+    assert "mock.tower-redis.com" == tower_connect_redis_dns
+    assert "mock.tower-redis.com:6379" == tower_connect_redis_url
+    assert tower_connect_redis_dns == tower_redis_dns
     assert "mock.wave-redis.com" == wave_lite_redis_dns
     assert "rediss://mock.wave-redis.com:6379" == wave_lite_redis_url
     assert wave_lite_redis_url != tower_redis_url
@@ -60,6 +63,7 @@ def test_external_redis_url_no_ecosystem(backup_tfvars):
     plan         = prepare_plan(override_data)
     outputs                 = plan["planned_values"]["outputs"]
 
+    tower_redis_dns         = outputs["tower_redis_dns"]["value"]
     tower_redis_url         = outputs["tower_redis_url"]["value"]
     tower_connect_redis_dns = outputs["tower_connect_redis_dns"]["value"]
     tower_connect_redis_url = outputs["tower_connect_redis_url"]["value"]
@@ -67,9 +71,11 @@ def test_external_redis_url_no_ecosystem(backup_tfvars):
     wave_lite_redis_url     = outputs["wave_lite_redis_url"]["value"]
 
     # Then
-    assert "redis://mock-new-tower-redis.example.com:6379" == tower_redis_url
+    assert "mock.tower-redis.com" == tower_redis_dns
+    assert "redis://mock.tower-redis.com:6379" == tower_redis_url
     assert "N/A" == tower_connect_redis_dns
     assert "N/A" == tower_connect_redis_url
+    assert tower_connect_redis_dns != tower_redis_dns
     assert "N/A" == wave_lite_redis_dns
     assert "N/A" == wave_lite_redis_url
 
@@ -99,6 +105,7 @@ def test_container_redis_url_all_ecosystem(backup_tfvars):
     plan         = prepare_plan(override_data)
     outputs                 = plan["planned_values"]["outputs"]
 
+    tower_redis_dns         = outputs["tower_redis_dns"]["value"]
     tower_redis_url         = outputs["tower_redis_url"]["value"]
     tower_connect_redis_dns = outputs["tower_connect_redis_dns"]["value"]
     tower_connect_redis_url = outputs["tower_connect_redis_url"]["value"]
@@ -108,9 +115,11 @@ def test_container_redis_url_all_ecosystem(backup_tfvars):
 
     # Then
     # Tower Redis should use container service name
+    assert "redis" == tower_redis_dns
     assert "redis://redis:6379" == tower_redis_url
     assert "redis" == tower_connect_redis_dns
     assert "redis:6379" == tower_connect_redis_url
+    assert tower_connect_redis_dns == tower_redis_dns
     assert "wave-redis" == wave_lite_redis_dns
     assert "redis://wave-redis:6379" == wave_lite_redis_url
     assert wave_lite_redis_url != tower_redis_url
@@ -138,6 +147,7 @@ def test_container_redis_url_no_ecosystem(backup_tfvars):
     plan         = prepare_plan(override_data)
     outputs                 = plan["planned_values"]["outputs"]
 
+    tower_redis_dns         = outputs["tower_redis_dns"]["value"]
     tower_redis_url         = outputs["tower_redis_url"]["value"]
     tower_connect_redis_dns = outputs["tower_connect_redis_dns"]["value"]
     tower_connect_redis_url = outputs["tower_connect_redis_url"]["value"]
@@ -146,9 +156,11 @@ def test_container_redis_url_no_ecosystem(backup_tfvars):
 
     # Then
     # Tower Redis should use container service name
+    assert "redis" == tower_redis_dns
     assert "redis://redis:6379" == tower_redis_url
     assert "N/A" == tower_connect_redis_dns
     assert "N/A" == tower_connect_redis_url
+    assert tower_connect_redis_dns != tower_redis_dns
     assert "N/A" == wave_lite_redis_dns
     assert "N/A" == wave_lite_redis_url
     assert wave_lite_redis_url != tower_redis_url
