@@ -35,18 +35,17 @@ locals {
 
   # Dont try to be smart. Just calculate all strings and use the flags / module feed to control what comes in.
   # Two DB options should always be "" so we can smash together in a unified catch-all.
-  tower_db_local                 = "db:3306"
-  tower_db_remote_existing       = var.flag_use_existing_external_db ? var.tower_db_url : ""
-  tower_db_remote_new_real       = var.flag_create_external_db ? try(var.rds_tower.db_instance_address, "") : ""
-  tower_db_remote_new_mock       = var.flag_create_external_db ? "mock.towerdb.com" : ""
-  tower_db_remote_new_reconciled = var.use_mocks ? local.tower_db_remote_new_mock : local.tower_db_remote_new_real
-  tower_db_remote_reconciled     = join("", [local.tower_db_remote_existing, local.tower_db_remote_new_reconciled])
-  tower_db_root                  = local.tower_db_remote_reconciled != "" ? local.tower_db_remote_reconciled : local.tower_db_local
-
+  tower_db_container         = var.flag_use_container_db ? "db" : ""
+  tower_db_external_mock     = var.flag_create_external_db && var.use_mocks ? "mock.tower-db.com" : ""
+  tower_db_external_new      = var.flag_create_external_db && !var.use_mocks ? var.rds_tower.db_instance_address : ""
+  tower_db_external_existing = var.flag_use_existing_external_db ? var.tower_db_url : ""
+  tower_db_dns               = join("", [local.tower_db_container, local.tower_db_external_mock, local.tower_db_external_new, local.tower_db_external_existing])
+  tower_db_dns_with_port     = "${local.tower_db_dns}:3306"
   # NOTE! DO NOT ADD '?' -- already applied by data.external.generate_db_connection_string.result.value
+
   tower_db_url = format(
     "jdbc:mysql://%s/%s%s",
-    local.tower_db_root,
+    local.tower_db_dns_with_port,
     var.db_database_name,
     data.external.generate_db_connection_string.result.value,
   )
@@ -66,11 +65,7 @@ locals {
   # ---------------------------------------------------------------------------------------
   # Uses a separate compartment in same DB as Tower uses. Do not add connection string or else it breaks lightbulb icon in app.
   # Does not need Redis.
-  swell_db_url = format(
-    "%s/%s",
-    local.tower_db_root,
-    var.swell_database_name
-  )
+  swell_db_url = format("%s/%s", local.tower_db_dns_with_port, var.swell_database_name)
 
 
   # CONNECT (STUDIO)

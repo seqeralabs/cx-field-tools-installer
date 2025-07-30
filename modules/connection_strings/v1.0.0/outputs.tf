@@ -16,9 +16,9 @@ output "tower_api_endpoint" {
   value       = local.tower_api_endpoint
 }
 
-output "tower_db_root" {
+output "tower_db_dns" {
   description = "The root database connection for Tower"
-  value       = local.tower_db_root
+  value       = local.tower_db_dns
   sensitive   = false
 }
 

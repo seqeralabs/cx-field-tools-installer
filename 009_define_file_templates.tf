@@ -298,7 +298,7 @@ locals {
       private_cacert_bucket_prefix = var.private_cacert_bucket_prefix,
 
       populate_external_db = local.populate_external_db,
-      tower_db_url         = module.connection_strings.tower_db_root,
+      tower_db_url         = module.connection_strings.tower_db_dns,
       db_database_name     = var.db_database_name,
 
       use_wave_lite    = var.flag_use_wave_lite,
