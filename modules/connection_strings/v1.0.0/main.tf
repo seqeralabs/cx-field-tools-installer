@@ -17,7 +17,6 @@ locals {
   # ---------------------------------------------------------------------------------------
   # If use_mocks is true, we will mock the resources that would otherwise be created.
   # This is useful for testing the connection strings without having to create the resources.
-  use_mocks = var.use_mocks
 
 
   # Control Flags
@@ -42,7 +41,7 @@ locals {
   tower_db_remote_existing       = var.flag_use_existing_external_db ? var.tower_db_url : ""
   tower_db_remote_new_real       = var.flag_create_external_db ? try(var.rds_tower.db_instance_address, "") : ""
   tower_db_remote_new_mock       = var.flag_create_external_db ? "mock-new-tower-db.example.com" : ""
-  tower_db_remote_new_reconciled = local.use_mocks ? local.tower_db_remote_new_mock : local.tower_db_remote_new_real
+  tower_db_remote_new_reconciled = var.use_mocks ? local.tower_db_remote_new_mock : local.tower_db_remote_new_real
   tower_db_remote_reconciled     = join("", [local.tower_db_remote_existing, local.tower_db_remote_new_reconciled])
   tower_db_root                  = local.tower_db_remote_reconciled != "" ? local.tower_db_remote_reconciled : local.tower_db_local
 
@@ -59,7 +58,7 @@ locals {
   tower_redis_local             = "redis:6379"
   tower_redis_remote_real       = try("${var.elasticache_tower.cache_nodes[0].address}:${var.elasticache_tower.cache_nodes[0].port}", "")
   tower_redis_remote_mock       = "mock-new-tower-redis.example.com:6379"
-  tower_redis_remote_reconciled = local.use_mocks ? local.tower_redis_remote_mock : local.tower_redis_remote_real
+  tower_redis_remote_reconciled = var.use_mocks ? local.tower_redis_remote_mock : local.tower_redis_remote_real
   tower_redis_url_reconciled    = var.flag_create_external_redis ? local.tower_redis_remote_reconciled : local.tower_redis_local
   tower_redis_url               = "redis://${local.tower_redis_url_reconciled}"
 
@@ -95,7 +94,7 @@ locals {
   connect_redis_local             = "redis:6379"
   connect_redis_remote_new        = try("${var.elasticache_tower.cache_nodes[0].address}:${var.elasticache_tower.cache_nodes[0].port}", "")
   connect_redis_remote_mock       = "mock-new-connect-redis.example.com:6379"
-  connect_redis_remote_reconciled = local.use_mocks ? local.connect_redis_remote_mock : local.connect_redis_remote_new
+  connect_redis_remote_reconciled = var.use_mocks ? local.connect_redis_remote_mock : local.connect_redis_remote_new
   connect_redis_url_reconciled    = var.flag_create_external_redis ? local.connect_redis_remote_reconciled : local.connect_redis_local
   tower_connect_redis_url         = local.connect_redis_url_reconciled
 
@@ -110,17 +109,17 @@ locals {
   tower_wave_dns = local.wave_enabled ? var.wave_server_url : "N/A"
   tower_wave_url = local.wave_enabled ? "https://${local.tower_wave_dns}" : "N/A"
 
-  wl_db_local             = "wave-db:5432"
-  wl_db_remote_new        = try(var.rds_wave_lite.db_instance_address, "")
-  wl_db_remote_mock       = "mock-new-wave-lite-db.example.com"
-  wl_db_remote_reconciled = local.use_mocks ? local.wl_db_remote_mock : local.wl_db_remote_new
-  wl_db_url_reconciled    = var.flag_create_external_db ? local.wl_db_remote_reconciled : local.wl_db_local
-  wave_lite_db_url        = local.wave_enabled ? local.wl_db_url_reconciled : "N/A"
+  # NOTE: Current as of July 29/25, Wave-Lite cannot be deployed to a pre-existing RDS Postgres instance.
+  wl_db_container      = var.flag_use_container_db || var.flag_use_existing_external_db ? "wave-db:5432" : ""
+  wl_db_rds_mock       = var.flag_create_external_db && var.use_mocks ? "mock-new-wave-lite-db.example.com" : ""
+  wl_db_rds_new        = var.flag_create_external_db && !var.use_mocks ? var.rds_wave_lite.db_instance_address : ""
+  wl_db_url_reconciled = join("", [local.wl_db_container, local.wl_db_rds_mock, local.wl_db_rds_new])
+  wave_lite_db_url     = local.wave_enabled ? local.wl_db_url_reconciled : "N/A"
 
   wl_redis_local             = "wave-redis:6379"
   wl_redis_remote_new        = try("${var.elasticache_wave_lite.url}", "abc")
   wl_redis_remote_mock       = "mock-new-wave-lite-redis.example.com"
-  wl_redis_remote_reconciled = local.use_mocks ? local.wl_redis_remote_mock : local.wl_redis_remote_new
+  wl_redis_remote_reconciled = var.use_mocks ? local.wl_redis_remote_mock : local.wl_redis_remote_new
   wl_redis_url_reconciled    = var.flag_create_external_redis ? local.wl_redis_remote_reconciled : local.wl_redis_local
   wave_lite_redis_url        = var.flag_create_external_redis ? "rediss://${local.wl_redis_url_reconciled}" : "redis://${local.wl_redis_url_reconciled}"
 }

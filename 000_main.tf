@@ -249,11 +249,15 @@ module "connection_strings" {
   source = "./modules/connection_strings/v1.0.0"
 
   # Feature Flags
-  flag_create_load_balancer     = var.flag_create_load_balancer
-  flag_do_not_use_https         = var.flag_do_not_use_https
+  flag_create_load_balancer = var.flag_create_load_balancer
+  flag_do_not_use_https     = var.flag_do_not_use_https
+
   flag_create_external_db       = var.flag_create_external_db
   flag_use_existing_external_db = var.flag_use_existing_external_db
-  flag_create_external_redis    = var.flag_create_external_redis
+  flag_use_container_db         = var.flag_use_container_db
+
+  flag_create_external_redis = var.flag_create_external_redis
+  flag_use_container_redis = var.flag_use_container_redis
 
   # Tower Configuration
   tower_server_url = var.tower_server_url
