@@ -42,6 +42,11 @@ output "tower_redis_url" {
 ## ------------------------------------------------------------------------------------
 ## Groundswell Outputs
 ## ------------------------------------------------------------------------------------
+output "swell_db_dns" {
+  description = "The DNS for Groundswell"
+  value       = local.swell_db_dns
+  sensitive   = false
+}
 output "swell_db_url" {
   description = "The complete database URL for Groundswell"
   value       = local.swell_db_url

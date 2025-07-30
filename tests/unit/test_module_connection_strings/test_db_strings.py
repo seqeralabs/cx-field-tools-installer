@@ -28,8 +28,9 @@ def test_external_new_db_url_full_ecoystem(backup_tfvars):
     plan = prepare_plan(override_data)
     outputs = plan["planned_values"]["outputs"]
 
-    tower_db_dns    = outputs["tower_db_dns"]["value"]
+    tower_db_dns     = outputs["tower_db_dns"]["value"]
     tower_db_url     = outputs["tower_db_url"]["value"]
+    swell_db_dns     = outputs["swell_db_dns"]["value"]
     swell_db_url     = outputs["swell_db_url"]["value"]
     wave_lite_db_dns = outputs["wave_lite_db_dns"]["value"]
     wave_lite_db_url = outputs["wave_lite_db_url"]["value"]
@@ -37,7 +38,9 @@ def test_external_new_db_url_full_ecoystem(backup_tfvars):
     # Then
     assert "mock.tower-db.com" == tower_db_dns
     assert "jdbc:mysql://mock.tower-db.com:3306/tower" in tower_db_url
-    assert "mock.tower-db.com" in swell_db_url
+    assert "mock.tower-db.com" == swell_db_dns
+    assert "mysql://mock.tower-db.com:3306/swell" == swell_db_url
+    assert swell_db_url != tower_db_url
     assert "mock.wave-db.com" == wave_lite_db_dns
     assert "jdbc:postgresql://mock.wave-db.com:5432/wave" == wave_lite_db_url
     assert wave_lite_db_url != tower_db_url
@@ -62,19 +65,22 @@ def test_external_new_db_url_no_ecoystem(backup_tfvars):
     plan = prepare_plan(override_data)
     outputs = plan["planned_values"]["outputs"]
 
-    tower_db_dns    = outputs["tower_db_dns"]["value"]
+    tower_db_dns     = outputs["tower_db_dns"]["value"]
     tower_db_url     = outputs["tower_db_url"]["value"]
+    swell_db_dns     = outputs["swell_db_dns"]["value"]
     swell_db_url     = outputs["swell_db_url"]["value"]
     wave_lite_db_dns = outputs["wave_lite_db_dns"]["value"]
     wave_lite_db_url = outputs["wave_lite_db_url"]["value"]
 
     # Then
-    # TODO: FIX GROUNDSWELL entry
     assert "mock.tower-db.com" == tower_db_dns
     assert "jdbc:mysql://mock.tower-db.com:3306/tower" in tower_db_url
-    assert "mock.tower-db.com" in swell_db_url
+    assert "N/A"== swell_db_dns
+    assert "N/A" == swell_db_url
+    assert swell_db_url != tower_db_url
     assert "N/A" == wave_lite_db_dns
     assert "N/A" == wave_lite_db_url
+    assert wave_lite_db_url != tower_db_url
 
 
 ## ------------------------------------------------------------------------------------
@@ -101,8 +107,9 @@ def test_external_existing_db_url_all_ecosystem(backup_tfvars):
     plan = prepare_plan(override_data)
     outputs = plan["planned_values"]["outputs"]
 
-    tower_db_dns    = outputs["tower_db_dns"]["value"]
+    tower_db_dns     = outputs["tower_db_dns"]["value"]
     tower_db_url     = outputs["tower_db_url"]["value"]
+    swell_db_dns     = outputs["swell_db_dns"]["value"]
     swell_db_url     = outputs["swell_db_url"]["value"]
     wave_lite_db_dns = outputs["wave_lite_db_dns"]["value"]
     wave_lite_db_url = outputs["wave_lite_db_url"]["value"]
@@ -110,7 +117,9 @@ def test_external_existing_db_url_all_ecosystem(backup_tfvars):
     # Then
     assert "existing.tower-db.com" == tower_db_dns
     assert "jdbc:mysql://existing.tower-db.com:3306/tower" in tower_db_url
-    assert "existing.tower-db.com" in swell_db_url
+    assert "existing.tower-db.com" == swell_db_dns
+    assert "mysql://existing.tower-db.com:3306/swell"== swell_db_url
+    assert swell_db_url != tower_db_url
     # July 29/25 -- Wave-Lite feature does not currently support existing. If not creating new remote, uses local db.
     assert "wave-db" == wave_lite_db_dns
     assert "jdbc:postgresql://wave-db:5432/wave" == wave_lite_db_url
@@ -138,8 +147,9 @@ def test_external_existing_db_url_no_ecosystem(backup_tfvars):
     plan = prepare_plan(override_data)
     outputs = plan["planned_values"]["outputs"]
 
-    tower_db_dns    = outputs["tower_db_dns"]["value"]
+    tower_db_dns     = outputs["tower_db_dns"]["value"]
     tower_db_url     = outputs["tower_db_url"]["value"]
+    swell_db_dns     = outputs["swell_db_dns"]["value"]
     swell_db_url     = outputs["swell_db_url"]["value"]
     wave_lite_db_dns = outputs["wave_lite_db_dns"]["value"]
     wave_lite_db_url = outputs["wave_lite_db_url"]["value"]
@@ -147,7 +157,9 @@ def test_external_existing_db_url_no_ecosystem(backup_tfvars):
     # Then
     assert "existing.tower-db.com" == tower_db_dns
     assert "jdbc:mysql://existing.tower-db.com:3306/tower" in tower_db_url
-    assert "existing.tower-db.com" in swell_db_url           # TODO: Fix groundswell
+    assert "N/A" == swell_db_dns
+    assert "N/A" == swell_db_url
+    assert swell_db_url != tower_db_url
     # July 29/25 -- Wave-Lite feature does not currently support existing. If not new, uses local.
     assert "N/A" == wave_lite_db_dns
     assert "N/A" == wave_lite_db_url
@@ -176,8 +188,9 @@ def test_container_db_url_full_ecosystem(backup_tfvars):
     plan = prepare_plan(override_data)
     outputs = plan["planned_values"]["outputs"]
 
-    tower_db_dns    = outputs["tower_db_dns"]["value"]
+    tower_db_dns     = outputs["tower_db_dns"]["value"]
     tower_db_url     = outputs["tower_db_url"]["value"]
+    swell_db_dns     = outputs["swell_db_dns"]["value"]
     swell_db_url     = outputs["swell_db_url"]["value"]
     wave_lite_db_dns = outputs["wave_lite_db_dns"]["value"]
     wave_lite_db_url = outputs["wave_lite_db_url"]["value"]
@@ -186,7 +199,9 @@ def test_container_db_url_full_ecosystem(backup_tfvars):
     # Container DB should use the docker service name
     assert "db" == tower_db_dns
     assert "jdbc:mysql://db:3306/tower" in tower_db_url
-    assert "db:3306" in swell_db_url
+    assert "db" == swell_db_dns
+    assert "mysql://db:3306/swell" == swell_db_url
+    assert swell_db_url != tower_db_url
     assert "wave-db" == wave_lite_db_dns
     assert "jdbc:postgresql://wave-db:5432/wave" == wave_lite_db_url
     assert wave_lite_db_url != tower_db_url
@@ -212,8 +227,9 @@ def test_container_db_url_no_ecosystem(backup_tfvars):
     plan = prepare_plan(override_data)
     outputs = plan["planned_values"]["outputs"]
 
-    tower_db_dns    = outputs["tower_db_dns"]["value"]
+    tower_db_dns     = outputs["tower_db_dns"]["value"]
     tower_db_url     = outputs["tower_db_url"]["value"]
+    swell_db_dns     = outputs["swell_db_dns"]["value"]
     swell_db_url     = outputs["swell_db_url"]["value"]
     wave_lite_db_dns = outputs["wave_lite_db_dns"]["value"]
     wave_lite_db_url = outputs["wave_lite_db_url"]["value"]
@@ -222,7 +238,9 @@ def test_container_db_url_no_ecosystem(backup_tfvars):
     # Container DB should use the docker service name
     assert "db" == tower_db_dns
     assert "jdbc:mysql://db:3306/tower" in tower_db_url
-    assert "db:3306" in swell_db_url
+    assert "N/A" == swell_db_dns
+    assert "N/A" == swell_db_url
+    assert swell_db_url != tower_db_url
     assert "N/A" == wave_lite_db_dns
     assert "N/A" == wave_lite_db_url
     assert wave_lite_db_url != tower_db_url

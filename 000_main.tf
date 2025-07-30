@@ -265,6 +265,7 @@ module "connection_strings" {
   db_database_name = var.db_database_name
 
   # Groundswell Configuration
+  flag_enable_groundswell = var.flag_enable_groundswell
   swell_database_name = var.swell_database_name
 
   # Wave Configuration

@@ -86,3 +86,18 @@ def test_wave_nothing_enabled(backup_tfvars):
 
     # Should be "N/A" when neither Wave nor Wave-Lite is enabled.
     assert "N/A" == wave_url
+
+
+    tower_wave_dns             = outputs["tower_wave_dns"]["value"]
+    tower_wave_url             = outputs["tower_wave_url"]["value"]
+    wave_lite_db_dns           = outputs["wave_lite_db_dns"]["value"]
+    wave_lite_db_url           = outputs["wave_lite_db_url"]["value"]
+    wave_lite_redis_dns        = outputs["wave_lite_redis_dns"]["value"]
+    wave_lite_redis_url        = outputs["wave_lite_redis_url"]["value"]
+
+    assert "N/A" == tower_wave_dns
+    assert "N/A" == tower_wave_url
+    assert "N/A" == wave_lite_db_dns
+    assert "N/A" == wave_lite_db_url
+    assert "N/A" == wave_lite_redis_dns
+    assert "N/A" ==  wave_lite_redis_url

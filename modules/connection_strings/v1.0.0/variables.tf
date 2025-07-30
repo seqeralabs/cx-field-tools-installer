@@ -97,6 +97,11 @@ variable "elasticache_tower" {
 ## ------------------------------------------------------------------------------------
 ## Groundswell Configuration
 ## ------------------------------------------------------------------------------------
+variable "flag_enable_groundswell" {
+  description = "Whether to activate Groundswell."
+  type        = bool
+}
+
 variable "swell_database_name" {
   description = "The name of the Groundswell database"
   type        = string
