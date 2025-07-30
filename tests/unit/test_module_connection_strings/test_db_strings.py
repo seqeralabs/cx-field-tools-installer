@@ -37,7 +37,7 @@ def test_external_new_db_url_full_ecoystem(backup_tfvars):
     assert "mock.towerdb.com" in tower_db_url
     assert "mock.towerdb.com" in swell_db_url
     assert "mock.wave-db.com" == wave_lite_db_dns
-    assert "jdbc:postgresql://mock.wave-db.com/wave" == wave_lite_db_url
+    assert "jdbc:postgresql://mock.wave-db.com:5432/wave" == wave_lite_db_url
     assert wave_lite_db_url != tower_db_url
 
 
@@ -110,7 +110,7 @@ def test_external_existing_db_url_all_ecosystem(backup_tfvars):
     assert "existing.towerdb.com" in tower_db_url
     assert "existing.towerdb.com" in swell_db_url
     # July 29/25 -- Wave-Lite feature does not currently support existing. If not creating new remote, uses local db.
-    assert "wave-db:5432" == wave_lite_db_dns
+    assert "wave-db" == wave_lite_db_dns
     assert "jdbc:postgresql://wave-db:5432/wave" == wave_lite_db_url
     assert wave_lite_db_url != tower_db_url
 
@@ -185,7 +185,7 @@ def test_container_db_url_full_ecosystem(backup_tfvars):
     assert "db:3306" == tower_db_root
     assert "db:3306" in tower_db_url
     assert "db:3306" in swell_db_url
-    assert "wave-db:5432" == wave_lite_db_dns
+    assert "wave-db" == wave_lite_db_dns
     assert "jdbc:postgresql://wave-db:5432/wave" == wave_lite_db_url
     assert wave_lite_db_url != tower_db_url
 

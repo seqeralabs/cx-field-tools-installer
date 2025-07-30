@@ -107,18 +107,18 @@ locals {
   tower_wave_url = local.wave_enabled ? "https://${local.tower_wave_dns}" : "N/A"
 
   # NOTE: Current as of July 29/25, Wave-Lite cannot be deployed to a pre-existing RDS Postgres instance.
-  wl_db_container     = var.flag_use_container_db || var.flag_use_existing_external_db ? "wave-db:5432" : ""
+  wl_db_container     = var.flag_use_container_db || var.flag_use_existing_external_db ? "wave-db" : ""
   wl_db_external_mock = var.flag_create_external_db && var.use_mocks ? "mock.wave-db.com" : ""
   wl_db_external_new  = var.flag_create_external_db && !var.use_mocks ? var.rds_wave_lite.db_instance_address : ""
   wave_lite_db_dns    = local.wave_enabled ? join("", [local.wl_db_container, local.wl_db_external_mock, local.wl_db_external_new]) : "N/A"
-  wave_lite_db_url    = local.wave_enabled ? "jdbc:postgresql://${local.wave_lite_db_dns}/wave" : "N/A"
+  wave_lite_db_url    = local.wave_enabled ? "jdbc:postgresql://${local.wave_lite_db_dns}:5432/wave" : "N/A"
 
   # NOTE: Current as of July 29/25, Wave-Lite container redis doesn't support SSL
-  wl_redis_container     = var.flag_use_container_redis ? "wave-redis:6379" : ""
+  wl_redis_container     = var.flag_use_container_redis ? "wave-redis" : ""
   wl_redis_external_mock = var.flag_create_external_redis && var.use_mocks ? "mock.wave-redis.com" : ""
   wl_redis_external_new  = var.flag_create_external_redis && !var.use_mocks ? var.elasticache_wave_lite.url : ""
   wl_redis_prefixed      = var.flag_create_external_redis ? "rediss://${local.wave_lite_redis_dns}" : "redis://${local.wave_lite_redis_dns}"
   wave_lite_redis_dns    = local.wave_enabled ? join("", [local.wl_redis_container, local.wl_redis_external_mock, local.wl_redis_external_new]) : "N/A"
-  wave_lite_redis_url    = local.wave_enabled ? local.wl_redis_prefixed : "N/A"
+  wave_lite_redis_url    = local.wave_enabled ? "${local.wl_redis_prefixed}:6379" : "N/A"
 }
 

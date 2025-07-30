@@ -38,7 +38,7 @@ def test_external_redis_url_full_ecosystem(backup_tfvars):
     assert "mock.connect-redis.com" in tower_connect_redis_dns
     assert "mock.connect-redis.com" in tower_connect_redis_url
     assert "mock.wave-redis.com" == wave_lite_redis_dns
-    assert "rediss://mock.wave-redis.com" == wave_lite_redis_url
+    assert "rediss://mock.wave-redis.com:6379" == wave_lite_redis_url
     assert wave_lite_redis_url != tower_redis_url
 
 
@@ -104,13 +104,14 @@ def test_container_redis_url_all_ecosystem(backup_tfvars):
     tower_connect_redis_url = outputs["tower_connect_redis_url"]["value"]
     wave_lite_redis_dns     = outputs["wave_lite_redis_dns"]["value"]
     wave_lite_redis_url     = outputs["wave_lite_redis_url"]["value"]
+    assert wave_lite_redis_url != tower_redis_url
 
     # Then
     # Tower Redis should use container service name
     assert "redis://redis:6379" == tower_redis_url
     assert "redis:6379" in tower_connect_redis_dns
     assert "redis:6379" in tower_connect_redis_url
-    assert "wave-redis:6379" == wave_lite_redis_dns
+    assert "wave-redis" == wave_lite_redis_dns
     assert "redis://wave-redis:6379" == wave_lite_redis_url
     assert wave_lite_redis_url != tower_redis_url
 
