@@ -32,7 +32,7 @@ variable "flag_use_wave" {
 }
 
 variable "flag_use_wave_lite" {
-  description = "Whether to use Wave-Lite"
+  description = "Whether to use Wave"
   type        = bool
 }
 
@@ -91,12 +91,7 @@ variable "swell_database_name" {
 ## Wave Configuration
 ## ------------------------------------------------------------------------------------
 variable "wave_server_url" {
-  description = "The server URL for Wave"
-  type        = string
-}
-
-variable "wave_lite_server_url" {
-  description = "The server URL for Wave-Lite"
+  description = "The server URL for Wave or Wave-Lite"
   type        = string
 }
 

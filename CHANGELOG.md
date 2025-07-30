@@ -64,7 +64,6 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
 | New | Wave-Lite | `secrets_bootstrap_wave_lite` | Secrets associated with Wave-Lite configuration. |
 | New | Wave-Lite | `flag_use_wave_lite` | Enables/Disables Wave-Lite. |
 | New | Wave-Lite | `num_wave_lite_replicas` | Number of Wave-Lite relicas to run. |
-| New | Wave-Lite | `wave_lite_server_url` | The URL to use to check the Wave-Lite endpoint. |
 | New | Private Certificate | `flag_use_private_cacert` | Single flag replacing `flag_generate_private_cacert` & `flag_use_existing_private_cacert` |
 | | | | |
 | Modified | Studios | `data_studio_options` | Removed deprecated entries. Added `0.8.4` options. |
@@ -75,6 +74,7 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
 | Deleted | Private Certificate | `existing_ca_cert_file` | Deleted since not required after S3 Bucket pre-load flow change. |
 | Deleted | Private Certificate | `existing_ca_key_file` | Deleted since not required after S3 Bucket pre-load flow change. |
 | Deleted | Private Certificate | `flag_use_custom_docker_compose_file` | Deleted since not required after S3 Bucket pre-load flow change. |
+| Deleted | Wave-Lite | `wave_lite_server_url` | The URL to use to check the Wave-Lite endpoint. |
 
 
 

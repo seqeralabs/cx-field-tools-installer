@@ -4,20 +4,10 @@
 #   query = {
 #     tower_container_version = var.tower_container_version
 #     flag_use_container_db = var.flag_use_container_db
-#     db_container_engine_version = var.db_container_engine_version
-#     db_engine_version = var.db_engine_version
 #   }
 # }
 
-# BACKUP
-# data "external" "generate_db_connection_string" {
-#   program = ["python3", "${path.root}/scripts/installer/data_external/generate_db_connection_string.py"]
-#   query   = {}
-# }
-
 data "external" "generate_db_connection_string" {
-  # program = ["python3", "../../../scripts/installer/data_external/generate_db_connection_string.py"]
-  # program = ["python3", "scripts/installer/data_external/generate_db_connection_string.py"]
   program = ["python3", "${path.module}/../../../scripts/installer/data_external/generate_db_connection_string.py"]
   query   = {}
 }
@@ -112,13 +102,13 @@ locals {
 
   # WAVE-LITE
   # ---------------------------------------------------------------------------------------
-  # NOTE: June 16/25 -- Removed var.flag_use_wave_lite check as it was irrelevant. We are just assigning a string here
-  #                     The infra wont actually get created unless this flag is true.
   # TODO: June 16/25 -- Consider if `rediss://` hardcode aligns with how config is presented.
   # TODO: June 16/25 -- Consider if abbreviated variables make code more legible.
 
-  tower_wave_url = var.flag_use_wave_lite ? var.wave_lite_server_url : var.wave_server_url
-  tower_wave_dns = replace(local.tower_wave_url, "https://", "")
+  wave_enabled = var.flag_use_wave || var.flag_use_wave_lite ? true : false
+
+  tower_wave_dns = local.wave_enabled ? var.wave_server_url : "N/A"
+  tower_wave_url = local.wave_enabled ? "https://${local.tower_wave_dns}" : "N/A"
 
   wl_db_local             = "wave-db:5432"
   wl_db_remote_new        = try(var.rds_wave_lite.db_instance_address, "")

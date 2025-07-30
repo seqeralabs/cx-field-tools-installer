@@ -199,12 +199,6 @@ locals {
 
   # Private CA Files
   # ---------------------------------------------------------------------------------------
-  private_ca_cert       = "${module.connection_strings.tower_base_url}.crt"
-  private_ca_key        = "${module.connection_strings.tower_base_url}.key
-
-
-  # Private CA Files
-  # ---------------------------------------------------------------------------------------
   private_ca_cert = "${module.connection_strings.tower_base_url}.crt"
   private_ca_key  = "${module.connection_strings.tower_base_url}.key"
 
@@ -215,7 +209,7 @@ locals {
   dollar      = "$"
   singlequote = "'"
 
-    
+
   # Migrate-DB Flag
   # ---------------------------------------------------------------------------------------
   # Migrate-db only available for 23.4.1+ or higher. Check to ensure we don't include for 23.3.x or below. 
@@ -255,14 +249,11 @@ module "connection_strings" {
   source = "./modules/connection_strings/v1.0.0"
 
   # Feature Flags
-  flag_create_load_balancer       = var.flag_create_load_balancer
-  flag_do_not_use_https           = var.flag_do_not_use_https
-  flag_create_external_db         = var.flag_create_external_db
-  flag_use_existing_external_db   = var.flag_use_existing_external_db
-  flag_create_external_redis      = var.flag_create_external_redis
-  flag_use_wave                   = var.flag_use_wave
-  flag_use_wave_lite              = var.flag_use_wave_lite
-  flag_studio_enable_path_routing = var.flag_studio_enable_path_routing
+  flag_create_load_balancer     = var.flag_create_load_balancer
+  flag_do_not_use_https         = var.flag_do_not_use_https
+  flag_create_external_db       = var.flag_create_external_db
+  flag_use_existing_external_db = var.flag_use_existing_external_db
+  flag_create_external_redis    = var.flag_create_external_redis
 
   # Tower Configuration
   tower_server_url = var.tower_server_url
@@ -273,9 +264,13 @@ module "connection_strings" {
   swell_database_name = var.swell_database_name
 
   # Wave Configuration
-  wave_server_url              = var.flag_use_wave ? var.wave_server_url : "https://wave.seqera.io"
-  wave_lite_server_url         = var.flag_use_wave_lite ? var.wave_lite_server_url : ""
-  data_studio_path_routing_url = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : ""
+  flag_use_wave      = var.flag_use_wave
+  flag_use_wave_lite = var.flag_use_wave_lite
+  wave_server_url    = try(var.wave_server_url, null)
+
+  # Studios Configuration
+  flag_studio_enable_path_routing = var.flag_studio_enable_path_routing
+  data_studio_path_routing_url    = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : ""
 
   # External Resource References
   rds_tower             = var.flag_create_external_db ? try(module.rds[0], null) : null

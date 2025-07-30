@@ -38,7 +38,7 @@ In this flow, we create a new self-signed Certificate Authority and issue a leaf
         2. If using path-based routing (available v25.2.0+), it is the value specified in _terraform.tfvars_ `data_studio_path_routing_url`.
 
     1. Wave-Lite (_optional_)
-        1. The value specified in _terraform.tfvars_ `wave_lite_server_url` (_remove prefix_).
+        1. The value specified in _terraform.tfvars_ `wave_server_url` (when `flag_use_wave_lite = true`).
 
 1. Create certificate assets.
 

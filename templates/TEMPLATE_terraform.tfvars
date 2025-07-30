@@ -211,7 +211,7 @@ Enable Tower to connect to the Wave service.
 To connect the Seqera-hosted Wave Service, set `flag_use_wave` to true.
 To connect to a self-hosted Wave Lite instance instead, set `flag_use_wave_lite` to true.
 
-You should not need to modify the URL of the Seqera-hosted wave.
+Seqera-hosted wave is reached at "wave.seqera.io" Wave-Lite is a domain defined by you.  Do not add `https://` for either one.
 
 If you are deploying a Wave-LIte instance, you will need to make a decision re: DNS. Seqera recommends exposing 
 the service as a subdomain of your `tower_server_url` value (see entry in section further below). This pattern works 
@@ -224,11 +224,11 @@ to work. e.g:
     - mywavelite.example.com
 
 */
-flag_use_wave          = false
-flag_use_wave_lite     = false
+flag_use_wave      = false
+flag_use_wave_lite = false
+
 num_wave_lite_replicas = 2
 wave_server_url        = "https://wave.seqera.io"
-wave_lite_server_url   = "https://REPLACE_ME_IF_NEEDED"
 
 /*
 ## ------------------------------------------------------------------------------------
