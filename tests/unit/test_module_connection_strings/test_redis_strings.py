@@ -35,8 +35,8 @@ def test_external_redis_url_full_ecosystem(backup_tfvars):
 
     # Then
     assert "redis://mock-new-tower-redis.example.com:6379" == tower_redis_url
-    assert "mock.connect-redis.com" in tower_connect_redis_dns
-    assert "mock.connect-redis.com" in tower_connect_redis_url
+    assert "mock.connect-redis.com" == tower_connect_redis_dns
+    assert "mock.connect-redis.com:6379" == tower_connect_redis_url
     assert "mock.wave-redis.com" == wave_lite_redis_dns
     assert "rediss://mock.wave-redis.com:6379" == wave_lite_redis_url
     assert wave_lite_redis_url != tower_redis_url
@@ -68,8 +68,8 @@ def test_external_redis_url_no_ecosystem(backup_tfvars):
 
     # Then
     assert "redis://mock-new-tower-redis.example.com:6379" == tower_redis_url
-    assert "N/A" in tower_connect_redis_dns
-    assert "N/A" in tower_connect_redis_url
+    assert "N/A" == tower_connect_redis_dns
+    assert "N/A" == tower_connect_redis_url
     assert "N/A" == wave_lite_redis_dns
     assert "N/A" == wave_lite_redis_url
 
@@ -109,8 +109,8 @@ def test_container_redis_url_all_ecosystem(backup_tfvars):
     # Then
     # Tower Redis should use container service name
     assert "redis://redis:6379" == tower_redis_url
-    assert "redis:6379" in tower_connect_redis_dns
-    assert "redis:6379" in tower_connect_redis_url
+    assert "redis" == tower_connect_redis_dns
+    assert "redis:6379" == tower_connect_redis_url
     assert "wave-redis" == wave_lite_redis_dns
     assert "redis://wave-redis:6379" == wave_lite_redis_url
     assert wave_lite_redis_url != tower_redis_url
@@ -147,8 +147,8 @@ def test_container_redis_url_no_ecosystem(backup_tfvars):
     # Then
     # Tower Redis should use container service name
     assert "redis://redis:6379" == tower_redis_url
-    assert "N/A" in tower_connect_redis_dns
-    assert "N/A" in tower_connect_redis_url
+    assert "N/A" == tower_connect_redis_dns
+    assert "N/A" == tower_connect_redis_url
     assert "N/A" == wave_lite_redis_dns
     assert "N/A" == wave_lite_redis_url
     assert wave_lite_redis_url != tower_redis_url

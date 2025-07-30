@@ -78,12 +78,10 @@ locals {
   # ---------------------------------------------------------------------------------------
   # Connect needs Redis but not its own database.
   # DNS needs host-matching in the ALB (e.g.): studio.TOWER_DOMAIN, 123.TOWER_DOMAIN, 456.TOWER_DOMAIN
-  # July 23/25 - modifying both existing `tower_connect_` values to handle path-based routing. 
-  #  NOTE: `tower_connect_Wildcard_dns` is misleading now since one of the options isn't actually a wildcard, but it means no changes in downstream DNS & ALB rules.
+  # NOTE: `tower_connect_Wildcard_dns` is misleading now since one of the options isn't actually a wildcard, but it means no changes in downstream DNS & ALB rules.
   tower_connect_dns          = var.flag_studio_enable_path_routing ? "${var.data_studio_path_routing_url}" : "connect.${var.tower_server_url}"
   tower_connect_wildcard_dns = var.flag_studio_enable_path_routing ? "${var.data_studio_path_routing_url}" : "*.${var.tower_server_url}"
 
-  # TODO: July 22/25 -- Figure out if path-based routing affects this.
   connect_url_secure       = "https://${local.tower_connect_dns}"
   connect_url_insecure     = "http://${var.tower_server_url}:9090"
   tower_connect_server_url = local.use_insecure_ec2 ? local.connect_url_insecure : local.connect_url_secure
@@ -91,12 +89,13 @@ locals {
 
   # DONT append `redis://` as prefix here. Studios does this itself. Breaks if we reuse `tower_redis_url`.
   # DNS and URL will be the same but harmonizing them for consistency with other outputs and to be positioned for eventual Studios change.
-  connect_redis_container     = var.flag_use_container_redis ? "redis:6379" : ""
+  connect_redis_container     = var.flag_use_container_redis ? "redis" : ""
   connect_redis_external_mock = var.flag_create_external_redis && var.use_mocks ? "mock.connect-redis.com" : ""
-  connect_redis_external_new  = var.flag_create_external_redis && !var.use_mocks ? "${var.elasticache_tower.cache_nodes[0].address}:${var.elasticache_tower.cache_nodes[0].port}" : ""
+  connect_redis_external_new  = var.flag_create_external_redis && !var.use_mocks ? "${var.elasticache_tower.cache_nodes[0].address}" : ""
   tower_connect_redis_dns     = var.flag_enable_data_studio ? join("", [local.connect_redis_container, local.connect_redis_external_mock, local.connect_redis_external_new]) : "N/A"
-  tower_connect_redis_url     = var.flag_enable_data_studio ? "${local.tower_connect_redis_dns}" : "N/A"
 
+  connect_redis_dns_with_port = var.flag_create_external_redis && !var.use_mocks ? "${local.tower_connect_redis_dns}:${var.elasticache_tower.cache_nodes[0].port}" : "${local.tower_connect_redis_dns}:6379"
+  tower_connect_redis_url     = var.flag_enable_data_studio ? "${local.connect_redis_dns_with_port}" : "N/A"
 
   # WAVE-LITE
   # ---------------------------------------------------------------------------------------
