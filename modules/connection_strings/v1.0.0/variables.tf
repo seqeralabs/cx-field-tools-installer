@@ -36,6 +36,11 @@ variable "flag_use_container_redis" {
   type        = bool
 }
 
+variable "flag_enable_data_studio" {
+  description = "Whether to use Studios."
+  type        = bool
+}
+
 variable "flag_use_wave" {
   description = "Whether to use Wave"
   type        = bool

@@ -89,14 +89,13 @@ locals {
   tower_connect_server_url = local.use_insecure_ec2 ? local.connect_url_insecure : local.connect_url_secure
 
 
-  # Connect logic seems to append `redis://` as prefix. Breaks if we reuse `tower_redis_url`.
-  # TODO: May 16/2025 -- post-Wave-Lite Feature Release, check if auto-appending behaviour still happening.
-  connect_redis_local             = "redis:6379"
-  connect_redis_remote_new        = try("${var.elasticache_tower.cache_nodes[0].address}:${var.elasticache_tower.cache_nodes[0].port}", "")
-  connect_redis_remote_mock       = "mock-new-connect-redis.example.com:6379"
-  connect_redis_remote_reconciled = var.use_mocks ? local.connect_redis_remote_mock : local.connect_redis_remote_new
-  connect_redis_url_reconciled    = var.flag_create_external_redis ? local.connect_redis_remote_reconciled : local.connect_redis_local
-  tower_connect_redis_url         = local.connect_redis_url_reconciled
+  # DONT append `redis://` as prefix here. Studios does this itself. Breaks if we reuse `tower_redis_url`.
+  # DNS and URL will be the same but harmonizing them for consistency with other outputs and to be positioned for eventual Studios change.
+  connect_redis_container     = var.flag_use_container_redis ? "redis:6379" : ""
+  connect_redis_external_mock = var.flag_create_external_redis && var.use_mocks ? "mock.connect-redis.com" : ""
+  connect_redis_external_new  = var.flag_create_external_redis && !var.use_mocks ? "${var.elasticache_tower.cache_nodes[0].address}:${var.elasticache_tower.cache_nodes[0].port}" : ""
+  tower_connect_redis_dns     = var.flag_enable_data_studio ? join("", [local.connect_redis_container, local.connect_redis_external_mock, local.connect_redis_external_new]) : "N/A"
+  tower_connect_redis_url     = var.flag_enable_data_studio ? "${local.tower_connect_redis_dns}" : "N/A"
 
 
   # WAVE-LITE

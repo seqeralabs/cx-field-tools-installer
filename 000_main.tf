@@ -257,7 +257,7 @@ module "connection_strings" {
   flag_use_container_db         = var.flag_use_container_db
 
   flag_create_external_redis = var.flag_create_external_redis
-  flag_use_container_redis = var.flag_use_container_redis
+  flag_use_container_redis   = var.flag_use_container_redis
 
   # Tower Configuration
   tower_server_url = var.tower_server_url
@@ -273,6 +273,7 @@ module "connection_strings" {
   wave_server_url    = try(var.wave_server_url, null)
 
   # Studios Configuration
+  flag_enable_data_studio         = var.flag_enable_data_studio
   flag_studio_enable_path_routing = var.flag_studio_enable_path_routing
   data_studio_path_routing_url    = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : ""
 

@@ -61,6 +61,12 @@ output "tower_connect_server_url" {
   value       = local.tower_connect_server_url
 }
 
+output "tower_connect_redis_dns" {
+  description = "The Redis DNS for Connect"
+  value       = local.tower_connect_redis_dns
+  sensitive   = false
+}
+
 output "tower_connect_redis_url" {
   description = "The Redis URL for Connect"
   value       = local.tower_connect_redis_url

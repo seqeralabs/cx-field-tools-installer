@@ -90,6 +90,11 @@ output "tower_connect_server_url" {
   value       = module.connection_strings.tower_connect_server_url
 }
 
+output "tower_connect_redis_dns" {
+  description = "The DNS for the Redis instance used by Connect."
+  value       = module.connection_strings.tower_connect_redis_dns
+}
+
 output "tower_connect_redis_url" {
   description = "The URL for the Redis instance used by Connect."
   value       = module.connection_strings.tower_connect_redis_url

@@ -28,13 +28,15 @@ def test_external_redis_url_full_ecosystem(backup_tfvars):
     outputs                 = plan["planned_values"]["outputs"]
 
     tower_redis_url         = outputs["tower_redis_url"]["value"]
+    tower_connect_redis_dns = outputs["tower_connect_redis_dns"]["value"]
     tower_connect_redis_url = outputs["tower_connect_redis_url"]["value"]
     wave_lite_redis_dns     = outputs["wave_lite_redis_dns"]["value"]
     wave_lite_redis_url     = outputs["wave_lite_redis_url"]["value"]
 
     # Then
     assert "redis://mock-new-tower-redis.example.com:6379" == tower_redis_url
-    assert "mock-new-connect-redis.example.com" in tower_connect_redis_url
+    assert "mock.connect-redis.com" in tower_connect_redis_dns
+    assert "mock.connect-redis.com" in tower_connect_redis_url
     assert "mock.wave-redis.com" == wave_lite_redis_dns
     assert "rediss://mock.wave-redis.com" == wave_lite_redis_url
     assert wave_lite_redis_url != tower_redis_url
@@ -59,13 +61,15 @@ def test_external_redis_url_no_ecosystem(backup_tfvars):
     outputs                 = plan["planned_values"]["outputs"]
 
     tower_redis_url         = outputs["tower_redis_url"]["value"]
+    tower_connect_redis_dns = outputs["tower_connect_redis_dns"]["value"]
     tower_connect_redis_url = outputs["tower_connect_redis_url"]["value"]
     wave_lite_redis_dns     = outputs["wave_lite_redis_dns"]["value"]
     wave_lite_redis_url     = outputs["wave_lite_redis_url"]["value"]
 
     # Then
     assert "redis://mock-new-tower-redis.example.com:6379" == tower_redis_url
-    assert "mock-new-connect-redis.example.com" in tower_connect_redis_url
+    assert "N/A" in tower_connect_redis_dns
+    assert "N/A" in tower_connect_redis_url
     assert "N/A" == wave_lite_redis_dns
     assert "N/A" == wave_lite_redis_url
 
@@ -96,6 +100,7 @@ def test_container_redis_url_all_ecosystem(backup_tfvars):
     outputs                 = plan["planned_values"]["outputs"]
 
     tower_redis_url         = outputs["tower_redis_url"]["value"]
+    tower_connect_redis_dns = outputs["tower_connect_redis_dns"]["value"]
     tower_connect_redis_url = outputs["tower_connect_redis_url"]["value"]
     wave_lite_redis_dns     = outputs["wave_lite_redis_dns"]["value"]
     wave_lite_redis_url     = outputs["wave_lite_redis_url"]["value"]
@@ -103,6 +108,7 @@ def test_container_redis_url_all_ecosystem(backup_tfvars):
     # Then
     # Tower Redis should use container service name
     assert "redis://redis:6379" == tower_redis_url
+    assert "redis:6379" in tower_connect_redis_dns
     assert "redis:6379" in tower_connect_redis_url
     assert "wave-redis:6379" == wave_lite_redis_dns
     assert "redis://wave-redis:6379" == wave_lite_redis_url
@@ -132,6 +138,7 @@ def test_container_redis_url_no_ecosystem(backup_tfvars):
     outputs                 = plan["planned_values"]["outputs"]
 
     tower_redis_url         = outputs["tower_redis_url"]["value"]
+    tower_connect_redis_dns = outputs["tower_connect_redis_dns"]["value"]
     tower_connect_redis_url = outputs["tower_connect_redis_url"]["value"]
     wave_lite_redis_dns     = outputs["wave_lite_redis_dns"]["value"]
     wave_lite_redis_url     = outputs["wave_lite_redis_url"]["value"]
@@ -139,7 +146,8 @@ def test_container_redis_url_no_ecosystem(backup_tfvars):
     # Then
     # Tower Redis should use container service name
     assert "redis://redis:6379" == tower_redis_url
-    assert "redis:6379" in tower_connect_redis_url  #TODO: Fix this
+    assert "N/A" in tower_connect_redis_dns
+    assert "N/A" in tower_connect_redis_url
     assert "N/A" == wave_lite_redis_dns
     assert "N/A" == wave_lite_redis_url
     assert wave_lite_redis_url != tower_redis_url
