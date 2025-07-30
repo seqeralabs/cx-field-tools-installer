@@ -1,6 +1,4 @@
-# May 27/2025: removing since this causes problems with the native compose feature in Docker (we 
-#              no longer install the separate docker-compose extension)
-# version: "3"
+# `version: "3"` causes problems with the native compose feature in Docker (i.e. not the separate docker-compose extension)
 services:
 
 %{ if flag_use_container_db == true ~}
@@ -254,10 +252,12 @@ services:
       - $HOME/target/customcerts/${private_ca_key}:/etc/ssl/private/${private_ca_key}
     restart: always
     depends_on:
-      - wave-lite
+%{ if flag_use_wave_lite == true ~}
       - wave-lite-reverse-proxy
+%{ endif ~}
+%{ if flag_enable_data_studio == true ~}
       - connect-proxy
-      - frontend
+%{ endif ~}
 %{ endif ~}
 
 %{ if flag_use_wave_lite == true ~}

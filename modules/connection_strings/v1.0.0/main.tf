@@ -1,16 +1,16 @@
 # https://medium.com/@leslie.alldridge/terraform-external-data-source-using-custom-python-script-with-example-cea5e618d83e
-# data "external" "generate_db_connection_string" {
-#   program = ["python3", "${path.module}/.githooks/data_external/generate_db_connection_string.py"]
-#   query = {
-#     tower_container_version = var.tower_container_version
-#     flag_use_container_db = var.flag_use_container_db
-#   }
-# }
-
 data "external" "generate_db_connection_string" {
   program = ["python3", "${path.module}/../../../scripts/installer/data_external/generate_db_connection_string.py"]
   query   = {}
+
+  # Example how to use:
+  #   query = {
+  #     tower_container_version = var.tower_container_version
+  #     flag_use_container_db = var.flag_use_container_db
+  #   }
 }
+
+# TODO: Harmonize all these keys (new_real; new_mock)
 
 locals {
   # Testing Mocks
@@ -93,9 +93,9 @@ locals {
   # Connect logic seems to append `redis://` as prefix. Breaks if we reuse `tower_redis_url`.
   # TODO: May 16/2025 -- post-Wave-Lite Feature Release, check if auto-appending behaviour still happening.
   connect_redis_local             = "redis:6379"
-  connect_redis_remote_real       = try("${var.elasticache_tower.cache_nodes[0].address}:${var.elasticache_tower.cache_nodes[0].port}", "")
+  connect_redis_remote_new        = try("${var.elasticache_tower.cache_nodes[0].address}:${var.elasticache_tower.cache_nodes[0].port}", "")
   connect_redis_remote_mock       = "mock-new-connect-redis.example.com:6379"
-  connect_redis_remote_reconciled = local.use_mocks ? local.connect_redis_remote_mock : local.connect_redis_remote_real
+  connect_redis_remote_reconciled = local.use_mocks ? local.connect_redis_remote_mock : local.connect_redis_remote_new
   connect_redis_url_reconciled    = var.flag_create_external_redis ? local.connect_redis_remote_reconciled : local.connect_redis_local
   tower_connect_redis_url         = local.connect_redis_url_reconciled
 
@@ -114,7 +114,8 @@ locals {
   wl_db_remote_new        = try(var.rds_wave_lite.db_instance_address, "")
   wl_db_remote_mock       = "mock-new-wave-lite-db.example.com"
   wl_db_remote_reconciled = local.use_mocks ? local.wl_db_remote_mock : local.wl_db_remote_new
-  wave_lite_db_url        = var.flag_create_external_db ? local.wl_db_remote_reconciled : local.wl_db_local
+  wl_db_url_reconciled    = var.flag_create_external_db ? local.wl_db_remote_reconciled : local.wl_db_local
+  wave_lite_db_url        = local.wave_enabled ? local.wl_db_url_reconciled : "N/A"
 
   wl_redis_local             = "wave-redis:6379"
   wl_redis_remote_new        = try("${var.elasticache_wave_lite.url}", "abc")
