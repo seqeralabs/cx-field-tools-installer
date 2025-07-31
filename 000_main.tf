@@ -225,6 +225,11 @@ locals {
     tonumber(length(regexall("^v2[5-9]", var.tower_container_version))) >= 1 ? true : false
   )
 
+
+  # Ansible
+  # ---------------------------------------------------------------------------------------
+  playbook_dir = "/home/ec2-user/target/ansible"
+
 }
 
 # Add subnet_collector module. 

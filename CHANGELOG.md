@@ -40,6 +40,7 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
         - (Architecture) -- Moved conditional Ansible steps from Bash environment logic to `.tpl` inclusion / exclusion.
         - (Architecture) -- Modified `docker-compose.yml` so that all configuration files are mounted from their respective `target/**` folder.
         - (Architecture) -- Bumped `seqerakit --> v0.5.5` and `tw --> 0.14.0`.
+        - (Architecture) -- Broke out monolithic step in `011_configure_vm.tf` into smaller chained resources for bettter visibility and reduced blast radius.
         <br /><br />
         - (Security) -- Bumped `java-17-amazon-corretto-devel-1:17.0.14+7-1.amzn2023.1` to `1:17.0.15+6-1.amzn2023.1`.
         - (Security) -- Bumped docker version from `28.1.1` --> `28.3.1`.
