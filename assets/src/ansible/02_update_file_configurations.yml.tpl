@@ -43,6 +43,23 @@
         chown ec2-user:ec2-user data-studios.env
         chown ec2-user:ec2-user data-studios-rsa.pem
 
+    - name: Switch primary group to docker to avoid need to logout.
+      # https://stackoverflow.com/questions/49434650/how-to-add-a-user-to-a-group-without-logout-login-bash-script
+      become: true
+      become_user: ec2-user
+      ansible.builtin.shell: |
+        newgrp docker
+
+    - name: Reinstall Ansible community docker package
+      become: true
+      become_user: ec2-user
+      # Force reinstall the docker.community plugin since Ansible complains if we dont.
+      # Ansible will complain about the docker_compose_v2 modules when only 3.4.11 is present.
+      ansible.builtin.shell: |
+        cd /home/ec2-user && source ~/.bashrc
+
+        ansible-galaxy collection install community.docker:==3.7.0
+
     - name: Populate SP env file with DB connection variables.
       become: true
       become_user: ec2-user
@@ -140,27 +157,14 @@
         aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.key ${tower_base_url}.key
 %{ endif ~}
 
-    - name: Switch primary group to docker to avoid need to logout.
-      # https://stackoverflow.com/questions/49434650/how-to-add-a-user-to-a-group-without-logout-login-bash-script
-      become: true
-      become_user: ec2-user
-      ansible.builtin.shell: |
-        newgrp docker
-
-    - name: Reinstall Ansible community docker package
-      become: true
-      become_user: ec2-user
-      # Force reinstall the docker.community plugin since Ansible complains if we dont.
-      # Cant be in the 03-series because Ansible will complain about the docker_compose_v2 modules when only 3.4.11 is present.
-      ansible.builtin.shell: |
-        cd /home/ec2-user && source ~/.bashrc
-
-        ansible-galaxy collection install community.docker:==3.7.0
-
+%{ if flag_enable_data_studio ~}
     - name: Create Studio 0.8.2 data folder.
       become: true
       become_user: ec2-user
-      # DEPENDENCY: July 22/25 -- remove when fixed upstream in Studios in a later release.
       ansible.builtin.shell: |
+        # DEPENDENCY: July 22/25 -- remove when fixed upstream in Studios in a later release.
+        echo "Creating data directory on host for Studios."
+
         mkdir -p /home/ec2-user/.tower/connect
         sudo chmod 777 /home/ec2-user/.tower/connect
+%{ endif ~}

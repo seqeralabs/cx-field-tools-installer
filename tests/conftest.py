@@ -271,6 +271,7 @@ def config_ansible_02_all_flags_true():
         flag_create_load_balancer     = false
         flag_use_private_cacert       = true
 
+        flag_enable_data_studio       = true
         flag_enable_groundswell       = true
         flag_use_wave_lite            = true
     """
@@ -302,6 +303,7 @@ def config_ansible_02_all_flags_false():
         flag_create_load_balancer     = true
         flag_use_private_cacert       = false
 
+        flag_enable_data_studio       = false
         flag_enable_groundswell       = false
         flag_use_wave_lite            = false
     """

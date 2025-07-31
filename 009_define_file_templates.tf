@@ -327,6 +327,7 @@ locals {
       populate_external_db         = local.populate_external_db,
       tower_db_dns                 = module.connection_strings.tower_db_dns,
       flag_enable_groundswell      = var.flag_enable_groundswell,
+      flag_enable_data_studio      = var.flag_enable_data_studio,
       flag_use_wave_lite           = var.flag_use_wave_lite,
       wave_lite_db_dns             = module.connection_strings.wave_lite_db_dns
     }

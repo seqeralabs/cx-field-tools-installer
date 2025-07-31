@@ -48,10 +48,11 @@ def test_002_update_file_configurations_all_present(backup_tfvars, config_ansibl
     # ------------------------------------------------------------------------------------
     # Test tower.env - assert all core keys exist
     # ------------------------------------------------------------------------------------
-    assert "Populating external Platform DB." in ansible_file             # Tower DB
-    assert "Populating Wave Lite Postgres." in ansible_file               # Wabe-Lite DB
-    assert "Populating external DB with Groundswell." in ansible_file     # Groundswell DB
-    assert "Configuring private certificates." in ansible_file            # Private CA cert
+    assert "Populating external Platform DB." in ansible_file               # Tower DB
+    assert "Populating Wave Lite Postgres." in ansible_file                 # Wabe-Lite DB
+    assert "Populating external DB with Groundswell." in ansible_file       # Groundswell DB
+    assert "Configuring private certificates." in ansible_file              # Private CA cert
+    assert "Creating data directory on host for Studios." in ansible_file   # Studios datadir 0.8.2
 
 
 @pytest.mark.local
@@ -82,7 +83,8 @@ def test_002_update_file_configurations_none_present(backup_tfvars, config_ansib
     # ------------------------------------------------------------------------------------
     # Test tower.env - assert all core keys exist
     # ------------------------------------------------------------------------------------
-    assert "Populating external Platform DB." not in ansible_file             # Tower DB
-    assert "Populating Wave Lite Postgres." not in ansible_file               # Wabe-Lite DB
-    assert "Populating external DB with Groundswell." not in ansible_file     # Groundswell DB
-    assert "Configuring private certificates." not in ansible_file            # Private CA cert
+    assert "Populating external Platform DB." not in ansible_file               # Tower DB
+    assert "Populating Wave Lite Postgres." not in ansible_file                 # Wabe-Lite DB
+    assert "Populating external DB with Groundswell." not in ansible_file       # Groundswell DB
+    assert "Configuring private certificates." not in ansible_file              # Private CA cert
+    assert "Creating data directory on host for Studios." not in ansible_file   # Studios datadir 0.8.2
