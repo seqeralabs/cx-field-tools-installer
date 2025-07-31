@@ -150,3 +150,69 @@ def test_005_should_not_be_present(backup_tfvars, config_ansible_05_should_not_b
     # Test tower.env - assert all core keys exist
     # ------------------------------------------------------------------------------------
     assert "Patching container db with groundswell init script." not in ansible_file_05  # Groundswell
+
+
+@pytest.mark.local
+@pytest.mark.ansible
+@pytest.mark.vpc_existing
+@pytest.mark.long
+def test_006_should_be_present(backup_tfvars, config_ansible_06_should_be_present):  # teardown_tf_state_all):
+    """
+    Test 
+    """
+
+    # Given
+    print("Testing Ansible 02_update_file_configurations.yml.tpl.")
+
+    # When
+    outputs = config_ansible_06_should_be_present["planned_values"]["outputs"]
+    variables = config_ansible_06_should_be_present["variables"]
+
+    ansible_file_06 = read_file(f"{root}/assets/target/ansible/06_run_seqerakit.yml")
+
+    """
+    WARNING!!!!!!
+      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
+            AFFECTS: `outputs` and `variables`
+      - tower_env_file values are directly cracked from HCL so they are "true".
+    """
+
+    # ------------------------------------------------------------------------------------
+    # Test tower.env - assert all core keys exist
+    # ------------------------------------------------------------------------------------
+    assert "Seqerakit - Using hosts file." in ansible_file_06
+    assert "Seqerakit - Using insecure."   in ansible_file_06
+    assert "Seqerakit - Using truststore." not in ansible_file_06
+
+
+@pytest.mark.local
+@pytest.mark.ansible
+@pytest.mark.vpc_existing
+@pytest.mark.long
+def test_006_should_not_be_present(backup_tfvars, config_ansible_06_should_not_be_present):  # teardown_tf_state_all):
+    """
+    Test 
+    """
+
+    # Given
+    print("Testing Ansible 02_update_file_configurations.yml.tpl.")
+
+    # When
+    outputs = config_ansible_06_should_not_be_present["planned_values"]["outputs"]
+    variables = config_ansible_06_should_not_be_present["variables"]
+
+    ansible_file_06 = read_file(f"{root}/assets/target/ansible/06_run_seqerakit.yml")
+
+    """
+    WARNING!!!!!!
+      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
+            AFFECTS: `outputs` and `variables`
+      - tower_env_file values are directly cracked from HCL so they are "true".
+    """
+
+    # ------------------------------------------------------------------------------------
+    # Test tower.env - assert all core keys exist
+    # ------------------------------------------------------------------------------------
+    assert "Seqerakit - Using hosts file." not in ansible_file_06
+    assert "Seqerakit - Using insecure."   not in ansible_file_06
+    assert "Seqerakit - Using truststore." in ansible_file_06

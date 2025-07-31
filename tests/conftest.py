@@ -322,7 +322,7 @@ def config_ansible_02_should_not_be_present():
 @pytest.fixture(scope="module")  # function
 def config_ansible_05_should_be_present():
     """
-    Test conditional blocks in Ansible 02_update_file_configurations.yml.tpl
+    Test conditional blocks in Ansible 05_patch_groundswell.yml
     """
 
     override_data = """
@@ -347,7 +347,7 @@ def config_ansible_05_should_be_present():
 @pytest.fixture(scope="module")  # function
 def config_ansible_05_should_not_be_present():
     """
-    Test conditional blocks in Ansible 02_update_file_configurations.yml.tpl
+    Test conditional blocks in Ansible 05_patch_groundswell.yml
     """
 
     override_data = """
@@ -367,6 +367,53 @@ def config_ansible_05_should_not_be_present():
     yield plan
 
     run_terraform_destroy()
+
+
+@pytest.fixture(scope="module")  # function
+def config_ansible_06_should_be_present():
+    """
+    Test conditional blocks in Ansible 06_run_seqerakit.yml
+    """
+
+    override_data = """
+        flag_create_hosts_file_entry  = true
+        flag_do_not_use_https         = true
+
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    qualifier = "-target=null_resource.generate_independent_config_files"
+    plan = prepare_plan(override_data)
+    run_terraform_apply(qualifier)
+    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
+
+    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
+    yield plan
+
+    run_terraform_destroy()
+
+
+@pytest.fixture(scope="module")  # function
+def config_ansible_06_should_not_be_present():
+    """
+    Test conditional blocks in Ansible 06_run_seqerakit.yml
+    """
+
+    override_data = """
+        flag_create_hosts_file_entry  = false
+        flag_do_not_use_https         = false
+
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    qualifier = "-target=null_resource.generate_independent_config_files"
+    plan = prepare_plan(override_data)
+    run_terraform_apply(qualifier)
+    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
+
+    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
+    yield plan
+
+    run_terraform_destroy()
+
 
 @pytest.fixture(scope="function")
 def teardown_tf_state_all():

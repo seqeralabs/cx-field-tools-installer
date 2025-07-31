@@ -43,13 +43,19 @@
 
 
       # Using true in both ifs because we do not want TF to fail if seqerakit fails.
-      if [[ $SEQERAKIT_USE_HOSTS_FILE == "true" ]]; then
-        export TOWER_API_ENDPOINT="http://localhost:8000/api"
-        seqerakit setup.yml --cli="--insecure" || true
+%{ if flag_create_hosts_file_entry ~}
+      echo "Seqerakit - Using hosts file."
+      export TOWER_API_ENDPOINT="http://localhost:8000/api"
+      seqerakit setup.yml --cli="--insecure" || true
+%{ endif ~}
 
-      elif [[ $CACERT_DO_NOT_USE_HTTPS == "true" ]]; then
-        seqerakit setup.yml --cli="--insecure" || true
+%{ if flag_do_not_use_https ~}
+      echo "Seqerakit - Using insecure."
+      seqerakit setup.yml --cli="--insecure" || true
+%{ endif ~}
 
-      else
-        seqerakit setup.yml --cli="-Djavax.net.ssl.trustStore=/usr/lib/jvm/java-17-amazon-corretto/lib/security/cacerts" || true
-      fi
+%{ if !flag_create_hosts_file_entry && !flag_do_not_use_https}
+      # This is used by default if the other two edgecases arent true.
+      echo "Seqerakit - Using truststore."
+      seqerakit setup.yml --cli="-Djavax.net.ssl.trustStore=/usr/lib/jvm/java-17-amazon-corretto/lib/security/cacerts" || true
+%{ endif ~}
