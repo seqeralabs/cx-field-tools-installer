@@ -431,15 +431,14 @@ data_studio_eligible_workspaces           = ""
 #  2. `qualifier` values MUST use hyphens (`-`), NOT underscores (`_`).
 #  3. Versioning Strategy (See Design Decisions for more details.)
 #     - Major and minor versions are pinned explicitly (e.g., `1.83.0-0.7.1` and `1.83.0-0.8.0`).  
-#     - Preference for clients v0.7 with a sliding patch version can be achieved by omitting the patch (e.g., use "0.7" instead of "0.7.1") to always get the latest patch update.
+#     - Auto-use latest update by by omitting the patch (e.g. "1.83.0-0.7" instead of "1.83.0-0.7.1").
 #   4. For the use of custom data studio images, ensure flag_use_wave = true. 
-#   5. Acceptable status values are: "recommended", "deprecated", and "experimental". Anything will be displayed as "unsupported".
-#   6. Current as of Platform v25.2.0, only VSCode, Jupyter, and R will work with path-based Studio routing (not Xpra). This must also be the 0.8.4 client version.
+#   5. Acceptable status values are: "recommended", "deprecated", and "experimental". Anything else will be displayed as "unsupported".
+#   6. Current as of Platform v25.2.0, only VSCode, Jupyter, and R will work with path-based Studio routing (not Xpra). This must also be the 0.8.5 client version.
 
 data_studio_options = {
   # DEPENDENCY
-  # DEPRECATION NOTICE (July 22/25): Future versions of the installer will no longer include entries for connect-client v0.8.0. 
-  #  Please update entries accordingly ahead of the a future version where the commented content will be removed. The most up-to-date version of connect-client is v0.8.0.
+  # DEPRECATION NOTICE (July 22/25): Future versions will not list entries for connect-client v0.8.0. 
 
   vscode-1-83-0-0-8-0 = {
     qualifier = "VSCODE-1-83-0-0-8-0"
