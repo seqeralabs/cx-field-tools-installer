@@ -24,7 +24,7 @@ from testcontainers.mysql import MySqlContainer
 @pytest.mark.ansible
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_002_update_file_configurations_all_present(backup_tfvars, config_ansible_02_all_flags_true):  # teardown_tf_state_all):
+def test_002_update_file_configurations_all_present(backup_tfvars, config_ansible_02_should_be_present):  # teardown_tf_state_all):
     """
     Test 
     """
@@ -33,10 +33,10 @@ def test_002_update_file_configurations_all_present(backup_tfvars, config_ansibl
     print("Testing Ansible 02_update_file_configurations.yml.tpl.")
 
     # When
-    outputs = config_ansible_02_all_flags_true["planned_values"]["outputs"]
-    variables = config_ansible_02_all_flags_true["variables"]
+    outputs = config_ansible_02_should_be_present["planned_values"]["outputs"]
+    variables = config_ansible_02_should_be_present["variables"]
 
-    ansible_file = read_file(f"{root}/assets/target/ansible/02_update_file_configurations.yml")
+    ansible_file_02 = read_file(f"{root}/assets/target/ansible/02_update_file_configurations.yml")
 
     """
     WARNING!!!!!!
@@ -48,18 +48,18 @@ def test_002_update_file_configurations_all_present(backup_tfvars, config_ansibl
     # ------------------------------------------------------------------------------------
     # Test tower.env - assert all core keys exist
     # ------------------------------------------------------------------------------------
-    assert "Populating external Platform DB." in ansible_file               # Tower DB
-    assert "Populating Wave Lite Postgres." in ansible_file                 # Wabe-Lite DB
-    assert "Populating external DB with Groundswell." in ansible_file       # Groundswell DB
-    assert "Configuring private certificates." in ansible_file              # Private CA cert
-    assert "Creating data directory on host for Studios." in ansible_file   # Studios datadir 0.8.2
+    assert "Populating external Platform DB." in ansible_file_02                     # Tower DB
+    assert "Populating Wave Lite Postgres." in ansible_file_02                       # Wabe-Lite DB
+    assert "Populating external DB with Groundswell." in ansible_file_02             # Groundswell DB
+    assert "Configuring private certificates." in ansible_file_02                    # Private CA cert
+    assert "Creating data directory on host for Studios." in ansible_file_02         # Studios datadir 0.8.2
 
 
 @pytest.mark.local
 @pytest.mark.ansible
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_002_update_file_configurations_none_present(backup_tfvars, config_ansible_02_all_flags_false):  # teardown_tf_state_all):
+def test_002_update_file_configurations_none_present(backup_tfvars, config_ansible_02_should_not_be_present):  # teardown_tf_state_all):
     """
     Test 
     """
@@ -68,10 +68,10 @@ def test_002_update_file_configurations_none_present(backup_tfvars, config_ansib
     print("Testing Ansible 02_update_file_configurations.yml.tpl.")
 
     # When
-    outputs = config_ansible_02_all_flags_false["planned_values"]["outputs"]
-    variables = config_ansible_02_all_flags_false["variables"]
+    outputs = config_ansible_02_should_not_be_present["planned_values"]["outputs"]
+    variables = config_ansible_02_should_not_be_present["variables"]
 
-    ansible_file = read_file(f"{root}/assets/target/ansible/02_update_file_configurations.yml")
+    ansible_file_02 = read_file(f"{root}/assets/target/ansible/02_update_file_configurations.yml")
 
     """
     WARNING!!!!!!
@@ -83,8 +83,70 @@ def test_002_update_file_configurations_none_present(backup_tfvars, config_ansib
     # ------------------------------------------------------------------------------------
     # Test tower.env - assert all core keys exist
     # ------------------------------------------------------------------------------------
-    assert "Populating external Platform DB." not in ansible_file               # Tower DB
-    assert "Populating Wave Lite Postgres." not in ansible_file                 # Wabe-Lite DB
-    assert "Populating external DB with Groundswell." not in ansible_file       # Groundswell DB
-    assert "Configuring private certificates." not in ansible_file              # Private CA cert
-    assert "Creating data directory on host for Studios." not in ansible_file   # Studios datadir 0.8.2
+    assert "Populating external Platform DB." not in ansible_file_02               # Tower DB
+    assert "Populating Wave Lite Postgres." not in ansible_file_02                 # Wabe-Lite DB
+    assert "Populating external DB with Groundswell." not in ansible_file_02       # Groundswell DB
+    assert "Configuring private certificates." not in ansible_file_02              # Private CA cert
+    assert "Creating data directory on host for Studios." not in ansible_file_02   # Studios datadir 0.8.2
+
+
+@pytest.mark.local
+@pytest.mark.ansible
+@pytest.mark.vpc_existing
+@pytest.mark.long
+def test_005_should_be_present(backup_tfvars, config_ansible_05_should_be_present):  # teardown_tf_state_all):
+    """
+    Test 
+    """
+
+    # Given
+    print("Testing Ansible 02_update_file_configurations.yml.tpl.")
+
+    # When
+    outputs = config_ansible_05_should_be_present["planned_values"]["outputs"]
+    variables = config_ansible_05_should_be_present["variables"]
+
+    ansible_file_05 = read_file(f"{root}/assets/target/ansible/05_patch_groundswell.yml")
+
+    """
+    WARNING!!!!!!
+      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
+            AFFECTS: `outputs` and `variables`
+      - tower_env_file values are directly cracked from HCL so they are "true".
+    """
+
+    # ------------------------------------------------------------------------------------
+    # Test tower.env - assert all core keys exist
+    # ------------------------------------------------------------------------------------
+    assert "Patching container db with groundswell init script." in ansible_file_05  # Groundswell
+
+
+@pytest.mark.local
+@pytest.mark.ansible
+@pytest.mark.vpc_existing
+@pytest.mark.long
+def test_005_should_not_be_present(backup_tfvars, config_ansible_05_should_not_be_present):  # teardown_tf_state_all):
+    """
+    Test 
+    """
+
+    # Given
+    print("Testing Ansible 02_update_file_configurations.yml.tpl.")
+
+    # When
+    outputs = config_ansible_05_should_not_be_present["planned_values"]["outputs"]
+    variables = config_ansible_05_should_not_be_present["variables"]
+
+    ansible_file_05 = read_file(f"{root}/assets/target/ansible/05_patch_groundswell.yml")
+
+    """
+    WARNING!!!!!!
+      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
+            AFFECTS: `outputs` and `variables`
+      - tower_env_file values are directly cracked from HCL so they are "true".
+    """
+
+    # ------------------------------------------------------------------------------------
+    # Test tower.env - assert all core keys exist
+    # ------------------------------------------------------------------------------------
+    assert "Patching container db with groundswell init script." not in ansible_file_05  # Groundswell
