@@ -439,6 +439,7 @@ data_studio_eligible_workspaces           = ""
 data_studio_options = {
   # DEPENDENCY
   # DEPRECATION NOTICE (July 22/25): Future versions will not list entries for connect-client v0.8.0. 
+  # (July 31/25) - `rstudio-4-4-1-0-8-0` removed due to license issues.
 
   vscode-1-83-0-0-8-0 = {
     qualifier = "VSCODE-1-83-0-0-8-0"
@@ -453,13 +454,6 @@ data_studio_options = {
     tool      = "jupyter"
     status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.0"
-  },
-  rstudio-4-4-1-0-8-0 = {
-    qualifier = "RSTUDIO-4-4-1-0-8-0"
-    icon      = "rstudio"
-    tool      = "rstudio"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.8.0"
   },
   xpra-6-0-R0-0-8-0 = {
     qualifier = "XPRA-6-0-R0-0-8-0"
