@@ -249,12 +249,72 @@ def config_baseline_settings_custom_docker_compose_no_https():
     run_terraform_apply(qualifier)
     execute_subprocess(f"terraform state list > terraform_state_list.txt")
 
-    # Apply will generate actual assets we can interrogate in project or via remote calls.
-    # Return plan only
+    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
     yield plan
 
     run_terraform_destroy()
 
+
+@pytest.fixture(scope="module")  # function
+def config_ansible_02_all_flags_true():
+    """
+    Test conditional blocks in Ansible 02_update_file_configurations.yml.tpl
+    """
+
+    override_data = """
+        flag_create_external_db       = true
+        flag_use_container_db         = false
+
+        flag_create_external_redis    = true
+        flag_use_container_redis      = false
+
+        flag_create_load_balancer     = false
+        flag_use_private_cacert       = true
+
+        flag_enable_groundswell       = true
+        flag_use_wave_lite            = true
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    qualifier = "-target=null_resource.generate_independent_config_files"
+    plan = prepare_plan(override_data)
+    run_terraform_apply(qualifier)
+    execute_subprocess(f"terraform state list > terraform_state_list.txt")
+
+    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
+    yield plan
+
+    run_terraform_destroy()
+
+
+@pytest.fixture(scope="module")  # function
+def config_ansible_02_all_flags_false():
+    """
+    Test conditional blocks in Ansible 02_update_file_configurations.yml.tpl
+    """
+
+    override_data = """
+        flag_create_external_db       = false
+        flag_use_container_db         = true
+
+        flag_create_external_redis    = false
+        flag_use_container_redis      = true
+
+        flag_create_load_balancer     = true
+        flag_use_private_cacert       = false
+
+        flag_enable_groundswell       = false
+        flag_use_wave_lite            = false
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    qualifier = "-target=null_resource.generate_independent_config_files"
+    plan = prepare_plan(override_data)
+    run_terraform_apply(qualifier)
+    execute_subprocess(f"terraform state list > terraform_state_list.txt")
+
+    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
+    yield plan
+
+    run_terraform_destroy()
 
 @pytest.fixture(scope="function")
 def teardown_tf_state_all():

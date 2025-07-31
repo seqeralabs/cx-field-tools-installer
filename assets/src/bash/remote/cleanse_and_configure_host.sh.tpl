@@ -18,7 +18,6 @@ rm -rf $HOME_PATH/data-studios-rsa.pem || true
 {
   echo -e "\n\n# CONFIG ADDED BY TERRAFORM INSTALLER ON: $(date)"
   echo -e "export APP_NAME=${app_name}"
-  echo -e "export FLAG_USE_PRIVATE_CACERT=${flag_use_private_cacert}"
   echo -e "export CACERT_DO_NOT_USE_HTTPS=${flag_do_not_use_https}"
 
   echo -e "export DB_POPULATE_EXTERNAL_INSTANCE=${populate_external_db}"

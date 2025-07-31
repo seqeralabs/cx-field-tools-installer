@@ -320,11 +320,14 @@ locals {
 locals {
   ansible_02_update_file_configurations = templatefile("assets/src/ansible/02_update_file_configurations.yml.tpl",
     {
-      app_name = var.app_name
-
+      app_name                     = var.app_name
       tower_base_url               = module.connection_strings.tower_base_url,
-      private_cacert_bucket_prefix = var.private_cacert_bucket_prefix
-      tower_db_dns                 = module.connection_strings.tower_db_dns
+      flag_use_private_cacert      = var.flag_use_private_cacert,
+      private_cacert_bucket_prefix = var.private_cacert_bucket_prefix,
+      populate_external_db         = local.populate_external_db,
+      tower_db_dns                 = module.connection_strings.tower_db_dns,
+      flag_enable_groundswell      = var.flag_enable_groundswell,
+      flag_use_wave_lite           = var.flag_use_wave_lite,
       wave_lite_db_dns             = module.connection_strings.wave_lite_db_dns
     }
   )

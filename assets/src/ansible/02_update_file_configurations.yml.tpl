@@ -57,43 +57,42 @@
         echo "TOWER_DB_USER=$TOWER_DB_USER" >> tower.env
         echo "TOWER_DB_PASSWORD=$TOWER_DB_PASSWORD" >> tower.env
 
+%{ if populate_external_db ~}
     - name: Populate RDS
       become: true
       become_user: ec2-user
       ansible.builtin.shell: |
         cd /home/ec2-user && source ~/.bashrc
 
-        if [[ $DB_POPULATE_EXTERNAL_INSTANCE == true ]]; then
-          echo "Populating external DB"
+        echo "Populating external Platform DB."
 
-          export db_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
-          export db_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
+        export db_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
+        export db_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
 
-          # https://unix.stackexchange.com/questions/205180/how-to-pass-password-to-mysql-command-line
-          docker run --rm -t -v $(pwd)/target/tower_config/tower.sql:/tower.sql -e \
-          MYSQL_PWD=$db_master_password --entrypoint /bin/bash mysql:8.0 \
-          -c "mysql --host ${tower_db_dns} --port=3306 --user=$db_master_user < tower.sql" || true
+        # https://unix.stackexchange.com/questions/205180/how-to-pass-password-to-mysql-command-line
+        docker run --rm -t -v $(pwd)/target/tower_config/tower.sql:/tower.sql -e \
+        MYSQL_PWD=$db_master_password --entrypoint /bin/bash mysql:8.0 \
+        -c "mysql --host ${tower_db_dns} --port=3306 --user=$db_master_user < tower.sql" || true
+%{ endif ~}
 
-        fi
-
+%{ if flag_use_wave_lite && populate_external_db ~}
     - name: Populate Wave Lite Postgres
       become: true
       become_user: ec2-user
       ansible.builtin.shell: |
         cd /home/ec2-user && source ~/.bashrc
 
-        if [[ $WAVE_LITE_ACTIVATED == true && $DB_POPULATE_EXTERNAL_INSTANCE == true ]]; then
-          echo "Populating Wave Lite Postgres"
+        echo "Populating Wave Lite Postgres."
 
-          export wave_lite_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/wave-lite/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
-          export wave_lite_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/wave-lite/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
+        export wave_lite_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/wave-lite/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
+        export wave_lite_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/wave-lite/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
 
-          docker run --rm -t -v $(pwd)/target/wave_lite_config/wave-lite-rds.sql:/tmp/wave.sql -e \
-          POSTGRES_PASSWORD=$wave_lite_master_password --entrypoint /bin/bash postgres:latest \
-          -c "PGPASSWORD=$wave_lite_master_password psql -h ${wave_lite_db_dns}  -p 5432 -U $wave_lite_master_user -d postgres < /tmp/wave.sql"
+        docker run --rm -t -v $(pwd)/target/wave_lite_config/wave-lite-rds.sql:/tmp/wave.sql -e \
+        POSTGRES_PASSWORD=$wave_lite_master_password --entrypoint /bin/bash postgres:latest \
+        -c "PGPASSWORD=$wave_lite_master_password psql -h ${wave_lite_db_dns}  -p 5432 -U $wave_lite_master_user -d postgres < /tmp/wave.sql"
+%{ endif ~}
 
-        fi
-
+%{ if flag_enable_groundswell && populate_external_db ~}
     - name: Populate Groundswell
       become: true
       become_user: ec2-user
@@ -101,18 +100,17 @@
       ansible.builtin.shell: |
         cd /home/ec2-user && source ~/.bashrc
 
-        if [[ $DB_POPULATE_EXTERNAL_INSTANCE == true ]]; then
-          echo "Populating external DB with Groundswell"
+        echo "Populating external DB with Groundswell."
 
-          export db_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
-          export db_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
+        export db_master_user=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-user" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
+        export db_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
 
-          docker run --rm -t -v $(pwd)/target/groundswell_config/groundswell.sql:/groundswell.sql -e \
-          MYSQL_PWD=$db_master_password --entrypoint /bin/bash mysql:8.0 \
-          -c "mysql --host ${tower_db_dns} --port=3306 --user=$db_master_user < groundswell.sql" || true
+        docker run --rm -t -v $(pwd)/target/groundswell_config/groundswell.sql:/groundswell.sql -e \
+        MYSQL_PWD=$db_master_password --entrypoint /bin/bash mysql:8.0 \
+        -c "mysql --host ${tower_db_dns} --port=3306 --user=$db_master_user < groundswell.sql" || true
+%{ endif ~}
 
-        fi
-
+%{ if flag_use_private_cacert ~}
     - name: Update entities dependent on private CA cert
       become: true
       become_user: ec2-user
@@ -120,28 +118,27 @@
         # Pull pre-loaded certificates from S3 Bucket and stash in necessary locations.
         # Only do so if rootCA.crt is not yet present in trust anchors
 
-        if [[ $FLAG_USE_PRIVATE_CACERT == true ]]; then
+        echo "Configuring private certificates."
 
-          if [[ ! -f "/etc/pki/ca-trust/source/anchors/rootCA.crt" ]]; then
+        if [[ ! -f "/etc/pki/ca-trust/source/anchors/rootCA.crt" ]]; then
 
-            # Add root CA cert to EC2 instance truststore. 
-            # ASSUMPTION -- Root CA cert (new or existing) is called rootCA.crt
-            cd /tmp
-            aws s3 cp ${private_cacert_bucket_prefix}/rootCA.crt .
-            
-            sudo keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file rootCA.crt
-            sudo cp rootCA.crt /etc/pki/ca-trust/source/anchors/
-            sudo update-ca-trust
+          # Add root CA cert to EC2 instance truststore. 
+          # ASSUMPTION -- Root CA cert (new or existing) is called rootCA.crt
+          cd /tmp
+          aws s3 cp ${private_cacert_bucket_prefix}/rootCA.crt .
+          
+          sudo keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file rootCA.crt
+          sudo cp rootCA.crt /etc/pki/ca-trust/source/anchors/
+          sudo update-ca-trust
 
-            rm rootCA.crt
-          fi
-
-          # Grab leaf cert and stash in target/ folder
-          cd /home/ec2-user/target/customcerts
-          aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.crt ${tower_base_url}.crt 
-          aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.key ${tower_base_url}.key
-
+          rm rootCA.crt
         fi
+
+        # Grab leaf cert and stash in target/ folder
+        cd /home/ec2-user/target/customcerts
+        aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.crt ${tower_base_url}.crt 
+        aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.key ${tower_base_url}.key
+%{ endif ~}
 
     - name: Switch primary group to docker to avoid need to logout.
       # https://stackoverflow.com/questions/49434650/how-to-add-a-user-to-a-group-without-logout-login-bash-script
