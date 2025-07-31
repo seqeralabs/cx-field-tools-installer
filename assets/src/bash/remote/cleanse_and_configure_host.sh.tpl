@@ -14,8 +14,7 @@ rm -rf $HOME_PATH/data-studios.env || true
 rm -rf $HOME_PATH/data-studios-rsa.pem || true
 
 
-# Populate the ~/.bashrc with values the Ansible scripts will need for their logic.
-# Added single-quotes around DB_URL to handle connection string with `&` in it (which was pushing keys to bg) 
+# Populate the ~/.bashrc with values the Ansible scripts need.
 {
   echo -e "\n\n# CONFIG ADDED BY TERRAFORM INSTALLER ON: $(date)"
   echo -e "export APP_NAME=${app_name}"
@@ -24,7 +23,6 @@ rm -rf $HOME_PATH/data-studios-rsa.pem || true
 
   echo -e "export DB_POPULATE_EXTERNAL_INSTANCE=${populate_external_db}"
   echo -e "export DB_URL=\"${tower_db_url}\""
-  echo -e "export DB_NAME=${db_database_name}"
 
   echo -e "export WAVE_LITE_ACTIVATED=${use_wave_lite}"
 
