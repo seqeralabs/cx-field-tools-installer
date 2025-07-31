@@ -18,7 +18,7 @@ EMAIL_ADDRESS = ""
 
 # Grab first TOWER_ROOT_USERS entry for login purposes
 # Hardcoding path bad, but this is hardcoded lots of other places so ok for now.
-with open("/home/ec2-user/tower.env", "r") as file:
+with open("/home/ec2-user/target/tower_config/tower.env", "r") as file:
     """Find the TOWER_ROOT_USER entry, split on comma if multiple value, and grab first entry"""
     lines = file.readlines()
 
