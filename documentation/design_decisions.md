@@ -133,16 +133,20 @@ In addition to the general design decisions noted above, there are a few decisio
 
     ```
     data_studio_options = {
-        rstudio4_0_0-0_8_0 = {
-            qualifier = "RSTUDIO-4-0-0-0-7-6"
-            icon = "rstudio"
-            container = "public.cr.seqera.io/platform/data-studio-rstudio:4.0.0-0.8.0"
+        vscode-1-83-0-0-8-0 = {
+            qualifier = "VSCODE-1-83-0-0-8-0"
+            icon      = "vscode"
+            tool      = "vscode"
+            status    = "deprecated"
+            container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.8.0"
         },
-        rstudio4_4_1-0_8_0 = {
-            qualifier = "RSTUDIO-4-4-1-0-7-6"
-            icon = "rstudio"
-            container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.8.0"
-        }
+        vscode-1-101-2-0-8-5 = {
+            qualifier = "VSCODE-1-101-2-0-8-5"
+            icon      = "vscode"
+            tool      = "vscode"
+            status    = "recommended"
+            container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.8.5"
+        },
     }
     ```
 
