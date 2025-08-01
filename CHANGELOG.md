@@ -29,6 +29,8 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
 
         - (Wave) -- Wave-Lite support introduced.
 
+        - (Groundswell) -- Bumping image to `0.4.3`.
+
 
     - **CX Installer**
         - (General) -- Began experimenting producing code with AI. Efforts are tightly scoped and 100% human supervised thus far.
@@ -37,7 +39,7 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
         - (Architecture) -- URL / connection string generation logic centralized in module `connection_strings`.
         - (Architecture) -- Changed private certificate flow: Certs must now be pre-loaded to S3 bucket & are pulled at run-time.
         - (Architecture) -- Refactored `assets/src/customcerts/`: Generation script supports multiple domains & removed placeholder files.
-        - (Architecture) -- Modified security groups `sg_ec2_noalb` & `sg_ec2_noalb_connect` for tighter scoping.
+        - (Architecture) -- Merged / broke out EC2 security groups for easier management and better permissions scoping. **This could break ancillary components if you reused the security groups elsewhere!**
         - (Architecture) -- Refactored when most `assets/target/` files are produced. Rather than waiting for all infrastructure to be created, we now create files as soon as minimal dependencies are met (_to facilitate testing_).
         - (Architecture) -- Added `... && !var.use_mock` to database and redis assets' `count` property to facilitate testing.
         - (Architecture) -- Moved conditional Ansible steps from Bash environment logic to `.tpl` inclusion / exclusion.
