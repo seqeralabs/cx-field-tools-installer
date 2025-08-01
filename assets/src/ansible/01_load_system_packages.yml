@@ -78,8 +78,8 @@
     - name: Install Docker components
       ansible.builtin.dnf:
         name:
-          - docker-ce-28.3.1
-          - docker-ce-cli-28.3.1
+          - docker-ce-28.3.3
+          - docker-ce-cli-28.3.3
           - containerd.io
           - docker-buildx-plugin
           - docker-compose-plugin
@@ -127,7 +127,7 @@
     - name: Install Java Corretto 17
       # tw relies on Java Corretto
       ansible.builtin.yum:
-        name: java-17-amazon-corretto-devel-1:17.0.15+6-1.amzn2023.1
+        name: java-17-amazon-corretto-devel-1:17.0.16+8-1.amzn2023.1
         state: present
 
     - name: Install pyyaml (needed by seqerakit)
@@ -169,7 +169,6 @@
       become_user: ec2-user
       ansible.builtin.shell: |
         cd /home/ec2-user
-        # wget https://github.com/seqeralabs/tower-cli/releases/download/v0.9.3/tw-linux-x86_64
         wget https://github.com/seqeralabs/tower-cli/releases/download/v0.14.0/tw-linux-x86_64
 
         mv tw-* tw

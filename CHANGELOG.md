@@ -20,9 +20,12 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
 
 - **Notable Changes**:
     - **Seqera Ecosytem**
+        - (Platform) -- Bumped Platform version to `v25.2.0`.
         - (Platform) -- Crypto secret rotation added.
 
+        - (Studios)  -- Bumped Studio version to `0.8.3`.
         - (Studios)  -- Studios path-based routing supported for ALB & EC2-direct flow.
+        - (Studios)  -- Added `0.8.5` Studios client images.
 
         - (Wave) -- Wave-Lite support introduced.
 
@@ -42,8 +45,8 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
         - (Architecture) -- Bumped `seqerakit --> v0.5.5` and `tw --> 0.14.0`.
         - (Architecture) -- Broke out monolithic step in `011_configure_vm.tf` into smaller chained resources for bettter visibility and reduced blast radius.
         <br /><br />
-        - (Security) -- Bumped `java-17-amazon-corretto-devel-1:17.0.14+7-1.amzn2023.1` to `1:17.0.15+6-1.amzn2023.1`.
-        - (Security) -- Bumped docker version from `28.1.1` --> `28.3.1`.
+        - (Security) -- Bumped `java-17-amazon-corretto-devel-1:17.0.14+7-1.amzn2023.1` to `java-17-amazon-corretto-devel-1:17.0.16+8-1.amzn2023.1`.
+        - (Security) -- Bumped docker version from `28.1.1` --> `28.3.3`.
         <br /><br />
         - (Documentation) -- Changed `TEMPLATE_terraform.tfvars` application name from `tower-dev` to `tower-template`.
         - (Documentation) -- Added Design Decision explaining why Studio subdomain routing is the default over path-based routing.
