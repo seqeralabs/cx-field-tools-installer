@@ -228,7 +228,7 @@ flag_use_wave      = false
 flag_use_wave_lite = false
 
 num_wave_lite_replicas = 2
-wave_server_url        = "https://wave.seqera.io"
+wave_server_url        = "wave.seqera.io"
 
 /*
 ## ------------------------------------------------------------------------------------
