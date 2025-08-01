@@ -14,7 +14,7 @@ SWELL_API_PREDICT_FRACTIONAL_CPUS=false
 
 # Database settings
 # NOTE: DO NOT ADD 'jdbc' at the front (breaks migration)
-SWELL_DB_URL=mysql://${swell_db_url}
+SWELL_DB_URL=${swell_db_url}
 SWELL_DB_USER=${swell_db_user}
 SWELL_DB_PASSWORD=${swell_db_password}
 SWELL_DB_DIALECT=mysql

@@ -16,9 +16,9 @@ output "tower_api_endpoint" {
   value       = local.tower_api_endpoint
 }
 
-output "tower_db_root" {
+output "tower_db_dns" {
   description = "The root database connection for Tower"
-  value       = local.tower_db_root
+  value       = local.tower_db_dns
   sensitive   = false
 }
 
@@ -28,6 +28,11 @@ output "tower_db_url" {
   sensitive   = false
 }
 
+output "tower_redis_dns" {
+  description = "The Redis DNS for Tower"
+  value       = local.tower_redis_dns
+  sensitive   = false
+}
 output "tower_redis_url" {
   description = "The Redis URL for Tower"
   value       = local.tower_redis_url
@@ -37,6 +42,11 @@ output "tower_redis_url" {
 ## ------------------------------------------------------------------------------------
 ## Groundswell Outputs
 ## ------------------------------------------------------------------------------------
+output "swell_db_dns" {
+  description = "The DNS for Groundswell"
+  value       = local.swell_db_dns
+  sensitive   = false
+}
 output "swell_db_url" {
   description = "The complete database URL for Groundswell"
   value       = local.swell_db_url
@@ -61,6 +71,12 @@ output "tower_connect_server_url" {
   value       = local.tower_connect_server_url
 }
 
+output "tower_connect_redis_dns" {
+  description = "The Redis DNS for Connect"
+  value       = local.tower_connect_redis_dns
+  sensitive   = false
+}
+
 output "tower_connect_redis_url" {
   description = "The Redis URL for Connect"
   value       = local.tower_connect_redis_url
@@ -80,12 +96,22 @@ output "tower_wave_dns" {
   value       = local.tower_wave_dns
 }
 
+output "wave_lite_db_dns" {
+  description = "The database DNS for Wave-Lite"
+  value       = local.wave_lite_db_dns
+  sensitive   = false
+}
 output "wave_lite_db_url" {
   description = "The database URL for Wave-Lite"
   value       = local.wave_lite_db_url
   sensitive   = false
 }
 
+output "wave_lite_redis_dns" {
+  description = "The Redis DNS for Wave-Lite"
+  value       = local.wave_lite_redis_dns
+  sensitive   = false
+}
 output "wave_lite_redis_url" {
   description = "The Redis URL for Wave-Lite"
   value       = local.wave_lite_redis_url

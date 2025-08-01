@@ -20,11 +20,16 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
 
 - **Notable Changes**:
     - **Seqera Ecosytem**
+        - (Platform) -- Bumped Platform version to `v25.2.0`.
         - (Platform) -- Crypto secret rotation added.
 
+        - (Studios)  -- Bumped Studio version to `0.8.3`.
         - (Studios)  -- Studios path-based routing supported for ALB & EC2-direct flow.
+        - (Studios)  -- Added `0.8.5` Studios client images.
 
         - (Wave) -- Wave-Lite support introduced.
+
+        - (Groundswell) -- Bumping image to `0.4.3`.
 
 
     - **CX Installer**
@@ -34,11 +39,16 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
         - (Architecture) -- URL / connection string generation logic centralized in module `connection_strings`.
         - (Architecture) -- Changed private certificate flow: Certs must now be pre-loaded to S3 bucket & are pulled at run-time.
         - (Architecture) -- Refactored `assets/src/customcerts/`: Generation script supports multiple domains & removed placeholder files.
-        - (Architecture) -- Modified security groups `sg_ec2_noalb` & `sg_ec2_noalb_connect` for tighter scoping.
+        - (Architecture) -- Merged / broke out EC2 security groups for easier management and better permissions scoping. **This could break ancillary components if you reused the security groups elsewhere!**
         - (Architecture) -- Refactored when most `assets/target/` files are produced. Rather than waiting for all infrastructure to be created, we now create files as soon as minimal dependencies are met (_to facilitate testing_).
+        - (Architecture) -- Added `... && !var.use_mock` to database and redis assets' `count` property to facilitate testing.
+        - (Architecture) -- Moved conditional Ansible steps from Bash environment logic to `.tpl` inclusion / exclusion.
+        - (Architecture) -- Modified `docker-compose.yml` so that all configuration files are mounted from their respective `target/**` folder.
+        - (Architecture) -- Bumped `seqerakit --> v0.5.5` and `tw --> 0.14.0`.
+        - (Architecture) -- Broke out monolithic step in `011_configure_vm.tf` into smaller chained resources for bettter visibility and reduced blast radius.
         <br /><br />
-        - (Security) -- Bumped `java-17-amazon-corretto-devel-1:17.0.14+7-1.amzn2023.1` to `1:17.0.15+6-1.amzn2023.1`.
-        - (Security) -- Bumped docker version from `28.1.1` --> `28.3.1`.
+        - (Security) -- Bumped `java-17-amazon-corretto-devel-1:17.0.14+7-1.amzn2023.1` to `java-17-amazon-corretto-devel-1:17.0.16+8-1.amzn2023.1`.
+        - (Security) -- Bumped docker version from `28.1.1` --> `28.3.3`.
         <br /><br />
         - (Documentation) -- Changed `TEMPLATE_terraform.tfvars` application name from `tower-dev` to `tower-template`.
         - (Documentation) -- Added Design Decision explaining why Studio subdomain routing is the default over path-based routing.
@@ -64,7 +74,6 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
 | New | Wave-Lite | `secrets_bootstrap_wave_lite` | Secrets associated with Wave-Lite configuration. |
 | New | Wave-Lite | `flag_use_wave_lite` | Enables/Disables Wave-Lite. |
 | New | Wave-Lite | `num_wave_lite_replicas` | Number of Wave-Lite relicas to run. |
-| New | Wave-Lite | `wave_lite_server_url` | The URL to use to check the Wave-Lite endpoint. |
 | New | Private Certificate | `flag_use_private_cacert` | Single flag replacing `flag_generate_private_cacert` & `flag_use_existing_private_cacert` |
 | | | | |
 | Modified | Studios | `data_studio_options` | Removed deprecated entries. Added `0.8.4` options. |
@@ -75,6 +84,7 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
 | Deleted | Private Certificate | `existing_ca_cert_file` | Deleted since not required after S3 Bucket pre-load flow change. |
 | Deleted | Private Certificate | `existing_ca_key_file` | Deleted since not required after S3 Bucket pre-load flow change. |
 | Deleted | Private Certificate | `flag_use_custom_docker_compose_file` | Deleted since not required after S3 Bucket pre-load flow change. |
+| Deleted | Wave-Lite | `wave_lite_server_url` | The URL to use to check the Wave-Lite endpoint. |
 
 
 

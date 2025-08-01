@@ -13,93 +13,71 @@ from tests.utils.local import prepare_plan
 @pytest.mark.redis
 @pytest.mark.redis_external
 @pytest.mark.tower
-def test_external_tower_redis_url(backup_tfvars):
+def test_external_redis_url_full_ecosystem(backup_tfvars):
     # Given
     override_data = """
         flag_create_external_redis                      = true
         flag_use_container_redis                        = false
-        flag_enable_data_studio                         = false
-        flag_use_wave_lite                              = false
-    """
 
-    # When
-    plan = prepare_plan(override_data)
-    outputs = plan["planned_values"]["outputs"]
-
-    # Then
-    assert (
-        "redis://mock-new-tower-redis.example.com"
-        in outputs["tower_redis_url"]["value"]
-    )
-
-    assert (
-        "rediss://mock-new-wave-lite-redis.example.com"
-        in outputs["wave_lite_redis_url"]["value"]
-    )
-
-    assert (
-        "mock-new-connect-redis.example.com"
-        in outputs["tower_connect_redis_url"]["value"]
-    )
-
-
-@pytest.mark.local
-@pytest.mark.redis
-@pytest.mark.redis_external
-@pytest.mark.connect
-def test_external_connect_redis_url(backup_tfvars):
-    # Given
-    override_data = """
-        flag_create_external_redis                      = true
-        flag_use_container_redis                        = false
         flag_enable_data_studio                         = true
-        flag_use_wave_lite                              = false
-    """
-
-    # When
-    plan = prepare_plan(override_data)
-    outputs = plan["planned_values"]["outputs"]
-
-    # Then
-    assert (
-        "mock-new-connect-redis.example.com"
-        in outputs["tower_connect_redis_url"]["value"]
-    )
-
-
-@pytest.mark.local
-@pytest.mark.redis
-@pytest.mark.redis_external
-@pytest.mark.wave_lite
-def test_external_wave_lite_redis_url(backup_tfvars):
-    """Test Wave-Lite Redis URL with external Redis instance."""
-    # Given
-    override_data = """
-        flag_create_external_redis                      = true
-        flag_use_container_redis                        = false
-        flag_enable_data_studio                         = false
         flag_use_wave_lite                              = true
     """
 
     # When
-    plan = prepare_plan(override_data)
-    outputs = plan["planned_values"]["outputs"]
+    plan         = prepare_plan(override_data)
+    outputs                 = plan["planned_values"]["outputs"]
+
+    tower_redis_dns         = outputs["tower_redis_dns"]["value"]
+    tower_redis_url         = outputs["tower_redis_url"]["value"]
+    tower_connect_redis_dns = outputs["tower_connect_redis_dns"]["value"]
+    tower_connect_redis_url = outputs["tower_connect_redis_url"]["value"]
+    wave_lite_redis_dns     = outputs["wave_lite_redis_dns"]["value"]
+    wave_lite_redis_url     = outputs["wave_lite_redis_url"]["value"]
 
     # Then
-    # Wave-Lite should use secure Redis connection (rediss://)
-    assert (
-        "rediss://mock-new-wave-lite-redis.example.com"
-        in outputs["wave_lite_redis_url"]["value"]
-    )
+    assert "mock.tower-redis.com" == tower_redis_dns
+    assert "redis://mock.tower-redis.com:6379" == tower_redis_url
+    assert "mock.tower-redis.com" == tower_connect_redis_dns
+    assert "mock.tower-redis.com:6379" == tower_connect_redis_url
+    assert tower_connect_redis_dns == tower_redis_dns
+    assert "mock.wave-redis.com" == wave_lite_redis_dns
+    assert "rediss://mock.wave-redis.com:6379" == wave_lite_redis_url
+    assert wave_lite_redis_url != tower_redis_url
 
-    # Ensure it's different from Tower's Redis (which uses redis://)
-    assert (
-        outputs["wave_lite_redis_url"]["value"] != outputs["tower_redis_url"]["value"]
-    )
 
-    # Validate secure vs insecure protocol difference
-    assert "rediss://" in outputs["wave_lite_redis_url"]["value"]
-    assert "redis://" in outputs["tower_redis_url"]["value"]
+@pytest.mark.local
+@pytest.mark.redis
+@pytest.mark.redis_external
+@pytest.mark.tower
+def test_external_redis_url_no_ecosystem(backup_tfvars):
+    # Given
+    override_data = """
+        flag_create_external_redis                      = true
+        flag_use_container_redis                        = false
+
+        flag_enable_data_studio                         = false
+        flag_use_wave_lite                              = false
+    """
+
+    # When
+    plan         = prepare_plan(override_data)
+    outputs                 = plan["planned_values"]["outputs"]
+
+    tower_redis_dns         = outputs["tower_redis_dns"]["value"]
+    tower_redis_url         = outputs["tower_redis_url"]["value"]
+    tower_connect_redis_dns = outputs["tower_connect_redis_dns"]["value"]
+    tower_connect_redis_url = outputs["tower_connect_redis_url"]["value"]
+    wave_lite_redis_dns     = outputs["wave_lite_redis_dns"]["value"]
+    wave_lite_redis_url     = outputs["wave_lite_redis_url"]["value"]
+
+    # Then
+    assert "mock.tower-redis.com" == tower_redis_dns
+    assert "redis://mock.tower-redis.com:6379" == tower_redis_url
+    assert "N/A" == tower_connect_redis_dns
+    assert "N/A" == tower_connect_redis_url
+    assert tower_connect_redis_dns != tower_redis_dns
+    assert "N/A" == wave_lite_redis_dns
+    assert "N/A" == wave_lite_redis_url
 
 
 ## ------------------------------------------------------------------------------------
@@ -110,7 +88,7 @@ def test_external_wave_lite_redis_url(backup_tfvars):
 @pytest.mark.redis_container
 @pytest.mark.container
 @pytest.mark.tower
-def test_container_tower_redis_url(backup_tfvars):
+def test_container_redis_url_all_ecosystem(backup_tfvars):
     """Test Tower with container Redis.
     NOTE: Studios and Wave-Lite default to local container paths when not activated.
     """
@@ -118,74 +96,71 @@ def test_container_tower_redis_url(backup_tfvars):
     override_data = """
         flag_create_external_redis                      = false
         flag_use_container_redis                        = true
-        flag_enable_data_studio                         = false
-        flag_use_wave_lite                              = false
-    """
 
-    # When
-    plan = prepare_plan(override_data)
-    outputs = plan["planned_values"]["outputs"]
-
-    # Then
-    # Tower Redis should use container service name
-    assert "redis://redis:6379" in outputs["tower_redis_url"]["value"]
-
-    # Connect Redis should use the same container service
-    assert "redis:6379" in outputs["tower_connect_redis_url"]["value"]
-
-    # Wave-Lite Redis should use dedicated container service with secure connection
-    assert "redis://wave-redis:6379" in outputs["wave_lite_redis_url"]["value"]
-
-
-@pytest.mark.local
-@pytest.mark.redis
-@pytest.mark.redis_container
-@pytest.mark.container
-@pytest.mark.connect
-def test_container_connect_redis_url(backup_tfvars):
-    """Test Connect with container Redis."""
-    # Given
-    override_data = """
-        flag_create_external_redis                      = false
-        flag_use_container_redis                        = true
         flag_enable_data_studio                         = true
-        flag_use_wave_lite                              = false
-    """
-
-    # When
-    plan = prepare_plan(override_data)
-    outputs = plan["planned_values"]["outputs"]
-
-    # Then
-    # Connect Redis should use the same container service
-    assert "redis:6379" in outputs["tower_connect_redis_url"]["value"]
-
-
-@pytest.mark.local
-@pytest.mark.redis
-@pytest.mark.redis_container
-@pytest.mark.container
-@pytest.mark.wave_lite
-def test_container_wave_lite_redis_url(backup_tfvars):
-    """Test Redis URLs with container Redis mode."""
-    # Given
-    override_data = """
-        flag_create_external_redis                      = false
-        flag_use_container_redis                        = true
-        flag_enable_data_studio                         = false
         flag_use_wave_lite                              = true
     """
 
     # When
-    plan = prepare_plan(override_data)
-    outputs = plan["planned_values"]["outputs"]
+    plan         = prepare_plan(override_data)
+    outputs                 = plan["planned_values"]["outputs"]
+
+    tower_redis_dns         = outputs["tower_redis_dns"]["value"]
+    tower_redis_url         = outputs["tower_redis_url"]["value"]
+    tower_connect_redis_dns = outputs["tower_connect_redis_dns"]["value"]
+    tower_connect_redis_url = outputs["tower_connect_redis_url"]["value"]
+    wave_lite_redis_dns     = outputs["wave_lite_redis_dns"]["value"]
+    wave_lite_redis_url     = outputs["wave_lite_redis_url"]["value"]
+    assert wave_lite_redis_url != tower_redis_url
 
     # Then
+    # Tower Redis should use container service name
+    assert "redis" == tower_redis_dns
+    assert "redis://redis:6379" == tower_redis_url
+    assert "redis" == tower_connect_redis_dns
+    assert "redis:6379" == tower_connect_redis_url
+    assert tower_connect_redis_dns == tower_redis_dns
+    assert "wave-redis" == wave_lite_redis_dns
+    assert "redis://wave-redis:6379" == wave_lite_redis_url
+    assert wave_lite_redis_url != tower_redis_url
 
-    # Wave-Lite Redis should use dedicated container service with secure connection
-    assert "redis://wave-redis:6379" in outputs["wave_lite_redis_url"]["value"]
 
-    # Ensure it's different from Tower's Redis container
-    assert (
-        outputs["wave_lite_redis_url"]["value"] != outputs["tower_redis_url"]["value"]
-    )
+@pytest.mark.local
+@pytest.mark.redis
+@pytest.mark.redis_container
+@pytest.mark.container
+@pytest.mark.tower
+def test_container_redis_url_no_ecosystem(backup_tfvars):
+    """Test Tower with container Redis.
+    NOTE: Studios and Wave-Lite default to local container paths when not activated.
+    """
+    # Given
+    override_data = """
+        flag_create_external_redis                      = false
+        flag_use_container_redis                        = true
+
+        flag_enable_data_studio                         = false
+        flag_use_wave_lite                              = false
+    """
+
+    # When
+    plan         = prepare_plan(override_data)
+    outputs                 = plan["planned_values"]["outputs"]
+
+    tower_redis_dns         = outputs["tower_redis_dns"]["value"]
+    tower_redis_url         = outputs["tower_redis_url"]["value"]
+    tower_connect_redis_dns = outputs["tower_connect_redis_dns"]["value"]
+    tower_connect_redis_url = outputs["tower_connect_redis_url"]["value"]
+    wave_lite_redis_dns     = outputs["wave_lite_redis_dns"]["value"]
+    wave_lite_redis_url     = outputs["wave_lite_redis_url"]["value"]
+
+    # Then
+    # Tower Redis should use container service name
+    assert "redis" == tower_redis_dns
+    assert "redis://redis:6379" == tower_redis_url
+    assert "N/A" == tower_connect_redis_dns
+    assert "N/A" == tower_connect_redis_url
+    assert tower_connect_redis_dns != tower_redis_dns
+    assert "N/A" == wave_lite_redis_dns
+    assert "N/A" == wave_lite_redis_url
+    assert wave_lite_redis_url != tower_redis_url

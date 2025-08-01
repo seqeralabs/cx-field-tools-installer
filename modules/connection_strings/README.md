@@ -36,7 +36,6 @@ module "connection_strings" {
 
   # Wave Configuration
   wave_server_url = var.wave_server_url
-  wave_lite_server_url = var.wave_lite_server_url
 
   # External Resource References
   rds_wave_lite = module.rds-wave-lite
@@ -60,7 +59,6 @@ module "connection_strings" {
 | db_database_name | The name of the Tower database | `string` | n/a | yes |
 | swell_database_name | The name of the Groundswell database | `string` | n/a | yes |
 | wave_server_url | The server URL for Wave | `string` | n/a | yes |
-| wave_lite_server_url | The server URL for Wave-Lite | `string` | n/a | yes |
 | elasticache_wave_lite | The elasticache_wave_lite module object containing Redis configuration | `any` | `null` | no |
 | aws_elasticache_redis | The aws_elasticache_cluster.redis object containing Redis cluster configuration | `any` | `null` | no |
 | rds | The rds module object containing Tower RDS configuration | `any` | `null` | no |

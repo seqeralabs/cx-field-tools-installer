@@ -595,10 +595,6 @@ def verify_wave(data: SimpleNamespace):
         )
 
     if (data.flag_use_wave_lite == True):
-        if data.wave_lite_server_url in ['https://wave.seqera.io']:
-            log_error_and_exit(
-            "`Your Wave Lite URL is pointing to the Seqera-hosted Wave service. Please modify `wave_server_url`."
-            )
 
         if data.flag_use_private_cacert:
             logger.warning(
@@ -634,6 +630,19 @@ def verify_production_deployment(data: SimpleNamespace):
             "WARNING: You are running Wave Lite without a managed DB/Redis. This does not align to Seqera-recommended Production deployment best practices and can result in system instability."
         )
 
+
+def verify_insecure_platform(data: SimpleNamespace): 
+    if data.flag_do_not_use_https:
+
+        if data.flag_enable_data_studio:
+            log_error_and_exit(
+                    "Studios requires a secure Seqera Platform endpoint."
+                )
+
+        if data.flag_use_wave_lite:
+            log_error_and_exit(
+                    "Wave-Lite requires a secure Seqera Platform endpoint."
+                )
 
 # -------------------------------------------------------------------------------
 # MAIN
@@ -730,6 +739,7 @@ if __name__ == "__main__":
     logger.info("Verifying alignment to Production Best Practices")
     logger.info("-" * 50)
     verify_production_deployment(data)
+    verify_insecure_platform(data=data)
 
 
     print("\n")

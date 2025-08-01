@@ -57,6 +57,7 @@
         state: touch
       when: not docker_removal_marker.stat.exists
 
+    # NOTE: Maybe renable this in the future when mainstream package has all necessary patches.
     # - name: Install docker.
     # # https://docs.docker.com/engine/install/ubuntu/
     #   ansible.builtin.dnf:
@@ -77,8 +78,8 @@
     - name: Install Docker components
       ansible.builtin.dnf:
         name:
-          - docker-ce-28.3.1
-          - docker-ce-cli-28.3.1
+          - docker-ce-28.3.3
+          - docker-ce-cli-28.3.3
           - containerd.io
           - docker-buildx-plugin
           - docker-compose-plugin
@@ -123,39 +124,10 @@
         groups: docker
         append: yes
 
-    # - name: MySQL - Get RPM
-    #   # https://serverfault.com/questions/946219/how-to-install-mysql-server-using-ansible-playbook
-    #   ansible.builtin.shell: |
-    #     mkdir -p /opt/mysql && cd /opt/mysql
-    #     rm -rf /opt/mysql/mysql*.rpm*
-
-    #     # Stopped working ~Jan 15/24. Commented out but keeping for reference.
-    #     # wget https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
-    #     # rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
-
-    #     # Sudo suddenly required to make this work. Very strange. key must be imported first (Jan 16/24)
-    #     rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2023
-    #     wget https://dev.mysql.com/get/mysql80-community-release-el9-5.noarch.rpm
-    #     yum install -y mysql80-community-release-el9-5.noarch.rpm
-
-    # #This stopped working when the RPM / GPG problem (above) happened. Commented out but kept for reference.
-    # #Consider replacing this whole thing with a MySQL docker container instead to avoid future headaches.
-    # - name: MySQL - Install RPM
-    #   ansible.builtin.yum:
-    #     # name: /opt/mysql/mysql80-community-release-el9-1.noarch.rpm
-    #     name: /opt/mysql/mysql80-community-release-el9-5.noarch.rpm
-    #     state: present
-
-    # - name: MySQL - Install Client
-    #   ansible.builtin.yum:
-    #     name: mysql-community-client
-    #     state: installed
-
     - name: Install Java Corretto 17
       # tw relies on Java Corretto
       ansible.builtin.yum:
-        #name: java-17-amazon-corretto-devel-1:17.0.14+7-1.amzn2023.1
-        name: java-17-amazon-corretto-devel-1:17.0.15+6-1.amzn2023.1
+        name: java-17-amazon-corretto-devel-1:17.0.16+8-1.amzn2023.1
         state: present
 
     - name: Install pyyaml (needed by seqerakit)
@@ -169,8 +141,9 @@
       become: true
       become_user: ec2-user
       ansible.builtin.pip:
-        name: seqerakit==0.4.8
+        # name: seqerakit==0.4.8
         # name: git+https://github.com/seqeralabs/seqera-kit.git@dev
+        name: seqerakit==0.5.5
         extra_args: --user
 
     - name: Create .docker folder
@@ -190,22 +163,13 @@
         owner: ec2-user
         group: ec2-user
 
-    # - name: Install Docker-Compose (v2)
-    #   # https://www.techcrumble.net/2019/12/how-install-docker-and-docker-compose-using-ansible-playbooks/
-    #   # https://github.com/docker/compose/releases/
-    #   # Pinning to specific version rather than latest.
-    #   get_url:
-    #     url: https://github.com/docker/compose/releases/download/v2.24.2/docker-compose-linux-x86_64
-    #     dest: /home/ec2-user/.docker/cli-plugins/docker-compose
-    #     mode: 'u+x,g+x,o+x'
-
     - name: Install twcli
       # Source: https://github.com/seqeralabs/tower-cli
       become: true
       become_user: ec2-user
       ansible.builtin.shell: |
         cd /home/ec2-user
-        wget https://github.com/seqeralabs/tower-cli/releases/download/v0.9.3/tw-linux-x86_64
+        wget https://github.com/seqeralabs/tower-cli/releases/download/v0.14.0/tw-linux-x86_64
 
         mv tw-* tw
         chmod +x ./tw

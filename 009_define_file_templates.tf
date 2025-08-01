@@ -110,8 +110,7 @@ locals {
 
       swell_db_user     = local.groundswell_secrets["SWELL_DB_USER"]["value"],
       swell_db_password = local.groundswell_secrets["SWELL_DB_PASSWORD"]["value"],
-      # swell_database_name                     = var.swell_database_name,
-      swell_db_url = module.connection_strings.swell_db_url,
+      swell_db_url      = module.connection_strings.swell_db_url,
 
       flag_use_container_db = var.flag_use_container_db,
       db_engine_version     = var.db_engine_version
@@ -298,7 +297,7 @@ locals {
       private_cacert_bucket_prefix = var.private_cacert_bucket_prefix,
 
       populate_external_db = local.populate_external_db,
-      tower_db_url         = module.connection_strings.tower_db_root,
+      tower_db_url         = module.connection_strings.tower_db_dns,
       db_database_name     = var.db_database_name,
 
       use_wave_lite    = var.flag_use_wave_lite,
@@ -321,10 +320,16 @@ locals {
 locals {
   ansible_02_update_file_configurations = templatefile("assets/src/ansible/02_update_file_configurations.yml.tpl",
     {
-      app_name = var.app_name
-
+      app_name                     = var.app_name
       tower_base_url               = module.connection_strings.tower_base_url,
-      private_cacert_bucket_prefix = var.private_cacert_bucket_prefix
+      flag_use_private_cacert      = var.flag_use_private_cacert,
+      private_cacert_bucket_prefix = var.private_cacert_bucket_prefix,
+      populate_external_db         = local.populate_external_db,
+      tower_db_dns                 = module.connection_strings.tower_db_dns,
+      flag_enable_groundswell      = var.flag_enable_groundswell,
+      flag_enable_data_studio      = var.flag_enable_data_studio,
+      flag_use_wave_lite           = var.flag_use_wave_lite,
+      wave_lite_db_dns             = module.connection_strings.wave_lite_db_dns
     }
   )
 
@@ -343,8 +348,9 @@ locals {
 
   ansible_06_run_seqerakit = templatefile("assets/src/ansible/06_run_seqerakit.yml.tpl",
     {
-      app_name                                    = var.app_name,
-      seqerakit_flag_credential_create_codecommit = var.seqerakit_flag_credential_create_codecommit
+      app_name                     = var.app_name,
+      flag_create_hosts_file_entry = var.flag_create_hosts_file_entry,
+      flag_do_not_use_https        = var.flag_do_not_use_https,
     }
   )
 

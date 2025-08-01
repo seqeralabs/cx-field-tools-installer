@@ -64,16 +64,15 @@ flag_use_existing_vpc                   = true
 ## ------------------------------------------------------------------------------------
 flag_use_wave          = false
 flag_use_wave_lite     = true
+
 num_wave_lite_replicas = 2
 wave_server_url        = "https://wave.stage-seqera.io"
-wave_lite_server_url   = "https://wave.autodc.dev-seqera.net"
 
 
 ## ------------------------------------------------------------------------------------
 ## Flags - DNS
 ## ------------------------------------------------------------------------------------
 new_route53_private_zone_name = "dev-seqera-private-sage.net"
-
 existing_route53_public_zone_name  = "dev-seqera.net"
 
 

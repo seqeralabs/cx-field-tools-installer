@@ -49,9 +49,9 @@ output "aws_ec2_public_ip" {
 #   description = "Dynamically generated db connectino string based on tfvars selections."
 #   value = data.external.generate_db_connection_string.result.value
 # }
-output "tower_db_root" {
+output "tower_db_dns" {
   description = "The DB root."
-  value       = module.connection_strings.tower_db_root
+  value       = module.connection_strings.tower_db_dns
 }
 
 output "tower_db_url" {
@@ -59,6 +59,10 @@ output "tower_db_url" {
   value       = module.connection_strings.tower_db_url
 }
 
+output "tower_redis_dns" {
+  description = "The Redis DNS for Tower"
+  value       = module.connection_strings.tower_redis_dns
+}
 output "tower_redis_url" {
   description = "The Redis URL for Tower"
   value       = module.connection_strings.tower_redis_url
@@ -67,6 +71,11 @@ output "tower_redis_url" {
 # ----------------------------------------------------------------------------------------------------------------------
 # Groundswell
 # ----------------------------------------------------------------------------------------------------------------------
+output "swell_db_dns" {
+  description = "The DNS for Groundswell"
+  value       = module.connection_strings.swell_db_dns
+}
+
 output "swell_db_url" {
   description = "The complete database URL for Groundswell"
   value       = module.connection_strings.swell_db_url
@@ -90,6 +99,11 @@ output "tower_connect_server_url" {
   value       = module.connection_strings.tower_connect_server_url
 }
 
+output "tower_connect_redis_dns" {
+  description = "The DNS for the Redis instance used by Connect."
+  value       = module.connection_strings.tower_connect_redis_dns
+}
+
 output "tower_connect_redis_url" {
   description = "The URL for the Redis instance used by Connect."
   value       = module.connection_strings.tower_connect_redis_url
@@ -108,11 +122,20 @@ output "tower_wave_dns" {
   value       = module.connection_strings.tower_wave_dns
 }
 
+output "wave_lite_db_dns" {
+  description = "The database DNS for Wave-Lite"
+  value       = module.connection_strings.wave_lite_db_dns
+}
+
 output "wave_lite_db_url" {
   description = "The database URL for Wave-Lite"
   value       = module.connection_strings.wave_lite_db_url
 }
 
+output "wave_lite_redis_dns" {
+  description = "The Redis DNS for Wave-Lite"
+  value       = module.connection_strings.wave_lite_redis_dns
+}
 output "wave_lite_redis_url" {
   description = "The Redis URL for Wave-Lite"
   value       = module.connection_strings.wave_lite_redis_url

@@ -65,7 +65,7 @@ In response to the outlined design considerations, the following design decision
 7. **Regenerate files via `null_resource` instead of `local_file`.**<br />
     This project uses `local-exec` provisioners with `null_resources` to generate files. Our preference would have been to use the more targeted `local_file` resource ([example](https://dfux.me/posts/ssh-config-terraform/)), but `local_file` resources don't regenerate consistently.
 
-8. **Do not optimize Terraform statement management**
+8. **Do not optimize Terraform state management**
     Terraform offers a wide variety of [backend options](https://developer.hashicorp.com/terraform/language/settings/backends/configuration). These implementations can get quite complex and are beyond the scope of this solution. We default to local state storage by default. Clients are free to implement a more robust state management solution without their own project effort. 
 
 9. **Minimize reliance on third-party tooling where possible**
@@ -133,16 +133,20 @@ In addition to the general design decisions noted above, there are a few decisio
 
     ```
     data_studio_options = {
-        rstudio4_0_0-0_8_0 = {
-            qualifier = "RSTUDIO-4-0-0-0-7-6"
-            icon = "rstudio"
-            container = "public.cr.seqera.io/platform/data-studio-rstudio:4.0.0-0.8.0"
+        vscode-1-83-0-0-8-0 = {
+            qualifier = "VSCODE-1-83-0-0-8-0"
+            icon      = "vscode"
+            tool      = "vscode"
+            status    = "deprecated"
+            container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.8.0"
         },
-        rstudio4_4_1-0_8_0 = {
-            qualifier = "RSTUDIO-4-4-1-0-7-6"
-            icon = "rstudio"
-            container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.8.0"
-        }
+        vscode-1-101-2-0-8-5 = {
+            qualifier = "VSCODE-1-101-2-0-8-5"
+            icon      = "vscode"
+            tool      = "vscode"
+            status    = "recommended"
+            container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.8.5"
+        },
     }
     ```
 
@@ -195,7 +199,7 @@ In addition to the general design decisions noted above, there are a few decisio
     
     Path-based routing has limitations, however, (_TODO: Add link to official docs outlining_) so the project favours use of the subdomains by default.
 
-15. **Private Certificate Support Overhaul**
+15. **Private Certificate support overhaul**
 
     As of <TODO: RELEASE TIED TO v25.2.0>, private certificate support has been overhauled. 
 
@@ -231,3 +235,13 @@ In addition to the general design decisions noted above, there are a few decisio
       - Make generation of certificate a one-time non-automated step.
       - Regardless of how cert generated, administrator manually loads cert & key (new or existing) into S3 Bucket.
       - If private cert necessary, Ansible pulls target files onto EC2 and makes availabe to trust store and reverseproxy.
+
+16. **Introduction of `use_mock` flag into resources related to Database & Redis**
+
+    A `var.use_mocks` check has been introduced to database and Redis related resources in `003_database.tf`. 
+
+    (TODO: Release version) release shipped with the first phase of a testing framework. This feature conducts a series of quick local checks to ensure the veracity of core connection details and configuration files. While we favour `terraform plan` as much as possible, the generation of configuration files requires a `terraform apply` motion. 
+
+    Using `terraform apply -target=...` reduces scope and improves speed but, unfortunately, `module.connection_strings` is central to all the tests and it in turn relies upon the provision of RDS and Elasticache resources for deployments that follow best practices guidelines. As a result, a testing loop that must actually deploy these resources takes up to 20 minutes to complete.
+
+    By adding a `... && !var.use_mocks` to the `count` of the affected resources, I can descope these resources from the minimal footprint deployment, thereby vastly speeding up (_and thereby encouraging the on-going use of_) testing. The downside of this approach, however, is that there is an ongoing intermingling of concerns between logic meant to deploy resources for real, versus logic focused on testing. I cannot think of a better way to balance speed with rigour at the moment so this will be the go-forward approach until a better technique presents itself.
