@@ -65,7 +65,7 @@ In response to the outlined design considerations, the following design decision
 7. **Regenerate files via `null_resource` instead of `local_file`.**<br />
     This project uses `local-exec` provisioners with `null_resources` to generate files. Our preference would have been to use the more targeted `local_file` resource ([example](https://dfux.me/posts/ssh-config-terraform/)), but `local_file` resources don't regenerate consistently.
 
-8. **Do not optimize Terraform statement management**
+8. **Do not optimize Terraform state management**
     Terraform offers a wide variety of [backend options](https://developer.hashicorp.com/terraform/language/settings/backends/configuration). These implementations can get quite complex and are beyond the scope of this solution. We default to local state storage by default. Clients are free to implement a more robust state management solution without their own project effort. 
 
 9. **Minimize reliance on third-party tooling where possible**
