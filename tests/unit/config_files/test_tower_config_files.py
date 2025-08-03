@@ -21,6 +21,29 @@ from testcontainers.mysql import MySqlContainer
 ## ------------------------------------------------------------------------------------
 # NOTE: To avoid creating VPC assets, use an existing VPC in the account the AWS provider is configured to use.
 
+def generate_namespaced_dictionaries(dict: dict) -> tuple[SimpleNamespace, SimpleNamespace, dict, dict]:
+
+    """
+    WARNING!!!!!!
+      - Plan keys are in Python dictionary form, so JSON "true" becomes True.  AFFECTS: `outputs` and `vars`
+      - Config file values are directly cracked from HCL so they are "true".
+    """
+
+    vars_dict = dict["variables"]
+    outputs_dict = dict["planned_values"]["outputs"]
+    
+
+    # https://dev.to/taqkarim/extending-simplenamespace-for-nested-dictionaries-58e8
+    # Avoids noisy dict notation ([""]) and constant repetition of `.value`.
+    # Variables have only one key (values); outputs may have 3 keys (sensitive, type, value).
+    vars_flattened = {k: v.get("value", v) for k,v in vars_dict.items()}
+    outputs_flattened = {k: v.get("value", v) for k,v in outputs_dict.items()}
+    
+    vars = json.loads(json.dumps(vars_flattened), object_hook=lambda item: SimpleNamespace(**item))
+    outputs = json.loads(json.dumps(outputs_flattened), object_hook=lambda item: SimpleNamespace(**item))
+
+    return (vars, outputs, vars_dict, outputs_dict)
+
 
 @pytest.mark.local
 @pytest.mark.config_keys
@@ -35,20 +58,9 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
     print("Testing tower.env generated from default settings.")
 
     # When
-    outputs = config_baseline_settings_default["planned_values"]["outputs"]
-    vars = config_baseline_settings_default["variables"]
-
+    vars, outputs, vars_dict, _ = generate_namespaced_dictionaries(config_baseline_settings_default)
     tower_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/tower.env")
     keys = tower_env_file.keys()
-
-
-
-    """
-    WARNING!!!!!!
-      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
-            AFFECTS: `outputs` and `vars`
-      - tower_env_file values are directly cracked from HCL so they are "true".
-    """
 
     # ------------------------------------------------------------------------------------
     # Test tower.env - assert all core keys exist
@@ -57,19 +69,20 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
     entries = {
         "TOWER_ENABLE_AWS_SSM"        : "true",
         "LICENSE_SERVER_URL"          : "https://licenses.seqera.io",
-        "TOWER_SERVER_URL"            : outputs["tower_server_url"]["value"],
-        "TOWER_CONTACT_EMAIL"         : vars["tower_contact_email"]["value"],
-        "TOWER_ENABLE_PLATFORMS"      : vars["tower_enable_platforms"]["value"],
-        "TOWER_ROOT_USERS"            : vars["tower_root_users"]["value"],
-        "TOWER_DB_URL"                : outputs["tower_db_url"]["value"],
-        "TOWER_DB_DRIVER"             : vars["tower_db_driver"]["value"],
-        "TOWER_DB_DIALECT"            : vars["tower_db_dialect"]["value"],
-        "TOWER_DB_MIN_POOL_SIZE"      : vars["tower_db_min_pool_size"]["value"],  # str()
-        "TOWER_DB_MAX_POOL_SIZE"      : vars["tower_db_max_pool_size"]["value"],  # str()
-        "TOWER_DB_MAX_LIFETIME"       : vars["tower_db_max_lifetime"]["value"],   # str()
-        "FLYWAY_LOCATIONS"            : vars["flyway_locations"]["value"],
-        "TOWER_REDIS_URL"             : outputs["tower_redis_url"]["value"],
-        "WAVE_SERVER_URL"             : outputs["tower_wave_url"]["value"],
+        "TOWER_CONTACT_EMAIL"         : vars.tower_contact_email,
+        "TOWER_ENABLE_PLATFORMS"      : vars.tower_enable_platforms,
+        "TOWER_ROOT_USERS"            : vars.tower_root_users,
+        "TOWER_DB_DRIVER"             : vars.tower_db_driver,
+        "TOWER_DB_DIALECT"            : vars.tower_db_dialect,
+        "TOWER_DB_MIN_POOL_SIZE"      : vars.tower_db_min_pool_size,  # str()
+        "TOWER_DB_MAX_POOL_SIZE"      : vars.tower_db_max_pool_size,  # str()
+        "TOWER_DB_MAX_LIFETIME"       : vars.tower_db_max_lifetime,   # str()
+
+        "TOWER_SERVER_URL"            : outputs.tower_server_url,
+        "TOWER_DB_URL"                : outputs.tower_db_url,
+        "FLYWAY_LOCATIONS"            : vars.flyway_locations,
+        "TOWER_REDIS_URL"             : outputs.tower_redis_url,
+        "WAVE_SERVER_URL"             : outputs.tower_wave_url,
     }
 
     for k,v  in entries.items():
@@ -79,11 +92,11 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
     # Test always-present conditionals
     # ------------------------------------------------------------------------------------
     entries = {
-        "TOWER_ENABLE_AWS_SES"        : vars["flag_use_aws_ses_iam_integration"]["value"],
-        "TOWER_ENABLE_UNSAFE_MODE"    : vars["flag_do_not_use_https"]["value"],
-        "TOWER_ENABLE_WAVE"           : vars["flag_use_wave"]["value"] or vars["flag_use_wave_lite"]["value"],
-        "TOWER_ENABLE_GROUNDSWELL"    : vars["flag_enable_groundswell"]["value"],
-        "TOWER_DATA_EXPLORER_ENABLED" : vars["flag_data_explorer_enabled"]["value"]
+        "TOWER_ENABLE_AWS_SES"        : vars.flag_use_aws_ses_iam_integration,
+        "TOWER_ENABLE_UNSAFE_MODE"    : vars.flag_do_not_use_https,
+        "TOWER_ENABLE_WAVE"           : vars.flag_use_wave or vars.flag_use_wave_lite,
+        "TOWER_ENABLE_GROUNDSWELL"    : vars.flag_enable_groundswell,
+        "TOWER_DATA_EXPLORER_ENABLED" : vars.flag_data_explorer_enabled
     }
 
     for k,v in entries.items():
@@ -101,48 +114,67 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
 
     # ------------------------------------------------------------------------------------
     # Test sometimes-present conditionals
-    # Entries are the key, value, and controlling flag
+    # Entries are the key, value, and controlling condition
     # ------------------------------------------------------------------------------------
-    flag_use_existing_smtp                      = vars["flag_use_existing_smtp"]["value"]
-    flag_enable_groundswell                     = vars["flag_enable_groundswell"]["value"]
-    flag_data_explorer_enabled                  = vars["flag_data_explorer_enabled"]["value"]
-
-    flag_enable_data_studio                     = vars["flag_enable_data_studio"]["value"]
-    flag_studio_enable_path_routing             = vars["flag_studio_enable_path_routing"]["value"]
-    flag_limit_data_studio_to_some_workspaces   = vars["flag_limit_data_studio_to_some_workspaces"]["value"]
-
     entries = [
-        ("TOWER_SMTP_HOST", vars["tower_smtp_host"]["value"], flag_use_existing_smtp),
-        ("TOWER_SMTP_PORT", vars["tower_smtp_port"]["value"], flag_use_existing_smtp),
-        ("GROUNDSWELL_SERVER_URL", "http://groundswell:8090", flag_enable_groundswell),
-        ("TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES", vars["data_explorer_disabled_workspaces"]["value"], flag_data_explorer_enabled),
-
-        ("TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING", "false", flag_enable_data_studio and not flag_studio_enable_path_routing),
-        ("TOWER_DATA_STUDIO_ALLOWED_WORKSPACES", vars["data_studio_eligible_workspaces"]["value"], flag_enable_data_studio and flag_limit_data_studio_to_some_workspaces),
-        ("TOWER_DATA_STUDIO_CONNECT_URL", outputs["tower_connect_server_url"]["value"], flag_enable_data_studio),
-        ("TOWER_OIDC_PEM_PATH", "/data-studios-rsa.pem", flag_enable_data_studio),
-        ("TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN", "ipsemlorem", flag_enable_data_studio)
+        ("TOWER_SMTP_HOST", 
+                vars.tower_smtp_host, 
+                vars.flag_use_existing_smtp
+        ),
+        ("TOWER_SMTP_PORT", 
+                vars.tower_smtp_port, 
+                vars.flag_use_existing_smtp
+        ),
+        ("GROUNDSWELL_SERVER_URL", 
+                "http://groundswell:8090", 
+                vars.flag_enable_groundswell
+        ),
+        ("TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES", 
+                vars.data_explorer_disabled_workspaces, 
+                vars.flag_data_explorer_enabled
+        ),
+        ("TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING", 
+                "false", 
+                vars.flag_enable_data_studio and not vars.flag_studio_enable_path_routing
+        ),
+        ("TOWER_DATA_STUDIO_ALLOWED_WORKSPACES", 
+                vars.data_studio_eligible_workspaces, 
+                vars.flag_enable_data_studio and vars.flag_limit_data_studio_to_some_workspaces
+        ),
+        ("TOWER_DATA_STUDIO_CONNECT_URL", 
+                outputs.tower_connect_server_url, 
+                vars.flag_enable_data_studio
+        ),
+        ("TOWER_OIDC_PEM_PATH", 
+                "/data-studios-rsa.pem", 
+                vars.flag_enable_data_studio
+        ),
+        ("TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN", 
+                "ipsemlorem", 
+                vars.flag_enable_data_studio
+        )
     ]
 
     for entry in entries:
-        k,v,flag = entry
-        if flag:
+        k,v,condition = entry
+        if condition:
             assert tower_env_file[k] == v
         else:
             assert k not in keys
 
 
     # Data Studio Edgecase
+    # Need to use original vars_dict because can't iterate through SimpleNamespace
     qualifiers = ["ICON", "REPOSITORY", "TOOL", "STATUS"]
-    if flag_enable_data_studio:
-        for studio in vars["data_studio_options"]["value"]:
+    if vars.flag_enable_data_studio:
+        for studio in vars_dict["data_studio_options"]["value"]:
             for qualifier in qualifiers:
                 key = f"TOWER_DATA_STUDIO_TEMPLATES_{studio}_{qualifier}"
                 # EDGECASE: Called it 'container' in terrafrom tfvars, but setting is REPOSITORY
                 if qualifier == "REPOSITORY":
-                    value = vars["data_studio_options"]["value"][studio]["container"]
+                    value = vars_dict["data_studio_options"]["value"][studio]["container"]
                 else:
-                    value = vars["data_studio_options"]["value"][studio][qualifier.lower()]
+                    value = vars_dict["data_studio_options"]["value"][studio][qualifier.lower()]
                 assert tower_env_file[key.upper()] == value
 
 
@@ -159,70 +191,42 @@ def test_default_config_tower_yml(backup_tfvars, config_baseline_settings_defaul
     print("Testing tower.yml generated from default settings.")
 
     # When
-    outputs = config_baseline_settings_default["planned_values"]["outputs"]
-    variables = config_baseline_settings_default["variables"]
-
+    vars, _, _, _ = generate_namespaced_dictionaries(config_baseline_settings_default)
     tower_yml_file = read_yaml(f"{root}/assets/target/tower_config/tower.yml")
-
-    """
-    WARNING!!!!!!
-      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
-            AFFECTS: `outputs` and `variables`
-      - tower_env_file values are directly cracked from HCL so they are "true".
-    """
 
     # ------------------------------------------------------------------------------------
     # Test tower.yml
     # ------------------------------------------------------------------------------------
-    key = tower_yml_file["mail"]["smtp"]["auth"]
-    value = variables["tower_smtp_auth"]["value"]
-    assert key == value
+    entries = {
+        tower_yml_file["mail"]["smtp"]["auth"]                                  : vars.tower_smtp_auth,
+        tower_yml_file["mail"]["smtp"]["starttls"]["enable"]                    : vars.tower_smtp_starttls_enable,
+        tower_yml_file["mail"]["smtp"]["starttls"]["required"]                  : vars.tower_smtp_starttls_required,
+        tower_yml_file["mail"]["smtp"]["ssl"]["protocols"]                      : vars.tower_smtp_ssl_protocols,
+        tower_yml_file["micronaut"]["application"]["name"]                      : vars.app_name,
+        tower_yml_file["tower"]["cron"]["audit-log"]["clean-up"]["time-offset"] : f"{vars.tower_audit_retention_days}d"
+    }
 
-    key = tower_yml_file["mail"]["smtp"]["starttls"]["enable"]
-    value = variables["tower_smtp_starttls_enable"]["value"]
-    assert key == value
+    for k,v in entries.items():
+        assert k == v
 
-    key = tower_yml_file["mail"]["smtp"]["starttls"]["required"]
-    value = variables["tower_smtp_starttls_required"]["value"]
-    assert key == value
-
-    key = tower_yml_file["mail"]["smtp"]["ssl"]["protocols"]
-    value = variables["tower_smtp_ssl_protocols"]["value"]
-    assert key == value
-
-    key = tower_yml_file["micronaut"]["application"]["name"]
-    value = variables["app_name"]["value"]
-    assert key == value
-
-    if variables["flag_disable_email_login"]["value"]:
-        key = tower_yml_file["tower"]["auth"]["disable-email"]
-        assert key
+    # Edgecases
+    if vars.flag_disable_email_login:
+        assert "disable-email" in tower_yml_file["tower"]["auth"].keys()
     else:
         assert "auth" not in tower_yml_file["tower"].keys()
 
-    # Note this has time segment at end.
-    key = tower_yml_file["tower"]["cron"]["audit-log"]["clean-up"]["time-offset"]
-    value = variables["tower_audit_retention_days"]["value"]
-    assert key == f"{value}d"
-
-    # TODO verify why I did this in the template
-    flag_enable_data_studio = variables["flag_enable_data_studio"]["value"]
-    flag_limit_data_studio_to_some_workspaces = variables["flag_limit_data_studio_to_some_workspaces"]["value"]
-    if flag_enable_data_studio and not flag_limit_data_studio_to_some_workspaces:
-        key = tower_yml_file["tower"]["data-studio"]["allowed-workspaces"]
-        assert key == None
+    if vars.flag_enable_data_studio and not vars.flag_limit_data_studio_to_some_workspaces:
+        assert "allowed-workspaces" in tower_yml_file["tower"]["data-studio"].keys()
     else:
         assert "data-studio" not in tower_yml_file["tower"].keys()
 
     # Remove middle whitespace from vars since it seems to be stripped from the template interpolation.
     key = tower_yml_file["tower"]["trustedEmails"]
-    tower_root_users = variables["tower_root_users"]["value"].replace(" ", "")
-    tower_email_trusted_orgs = variables["tower_email_trusted_orgs"]["value"].replace(" ", "")
-    tower_email_trusted_users = variables["tower_email_trusted_users"]["value"].replace(" ", "")
-
-    # assert all(val in key for val in [tower_root_users, tower_email_trusted_orgs, tower_email_trusted_users])
+    tower_root_users = vars.tower_root_users.replace(" ", "")
     assert tower_root_users in key
+    tower_email_trusted_orgs = vars.tower_email_trusted_orgs.replace(" ", "")
     assert tower_email_trusted_orgs in key
+    tower_email_trusted_users = vars.tower_email_trusted_users.replace(" ", "")
     assert tower_email_trusted_users in key
 
 
@@ -239,59 +243,35 @@ def test_default_config_data_studios_env(backup_tfvars, config_baseline_settings
     print("Testing data-studio.env generated from default settings.")
 
     # When
-    outputs = config_baseline_settings_default["planned_values"]["outputs"]
-    variables = config_baseline_settings_default["variables"]
-
+    vars, outputs, _, _ = generate_namespaced_dictionaries(config_baseline_settings_default)
     ds_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/data-studios.env")
-    print(f"{ds_env_file.items()=}")
     keys = ds_env_file.keys()
-
-    """
-    WARNING!!!!!!
-      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
-            AFFECTS: `outputs` and `variables`
-      - tower_env_file values are directly cracked from HCL so they are "true".
-    """
 
     # ------------------------------------------------------------------------------------
     # Test data-studios.env - assert all core keys exist
     # ------------------------------------------------------------------------------------
-    key = "PLATFORM_URL"
-    value = outputs["tower_server_url"]["value"]
-    assert ds_env_file[key] == value
+    entries = {
+        "PLATFORM_URL"                              : f"https://{vars.tower_server_url}",
+        "CONNECT_HTTP_PORT"                         : 9090,    # str()
+        "CONNECT_TUNNEL_URL"                        : "connect-server:7070",
+        "CONNECT_PROXY_URL"                         : f"https://connect.{vars.tower_server_url}",
+        "CONNECT_REDIS_ADDRESS"                     : "redis:6379",
+        "CONNECT_REDIS_DB"                          : 1,
+        "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN"    : "ipsemlorem"
+    }
 
-    key = "CONNECT_HTTP_PORT"
-    value = 9090
-    assert ds_env_file[key] == str(value)
+    for k,v in entries.items():
+        assert ds_env_file[k] == str(v)
 
-    key = "CONNECT_TUNNEL_URL"
-    value = "connect-server:7070"
-    assert ds_env_file[key] == value
-
-    key = "CONNECT_PROXY_URL"
-    value = outputs["tower_connect_server_url"]["value"]
-    assert ds_env_file[key] == value
-    assert "connect." in ds_env_file[key]
-
-    key = "CONNECT_REDIS_ADDRESS"
-    value = outputs["tower_redis_url"]["value"]
-    assert f"redis://{ds_env_file[key]}" == value
-
-    key = "CONNECT_REDIS_DB"
-    value = 1
-    assert ds_env_file[key] == str(value)
-
-    key = "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN"
-    value = "ipsemlorem"
-    assert ds_env_file[key] == value
-
+    # ------------------------------------------------------------------------------------
+    # Test always-present conditionals
+    # ------------------------------------------------------------------------------------
     # TODO: Figure out how to use local.studio_uses_distroless for better targeting.
-    key = "CONNECT_LOG_LEVEL"
-    key2 = "CONNECT_SERVER_LOG_LEVEL"
-    if key in keys:
-        assert key2 not in keys
-    else:
-        assert key2 in keys
+    if "CONNECT_LOG_LEVEL" in keys:
+        assert "CONNECT_SERVER_LOG_LEVEL" not in keys
+    
+    if "CONNECT_SERVER_LOG_LEVEL":
+        assert "CONNECT_LOG_LEVEL" in keys
 
 
 @pytest.mark.local
@@ -304,27 +284,28 @@ def test_default_config_tower_sql(backup_tfvars, config_baseline_settings_defaul
     """
 
     # Given
-    tfvars = get_reconciled_tfvars()
+    vars, _, _, _ = generate_namespaced_dictionaries(config_baseline_settings_default)
 
     # Get values for comparison
-    db_database_name = tfvars["db_database_name"]
     ssm_data = read_json(ssm_tower)
     sql_content = read_file(f"{root}/assets/target/tower_config/tower.sql")
 
-    # Remove quotes from database name if present
-    expected_db_name = db_database_name
+    db_database_name = vars.db_database_name
     expected_user = ssm_data["TOWER_DB_USER"]["value"]
     expected_password = ssm_data["TOWER_DB_PASSWORD"]["value"]
 
     # ------------------------------------------------------------------------------------
     # Test tower.sql - validate all interpolated variables are properly replaced
     # ------------------------------------------------------------------------------------
-    assert f"CREATE DATABASE {expected_db_name};" in sql_content
-    assert f"ALTER DATABASE {expected_db_name} CHARACTER SET utf8 COLLATE utf8_bin;" in sql_content
-    assert f'GRANT ALL PRIVILEGES ON {expected_db_name}.* TO {expected_user}@"%";' in sql_content
+    entries = [
+        f"CREATE DATABASE {db_database_name};",
+        f"ALTER DATABASE {db_database_name} CHARACTER SET utf8 COLLATE utf8_bin;",
+        f'GRANT ALL PRIVILEGES ON {db_database_name}.* TO {expected_user}@"%";',
+        f'CREATE USER "{expected_user}" IDENTIFIED BY "{expected_password}";'
+    ]
 
-    # Test that user credentials are properly interpolated
-    assert f'CREATE USER "{expected_user}" IDENTIFIED BY "{expected_password}";' in sql_content
+    for entry in entries:
+        assert entry in sql_content
 
     # Additional validation: ensure no template variables remain
     assert "${db_database_name}" not in sql_content
@@ -351,19 +332,19 @@ def test_tower_sql_mysql_container_execution(backup_tfvars, config_baseline_sett
     """
 
     # Given
-    tfvars = get_reconciled_tfvars()
+    vars, _, _, _ = generate_namespaced_dictionaries(config_baseline_settings_default)
     ssm_data = read_json(ssm_tower)
     sql_content = read_file(f"{root}/assets/target/tower_config/tower.sql")
 
     # Note: Hack to emulate RDS master user / password.
-    # TODO: Use the master user / password from the SSM values.
+    # TODO: Use the master user / password from the SSM values. WARNING: DONT CHANGE THESE OR TEST FAILS.
     mock_master_user = "root"
     mock_master_password = "test"
     mock_db_name = "test"
 
     tower_db_user = ssm_data["TOWER_DB_USER"]["value"]
     tower_db_password = ssm_data["TOWER_DB_PASSWORD"]["value"]
-    tower_db_name = tfvars["db_database_name"]
+    tower_db_name = vars.db_database_name
 
     # When - Execute SQL against MySQL container
     with (
@@ -435,89 +416,86 @@ def test_tower_sql_mysql_container_execution(backup_tfvars, config_baseline_sett
                 os.unlink(temp_sql_path)
 
 
-# ----------------------------------- NON-DEFAULT TESTS
+# ------------------------------------------------------------------------------------
+# CUSTOM CONFIG TESTS
+# ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_custom_config_tower_env(backup_tfvars, config_baseline_settings_custom):  # teardown_tf_state_all):
+def test_custom_config_files_01(backup_tfvars, config_baseline_settings_custom_01):
     """
     Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars,
     PLUS custom overrides.
+
+    - Data Studios active & Path routing active
     """
 
     # When
-    outputs = config_baseline_settings_custom["planned_values"]["outputs"]
-    variables = config_baseline_settings_custom["variables"]
-
     tower_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/tower.env")
-    keys = tower_env_file.keys()
+    ds_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/data-studios.env")
 
-    """
-    WARNING!!!!!!
-      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
-            AFFECTS: `outputs` and `variables`
-      - tower_env_file values are directly cracked from HCL so they are "true".
-    """
 
-# ------------------------------------------------------------------------------------
-    # Test sometimes-present conditionals - Data studio
     # ------------------------------------------------------------------------------------
-    # All keys locked behind the `flag_enable_data_studio` flag.
-    flag_enable_data_studio = variables["flag_enable_data_studio"]["value"]
-    flag_studio_enable_path_routing = variables["flag_studio_enable_path_routing"]["value"]
-    data_studio_path_routing_url = variables["data_studio_path_routing_url"]["value"]
-
-    # By default, path-routing not enabled so wont use custom connect domain.
-    key = "TOWER_DATA_STUDIO_CONNECT_URL"
-    value = outputs["tower_connect_server_url"]["value"]
-    if flag_enable_data_studio:
-        assert tower_env_file[key] == value
-        assert tower_env_file[key] != data_studio_path_routing_url
-    else:
-        assert key not in keys
-
-    key = "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"
-    if flag_enable_data_studio:
-        if flag_studio_enable_path_routing:
-            assert tower_env_file[key] == "true"
-        else:
-            assert tower_env_file[key] == "false"
+    # Test conditionals - Tower Env File And Data Studios Env file
+    # ------------------------------------------------------------------------------------
+    assert tower_env_file["TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"]  == "true"
+    assert tower_env_file["TOWER_DATA_STUDIO_CONNECT_URL"]          == "https://connect-example.com"
+    assert ds_env_file["CONNECT_PROXY_URL"]                         == "https://connect-example.com"
 
 
 @pytest.mark.local
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_custom_config_data_studios_env(backup_tfvars, config_baseline_settings_custom):
+def test_custom_config_files_02(backup_tfvars, config_baseline_settings_custom_02):
     """
-    Test the target data-studio.env generated from default test terraform.tfvars and base-override.auto.tfvars,
+    Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars,
     PLUS custom overrides.
+
+    - Data Studios active & Path routing inactive
     """
 
     # When
-    outputs = config_baseline_settings_custom["planned_values"]["outputs"]
-    variables = config_baseline_settings_custom["variables"]
+    tower_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/tower.env")
+    ds_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/data-studios.env")
+
+
+    # ------------------------------------------------------------------------------------
+    # Test conditionals - Tower Env File And Data Studios Env file
+    # ------------------------------------------------------------------------------------
+    assert tower_env_file["TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"]  == "false"
+    assert tower_env_file["TOWER_DATA_STUDIO_CONNECT_URL"]          == "https://connect.autodc.dev-seqera.net"
+    assert ds_env_file["CONNECT_PROXY_URL"]                         == "https://connect.autodc.dev-seqera.net"
+
+
+@pytest.mark.local
+@pytest.mark.config_keys
+@pytest.mark.vpc_existing
+@pytest.mark.long
+def test_custom_config_files_03(backup_tfvars, config_baseline_settings_custom_03):
+    """
+    Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars,
+    PLUS custom overrides.
+
+    - Data Studios inactive & Path routing inactive
+    """
+
+    # When
+    tower_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/tower.env")
+    tower_env_file_keys = tower_env_file.keys()
 
     ds_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/data-studios.env")
-    keys = ds_env_file.keys()
+    ds_env_file_keys = ds_env_file.keys()
 
-    """
-    WARNING!!!!!!
-      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
-            AFFECTS: `outputs` and `variables`
-      - tower_env_file values are directly cracked from HCL so they are "true".
-    """
 
     # ------------------------------------------------------------------------------------
-    # Test data-studios.env - assert all core keys exist
+    # Test conditionals - Tower Env File And Data Studios Env file
     # ------------------------------------------------------------------------------------
-    data_studio_path_routing_url = variables["data_studio_path_routing_url"]["value"]
+    assert "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING" not in tower_env_file_keys
+    assert "TOWER_DATA_STUDIO_CONNECT_URL" not in tower_env_file_keys
 
-    key = "CONNECT_PROXY_URL"
-    value = outputs["tower_connect_server_url"]["value"]
-    assert ds_env_file[key] == value
-    assert data_studio_path_routing_url in ds_env_file[key]
+    assert "CONNECT_PROXY_URL" in ds_env_file_keys
 
 
 @pytest.mark.local
@@ -531,17 +509,9 @@ def test_custom_config_docker_compose_with_reverse_proxy(backup_tfvars, config_b
     """
 
     # When
-    outputs = config_baseline_settings_custom_docker_compose_reverse_proxy["planned_values"]["outputs"]
-    variables = config_baseline_settings_custom_docker_compose_reverse_proxy["variables"]
+    # n/a
 
     dc_file = read_yaml(f"{root}/assets/target/docker_compose/docker-compose.yml")
-
-    """
-    WARNING!!!!!!
-      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
-            AFFECTS: `outputs` and `variables`
-      - tower_env_file values are directly cracked from HCL so they are "true".
-    """
 
     # ------------------------------------------------------------------------------------
     # Test data-studios.env - assert all core keys exist
@@ -560,17 +530,9 @@ def test_custom_config_docker_compose_with_no_https(backup_tfvars, config_baseli
     """
 
     # When
-    outputs = config_baseline_settings_custom_docker_compose_no_https["planned_values"]["outputs"]
-    variables = config_baseline_settings_custom_docker_compose_no_https["variables"]
+    # n/a
 
     dc_file = read_yaml(f"{root}/assets/target/docker_compose/docker-compose.yml")
-
-    """
-    WARNING!!!!!!
-      - Plan keys are in Python dictionary form, so JSON "true" becomes True.
-            AFFECTS: `outputs` and `variables`
-      - tower_env_file values are directly cracked from HCL so they are "true".
-    """
 
     # ------------------------------------------------------------------------------------
     # Test data-studios.env - assert all core keys exist

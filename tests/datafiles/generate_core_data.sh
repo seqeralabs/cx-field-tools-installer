@@ -20,6 +20,8 @@ cp ../../templates/TEMPLATE_terraform.tfvars terraform.tfvars
 # Create a `base-overrides.auto.tfvars` file. This replaces the REPLACE_ME values in the base file,
 # but will still lose out lexically to the override.auto.tfvars file created in each pytest test case.
 # See: https://developer.hashicorp.com/terraform/language/values/variables#variable-definition-precedence
+# NOTE: Due to how terraform orders layering, if this name is changed to something like `terraform.auto.tfvars`
+# then the test-level override needs to be lexically after it.
 cat << 'EOF' > base-overrides.auto.tfvars
 ## ------------------------------------------------------------------------------------
 ## Testing
@@ -42,7 +44,7 @@ aws_account = "128997144437"
 aws_region  = "us-east-1"
 aws_profile = "development"
 
-tower_container_version                 = "v25.1.1"
+tower_container_version                 = "v25.2.0"
 
 
 ## ------------------------------------------------------------------------------------
@@ -109,6 +111,12 @@ flag_enable_groundswell = true
 ## ------------------------------------------------------------------------------------
 flag_enable_data_studio = true
 
+
+## ------------------------------------------------------------------------------------
+## Database (Generic)
+## Values that apply to both the containerized and RDS DBs
+## ------------------------------------------------------------------------------------
+db_database_name = "tower"
 
 ## ------------------------------------------------------------------------------------
 ## Database (External)
