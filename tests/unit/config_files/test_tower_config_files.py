@@ -37,7 +37,6 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
     variables = config_baseline_settings_default["variables"]
 
     tower_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/tower.env")
-    print(f"{tower_env_file.items()=}")
     keys = tower_env_file.keys()
 
     """
@@ -51,184 +50,87 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
     # Test tower.env - assert all core keys exist
     # ------------------------------------------------------------------------------------
     # TODO: Refactor this to be more compact / efficient
-    key = "TOWER_ENABLE_AWS_SSM"
-    value = "true"
-    assert tower_env_file[key] == value
+    entries = {
+        "TOWER_ENABLE_AWS_SSM"        : "true",
+        "LICENSE_SERVER_URL"          : "https://licenses.seqera.io",
+        "TOWER_SERVER_URL"            : outputs["tower_server_url"]["value"],
+        "TOWER_CONTACT_EMAIL"         : variables["tower_contact_email"]["value"],
+        "TOWER_ENABLE_PLATFORMS"      : variables["tower_enable_platforms"]["value"],
+        "TOWER_ROOT_USERS"            : variables["tower_root_users"]["value"],
+        "TOWER_DB_URL"                : outputs["tower_db_url"]["value"],
+        "TOWER_DB_DRIVER"             : variables["tower_db_driver"]["value"],
+        "TOWER_DB_DIALECT"            : variables["tower_db_dialect"]["value"],
+        "TOWER_DB_MIN_POOL_SIZE"      : variables["tower_db_min_pool_size"]["value"],  # str()
+        "TOWER_DB_MAX_POOL_SIZE"      : variables["tower_db_max_pool_size"]["value"],  # str()
+        "TOWER_DB_MAX_LIFETIME"       : variables["tower_db_max_lifetime"]["value"],   # str()
+        "FLYWAY_LOCATIONS"            : variables["flyway_locations"]["value"],
+        "TOWER_REDIS_URL"             : outputs["tower_redis_url"]["value"],
+        "WAVE_SERVER_URL"             : outputs["tower_wave_url"]["value"],
+    }
 
-    key = "LICENSE_SERVER_URL"
-    value = "https://licenses.seqera.io"
-    assert tower_env_file[key] == value
-
-    key = "TOWER_SERVER_URL"
-    value = outputs["tower_server_url"]["value"]
-    assert tower_env_file[key] == value
-
-    key = "TOWER_CONTACT_EMAIL"
-    value = variables["tower_contact_email"]["value"]
-    assert tower_env_file[key] == value
-
-    key = "TOWER_ENABLE_PLATFORMS"
-    value = variables["tower_enable_platforms"]["value"]
-    assert tower_env_file[key] == value
-
-    key = "TOWER_ROOT_USERS"
-    value = variables["tower_root_users"]["value"]
-    assert tower_env_file[key] == value
-
-    key = "TOWER_DB_URL"
-    value = outputs["tower_db_url"]["value"]
-    assert tower_env_file[key] == value
-
-    key = "TOWER_DB_DRIVER"
-    value = variables["tower_db_driver"]["value"]
-    assert tower_env_file["TOWER_DB_DRIVER"] == value
-
-    key = "TOWER_DB_DIALECT"
-    value = variables["tower_db_dialect"]["value"]
-    assert tower_env_file["TOWER_DB_DIALECT"] == value
-
-    key = "TOWER_DB_MIN_POOL_SIZE"
-    value = variables["tower_db_min_pool_size"]["value"]
-    assert tower_env_file["TOWER_DB_MIN_POOL_SIZE"] == str(value)
-
-    key = "TOWER_DB_MAX_POOL_SIZE"
-    value = variables["tower_db_max_pool_size"]["value"]
-    assert tower_env_file["TOWER_DB_MAX_POOL_SIZE"] == str(value)
-
-    key = "TOWER_DB_MAX_LIFETIME"
-    value = variables["tower_db_max_lifetime"]["value"]
-    assert tower_env_file["TOWER_DB_MAX_LIFETIME"] == str(value)
-
-    key = "FLYWAY_LOCATIONS"
-    value = variables["flyway_locations"]["value"]
-    assert tower_env_file["FLYWAY_LOCATIONS"] == value
-
-    key = "TOWER_REDIS_URL"
-    value = outputs["tower_redis_url"]["value"]
-    assert tower_env_file["TOWER_REDIS_URL"] == value
-
-    key = "WAVE_SERVER_URL"
-    value = outputs["tower_wave_url"]["value"]
-    assert tower_env_file[key] == value
+    for k,v  in entries.items():
+        assert tower_env_file[k] == str(v)
 
     # ------------------------------------------------------------------------------------
     # Test always-present conditionals
     # ------------------------------------------------------------------------------------
-    key = "TOWER_ENABLE_AWS_SES"
-    value = variables["flag_use_aws_ses_iam_integration"]["value"]
-    assert tower_env_file[key] == ("true" if value else "false")
+    entries = {
+        "TOWER_ENABLE_AWS_SES"        : variables["flag_use_aws_ses_iam_integration"]["value"],
+        "TOWER_ENABLE_UNSAFE_MODE"    : variables["flag_do_not_use_https"]["value"],
+        "TOWER_ENABLE_WAVE"           : variables["flag_use_wave"]["value"] or variables["flag_use_wave_lite"]["value"],
+        "TOWER_ENABLE_GROUNDSWELL"    : variables["flag_enable_groundswell"]["value"],
+        "TOWER_DATA_EXPLORER_ENABLED" : variables["flag_data_explorer_enabled"]["value"]
+    }
 
-    key = "TOWER_ENABLE_UNSAFE_MODE"
-    value = variables["flag_do_not_use_https"]["value"]
-    assert tower_env_file[key] == ("true" if value else "false")
-
-    key = "TOWER_ENABLE_WAVE"
-    value1 = variables["flag_use_wave"]["value"]
-    value2 = variables["flag_use_wave_lite"]["value"]
-    assert tower_env_file[key] == ("true" if value1 or value2 else "false")
-
-    key = "TOWER_ENABLE_GROUNDSWELL"
-    value = variables["flag_enable_groundswell"]["value"]
-    assert tower_env_file[key] == ("true" if value else "false")
-
-    key = "TOWER_DATA_EXPLORER_ENABLED"
-    value = variables["flag_data_explorer_enabled"]["value"]
-    assert tower_env_file[key] == ("true" if value else "false")
+    for k,v in entries.items():
+        assert tower_env_file[k] == ("true" if v else "false")
 
     # ------------------------------------------------------------------------------------
     # Test tower.env - assert some core keys NOT present
     # ------------------------------------------------------------------------------------
-    key = "TOWER_DB_USER"
-    assert key not in keys
+    entries = [
+        "TOWER_DB_USER", "TOWER_DB_PASSWORD", "TOWER_SMTP_USER", "TOWER_SMTP_PASSWORD"
+    ]
 
-    key = "TOWER_DB_PASSWORD"
-    assert key not in keys
-
-    key = "TOWER_SMTP_USER"
-    assert key not in keys
-
-    key = "TOWER_SMTP_PASSWORD"
-    assert key not in keys
+    for k in entries:
+        assert k not in keys
 
     # ------------------------------------------------------------------------------------
     # Test sometimes-present conditionals
+    # Entries are the key, value, and controlling flag
     # ------------------------------------------------------------------------------------
-    key = "TOWER_SMTP_HOST"
-    value = variables["tower_smtp_host"]["value"]
-    flag_use_existing_smtp = variables["flag_use_existing_smtp"]["value"]
-    if flag_use_existing_smtp:
-        assert tower_env_file[key] == value
-    else:
-        assert key not in keys
+    flag_use_existing_smtp                      = variables["flag_use_existing_smtp"]["value"]
+    flag_enable_groundswell                     = variables["flag_enable_groundswell"]["value"]
+    flag_data_explorer_enabled                  = variables["flag_data_explorer_enabled"]["value"]
 
-    key = "TOWER_SMTP_PORT"
-    value = variables["tower_smtp_port"]["value"]
-    flag_use_existing_smtp = variables["flag_use_existing_smtp"]["value"]
-    if flag_use_existing_smtp:
-        assert tower_env_file[key] == value
-    else:
-        assert key not in keys
+    flag_enable_data_studio                     = variables["flag_enable_data_studio"]["value"]
+    flag_studio_enable_path_routing             = variables["flag_studio_enable_path_routing"]["value"]
+    flag_limit_data_studio_to_some_workspaces   = variables["flag_limit_data_studio_to_some_workspaces"]["value"]
 
-    key = "GROUNDSWELL_SERVER_URL"
-    value = "http://groundswell:8090"
-    flag_enable_groundswell = variables["flag_enable_groundswell"]["value"]
-    if flag_enable_groundswell:
-        assert tower_env_file[key] == value
-    else:
-        assert key not in keys
+    entries = [
+        ("TOWER_SMTP_HOST", variables["tower_smtp_host"]["value"], flag_use_existing_smtp),
+        ("TOWER_SMTP_PORT", variables["tower_smtp_port"]["value"], flag_use_existing_smtp),
+        ("GROUNDSWELL_SERVER_URL", "http://groundswell:8090", flag_enable_groundswell),
+        ("TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES", variables["data_explorer_disabled_workspaces"]["value"], flag_data_explorer_enabled),
 
-    key = "TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES"
-    value = variables["data_explorer_disabled_workspaces"]["value"]
-    flag_data_explorer_enabled = variables["flag_data_explorer_enabled"]["value"]
-    if flag_data_explorer_enabled:
-        assert tower_env_file[key] == value
-    else:
-        assert key not in keys
+        ("TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING", "false", flag_enable_data_studio and not flag_studio_enable_path_routing),
+        ("TOWER_DATA_STUDIO_ALLOWED_WORKSPACES", variables["data_studio_eligible_workspaces"]["value"], flag_enable_data_studio and flag_limit_data_studio_to_some_workspaces),
+        ("TOWER_DATA_STUDIO_CONNECT_URL", outputs["tower_connect_server_url"]["value"], flag_enable_data_studio),
+        ("TOWER_OIDC_PEM_PATH", "/data-studios-rsa.pem", flag_enable_data_studio),
+        ("TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN", "ipsemlorem", flag_enable_data_studio)
+    ]
 
-    # ------------------------------------------------------------------------------------
-    # Test sometimes-present conditionals - Data studio
-    # ------------------------------------------------------------------------------------
-    # All keys locked behind the `flag_enable_data_studio` flag.
-    flag_enable_data_studio = variables["flag_enable_data_studio"]["value"]
-    flag_studio_enable_path_routing = variables["flag_studio_enable_path_routing"]["value"]
-    flag_limit_data_studio_to_some_workspaces = variables["flag_limit_data_studio_to_some_workspaces"]["value"]
+    for entry in entries:
+        k,v,flag = entry
+        if flag:
+            assert tower_env_file[k] == v
+        else:
+            assert k not in keys
 
-    key = "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"
-    if flag_enable_data_studio and not flag_studio_enable_path_routing:
-        assert tower_env_file[key] == "false"
 
-    key = "TOWER_DATA_STUDIO_ALLOWED_WORKSPACES"
-    value = variables["data_studio_eligible_workspaces"]["value"]
-    if flag_enable_data_studio and flag_limit_data_studio_to_some_workspaces:
-        assert tower_env_file[key] == value
-    else:
-        assert key not in keys
-
-    key = "TOWER_DATA_STUDIO_CONNECT_URL"
-    value = outputs["tower_connect_server_url"]["value"]
+    # Data Studio Edgecase
     if flag_enable_data_studio:
-        assert tower_env_file[key] == value
-        assert "connect." in tower_env_file[key]
-    else:
-        assert key not in keys
-
-    key = "TOWER_OIDC_PEM_PATH"
-    value = "/data-studios-rsa.pem"
-    if flag_enable_data_studio:
-        assert tower_env_file[key] == value
-    else:
-        assert key not in keys
-
-    key = "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN"
-    value = "ipsemlorem"
-    if flag_enable_data_studio:
-        assert tower_env_file[key] == value
-    else:
-        assert key not in keys
-
-    # TODO: Align this edgecase in project?
-    for studio in variables["data_studio_options"]["value"]:
-        if flag_enable_data_studio:
+        for studio in variables["data_studio_options"]["value"]:
             for qualifier in ["ICON", "REPOSITORY", "TOOL", "STATUS"]:
                 key = f"TOWER_DATA_STUDIO_TEMPLATES_{studio}_{qualifier}"
                 # EDGECASE: Called it 'container' in terrafrom tfvars, but setting is REPOSITORY
@@ -236,10 +138,8 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
                     value = variables["data_studio_options"]["value"][studio]["container"]
                 else:
                     value = variables["data_studio_options"]["value"][studio][qualifier.lower()]
-            assert key.upper() in keys
-            assert tower_env_file[key.upper()] == value
-        else:
-            assert key not in keys
+                assert key.upper() in keys
+                assert tower_env_file[key.upper()] == value
 
 
 @pytest.mark.local
