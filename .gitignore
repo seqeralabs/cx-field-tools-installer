@@ -33,3 +33,4 @@ CLAUDE.local.md
 .claude/
 
 tests/logs/*
+tests/datafiles/*.tfvars
