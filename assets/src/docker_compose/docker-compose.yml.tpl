@@ -1,6 +1,4 @@
-# May 27/2025: removing since this causes problems with the native compose feature in Docker (we 
-#              no longer install the separate docker-compose extension)
-# version: "3"
+# `version: "3"` causes problems with the native compose feature in Docker (i.e. not the separate docker-compose extension)
 services:
 
 %{ if flag_use_container_db == true ~}
@@ -62,7 +60,7 @@ services:
     ports:
       - 8090:8090
     env_file:
-      - groundswell.env
+      - $HOME/target/groundswell_config/groundswell.env
     restart: always
 %{ if flag_use_container_db == true ~}
     depends_on:
@@ -80,10 +78,10 @@ services:
     networks:
       - backend
     volumes:
-      - $HOME/tower.yml:/tower.yml
+      - $HOME/target/tower_config/tower.yml:/tower.yml
     env_file:
       # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
-      - tower.env
+      - $HOME/target/tower_config/tower.env
     restart: no
 %{ if flag_use_container_db == true ~}
     depends_on:
@@ -101,13 +99,13 @@ services:
       - frontend
       - backend
     volumes:
-      - $HOME/tower.yml:/tower.yml
+      - $HOME/target/tower_config/tower.yml:/tower.yml
 %{ if flag_enable_data_studio == true ~}
-      - $HOME/data-studios-rsa.pem:/data-studios-rsa.pem
+      - $HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem
 %{ endif ~}
     env_file:
       # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
-      - tower.env
+      - $HOME/target/tower_config/tower.env
     environment:
       # Micronaut environments are required. Do not edit these value
       - MICRONAUT_ENVIRONMENTS=prod,redis,cron,${oidc_consolidated}
@@ -127,13 +125,13 @@ services:
       - frontend
       - backend
     volumes:
-      - $HOME/tower.yml:/tower.yml
+      - $HOME/target/tower_config/tower.yml:/tower.yml
 %{ if flag_enable_data_studio == true ~}
-      - $HOME/data-studios-rsa.pem:/data-studios-rsa.pem
+      - $HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem
 %{ endif ~}
     env_file:
       # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
-      - tower.env
+      - $HOME/target/tower_config/tower.env
     environment:
       # Micronaut environments are required. Do not edit these value
       - MICRONAUT_ENVIRONMENTS=prod,redis,cron,${oidc_consolidated}
@@ -163,12 +161,12 @@ services:
     expose:
       - 8080
     volumes:
-      - $HOME/tower.yml:/tower.yml
+      - $HOME/target/tower_config/tower.yml:/tower.yml
 %{ if flag_enable_data_studio == true ~}
-      - $HOME/data-studios-rsa.pem:/data-studios-rsa.pem
+      - $HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem
 %{ endif ~}
     env_file:
-      - tower.env
+      - $HOME/target/tower_config/tower.env
     environment:
       - MICRONAUT_ENVIRONMENTS=prod,redis,ha,${oidc_consolidated}
     restart: always
@@ -200,7 +198,7 @@ services:
     user: 65532:65532
 %{ endif ~}
     env_file:
-      - data-studios.env
+      - $HOME/target/tower_config/data-studios.env
     networks:
       - frontend
       - backend
@@ -227,7 +225,7 @@ services:
       - NET_BIND_SERVICE
 %{ endif ~}
     env_file:
-      - data-studios.env
+      - $HOME/target/tower_config/data-studios.env
     networks:
       - backend
     ports:
@@ -254,10 +252,12 @@ services:
       - $HOME/target/customcerts/${private_ca_key}:/etc/ssl/private/${private_ca_key}
     restart: always
     depends_on:
-      - wave-lite
+%{ if flag_use_wave_lite == true ~}
       - wave-lite-reverse-proxy
+%{ endif ~}
+%{ if flag_enable_data_studio == true ~}
       - connect-proxy
-      - frontend
+%{ endif ~}
 %{ endif ~}
 
 %{ if flag_use_wave_lite == true ~}

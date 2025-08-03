@@ -40,14 +40,6 @@
 
       echo $docker_password | docker login https://cr.seqera.io --username $docker_user --password-stdin
 
-  # - name: Docker Compose Down
-  #   become: true
-  #   become_user: ec2-user
-  #   community.docker.docker_compose_v2:
-  #     project_src: /home/ec2-user/
-  #     state: absent
-  #     remove_orphans: true
-
 
   - name: Docker Compose Up
     become: true

@@ -199,12 +199,6 @@ locals {
 
   # Private CA Files
   # ---------------------------------------------------------------------------------------
-  private_ca_cert       = "${module.connection_strings.tower_base_url}.crt"
-  private_ca_key        = "${module.connection_strings.tower_base_url}.key
-
-
-  # Private CA Files
-  # ---------------------------------------------------------------------------------------
   private_ca_cert = "${module.connection_strings.tower_base_url}.crt"
   private_ca_key  = "${module.connection_strings.tower_base_url}.key"
 
@@ -215,7 +209,7 @@ locals {
   dollar      = "$"
   singlequote = "'"
 
-    
+
   # Migrate-DB Flag
   # ---------------------------------------------------------------------------------------
   # Migrate-db only available for 23.4.1+ or higher. Check to ensure we don't include for 23.3.x or below. 
@@ -230,6 +224,11 @@ locals {
     tonumber(length(regexall("^v24.[0-9]", var.tower_container_version))) >= 1 ||
     tonumber(length(regexall("^v2[5-9]", var.tower_container_version))) >= 1 ? true : false
   )
+
+
+  # Ansible
+  # ---------------------------------------------------------------------------------------
+  playbook_dir = "/home/ec2-user/target/ansible"
 
 }
 
@@ -255,14 +254,15 @@ module "connection_strings" {
   source = "./modules/connection_strings/v1.0.0"
 
   # Feature Flags
-  flag_create_load_balancer       = var.flag_create_load_balancer
-  flag_do_not_use_https           = var.flag_do_not_use_https
-  flag_create_external_db         = var.flag_create_external_db
-  flag_use_existing_external_db   = var.flag_use_existing_external_db
-  flag_create_external_redis      = var.flag_create_external_redis
-  flag_use_wave                   = var.flag_use_wave
-  flag_use_wave_lite              = var.flag_use_wave_lite
-  flag_studio_enable_path_routing = var.flag_studio_enable_path_routing
+  flag_create_load_balancer = var.flag_create_load_balancer
+  flag_do_not_use_https     = var.flag_do_not_use_https
+
+  flag_create_external_db       = var.flag_create_external_db
+  flag_use_existing_external_db = var.flag_use_existing_external_db
+  flag_use_container_db         = var.flag_use_container_db
+
+  flag_create_external_redis = var.flag_create_external_redis
+  flag_use_container_redis   = var.flag_use_container_redis
 
   # Tower Configuration
   tower_server_url = var.tower_server_url
@@ -270,20 +270,29 @@ module "connection_strings" {
   db_database_name = var.db_database_name
 
   # Groundswell Configuration
-  swell_database_name = var.swell_database_name
+  flag_enable_groundswell = var.flag_enable_groundswell
+  swell_database_name     = var.swell_database_name
 
   # Wave Configuration
-  wave_server_url              = var.flag_use_wave ? var.wave_server_url : "https://wave.seqera.io"
-  wave_lite_server_url         = var.flag_use_wave_lite ? var.wave_lite_server_url : ""
-  data_studio_path_routing_url = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : ""
+  flag_use_wave      = var.flag_use_wave
+  flag_use_wave_lite = var.flag_use_wave_lite
+  wave_server_url    = try(var.wave_server_url, null)
+
+  # Studios Configuration
+  flag_enable_data_studio         = var.flag_enable_data_studio
+  flag_studio_enable_path_routing = var.flag_studio_enable_path_routing
+  data_studio_path_routing_url    = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : ""
 
   # External Resource References
-  rds_tower             = var.flag_create_external_db ? try(module.rds[0], null) : null
-  rds_wave_lite         = var.flag_create_external_db ? try(module.rds-wave-lite[0], null) : null
-  elasticache_tower     = var.flag_create_external_redis ? try(aws_elasticache_cluster.redis[0], null) : null
-  elasticache_wave_lite = var.flag_create_external_redis ? try(module.elasticache_wave_lite[0], null) : null
+  # rds_tower             = var.flag_create_external_db ? try(module.rds[0], null) : null
+  # rds_wave_lite         = var.flag_create_external_db ? try(module.rds-wave-lite[0], null) : null
+  # elasticache_tower     = var.flag_create_external_redis ? try(aws_elasticache_cluster.redis[0], null) : null
+  # elasticache_wave_lite = var.flag_create_external_redis ? try(module.elasticache_wave_lite[0], null) : null
+  rds_tower             = var.use_mocks ? null : try(module.rds[0], null)
+  rds_wave_lite         = var.use_mocks ? null : try(module.rds-wave-lite[0], null)
+  elasticache_tower     = var.use_mocks ? null : try(aws_elasticache_cluster.redis[0], null)
+  elasticache_wave_lite = var.use_mocks ? null : try(module.elasticache_wave_lite[0], null)
 
   # Testing flag
   use_mocks = var.use_mocks
-
 }

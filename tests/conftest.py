@@ -112,7 +112,7 @@ def config_baseline_settings_default():
     # plan = prepare_plan(override_data, qualifier)
     plan = prepare_plan(override_data)
     run_terraform_apply(qualifier)
-    execute_subprocess(f"terraform state list > terraform_state_list.txt")
+    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
 
     # Apply will generate actual assets we can interrogate in project or via remote calls.
     # Return plan only
@@ -157,7 +157,7 @@ def config_baseline_settings_custom():
     # plan = prepare_plan(override_data, qualifier)
     plan = prepare_plan(override_data)
     run_terraform_apply(qualifier)
-    execute_subprocess(f"terraform state list > terraform_state_list.txt")
+    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
 
     # Apply will generate actual assets we can interrogate in project or via remote calls.
     # Return plan only
@@ -202,7 +202,7 @@ def config_baseline_settings_custom_docker_compose_reverse_proxy():
     # plan = prepare_plan(override_data, qualifier)
     plan = prepare_plan(override_data)
     run_terraform_apply(qualifier)
-    execute_subprocess(f"terraform state list > terraform_state_list.txt")
+    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
 
     # Apply will generate actual assets we can interrogate in project or via remote calls.
     # Return plan only
@@ -247,10 +247,169 @@ def config_baseline_settings_custom_docker_compose_no_https():
     # plan = prepare_plan(override_data, qualifier)
     plan = prepare_plan(override_data)
     run_terraform_apply(qualifier)
-    execute_subprocess(f"terraform state list > terraform_state_list.txt")
+    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
 
-    # Apply will generate actual assets we can interrogate in project or via remote calls.
-    # Return plan only
+    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
+    yield plan
+
+    run_terraform_destroy()
+
+
+@pytest.fixture(scope="module")  # function
+def config_ansible_02_should_be_present():
+    """
+    Test conditional blocks in Ansible 02_update_file_configurations.yml.tpl
+    """
+
+    override_data = """
+        flag_create_external_db       = true
+        flag_use_container_db         = false
+
+        flag_create_external_redis    = true
+        flag_use_container_redis      = false
+
+        flag_create_load_balancer     = false
+        flag_use_private_cacert       = true
+
+        flag_enable_data_studio       = true
+        flag_enable_groundswell       = true
+        flag_use_wave_lite            = true
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    qualifier = "-target=null_resource.generate_independent_config_files"
+    plan = prepare_plan(override_data)
+    run_terraform_apply(qualifier)
+    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
+
+    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
+    yield plan
+
+    run_terraform_destroy()
+
+
+@pytest.fixture(scope="module")  # function
+def config_ansible_02_should_not_be_present():
+    """
+    Test conditional blocks in Ansible 02_update_file_configurations.yml.tpl
+    """
+
+    override_data = """
+        flag_create_external_db       = false
+        flag_use_container_db         = true
+
+        flag_create_external_redis    = false
+        flag_use_container_redis      = true
+
+        flag_create_load_balancer     = true
+        flag_use_private_cacert       = false
+
+        flag_enable_data_studio       = false
+        flag_enable_groundswell       = false
+        flag_use_wave_lite            = false
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    qualifier = "-target=null_resource.generate_independent_config_files"
+    plan = prepare_plan(override_data)
+    run_terraform_apply(qualifier)
+    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
+
+    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
+    yield plan
+
+    run_terraform_destroy()
+
+
+@pytest.fixture(scope="module")  # function
+def config_ansible_05_should_be_present():
+    """
+    Test conditional blocks in Ansible 05_patch_groundswell.yml
+    """
+
+    override_data = """
+        flag_create_external_db       = false
+        flag_use_container_db         = true
+
+        flag_enable_groundswell       = true
+
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    qualifier = "-target=null_resource.generate_independent_config_files"
+    plan = prepare_plan(override_data)
+    run_terraform_apply(qualifier)
+    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
+
+    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
+    yield plan
+
+    run_terraform_destroy()
+
+
+@pytest.fixture(scope="module")  # function
+def config_ansible_05_should_not_be_present():
+    """
+    Test conditional blocks in Ansible 05_patch_groundswell.yml
+    """
+
+    override_data = """
+        flag_create_external_db       = false
+        flag_use_container_db         = true
+
+        flag_enable_groundswell       = false
+
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    qualifier = "-target=null_resource.generate_independent_config_files"
+    plan = prepare_plan(override_data)
+    run_terraform_apply(qualifier)
+    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
+
+    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
+    yield plan
+
+    run_terraform_destroy()
+
+
+@pytest.fixture(scope="module")  # function
+def config_ansible_06_should_be_present():
+    """
+    Test conditional blocks in Ansible 06_run_seqerakit.yml
+    """
+
+    override_data = """
+        flag_create_hosts_file_entry  = true
+        flag_do_not_use_https         = true
+
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    qualifier = "-target=null_resource.generate_independent_config_files"
+    plan = prepare_plan(override_data)
+    run_terraform_apply(qualifier)
+    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
+
+    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
+    yield plan
+
+    run_terraform_destroy()
+
+
+@pytest.fixture(scope="module")  # function
+def config_ansible_06_should_not_be_present():
+    """
+    Test conditional blocks in Ansible 06_run_seqerakit.yml
+    """
+
+    override_data = """
+        flag_create_hosts_file_entry  = false
+        flag_do_not_use_https         = false
+
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    qualifier = "-target=null_resource.generate_independent_config_files"
+    plan = prepare_plan(override_data)
+    run_terraform_apply(qualifier)
+    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
+
+    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
     yield plan
 
     run_terraform_destroy()

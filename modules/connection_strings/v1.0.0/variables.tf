@@ -21,8 +21,23 @@ variable "flag_use_existing_external_db" {
   type        = bool
 }
 
+variable "flag_use_container_db" {
+  description = "Whether to use a container db."
+  type        = bool
+}
+
 variable "flag_create_external_redis" {
   description = "Whether to create external Redis"
+  type        = bool
+}
+
+variable "flag_use_container_redis" {
+  description = "Whether to use a Redis."
+  type        = bool
+}
+
+variable "flag_enable_data_studio" {
+  description = "Whether to use Studios."
   type        = bool
 }
 
@@ -32,7 +47,7 @@ variable "flag_use_wave" {
 }
 
 variable "flag_use_wave_lite" {
-  description = "Whether to use Wave-Lite"
+  description = "Whether to use Wave"
   type        = bool
 }
 
@@ -82,6 +97,11 @@ variable "elasticache_tower" {
 ## ------------------------------------------------------------------------------------
 ## Groundswell Configuration
 ## ------------------------------------------------------------------------------------
+variable "flag_enable_groundswell" {
+  description = "Whether to activate Groundswell."
+  type        = bool
+}
+
 variable "swell_database_name" {
   description = "The name of the Groundswell database"
   type        = string
@@ -91,12 +111,7 @@ variable "swell_database_name" {
 ## Wave Configuration
 ## ------------------------------------------------------------------------------------
 variable "wave_server_url" {
-  description = "The server URL for Wave"
-  type        = string
-}
-
-variable "wave_lite_server_url" {
-  description = "The server URL for Wave-Lite"
+  description = "The server URL for Wave or Wave-Lite"
   type        = string
 }
 

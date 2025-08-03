@@ -211,7 +211,7 @@ Enable Tower to connect to the Wave service.
 To connect the Seqera-hosted Wave Service, set `flag_use_wave` to true.
 To connect to a self-hosted Wave Lite instance instead, set `flag_use_wave_lite` to true.
 
-You should not need to modify the URL of the Seqera-hosted wave.
+Seqera-hosted wave is reached at "wave.seqera.io" Wave-Lite is a domain defined by you.  Do not add `https://` for either one.
 
 If you are deploying a Wave-LIte instance, you will need to make a decision re: DNS. Seqera recommends exposing 
 the service as a subdomain of your `tower_server_url` value (see entry in section further below). This pattern works 
@@ -224,11 +224,11 @@ to work. e.g:
     - mywavelite.example.com
 
 */
-flag_use_wave          = false
-flag_use_wave_lite     = false
+flag_use_wave      = false
+flag_use_wave_lite = false
+
 num_wave_lite_replicas = 2
-wave_server_url        = "https://wave.seqera.io"
-wave_lite_server_url   = "https://REPLACE_ME_IF_NEEDED"
+wave_server_url        = "wave.seqera.io"
 
 /*
 ## ------------------------------------------------------------------------------------
@@ -380,7 +380,7 @@ Enable to allow pipeline optimization.
 
 flag_enable_groundswell = true
 
-swell_container_version = "0.4.0"
+swell_container_version = "0.4.3"
 swell_database_name     = "swell"
 ## swell_db_user                        = "DO_NOT_UNCOMMENT_ME"
 ## swell_db_password                    = "DO_NOT_UNCOMMENT_ME"
@@ -419,7 +419,7 @@ NOTES:
 flag_enable_data_studio         = true
 flag_studio_enable_path_routing = false
 data_studio_path_routing_url    = "REPLACE_ME_IF_NECESSARY"
-data_studio_container_version   = "0.8.2"
+data_studio_container_version   = "0.8.3"
 
 flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""
@@ -431,15 +431,15 @@ data_studio_eligible_workspaces           = ""
 #  2. `qualifier` values MUST use hyphens (`-`), NOT underscores (`_`).
 #  3. Versioning Strategy (See Design Decisions for more details.)
 #     - Major and minor versions are pinned explicitly (e.g., `1.83.0-0.7.1` and `1.83.0-0.8.0`).  
-#     - Preference for clients v0.7 with a sliding patch version can be achieved by omitting the patch (e.g., use "0.7" instead of "0.7.1") to always get the latest patch update.
+#     - Auto-use latest update by by omitting the patch (e.g. "1.83.0-0.7" instead of "1.83.0-0.7.1").
 #   4. For the use of custom data studio images, ensure flag_use_wave = true. 
-#   5. Acceptable status values are: "recommended", "deprecated", and "experimental". Anything will be displayed as "unsupported".
-#   6. Current as of Platform v25.2.0, only VSCode, Jupyter, and R will work with path-based Studio routing (not Xpra). This must also be the 0.8.4 client version.
+#   5. Acceptable status values are: "recommended", "deprecated", and "experimental". Anything else will be displayed as "unsupported".
+#   6. Current as of Platform v25.2.0, only VSCode, Jupyter, and R will work with path-based Studio routing (not Xpra). This must also be the 0.8.5 client version.
 
 data_studio_options = {
   # DEPENDENCY
-  # DEPRECATION NOTICE (July 22/25): Future versions of the installer will no longer include entries for connect-client v0.8.0. 
-  #  Please update entries accordingly ahead of the a future version where the commented content will be removed. The most up-to-date version of connect-client is v0.8.0.
+  # DEPRECATION NOTICE (July 22/25): Future versions will not list entries for connect-client v0.8.0. 
+  # (July 31/25) - `rstudio-4-4-1-0-8-0` removed due to license issues.
 
   vscode-1-83-0-0-8-0 = {
     qualifier = "VSCODE-1-83-0-0-8-0"
@@ -455,13 +455,6 @@ data_studio_options = {
     status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.0"
   },
-  rstudio-4-4-1-0-8-0 = {
-    qualifier = "RSTUDIO-4-4-1-0-8-0"
-    icon      = "rstudio"
-    tool      = "rstudio"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.8.0"
-  },
   xpra-6-0-R0-0-8-0 = {
     qualifier = "XPRA-6-0-R0-0-8-0"
     icon      = "xpra"
@@ -469,26 +462,33 @@ data_studio_options = {
     status    = "recommended"
     container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.8.0"
   },
-  vscode-1-101-2-0-8-4 = {
-    qualifier = "VSCODE-1-101-2-0-8-4"
+  vscode-1-101-2-0-8-5 = {
+    qualifier = "VSCODE-1-101-2-0-8-5"
     icon      = "vscode"
     tool      = "vscode"
     status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.8.4"
+    container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.8.5"
   },
-  jupyter-4-2-5-0-8-4 = {
-    qualifier = "JUPYTER-4-2-5-0-8-4"
+  jupyter-4-2-5-0-8-5 = {
+    qualifier = "JUPYTER-4-2-5-0-8-5"
     icon      = "jupyter"
     tool      = "jupyter"
     status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.4"
+    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.5"
   },
-  ride-2025-04-1-0-8-4 = {
-    qualifier = "RIDE-2025-04-1-0-8-4"
+  ride-2025-04-1-0-8-5 = {
+    qualifier = "RIDE-2025-04-1-0-8-5"
     icon      = "rstudio"
     tool      = "rstudio"
     status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.8.4"
+    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.8.5"
+  },
+  xpra-6-0-R2-1-0-8-5 = {
+    qualifier = "XPRA-6-0-R2-1-0-8-5"
+    icon      = "xpra"
+    tool      = "xpra"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.8.5"
   },
 }
 

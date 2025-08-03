@@ -21,7 +21,9 @@
         "*.mdc": "default"
     },
     "files.associations": {
-        "*.mdc": "markdown"
+        "*.mdc": "markdown",
+        "*yml.tpl": "yaml",
     },
+    "yaml.validate": false, // Did this to shutup noise from Ansible .yml.tpl 
     "python.formatting.provider": "black"
 }
