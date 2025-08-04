@@ -2,7 +2,7 @@
 # Testing
 # ------------------------------------------------------------------------------------
 # Added June 21/2025 for testing purposes (to drive mocking behaviour for to-be-created resources).
-variable "use_mocks" {
+variable "local_testing_active" {
   type        = bool
   default     = false
   description = "Use to drive mocking behaviour for to-be-created resources."

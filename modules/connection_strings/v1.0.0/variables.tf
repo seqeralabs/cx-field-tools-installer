@@ -143,7 +143,7 @@ variable "elasticache_wave_lite" {
 ## ------------------------------------------------------------------------------------
 ## Testing
 ## ------------------------------------------------------------------------------------
-variable "use_mocks" {
+variable "local_testing_active" {
   type        = bool
   default     = false
   description = "Use to drive mocking behaviour for to-be-created resources."

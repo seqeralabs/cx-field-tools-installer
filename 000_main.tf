@@ -48,7 +48,7 @@ resource "random_pet" "stackname" {
 
 
 data "aws_caller_identity" "current" {
-  count = var.use_mocks ? 0 : 1
+  count = var.local_testing_active ? 0 : 1
 }
 
 
@@ -288,11 +288,11 @@ module "connection_strings" {
   # rds_wave_lite         = var.flag_create_external_db ? try(module.rds-wave-lite[0], null) : null
   # elasticache_tower     = var.flag_create_external_redis ? try(aws_elasticache_cluster.redis[0], null) : null
   # elasticache_wave_lite = var.flag_create_external_redis ? try(module.elasticache_wave_lite[0], null) : null
-  rds_tower             = var.use_mocks ? null : try(module.rds[0], null)
-  rds_wave_lite         = var.use_mocks ? null : try(module.rds-wave-lite[0], null)
-  elasticache_tower     = var.use_mocks ? null : try(aws_elasticache_cluster.redis[0], null)
-  elasticache_wave_lite = var.use_mocks ? null : try(module.elasticache_wave_lite[0], null)
+  rds_tower             = var.local_testing_active ? null : try(module.rds[0], null)
+  rds_wave_lite         = var.local_testing_active ? null : try(module.rds-wave-lite[0], null)
+  elasticache_tower     = var.local_testing_active ? null : try(aws_elasticache_cluster.redis[0], null)
+  elasticache_wave_lite = var.local_testing_active ? null : try(module.elasticache_wave_lite[0], null)
 
   # Testing flag
-  use_mocks = var.use_mocks
+  local_testing_active = var.local_testing_active
 }
