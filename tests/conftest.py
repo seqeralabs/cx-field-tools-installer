@@ -76,6 +76,9 @@ def backup_tfvars():
     delete_pycache_folders(root)
     move_file(tfvars_backup_path, tfvars_path)
 
+    # Single-source destroy at end of testing cycle to save time
+    run_terraform_destroy()
+
 
 # TODO: Make sure module is for the file calling it, NOT where this fixture lives.
 @pytest.fixture(scope="module")  # function
@@ -118,7 +121,7 @@ def config_baseline_settings_default():
     # Return plan only
     yield plan
 
-    run_terraform_destroy()
+    # run_terraform_destroy()
 
 
 @pytest.fixture(scope="module")  # function
@@ -147,7 +150,7 @@ def config_baseline_settings_custom_01():
     # Return plan only
     yield plan
 
-    run_terraform_destroy()
+    # run_terraform_destroy()
 
 
 @pytest.fixture(scope="module")  # function
@@ -176,7 +179,7 @@ def config_baseline_settings_custom_02():
     # Return plan only
     yield plan
 
-    run_terraform_destroy()
+    # run_terraform_destroy()
 
 
 @pytest.fixture(scope="module")  # function
@@ -205,7 +208,7 @@ def config_baseline_settings_custom_03():
     # Return plan only
     yield plan
 
-    run_terraform_destroy()
+    # run_terraform_destroy()
 
 
 @pytest.fixture(scope="module")  # function
@@ -250,7 +253,7 @@ def config_baseline_settings_custom_docker_compose_reverse_proxy():
     # Return plan only
     yield plan
 
-    run_terraform_destroy()
+    # run_terraform_destroy()
 
 
 @pytest.fixture(scope="module")  # function
@@ -294,7 +297,7 @@ def config_baseline_settings_custom_docker_compose_no_https():
     # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
     yield plan
 
-    run_terraform_destroy()
+    # run_terraform_destroy()
 
 
 @pytest.fixture(scope="module")  # function
@@ -326,7 +329,7 @@ def config_ansible_02_should_be_present():
     # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
     yield plan
 
-    run_terraform_destroy()
+    # run_terraform_destroy()
 
 
 @pytest.fixture(scope="module")  # function
@@ -358,7 +361,7 @@ def config_ansible_02_should_not_be_present():
     # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
     yield plan
 
-    run_terraform_destroy()
+    # run_terraform_destroy()
 
 
 @pytest.fixture(scope="module")  # function
@@ -383,7 +386,7 @@ def config_ansible_05_should_be_present():
     # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
     yield plan
 
-    run_terraform_destroy()
+    # run_terraform_destroy()
 
 
 @pytest.fixture(scope="module")  # function
@@ -408,7 +411,7 @@ def config_ansible_05_should_not_be_present():
     # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
     yield plan
 
-    run_terraform_destroy()
+    # run_terraform_destroy()
 
 
 @pytest.fixture(scope="module")  # function
@@ -431,7 +434,7 @@ def config_ansible_06_should_be_present():
     # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
     yield plan
 
-    run_terraform_destroy()
+    # run_terraform_destroy()
 
 
 @pytest.fixture(scope="module")  # function
@@ -454,7 +457,7 @@ def config_ansible_06_should_not_be_present():
     # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
     yield plan
 
-    run_terraform_destroy()
+    # run_terraform_destroy()
 
 
 @pytest.fixture(scope="function")
