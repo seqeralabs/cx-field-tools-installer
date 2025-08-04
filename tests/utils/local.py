@@ -51,29 +51,29 @@ Originally tried using [tftest](https://pypi.org/project/tftest/). Too complicat
 root = str(Path(__file__).parent.parent.parent.resolve())
 
 # Tfvars and override files filepaths
-tfvars_path = f"{root}/terraform.tfvars"
-tfvars_backup_path = f"{root}/terraform.tfvars.backup"
+tfvars_path                         = f"{root}/terraform.tfvars"
+tfvars_backup_path                  = f"{root}/terraform.tfvars.backup"
 
-test_tfvars_source = f"{root}/tests/datafiles/terraform.tfvars"
-test_tfvars_target = f"{root}/terraform.tfvars"
-test_tfvars_override_source = f"{root}/tests/datafiles/base-overrides.auto.tfvars"
-test_tfvars_override_target = f"{root}/base-overrides.auto.tfvars"
+test_tfvars_source                  = f"{root}/tests/datafiles/terraform.tfvars"
+test_tfvars_target                  = f"{root}/terraform.tfvars"
+test_tfvars_override_source         = f"{root}/tests/datafiles/base-overrides.auto.tfvars"
+test_tfvars_override_target         = f"{root}/base-overrides.auto.tfvars"
 
-test_case_override_target = f"{root}/override.auto.tfvars"
+test_case_override_target           = f"{root}/override.auto.tfvars"
 
-test_docker_compose_file = f"/tmp/cx-testing-docker-compose.yml"
+test_docker_compose_file  = f"/tmp/cx-testing-docker-compose.yml"
 
 # SSM (testing) secrets
-ssm_tower = f"{root}/tests/datafiles/ssm_sensitive_values_tower_testing.json"
-ssm_groundswell = f"{root}/tests/datafiles/ssm_sensitive_values_groundswell_testing.json"
-ssm_seqerakit = f"{root}/tests/datafiles/ssm_sensitive_values_seqerakit_testing.json"
-ssm_wave_lite = f"{root}/tests/datafiles/ssm_sensitive_values_wave_lite_testing.json"
+ssm_tower                           = f"{root}/tests/datafiles/ssm_sensitive_values_tower_testing.json"
+ssm_groundswell                     = f"{root}/tests/datafiles/ssm_sensitive_values_groundswell_testing.json"
+ssm_seqerakit                       = f"{root}/tests/datafiles/ssm_sensitive_values_seqerakit_testing.json"
+ssm_wave_lite                       = f"{root}/tests/datafiles/ssm_sensitive_values_wave_lite_testing.json"
 
 # Tfplan files and caching folder
-plan_cache_dir = f"{root}/tests/.plan_cache"
+plan_cache_dir                      = f"{root}/tests/.plan_cache"
 
-test_case_tfplan_file = f"{root}/tfplan"
-test_case_tfplan_json_file = f"{root}/tfplan.json"
+test_case_tfplan_file               = f"{root}/tfplan"
+test_case_tfplan_json_file          = f"{root}/tfplan.json"
 
 
 ## ------------------------------------------------------------------------------------
@@ -179,7 +179,7 @@ def run_terraform_plan(qualifier: str = "") -> None:
     for file in [test_case_tfplan_file, test_case_tfplan_json_file]:
         Path(file).unlink(missing_ok=True)
 
-    command = f"terraform plan {qualifier} -out=tfplan && terraform show -json tfplan > tfplan.json"
+    command = f"terraform plan {qualifier} -out=tfplan -refresh=false && terraform show -json tfplan > tfplan.json"
     execute_subprocess(command)
 
 

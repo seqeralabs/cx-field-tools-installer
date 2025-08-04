@@ -39,3 +39,13 @@ variable "subnets_alb" {
   description = "List of ALB subnets"
   type        = list(string)
 }
+
+
+## ------------------------------------------------------------------------------------
+## Testing
+## ------------------------------------------------------------------------------------
+variable "local_testing_active" {
+  type        = bool
+  default     = false
+  description = "Use to drive mocking behaviour for to-be-created resources."
+}

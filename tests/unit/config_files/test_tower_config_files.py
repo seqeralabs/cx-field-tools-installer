@@ -36,6 +36,7 @@ def generate_namespaced_dictionaries(dict: dict) -> tuple[SimpleNamespace, Simpl
     # https://dev.to/taqkarim/extending-simplenamespace-for-nested-dictionaries-58e8
     # Avoids noisy dict notation ([""]) and constant repetition of `.value`.
     # Variables have only one key (values); outputs may have 3 keys (sensitive, type, value).
+    # Example: `vars.tower_contact_email`
     vars_flattened = {k: v.get("value", v) for k,v in vars_dict.items()}
     outputs_flattened = {k: v.get("value", v) for k,v in outputs_dict.items()}
     
