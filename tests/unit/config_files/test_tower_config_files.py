@@ -3,12 +3,13 @@ import subprocess
 import json
 import os
 import tempfile
+import time
 
 from types import SimpleNamespace
 
 from tests.utils.local import root, test_tfvars_target, test_tfvars_override_target, test_case_override_target
 from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
-from tests.utils.local import parse_key_value_file, read_file, read_yaml, read_json
+from tests.utils.local import parse_key_value_file, read_file, read_yaml, read_json, write_file
 from tests.utils.local import get_reconciled_tfvars
 
 from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
@@ -44,6 +45,47 @@ def generate_namespaced_dictionaries(dict: dict) -> tuple[SimpleNamespace, Simpl
     outputs = json.loads(json.dumps(outputs_flattened), object_hook=lambda item: SimpleNamespace(**item))
 
     return (vars, outputs, vars_dict, outputs_dict)
+
+def strip_eot_block(text):
+    "terraform console emits multi-line output with starting line '<<EOT' and last line 'EOT'. Need to get ride of for file parsing."
+    if text.startswith("<<EOT"):
+        lines = text.splitlines()
+        return "\n".join(lines[1:-1])
+    return text
+
+def test_poc(backup_tfvars, config_baseline_settings_default):
+    """
+    Trying to create files directly via Terraform console.
+    """
+    vars, outputs, vars_dict, _ = generate_namespaced_dictionaries(config_baseline_settings_default)
+
+    # console command needs single quotes on outside and double-quotes within.
+    input_str = 'templatefile("assets/src/ansible/06_run_seqerakit.yml.tpl", { app_name = "abc", flag_create_hosts_file_entry = false, flag_do_not_use_https = true })'
+    outfile = "graham2.yml"
+    # with open(outfile, "w") as f:
+    #     result = subprocess.run(
+    #         ["terraform", "console"],
+    #         input=input_str,
+    #         stdout=f,
+    #         stderr=subprocess.PIPE,
+    #         text=True,
+    #         check=True
+    #     )
+    result = subprocess.run(
+        ["terraform", "console"],
+        input=input_str,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=True
+    )
+    output = result.stdout
+    output = strip_eot_block(output)
+    write_file(outfile, output)
+
+    content = read_yaml(outfile)
+    print(content)
+
 
 
 @pytest.mark.local

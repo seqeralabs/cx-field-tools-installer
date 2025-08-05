@@ -54,10 +54,8 @@ def backup_tfvars():
     # Create a fresh copy of the base testing terraform.tfvars file.
     subprocess.run("make generate_test_data", shell=True, check=True)
 
-    print(f"\nBacking up {tfvars_path} to {tfvars_backup_path}.")
+    print(f"\nBacking up terraform.tfvars & Loading test tfvars (base) artefacts.")
     move_file(tfvars_path, tfvars_backup_path)
-
-    print(f"\nLoading test tfvars (base) artefacts.")
     copy_file(test_tfvars_source, test_tfvars_target)
     copy_file(test_tfvars_override_source, test_tfvars_override_target)
 
@@ -80,7 +78,26 @@ def backup_tfvars():
     move_file(tfvars_backup_path, tfvars_path)
 
 
-# TODO: Make sure module is for the file calling it, NOT where this fixture lives.
+# @pytest.fixture(scope="session")  # function
+# def config_baseline_settings_default():
+#     """
+#     Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars.
+#     """
+
+#     override_data = """
+#         # No override values needed. Testing baseline only.
+#     """
+#     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+#     plan = prepare_plan(override_data)
+#     qualifier = "-target=null_resource.generate_independent_config_files"
+#     run_terraform_apply(qualifier)
+
+#     # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
+#     yield plan
+
+#     # run_terraform_destroy()
+
+
 @pytest.fixture(scope="session")  # function
 def config_baseline_settings_default():
     """
@@ -92,10 +109,7 @@ def config_baseline_settings_default():
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
     plan = prepare_plan(override_data)
-    qualifier = "-target=null_resource.generate_independent_config_files"
-    run_terraform_apply(qualifier)
 
-    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
     yield plan
 
     # run_terraform_destroy()
