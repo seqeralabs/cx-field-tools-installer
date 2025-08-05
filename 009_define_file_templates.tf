@@ -125,13 +125,11 @@ locals {
       studio_uses_distroless   = local.studio_uses_distroless
     }
   )
-}
 
 
-## ------------------------------------------------------------------------------------
-## Wave Lite config files
-## ------------------------------------------------------------------------------------
-locals {
+  ## ------------------------------------------------------------------------------------
+  ## Wave Lite config files
+  ## ------------------------------------------------------------------------------------
   wave_lite_yml = templatefile("assets/src/wave_lite_config/wave-lite.yml.tpl",
     {
       tower_server_url = module.connection_strings.tower_server_url,
@@ -148,14 +146,11 @@ locals {
       tower_contact_email = var.tower_contact_email,
     }
   )
-}
 
 
-
-## ------------------------------------------------------------------------------------
-## Update Docker-Compose with Docker version
-## ------------------------------------------------------------------------------------
-locals {
+  ## ------------------------------------------------------------------------------------
+  ## Update Docker-Compose with Docker version
+  ## ------------------------------------------------------------------------------------
   docker_compose = templatefile("assets/src/docker_compose/docker-compose.yml.tpl",
     {
       docker_version    = var.tower_container_version,
@@ -195,12 +190,11 @@ locals {
       private_ca_key  = local.private_ca_key
     }
   )
-}
 
-## ------------------------------------------------------------------------------------
-## Seqerakit - Everything But Compute Environments
-## ------------------------------------------------------------------------------------
-locals {
+
+  ## ------------------------------------------------------------------------------------
+  ## Seqerakit - Everything But Compute Environments
+  ## ------------------------------------------------------------------------------------
   seqerakit_yml = templatefile("assets/src/seqerakit/setup.yml.tpl",
     {
       seqerakit_org_name     = var.seqerakit_org_name,
@@ -226,13 +220,11 @@ locals {
       seqerakit_flag_credential_use_codecommit_baseurl = var.seqerakit_flag_credential_use_codecommit_baseurl
     }
   )
-}
 
 
-## ------------------------------------------------------------------------------------
-## Seqerakit - Compute Environments
-## ------------------------------------------------------------------------------------
-locals {
+  ## ------------------------------------------------------------------------------------
+  ## Seqerakit - Compute Environments
+  ## ------------------------------------------------------------------------------------
   aws_batch_manual = templatefile("assets/src/seqerakit/compute-envs/aws_batch_manual.yml.tpl",
     {
       aws_region = var.seqerakit_compute_env_region,
@@ -250,10 +242,10 @@ locals {
       use_fast_storage = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False"
     }
   )
-}
 
-
-locals {
+  ## ------------------------------------------------------------------------------------
+  ## Forge
+  ## ------------------------------------------------------------------------------------
   aws_batch_forge = templatefile("assets/src/seqerakit/compute-envs/aws_batch_forge.yml.tpl",
     {
       aws_region = var.seqerakit_compute_env_region,
@@ -279,13 +271,11 @@ locals {
       )
     }
   )
-}
 
 
-## ------------------------------------------------------------------------------------
-## VM Configuration - Mandatory
-## ------------------------------------------------------------------------------------
-locals {
+  ## ------------------------------------------------------------------------------------
+  ## VM Configuration - Mandatory
+  ## ------------------------------------------------------------------------------------
   cleanse_and_configure_host = templatefile(
     "assets/src/bash/remote/cleanse_and_configure_host.sh.tpl",
     {
@@ -311,13 +301,10 @@ locals {
 
     }
   )
-}
 
-
-## ------------------------------------------------------------------------------------
-## Ansible
-## ------------------------------------------------------------------------------------
-locals {
+  ## ------------------------------------------------------------------------------------
+  ## Ansible
+  ## ------------------------------------------------------------------------------------
   ansible_02_update_file_configurations = templatefile("assets/src/ansible/02_update_file_configurations.yml.tpl",
     {
       app_name                     = var.app_name
@@ -361,13 +348,10 @@ locals {
     }
   )
 
-}
 
-
-## ------------------------------------------------------------------------------------
-## SSH Config
-## ------------------------------------------------------------------------------------
-locals {
+  ## ------------------------------------------------------------------------------------
+  ## SSH Config
+  ## ------------------------------------------------------------------------------------
   ssh_config = templatefile("assets/src/ssh/ssh_config.tpl",
     {
       node_id = aws_instance.ec2.id,
@@ -383,13 +367,11 @@ locals {
       profile  = var.aws_profile
     }
   )
-}
 
 
-## ------------------------------------------------------------------------------------
-## EC2 Docker Logging
-## ------------------------------------------------------------------------------------
-locals {
+  ## ------------------------------------------------------------------------------------
+  ## EC2 Docker Logging
+  ## ------------------------------------------------------------------------------------
   docker_logging = templatefile("assets/src/docker_logging/daemon.json.tpl",
     {
       flag_docker_logging_local    = var.flag_docker_logging_local,
@@ -399,22 +381,11 @@ locals {
       docker_cidr_range = var.docker_cidr_range
     }
   )
-}
 
 
-## ------------------------------------------------------------------------------------
-## Tower Connect
-## ------------------------------------------------------------------------------------
-resource "tls_private_key" "connect_pem" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
-
-## ------------------------------------------------------------------------------------
-## Local Server With Private CA Config
-## ------------------------------------------------------------------------------------
-locals {
+  ## ------------------------------------------------------------------------------------
+  ## Local Server With Private CA Config
+  ## ------------------------------------------------------------------------------------
   private_ca_conf = templatefile("assets/src/customcerts/custom_default.conf.tpl",
     {
       flag_enable_data_studio = var.flag_enable_data_studio,
@@ -429,3 +400,15 @@ locals {
     }
   )
 }
+
+
+## ------------------------------------------------------------------------------------
+## Tower Connect
+## ------------------------------------------------------------------------------------
+resource "tls_private_key" "connect_pem" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+
+

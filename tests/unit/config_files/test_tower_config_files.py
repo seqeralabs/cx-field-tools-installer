@@ -57,10 +57,51 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
     """
     Trying to create files directly via Terraform console.
     """
+    start_time = time.time()
     vars, outputs, vars_dict, _ = generate_namespaced_dictionaries(config_baseline_settings_default)
 
+    # Transform template files into parseable JSON
+    command = "./hcl2json 009_define_file_templates.tf > graham3.json"
+    result = execute_subprocess(command)
+    templatefile_json = read_json("graham3.json")
+    run_seqerakit = templatefile_json["locals"][0]["ansible_06_run_seqerakit"]
+    # print(run_seqerakit)
+    run_seqerakit = run_seqerakit[2:-1]
+    print(run_seqerakit)
+
+    # This part a big magical, from Claude: Here's how it works:
+    # 1. re.sub(pattern, replace_var, input_str) finds every occurrence of var.something
+    # 2. For each match, it calls replace_var(match)
+    # 3. replace_var extracts the variable name and returns the replacement value
+    # 4. re.sub substitutes each match with the returned value
+    # So for your input string, it will automatically find and replace var.app_name, var.flag_create_hosts_file_entry, and var.flag_do_not_use_https in a single call.
+    import re
+
+    def replace_vars_in_templatefile(input_str, vars_obj):
+        def replace_var(match):
+            var_name = match.group(1)
+            if hasattr(vars_obj, var_name):
+                value = getattr(vars_obj, var_name)
+                if isinstance(value, str):
+                    return f'"{value}"'
+                elif isinstance(value, bool):
+                    return str(value).lower()
+                else:
+                    return str(value)
+            return match.group(0)  # Return original if var not found
+
+        # The regex re.sub() function handles the "looping" automatically - it finds all matches of the pattern var\.(\w+) in the string and calls the
+        # replace_var function for each match.
+        pattern = r'var\.(\w+)'
+        return re.sub(pattern, replace_var, input_str)
+    
+    result = replace_vars_in_templatefile(run_seqerakit, vars)  # input string
+    print(result)
+    result = result.replace("\n", "")   # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
+    # write_file("graham4.txt", result)
+
     # console command needs single quotes on outside and double-quotes within.
-    input_str = 'templatefile("assets/src/ansible/06_run_seqerakit.yml.tpl", { app_name = "abc", flag_create_hosts_file_entry = false, flag_do_not_use_https = true })'
+    # input_str = 'templatefile("assets/src/ansible/06_run_seqerakit.yml.tpl", { app_name = "abc", flag_create_hosts_file_entry = false, flag_do_not_use_https = true })'
     outfile = "graham2.yml"
     # with open(outfile, "w") as f:
     #     result = subprocess.run(
@@ -73,7 +114,7 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
     #     )
     result = subprocess.run(
         ["terraform", "console"],
-        input=input_str,
+        input=str(result),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -85,7 +126,10 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
 
     content = read_yaml(outfile)
     print(content)
+    end_time = time.time() - start_time
+    print(f"{end_time=}")
 
+    # Takes about 4 seconds to execute. I can hash this too.
 
 
 @pytest.mark.local
