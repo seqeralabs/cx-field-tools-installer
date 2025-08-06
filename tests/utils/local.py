@@ -60,6 +60,9 @@ test_tfvars_override_source         = f"{root}/tests/datafiles/base-overrides.au
 test_tfvars_override_target         = f"{root}/base-overrides.auto.tfvars"
 
 test_case_override_target           = f"{root}/override.auto.tfvars"
+test_case_override_outputs_source   = f"{root}/tests/datafiles/012_testing_outputs.tf"
+test_case_override_outputs_target   = f"{root}/012_testing_outputs.tf"
+                
 
 test_docker_compose_file  = f"/tmp/cx-testing-docker-compose.yml"
 

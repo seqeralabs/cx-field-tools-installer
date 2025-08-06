@@ -16,6 +16,7 @@ from tests.utils.local import root, tfvars_path, tfvars_backup_path
 from tests.utils.local import test_tfvars_source, test_tfvars_target
 from tests.utils.local import test_tfvars_override_source, test_tfvars_override_target
 from tests.utils.local import test_case_override_target
+from tests.utils.local import test_case_override_outputs_source, test_case_override_outputs_target
 
 from tests.utils.local import root
 from tests.utils.local import copy_file, move_file
@@ -59,6 +60,8 @@ def backup_tfvars():
     copy_file(test_tfvars_source, test_tfvars_target)
     copy_file(test_tfvars_override_source, test_tfvars_override_target)
 
+    copy_file(test_case_override_outputs_source, test_case_override_outputs_target)
+
     yield
 
     print("\nRestoring original environment.")
@@ -71,6 +74,7 @@ def backup_tfvars():
         test_case_override_target,
         test_tfvars_target,
         test_tfvars_override_target,
+        test_case_override_outputs_target
     ]:
         Path(file).unlink(missing_ok=True)
 

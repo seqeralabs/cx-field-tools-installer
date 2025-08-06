@@ -4,6 +4,7 @@ import json
 import os
 import tempfile
 import time
+from pathlib import Path
 
 from types import SimpleNamespace
 
@@ -61,11 +62,10 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
     vars, outputs, vars_dict, _ = generate_namespaced_dictionaries(config_baseline_settings_default)
 
     # Transform template files into parseable JSON
-    command = "./hcl2json 009_define_file_templates.tf > graham3.json"
+    command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
     result = execute_subprocess(command)
-    templatefile_json = read_json("graham3.json")
+    templatefile_json = read_json("009_define_file_templates.json")
     run_seqerakit = templatefile_json["locals"][0]["ansible_06_run_seqerakit"]
-    # print(run_seqerakit)
     run_seqerakit = run_seqerakit[2:-1]
     print(run_seqerakit)
 
@@ -77,7 +77,7 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
     # So for your input string, it will automatically find and replace var.app_name, var.flag_create_hosts_file_entry, and var.flag_do_not_use_https in a single call.
     import re
 
-    def replace_vars_in_templatefile(input_str, vars_obj):
+    def replace_vars_in_templatefile(input_str, vars_obj, type) -> str:
         def replace_var(match):
             var_name = match.group(1)
             if hasattr(vars_obj, var_name):
@@ -90,15 +90,21 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
                     return str(value)
             return match.group(0)  # Return original if var not found
 
-        # The regex re.sub() function handles the "looping" automatically - it finds all matches of the pattern var\.(\w+) in the string and calls the
+        # The regex re.sub() function handles the "looping" automatically - it finds all matches of the defined pattern in the string and calls the
         # replace_var function for each match.
-        pattern = r'var\.(\w+)'
-        return re.sub(pattern, replace_var, input_str)
+        if type == "tfvar":
+            pattern = r'var\.(\w+)'
+            return re.sub(pattern, replace_var, input_str)
+        
+        elif type == "module.connection_string":
+            pattern = r'module.connection_string\.(\w+)'
+            return re.sub(pattern, replace_var, input_str)
+        else:
+            return "Error"
     
-    result = replace_vars_in_templatefile(run_seqerakit, vars)  # input string
+    result = replace_vars_in_templatefile(run_seqerakit, vars, "tfvar")  # input string
     print(result)
     result = result.replace("\n", "")   # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
-    # write_file("graham4.txt", result)
 
     # console command needs single quotes on outside and double-quotes within.
     # input_str = 'templatefile("assets/src/ansible/06_run_seqerakit.yml.tpl", { app_name = "abc", flag_create_hosts_file_entry = false, flag_do_not_use_https = true })'
@@ -129,7 +135,17 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
     end_time = time.time() - start_time
     print(f"{end_time=}")
 
+    Path("009_define_file_templates.json").unlink(missing_ok=True)
+
     # Takes about 4 seconds to execute. I can hash this too.
+
+    command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
+    result = execute_subprocess(command)
+    templatefile_json = read_json("009_define_file_templates.json")
+    run_seqerakit = templatefile_json["locals"][0]["ansible_06_run_seqerakit"]
+    run_seqerakit = run_seqerakit[2:-1]
+    print(run_seqerakit)
+    print(outputs)
 
 
 @pytest.mark.local

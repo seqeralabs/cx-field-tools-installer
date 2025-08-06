@@ -306,3 +306,16 @@ fi
 
 # Delete test log file
 echo '{"message": "Cleansing content for new test loop."}' > ../logs/pytest_structured.log || true
+
+
+## ------------------------------------------------------------------------------------
+## WRITE TESTING SECRETS TO SSM
+## ------------------------------------------------------------------------------------
+cat << 'EOF' > 012_testing_outputs.tf
+## ------------------------------------------------------------------------------------
+## Write local values to output for testing purposes
+## Keep name of local the same; prefix with 'local_' for easy conversion
+## ------------------------------------------------------------------------------------
+output local_wave_enabled {
+    value = local.wave_enabled
+} 
