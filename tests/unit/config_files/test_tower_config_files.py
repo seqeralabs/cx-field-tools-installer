@@ -124,9 +124,12 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
 
         # vars not necessary since console will have them by virtue of all .tfvars being in root?
         # result = replace_vars_in_templatefile(input_str, vars, "tfvar")
+        # locals seem to not be necessary either -- terraform console seems to have access to them.
+        # result = replace_vars_in_templatefile(result, outputs, "local")
+        # Cant comment out the module replacement or else output file will be "known after apply". Keeping active gets actual interpolated file.
         result = replace_vars_in_templatefile(input_str, outputs, "module.connection_strings")
-        result = replace_vars_in_templatefile(result, outputs, "local")
         result = result.replace("\n", "")   # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
+        # TODO: Figure out secrets
 
         print(result)
         return result
