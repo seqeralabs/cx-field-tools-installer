@@ -4,33 +4,33 @@
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 5.12.0 |
-| <a name="provider_external"></a> [external](#provider\_external) | 2.3.3 |
-| <a name="provider_null"></a> [null](#provider\_null) | 3.2.2 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.6.2 |
-| <a name="provider_tls"></a> [tls](#provider\_tls) | 4.0.5 |
+| <a name="provider_null"></a> [null](#provider\_null) | 3.2.4 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
+| <a name="provider_tls"></a> [tls](#provider\_tls) | 4.1.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_alb"></a> [alb](#module\_alb) | terraform-aws-modules/alb/aws | 8.7.0 |
+| <a name="module_connection_strings"></a> [connection\_strings](#module\_connection\_strings) | ./modules/connection_strings/v1.0.0 | n/a |
 | <a name="module_elasticache_wave_lite"></a> [elasticache\_wave\_lite](#module\_elasticache\_wave\_lite) | ./modules/elasticache | n/a |
 | <a name="module_rds"></a> [rds](#module\_rds) | terraform-aws-modules/rds/aws | 6.1.1 |
 | <a name="module_rds-wave-lite"></a> [rds-wave-lite](#module\_rds-wave-lite) | terraform-aws-modules/rds/aws | 6.1.1 |
-| <a name="module_tower_alb_sg"></a> [tower\_alb\_sg](#module\_tower\_alb\_sg) | terraform-aws-modules/security-group/aws | 5.1.0 |
-| <a name="module_tower_batch_sg"></a> [tower\_batch\_sg](#module\_tower\_batch\_sg) | terraform-aws-modules/security-group/aws | 5.1.0 |
-| <a name="module_tower_db_sg"></a> [tower\_db\_sg](#module\_tower\_db\_sg) | terraform-aws-modules/security-group/aws | 5.1.0 |
-| <a name="module_tower_ec2_alb_connect_sg"></a> [tower\_ec2\_alb\_connect\_sg](#module\_tower\_ec2\_alb\_connect\_sg) | terraform-aws-modules/security-group/aws | 5.1.0 |
-| <a name="module_tower_ec2_alb_sg"></a> [tower\_ec2\_alb\_sg](#module\_tower\_ec2\_alb\_sg) | terraform-aws-modules/security-group/aws | 5.1.0 |
-| <a name="module_tower_ec2_alb_wave_sg"></a> [tower\_ec2\_alb\_wave\_sg](#module\_tower\_ec2\_alb\_wave\_sg) | terraform-aws-modules/security-group/aws | 5.1.0 |
-| <a name="module_tower_ec2_direct_connect_sg"></a> [tower\_ec2\_direct\_connect\_sg](#module\_tower\_ec2\_direct\_connect\_sg) | terraform-aws-modules/security-group/aws | 5.1.0 |
-| <a name="module_tower_ec2_direct_sg"></a> [tower\_ec2\_direct\_sg](#module\_tower\_ec2\_direct\_sg) | terraform-aws-modules/security-group/aws | 5.1.0 |
-| <a name="module_tower_ec2_egress_sg"></a> [tower\_ec2\_egress\_sg](#module\_tower\_ec2\_egress\_sg) | terraform-aws-modules/security-group/aws | 5.1.0 |
-| <a name="module_tower_ec2_ssh_sg"></a> [tower\_ec2\_ssh\_sg](#module\_tower\_ec2\_ssh\_sg) | terraform-aws-modules/security-group/aws | 5.1.0 |
-| <a name="module_tower_eice_egress_sg"></a> [tower\_eice\_egress\_sg](#module\_tower\_eice\_egress\_sg) | terraform-aws-modules/security-group/aws | 5.1.0 |
-| <a name="module_tower_eice_ingress_sg"></a> [tower\_eice\_ingress\_sg](#module\_tower\_eice\_ingress\_sg) | terraform-aws-modules/security-group/aws | 5.1.0 |
-| <a name="module_tower_interface_endpoint_sg"></a> [tower\_interface\_endpoint\_sg](#module\_tower\_interface\_endpoint\_sg) | terraform-aws-modules/security-group/aws | 5.1.0 |
-| <a name="module_tower_redis_sg"></a> [tower\_redis\_sg](#module\_tower\_redis\_sg) | terraform-aws-modules/security-group/aws | 5.1.0 |
+| <a name="module_sg_alb_core"></a> [sg\_alb\_core](#module\_sg\_alb\_core) | terraform-aws-modules/security-group/aws | 5.1.0 |
+| <a name="module_sg_batch"></a> [sg\_batch](#module\_sg\_batch) | terraform-aws-modules/security-group/aws | 5.1.0 |
+| <a name="module_sg_db"></a> [sg\_db](#module\_sg\_db) | terraform-aws-modules/security-group/aws | 5.1.0 |
+| <a name="module_sg_ec2_core"></a> [sg\_ec2\_core](#module\_sg\_ec2\_core) | terraform-aws-modules/security-group/aws | 5.1.0 |
+| <a name="module_sg_ec2_noalb_connect"></a> [sg\_ec2\_noalb\_connect](#module\_sg\_ec2\_noalb\_connect) | terraform-aws-modules/security-group/aws | 5.1.0 |
+| <a name="module_sg_ec2_noalb_no_https"></a> [sg\_ec2\_noalb\_no\_https](#module\_sg\_ec2\_noalb\_no\_https) | terraform-aws-modules/security-group/aws | 5.1.0 |
+| <a name="module_sg_ec2_noalb_with_private_certificate"></a> [sg\_ec2\_noalb\_with\_private\_certificate](#module\_sg\_ec2\_noalb\_with\_private\_certificate) | terraform-aws-modules/security-group/aws | 5.1.0 |
+| <a name="module_sg_eice"></a> [sg\_eice](#module\_sg\_eice) | terraform-aws-modules/security-group/aws | 5.1.0 |
+| <a name="module_sg_from_alb_connect"></a> [sg\_from\_alb\_connect](#module\_sg\_from\_alb\_connect) | terraform-aws-modules/security-group/aws | 5.1.0 |
+| <a name="module_sg_from_alb_core"></a> [sg\_from\_alb\_core](#module\_sg\_from\_alb\_core) | terraform-aws-modules/security-group/aws | 5.1.0 |
+| <a name="module_sg_from_alb_wave"></a> [sg\_from\_alb\_wave](#module\_sg\_from\_alb\_wave) | terraform-aws-modules/security-group/aws | 5.1.0 |
+| <a name="module_sg_redis"></a> [sg\_redis](#module\_sg\_redis) | terraform-aws-modules/security-group/aws | 5.1.0 |
+| <a name="module_sg_vpc_endpoint"></a> [sg\_vpc\_endpoint](#module\_sg\_vpc\_endpoint) | terraform-aws-modules/security-group/aws | 5.1.0 |
+| <a name="module_subnet_collector"></a> [subnet\_collector](#module\_subnet\_collector) | ./modules/subnet_collector/v1.0.0 | n/a |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | 5.1.2 |
 
 ## Inputs
@@ -42,12 +42,12 @@
 | <a name="input_aws_account"></a> [aws\_account](#input\_aws\_account) | n/a | `string` | n/a | yes |
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | n/a | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | n/a | `string` | n/a | yes |
-| <a name="input_private_cacert_bucket_prefix"></a> [bucket\_prefix\_for\_new\_private\_ca\_cert](#input\_bucket\_prefix\_for\_new\_private\_ca\_cert) | n/a | `string` | n/a | yes |
 | <a name="input_custom_resource_naming_prefix"></a> [custom\_resource\_naming\_prefix](#input\_custom\_resource\_naming\_prefix) | n/a | `string` | n/a | yes |
 | <a name="input_data_explorer_disabled_workspaces"></a> [data\_explorer\_disabled\_workspaces](#input\_data\_explorer\_disabled\_workspaces) | n/a | `string` | n/a | yes |
 | <a name="input_data_studio_container_version"></a> [data\_studio\_container\_version](#input\_data\_studio\_container\_version) | n/a | `string` | n/a | yes |
 | <a name="input_data_studio_eligible_workspaces"></a> [data\_studio\_eligible\_workspaces](#input\_data\_studio\_eligible\_workspaces) | n/a | `string` | n/a | yes |
-| <a name="input_data_studio_options"></a> [data\_studio\_options](#input\_data\_studio\_options) | n/a | <pre>map(object({<br/>    qualifier = string<br/>    icon = string<br/>    tool = optional(string)<br/>    status = optional(string)<br/>    container = string<br/>  }))</pre> | n/a | yes |
+| <a name="input_data_studio_options"></a> [data\_studio\_options](#input\_data\_studio\_options) | n/a | <pre>map(object({<br/>    qualifier = string<br/>    icon      = string<br/>    tool      = optional(string)<br/>    status    = optional(string)<br/>    container = string<br/>  }))</pre> | n/a | yes |
+| <a name="input_data_studio_path_routing_url"></a> [data\_studio\_path\_routing\_url](#input\_data\_studio\_path\_routing\_url) | Domain where Connect Proxy is available. | `string` | n/a | yes |
 | <a name="input_db_allocated_storage"></a> [db\_allocated\_storage](#input\_db\_allocated\_storage) | n/a | `number` | n/a | yes |
 | <a name="input_db_backup_retention_period"></a> [db\_backup\_retention\_period](#input\_db\_backup\_retention\_period) | n/a | `number` | n/a | yes |
 | <a name="input_db_container_engine"></a> [db\_container\_engine](#input\_db\_container\_engine) | n/a | `string` | n/a | yes |
@@ -66,10 +66,7 @@
 | <a name="input_ec2_require_imds_token"></a> [ec2\_require\_imds\_token](#input\_ec2\_require\_imds\_token) | n/a | `bool` | n/a | yes |
 | <a name="input_ec2_root_volume_size"></a> [ec2\_root\_volume\_size](#input\_ec2\_root\_volume\_size) | n/a | `number` | n/a | yes |
 | <a name="input_ec2_update_ami_if_available"></a> [ec2\_update\_ami\_if\_available](#input\_ec2\_update\_ami\_if\_available) | n/a | `bool` | n/a | yes |
-| <a name="input_wave_lite_elasticache "></a> [elasticache\_wave\_instance](#input\_elasticache\_wave\_instance) | Configuration for the Wave Elasticache instance including networking, clustering, and encryption settings | <pre>object({<br/>    apply_immediately = bool<br/>    engine            = string<br/>    engine_version    = string<br/>    node_type         = string<br/>    port              = number<br/><br/>    security_group_ids = list(string)<br/>    subnet_ids         = list(string)<br/><br/>    unclustered = object({<br/>      num_cache_nodes = number<br/>    })<br/><br/>    clustered = object({<br/>      multi_az_enabled           = bool<br/>      automatic_failover_enabled = bool<br/>      num_node_groups            = optional(number)<br/>      replicas_per_node_group    = optional(number)<br/>      parameter_group_name       = string<br/>    })<br/><br/>    encryption = object({<br/>      auth_token                 = optional(string)<br/>      at_rest_encryption_enabled = bool<br/>      transit_encryption_enabled = bool<br/>      kms_key_id                 = optional(string)<br/>    })<br/>  })</pre> | n/a | yes |
 | <a name="input_enable_vpc_flow_logs"></a> [enable\_vpc\_flow\_logs](#input\_enable\_vpc\_flow\_logs) | n/a | `bool` | n/a | yes |
-| <a name="input_existing_ca_cert_file"></a> [existing\_ca\_cert\_file](#input\_existing\_ca\_cert\_file) | n/a | `string` | n/a | yes |
-| <a name="input_existing_ca_key_file"></a> [existing\_ca\_key\_file](#input\_existing\_ca\_key\_file) | n/a | `string` | n/a | yes |
 | <a name="input_existing_route53_private_zone_name"></a> [existing\_route53\_private\_zone\_name](#input\_existing\_route53\_private\_zone\_name) | n/a | `string` | n/a | yes |
 | <a name="input_existing_route53_public_zone_name"></a> [existing\_route53\_public\_zone\_name](#input\_existing\_route53\_public\_zone\_name) | n/a | `string` | n/a | yes |
 | <a name="input_flag_create_external_db"></a> [flag\_create\_external\_db](#input\_flag\_create\_external\_db) | n/a | `bool` | n/a | yes |
@@ -87,7 +84,6 @@
 | <a name="input_flag_enable_data_studio"></a> [flag\_enable\_data\_studio](#input\_flag\_enable\_data\_studio) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_enable_groundswell"></a> [flag\_enable\_groundswell](#input\_flag\_enable\_groundswell) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_encrypt_ebs"></a> [flag\_encrypt\_ebs](#input\_flag\_encrypt\_ebs) | n/a | `bool` | n/a | yes |
-| <a name="input_flag_generate_private_cacert"></a> [flag\_generate\_private\_cacert](#input\_flag\_generate\_private\_cacert) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_iam_use_prexisting_role_arn"></a> [flag\_iam\_use\_prexisting\_role\_arn](#input\_flag\_iam\_use\_prexisting\_role\_arn) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_limit_data_studio_to_some_workspaces"></a> [flag\_limit\_data\_studio\_to\_some\_workspaces](#input\_flag\_limit\_data\_studio\_to\_some\_workspaces) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_make_instance_private"></a> [flag\_make\_instance\_private](#input\_flag\_make\_instance\_private) | n/a | `bool` | n/a | yes |
@@ -99,24 +95,26 @@
 | <a name="input_flag_overwrite_ssm_keys"></a> [flag\_overwrite\_ssm\_keys](#input\_flag\_overwrite\_ssm\_keys) | Not to be used in PROD but helpful when sharing same instance in DEV. | `bool` | `false` | no |
 | <a name="input_flag_private_tower_without_eice"></a> [flag\_private\_tower\_without\_eice](#input\_flag\_private\_tower\_without\_eice) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_run_seqerakit"></a> [flag\_run\_seqerakit](#input\_flag\_run\_seqerakit) | n/a | `bool` | n/a | yes |
+| <a name="input_flag_studio_enable_path_routing"></a> [flag\_studio\_enable\_path\_routing](#input\_flag\_studio\_enable\_path\_routing) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_use_aws_ses_iam_integration"></a> [flag\_use\_aws\_ses\_iam\_integration](#input\_flag\_use\_aws\_ses\_iam\_integration) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_use_container_db"></a> [flag\_use\_container\_db](#input\_flag\_use\_container\_db) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_use_container_redis"></a> [flag\_use\_container\_redis](#input\_flag\_use\_container\_redis) | n/a | `bool` | n/a | yes |
-| <a name="input_flag_use_custom_docker_compose_file"></a> [flag\_use\_custom\_docker\_compose\_file](#input\_flag\_use\_custom\_docker\_compose\_file) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_use_custom_resource_naming_prefix"></a> [flag\_use\_custom\_resource\_naming\_prefix](#input\_flag\_use\_custom\_resource\_naming\_prefix) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_use_existing_external_db"></a> [flag\_use\_existing\_external\_db](#input\_flag\_use\_existing\_external\_db) | n/a | `bool` | n/a | yes |
-| <a name="input_flag_use_existing_private_cacert"></a> [flag\_use\_existing\_private\_cacert](#input\_flag\_use\_existing\_private\_cacert) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_use_existing_route53_private_zone"></a> [flag\_use\_existing\_route53\_private\_zone](#input\_flag\_use\_existing\_route53\_private\_zone) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_use_existing_route53_public_zone"></a> [flag\_use\_existing\_route53\_public\_zone](#input\_flag\_use\_existing\_route53\_public\_zone) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_use_existing_smtp"></a> [flag\_use\_existing\_smtp](#input\_flag\_use\_existing\_smtp) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_use_existing_vpc"></a> [flag\_use\_existing\_vpc](#input\_flag\_use\_existing\_vpc) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_use_kms_key"></a> [flag\_use\_kms\_key](#input\_flag\_use\_kms\_key) | n/a | `bool` | n/a | yes |
+| <a name="input_flag_use_private_cacert"></a> [flag\_use\_private\_cacert](#input\_flag\_use\_private\_cacert) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_use_wave"></a> [flag\_use\_wave](#input\_flag\_use\_wave) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_use_wave_lite"></a> [flag\_use\_wave\_lite](#input\_flag\_use\_wave\_lite) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_vm_copy_files_to_instance"></a> [flag\_vm\_copy\_files\_to\_instance](#input\_flag\_vm\_copy\_files\_to\_instance) | n/a | `bool` | n/a | yes |
 | <a name="input_flyway_locations"></a> [flyway\_locations](#input\_flyway\_locations) | n/a | `string` | n/a | yes |
 | <a name="input_iam_prexisting_instance_role_arn"></a> [iam\_prexisting\_instance\_role\_arn](#input\_iam\_prexisting\_instance\_role\_arn) | n/a | `string` | n/a | yes |
 | <a name="input_new_route53_private_zone_name"></a> [new\_route53\_private\_zone\_name](#input\_new\_route53\_private\_zone\_name) | n/a | `string` | n/a | yes |
+| <a name="input_num_wave_lite_replicas"></a> [num\_wave\_lite\_replicas](#input\_num\_wave\_lite\_replicas) | n/a | `number` | n/a | yes |
+| <a name="input_private_cacert_bucket_prefix"></a> [private\_cacert\_bucket\_prefix](#input\_private\_cacert\_bucket\_prefix) | n/a | `string` | n/a | yes |
 | <a name="input_secrets_bootstrap_groundswell"></a> [secrets\_bootstrap\_groundswell](#input\_secrets\_bootstrap\_groundswell) | SSM SecureString for Groundswell secrets. | `string` | n/a | yes |
 | <a name="input_secrets_bootstrap_seqerakit"></a> [secrets\_bootstrap\_seqerakit](#input\_secrets\_bootstrap\_seqerakit) | SSM SecureString for Seqerakit secrets. | `string` | n/a | yes |
 | <a name="input_secrets_bootstrap_tower"></a> [secrets\_bootstrap\_tower](#input\_secrets\_bootstrap\_tower) | SSM SecureString for Tower secrets. | `string` | n/a | yes |
@@ -177,6 +175,7 @@
 | <a name="input_tower_smtp_ssl_protocols"></a> [tower\_smtp\_ssl\_protocols](#input\_tower\_smtp\_ssl\_protocols) | n/a | `string` | n/a | yes |
 | <a name="input_tower_smtp_starttls_enable"></a> [tower\_smtp\_starttls\_enable](#input\_tower\_smtp\_starttls\_enable) | n/a | `bool` | n/a | yes |
 | <a name="input_tower_smtp_starttls_required"></a> [tower\_smtp\_starttls\_required](#input\_tower\_smtp\_starttls\_required) | n/a | `bool` | n/a | yes |
+| <a name="input_use_mocks"></a> [use\_mocks](#input\_use\_mocks) | Use to drive mocking behaviour for to-be-created resources. | `bool` | `false` | no |
 | <a name="input_vpc_existing_alb_subnets"></a> [vpc\_existing\_alb\_subnets](#input\_vpc\_existing\_alb\_subnets) | n/a | `list(string)` | n/a | yes |
 | <a name="input_vpc_existing_batch_subnets"></a> [vpc\_existing\_batch\_subnets](#input\_vpc\_existing\_batch\_subnets) | n/a | `list(string)` | n/a | yes |
 | <a name="input_vpc_existing_db_subnets"></a> [vpc\_existing\_db\_subnets](#input\_vpc\_existing\_db\_subnets) | n/a | `list(string)` | n/a | yes |
@@ -203,6 +202,7 @@
 | <a name="input_wave_lite_db_engine_version"></a> [wave\_lite\_db\_engine\_version](#input\_wave\_lite\_db\_engine\_version) | n/a | `string` | n/a | yes |
 | <a name="input_wave_lite_db_instance_class"></a> [wave\_lite\_db\_instance\_class](#input\_wave\_lite\_db\_instance\_class) | n/a | `string` | n/a | yes |
 | <a name="input_wave_lite_db_param_group"></a> [wave\_lite\_db\_param\_group](#input\_wave\_lite\_db\_param\_group) | n/a | `string` | n/a | yes |
+| <a name="input_wave_lite_elasticache"></a> [wave\_lite\_elasticache](#input\_wave\_lite\_elasticache) | Configuration for the Wave Elasticache instance including networking, clustering, and encryption settings | <pre>object({<br/>    apply_immediately = bool<br/>    engine            = string<br/>    engine_version    = string<br/>    node_type         = string<br/>    port              = number<br/><br/>    security_group_ids = list(string)<br/>    subnet_ids         = list(string)<br/><br/>    unclustered = object({<br/>      num_cache_nodes = number<br/>    })<br/><br/>    clustered = object({<br/>      multi_az_enabled           = bool<br/>      automatic_failover_enabled = bool<br/>      num_node_groups            = optional(number)<br/>      replicas_per_node_group    = optional(number)<br/>      parameter_group_name       = string<br/>    })<br/><br/>    encryption = object({<br/>      auth_token                 = optional(string)<br/>      at_rest_encryption_enabled = bool<br/>      transit_encryption_enabled = bool<br/>      kms_key_id                 = optional(string)<br/>    })<br/>  })</pre> | n/a | yes |
 | <a name="input_wave_lite_skip_final_snapshot"></a> [wave\_lite\_skip\_final\_snapshot](#input\_wave\_lite\_skip\_final\_snapshot) | n/a | `bool` | n/a | yes |
 | <a name="input_wave_server_url"></a> [wave\_server\_url](#input\_wave\_server\_url) | n/a | `string` | n/a | yes |
 
@@ -215,11 +215,26 @@
 | <a name="output_aws_caller_user"></a> [aws\_caller\_user](#output\_aws\_caller\_user) | n/a |
 | <a name="output_aws_ec2_private_ip"></a> [aws\_ec2\_private\_ip](#output\_aws\_ec2\_private\_ip) | n/a |
 | <a name="output_aws_ec2_public_ip"></a> [aws\_ec2\_public\_ip](#output\_aws\_ec2\_public\_ip) | n/a |
-| <a name="output_database_connection_string"></a> [database\_connection\_string](#output\_database\_connection\_string) | Dynamically generated db connectino string based on tfvars selections. |
 | <a name="output_ec2_ssh_key"></a> [ec2\_ssh\_key](#output\_ec2\_ssh\_key) | n/a |
-| <a name="output_redis_endpoint"></a> [redis\_endpoint](#output\_redis\_endpoint) | n/a |
 | <a name="output_route53_record_status"></a> [route53\_record\_status](#output\_route53\_record\_status) | n/a |
-| <a name="output_seqera_configuration"></a> [seqera\_configuration](#output\_seqera\_configuration) | n/a |
-| <a name="output_tower_api_endpoint"></a> [tower\_api\_endpoint](#output\_tower\_api\_endpoint) | Outputs for SEQERAKIT |
+| <a name="output_swell_db_dns"></a> [swell\_db\_dns](#output\_swell\_db\_dns) | The DNS for Groundswell |
+| <a name="output_swell_db_url"></a> [swell\_db\_url](#output\_swell\_db\_url) | The complete database URL for Groundswell |
+| <a name="output_tower_api_endpoint"></a> [tower\_api\_endpoint](#output\_tower\_api\_endpoint) | n/a |
+| <a name="output_tower_base_url"></a> [tower\_base\_url](#output\_tower\_base\_url) | n/a |
+| <a name="output_tower_connect_dns"></a> [tower\_connect\_dns](#output\_tower\_connect\_dns) | The DNS name for Connect |
+| <a name="output_tower_connect_redis_dns"></a> [tower\_connect\_redis\_dns](#output\_tower\_connect\_redis\_dns) | The DNS for the Redis instance used by Connect. |
+| <a name="output_tower_connect_redis_url"></a> [tower\_connect\_redis\_url](#output\_tower\_connect\_redis\_url) | The URL for the Redis instance used by Connect. |
+| <a name="output_tower_connect_server_url"></a> [tower\_connect\_server\_url](#output\_tower\_connect\_server\_url) | The server URL for Connect with appropriate protocol and port |
+| <a name="output_tower_connect_wildcard_dns"></a> [tower\_connect\_wildcard\_dns](#output\_tower\_connect\_wildcard\_dns) | The DNS name for Connect |
+| <a name="output_tower_db_dns"></a> [tower\_db\_dns](#output\_tower\_db\_dns) | The DB root. |
+| <a name="output_tower_db_url"></a> [tower\_db\_url](#output\_tower\_db\_url) | The complete database URL for Tower including database name and connection string |
+| <a name="output_tower_redis_dns"></a> [tower\_redis\_dns](#output\_tower\_redis\_dns) | The Redis DNS for Tower |
+| <a name="output_tower_redis_url"></a> [tower\_redis\_url](#output\_tower\_redis\_url) | The Redis URL for Tower |
 | <a name="output_tower_server_url"></a> [tower\_server\_url](#output\_tower\_server\_url) | n/a |
+| <a name="output_tower_wave_dns"></a> [tower\_wave\_dns](#output\_tower\_wave\_dns) | The DNS name for Wave without protocol prefix |
+| <a name="output_tower_wave_url"></a> [tower\_wave\_url](#output\_tower\_wave\_url) | The URL for Wave-Lite |
+| <a name="output_wave_lite_db_dns"></a> [wave\_lite\_db\_dns](#output\_wave\_lite\_db\_dns) | The database DNS for Wave-Lite |
+| <a name="output_wave_lite_db_url"></a> [wave\_lite\_db\_url](#output\_wave\_lite\_db\_url) | The database URL for Wave-Lite |
+| <a name="output_wave_lite_redis_dns"></a> [wave\_lite\_redis\_dns](#output\_wave\_lite\_redis\_dns) | The Redis DNS for Wave-Lite |
+| <a name="output_wave_lite_redis_url"></a> [wave\_lite\_redis\_url](#output\_wave\_lite\_redis\_url) | The Redis URL for Wave-Lite |
 <!-- END_TF_DOCS -->    
