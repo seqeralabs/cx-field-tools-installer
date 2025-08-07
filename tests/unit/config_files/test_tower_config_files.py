@@ -23,7 +23,7 @@ from testcontainers.mysql import MySqlContainer
 ## ------------------------------------------------------------------------------------
 # NOTE: To avoid creating VPC assets, use an existing VPC in the account the AWS provider is configured to use.
 
-def generate_namespaced_dictionaries(dict: dict) -> tuple[SimpleNamespace, SimpleNamespace, dict, dict]:
+def generate_namespaced_dictionaries(dict: dict) -> tuple[SimpleNamespace, SimpleNamespace, dict, dict, SimpleNamespace]:
 
     """
     WARNING!!!!!!
@@ -33,6 +33,9 @@ def generate_namespaced_dictionaries(dict: dict) -> tuple[SimpleNamespace, Simpl
 
     vars_dict = dict["variables"]
     outputs_dict = dict["planned_values"]["outputs"]
+
+    with open('tests/datafiles/ssm_sensitive_values_tower_testing.json', 'r') as f:
+        tower_secrets = json.load(f)
     
 
     # https://dev.to/taqkarim/extending-simplenamespace-for-nested-dictionaries-58e8
@@ -41,6 +44,8 @@ def generate_namespaced_dictionaries(dict: dict) -> tuple[SimpleNamespace, Simpl
     # Example: `vars.tower_contact_email`
     vars_flattened = {k: v.get("value", v) for k,v in vars_dict.items()}
     outputs_flattened = {k: v.get("value", v) for k,v in outputs_dict.items()}
+
+    tower_secrets_flattened = {k: v.get("value", v) for k,v in tower_secrets.items()}
     
     # vars = json.loads(json.dumps(vars_flattened), object_hook=lambda item: SimpleNamespace(**item))
     # outputs = json.loads(json.dumps(outputs_flattened), object_hook=lambda item: SimpleNamespace(**item))
@@ -51,7 +56,9 @@ def generate_namespaced_dictionaries(dict: dict) -> tuple[SimpleNamespace, Simpl
     vars = SimpleNamespace(**vars_flattened)
     outputs = SimpleNamespace(**outputs_flattened)
 
-    return (vars, outputs, vars_dict, outputs_dict)
+    tower_secrets = SimpleNamespace(**tower_secrets_flattened)
+
+    return (vars, outputs, vars_dict, outputs_dict, tower_secrets)
 
 
 def test_poc(backup_tfvars, config_baseline_settings_default):
@@ -59,7 +66,7 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
     Trying to create files directly via Terraform console.
     """
     start_time = time.time()
-    vars, outputs, vars_dict, _ = generate_namespaced_dictionaries(config_baseline_settings_default)
+    vars, outputs, vars_dict, _, tower_secrets = generate_namespaced_dictionaries(config_baseline_settings_default)
 
     # Transform template files into parseable JSON
     command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
@@ -85,16 +92,18 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
         """
 
         def replace_var(match):
-            var_name = match.group(1)
-            if hasattr(vars_obj, var_name):
-                value = getattr(vars_obj, var_name)
-                if isinstance(value, str):
-                    return f'"{value}"'
-                elif isinstance(value, bool):
-                    return str(value).lower()
-                else:
-                    return str(value)
-            return match.group(0)  # Return original if var not found
+            try:
+                var_name = match.group(1)
+                if hasattr(vars_obj, var_name):
+                    value = getattr(vars_obj, var_name)
+                    if isinstance(value, str):
+                        return f'"{value}"'
+                    elif isinstance(value, bool):
+                        return str(value).lower()
+                    else:
+                        return str(value)
+            except IndexError:
+                return match.group(0)  # Return original if var not found
 
         # The regex re.sub() function handles the "looping" automatically. Finds all matches of the defined pattern in the string 
         # and calls the replace_var function for each.
@@ -106,6 +115,10 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
             pattern = r'module.connection_strings\.(\w+)'
             return re.sub(pattern, replace_var, input_str)
 
+        elif type == "tower_secrets":
+            pattern = r'local\.tower_secrets\["([^"]+)"\]\["[^"]+"\]'
+            return re.sub(pattern, replace_var, input_str)
+        
         elif type == "local":
             pattern = r'local\.(\w+)'
             return re.sub(pattern, replace_var, input_str)
@@ -127,9 +140,11 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
         # 
         # '\n' must be replace in  the extracted 009 payload so it can be passed to 'terraform console' via subprocess call.
 
+        # Had to re-enable this for tower.sql but it breaks tower.env (the data_studio_options). Why?
         # result = replace_vars_in_templatefile(input_str, vars, "tfvar")
         # result = replace_vars_in_templatefile(result, outputs, "local")
         result = replace_vars_in_templatefile(input_str, outputs, "module.connection_strings")
+        result = replace_vars_in_templatefile(result, tower_secrets, "tower_secrets")
         result = result.replace("\n", "")   # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
         # TODO: Figure out secrets
 
@@ -182,12 +197,25 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
     content = read_yaml(outfile)
     print(content)
 
-    # Takes about 4 seconds to execute. I can hash this too.
+    # tower.env
     result = prepare_templatefile_payload("tower_env", outputs)
     outfile = "graham3.env"
     write_populated_templatefile(outfile, result)
     content = parse_key_value_file(outfile)
     print(content)
+
+    # tower.sql
+    # with open('tests/datafiles/ssm_sensitive_values_tower_testing.json', 'r') as f:
+    #     tower_secrets = json.load(f)
+    # print(tower_secrets)
+    # TODO: Figure out how to jam secrets into regex swap.
+    result = prepare_templatefile_payload("tower_sql", outputs)
+    outfile = "graham4.sql"
+    write_populated_templatefile(outfile, result)
+    content = read_file(outfile)
+    print(content)
+
+    
 
     end_time = time.time() - start_time
     print(f"{end_time=}")
