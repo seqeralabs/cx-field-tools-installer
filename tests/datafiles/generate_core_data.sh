@@ -319,3 +319,4 @@ cat << 'EOF' > 012_testing_outputs.tf
 output local_wave_enabled {
     value = local.wave_enabled
 } 
+EOF

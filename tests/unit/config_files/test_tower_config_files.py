@@ -42,10 +42,17 @@ def generate_namespaced_dictionaries(dict: dict) -> tuple[SimpleNamespace, Simpl
     vars_flattened = {k: v.get("value", v) for k,v in vars_dict.items()}
     outputs_flattened = {k: v.get("value", v) for k,v in outputs_dict.items()}
     
-    vars = json.loads(json.dumps(vars_flattened), object_hook=lambda item: SimpleNamespace(**item))
-    outputs = json.loads(json.dumps(outputs_flattened), object_hook=lambda item: SimpleNamespace(**item))
+    # vars = json.loads(json.dumps(vars_flattened), object_hook=lambda item: SimpleNamespace(**item))
+    # outputs = json.loads(json.dumps(outputs_flattened), object_hook=lambda item: SimpleNamespace(**item))
+    # Only namespace the top level, preserve nested dictionaries as regular dicts
+    # Problem is that nested values like data_studios_options show up like:
+    # vscode-1-101-2-0-8-5=namespace(container='public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.8.5', icon='vscode', qualifier='VSCODE-1-101-2-0-8-5', status='recommended', tool='vscode')
+    # and this breaks the 'terraform console' template submission
+    vars = SimpleNamespace(**vars_flattened)
+    outputs = SimpleNamespace(**outputs_flattened)
 
     return (vars, outputs, vars_dict, outputs_dict)
+
 
 def strip_eot_block(text):
     "terraform console emits multi-line output with starting line '<<EOT' and last line 'EOT'. Need to get ride of for file parsing."
@@ -53,6 +60,7 @@ def strip_eot_block(text):
         lines = text.splitlines()
         return "\n".join(lines[1:-1])
     return text
+
 
 def test_poc(backup_tfvars, config_baseline_settings_default):
     """
@@ -65,9 +73,6 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
     command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
     result = execute_subprocess(command)
     templatefile_json = read_json("009_define_file_templates.json")
-    run_seqerakit = templatefile_json["locals"][0]["ansible_06_run_seqerakit"]
-    run_seqerakit = run_seqerakit[2:-1]
-    print(run_seqerakit)
 
     # This part a big magical, from Claude: Here's how it works:
     # 1. re.sub(pattern, replace_var, input_str) finds every occurrence of var.something
@@ -78,6 +83,15 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
     import re
 
     def replace_vars_in_templatefile(input_str, vars_obj, type) -> str:
+        """
+        input_str : The value of a key extracted from JSONified 009_define_file_templates.tf
+        vars_obj  : The SimpleNamespace object returned by generate_namespaced_dictionaries()
+        type      : The prefix we are looking to replace.
+
+        NOTE: This relies upon the emission of TF Locals values during testing via an extra outputs file definition
+        (created by tests/datafiles/generate_core_data.sh)
+        """
+
         def replace_var(match):
             var_name = match.group(1)
             if hasattr(vars_obj, var_name):
@@ -90,21 +104,39 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
                     return str(value)
             return match.group(0)  # Return original if var not found
 
-        # The regex re.sub() function handles the "looping" automatically - it finds all matches of the defined pattern in the string and calls the
-        # replace_var function for each match.
+        # The regex re.sub() function handles the "looping" automatically. Finds all matches of the defined pattern in the string 
+        # and calls the replace_var function for each.
         if type == "tfvar":
             pattern = r'var\.(\w+)'
             return re.sub(pattern, replace_var, input_str)
-        
-        elif type == "module.connection_string":
-            pattern = r'module.connection_string\.(\w+)'
+
+        elif type == "module.connection_strings":
+            pattern = r'module.connection_strings\.(\w+)'
+            return re.sub(pattern, replace_var, input_str)
+
+        elif type == "local":
+            pattern = r'local\.(\w+)'
             return re.sub(pattern, replace_var, input_str)
         else:
             return "Error"
+        
+    def sub_all_inputs(input_str):
+
+        # vars not necessary since console will have them by virtue of all .tfvars being in root?
+        # result = replace_vars_in_templatefile(input_str, vars, "tfvar")
+        result = replace_vars_in_templatefile(input_str, outputs, "module.connection_strings")
+        result = replace_vars_in_templatefile(result, outputs, "local")
+        result = result.replace("\n", "")   # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
+
+        print(result)
+        return result
     
-    result = replace_vars_in_templatefile(run_seqerakit, vars, "tfvar")  # input string
-    print(result)
-    result = result.replace("\n", "")   # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
+    
+    # result = replace_vars_in_templatefile(run_seqerakit, vars, "tfvar")
+    run_seqerakit = templatefile_json["locals"][0]["ansible_06_run_seqerakit"]
+    run_seqerakit = run_seqerakit[2:-1]
+    print(run_seqerakit)
+    result = sub_all_inputs(run_seqerakit)
 
     # console command needs single quotes on outside and double-quotes within.
     # input_str = 'templatefile("assets/src/ansible/06_run_seqerakit.yml.tpl", { app_name = "abc", flag_create_hosts_file_entry = false, flag_do_not_use_https = true })'
@@ -135,17 +167,33 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
     end_time = time.time() - start_time
     print(f"{end_time=}")
 
-    Path("009_define_file_templates.json").unlink(missing_ok=True)
 
     # Takes about 4 seconds to execute. I can hash this too.
 
-    command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
-    result = execute_subprocess(command)
     templatefile_json = read_json("009_define_file_templates.json")
-    run_seqerakit = templatefile_json["locals"][0]["ansible_06_run_seqerakit"]
-    run_seqerakit = run_seqerakit[2:-1]
-    print(run_seqerakit)
-    print(outputs)
+    tower_env = templatefile_json["locals"][0]["tower_env"]
+    tower_env = tower_env[2:-1]
+    print(tower_env)
+
+    result = sub_all_inputs(tower_env)
+    outfile = "graham3.env"
+    result = subprocess.run(
+        ["terraform", "console"],
+        input=str(result),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=True
+    )
+    output = result.stdout
+    output = strip_eot_block(output)
+    write_file(outfile, output)
+
+    content = parse_key_value_file(outfile)
+    print(content)
+
+
+    Path("009_define_file_templates.json").unlink(missing_ok=True)
 
 
 @pytest.mark.local
