@@ -54,14 +54,6 @@ def generate_namespaced_dictionaries(dict: dict) -> tuple[SimpleNamespace, Simpl
     return (vars, outputs, vars_dict, outputs_dict)
 
 
-def strip_eot_block(text):
-    "terraform console emits multi-line output with starting line '<<EOT' and last line 'EOT'. Need to get ride of for file parsing."
-    if text.startswith("<<EOT"):
-        lines = text.splitlines()
-        return "\n".join(lines[1:-1])
-    return text
-
-
 def test_poc(backup_tfvars, config_baseline_settings_default):
     """
     Trying to create files directly via Terraform console.
@@ -120,13 +112,23 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
         else:
             return "Error"
         
-    def sub_all_inputs(input_str):
+    def sub_templatefile_inputs(input_str):
 
-        # vars not necessary since console will have them by virtue of all .tfvars being in root?
+        # BACKGROUND:
+        # I'm sourcing the templatefile string directly from 009. A normal plan/apply would have all the input values availabe at execution.
+        # This is slow, however, so I'm trying to use the much faster 'terraform console' approach. Console appears to have access to 'tfvars' 
+        # and necessary 'locals', but not to the outputs of called modules (emitted file is "known after apply").
+        #
+        # To make this work, I need to run a 'terraform plan' (full) to generate all outputs (inclusive of module outputs), which can then 
+        # be used for substitution in the templatefile string passed by 'terraform console'. This feels like a Rube Goldberg, but it gets 
+        # test execution down from 30+ seconds (everytime) to ~4 seconds (first time, cacheable). 
+        # 
+        # TBD what happens with secrets
+        # 
+        # '\n' must be replace in  the extracted 009 payload so it can be passed to 'terraform console' via subprocess call.
+
         # result = replace_vars_in_templatefile(input_str, vars, "tfvar")
-        # locals seem to not be necessary either -- terraform console seems to have access to them.
         # result = replace_vars_in_templatefile(result, outputs, "local")
-        # Cant comment out the module replacement or else output file will be "known after apply". Keeping active gets actual interpolated file.
         result = replace_vars_in_templatefile(input_str, outputs, "module.connection_strings")
         result = result.replace("\n", "")   # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
         # TODO: Figure out secrets
@@ -134,66 +136,61 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
         print(result)
         return result
     
+    def prepare_templatefile_payload(key, outputs):
+        # The hcl2json conversion of 009 to JSON wraps the 'templatefile(...)' string we need with '${..}'.
+        # The wrapper needs to be removed or else it breaks 'terraform console'.
+        payload = templatefile_json["locals"][0][key]
+        payload = payload[2:-1]
+        payload = sub_templatefile_inputs(payload)
+        return payload
     
-    # result = replace_vars_in_templatefile(run_seqerakit, vars, "tfvar")
-    run_seqerakit = templatefile_json["locals"][0]["ansible_06_run_seqerakit"]
-    run_seqerakit = run_seqerakit[2:-1]
-    print(run_seqerakit)
-    result = sub_all_inputs(run_seqerakit)
+    def write_populated_templatefile(outfile, payload):
+        """
+        Example of how this calls 'terraform console':
+          > terraform console <<< 'templatefile("assets/src/ansible/06_run_seqerakit.yml.tpl", { app_name = "abc", flag_create_hosts_file_entry = false, flag_do_not_use_https = true })'
+        
+        'terraform console' command needs single quotes on outside and double-quotes within.
+        """
+        payload = subprocess.run(
+            ["terraform", "console"],
+            input=str(payload),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+        output = payload.stdout
 
-    # console command needs single quotes on outside and double-quotes within.
-    # input_str = 'templatefile("assets/src/ansible/06_run_seqerakit.yml.tpl", { app_name = "abc", flag_create_hosts_file_entry = false, flag_do_not_use_https = true })'
+        # Strip '<<EOT' and 'EOT' appending to start and end of multi-line payload emitted by 'terraform console'.
+        if output.startswith("<<EOT"):
+            lines = output.splitlines()
+            return "\n".join(lines[1:-1])
+
+        write_file(outfile, output)
+
+    # TODO:
+    #   1) Generate hash of tfvars variables and do cache check to speed this up.
+    #   2) If cache miss, emit generated files as <CACHE_VALUE>_<FILENAME> and stick in 'tests/.templatfile_cache'.
+
+    # NOTE:
+    #  - Logic varies a bit on read due to kind of file (e.g. YAML vs KV vs SQL)
+
+    # ansible_06_run_seqerakit
+    result = prepare_templatefile_payload("ansible_06_run_seqerakit", outputs)
     outfile = "graham2.yml"
-    # with open(outfile, "w") as f:
-    #     result = subprocess.run(
-    #         ["terraform", "console"],
-    #         input=input_str,
-    #         stdout=f,
-    #         stderr=subprocess.PIPE,
-    #         text=True,
-    #         check=True
-    #     )
-    result = subprocess.run(
-        ["terraform", "console"],
-        input=str(result),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        check=True
-    )
-    output = result.stdout
-    output = strip_eot_block(output)
-    write_file(outfile, output)
-
+    write_populated_templatefile(outfile, result)
     content = read_yaml(outfile)
     print(content)
-    end_time = time.time() - start_time
-    print(f"{end_time=}")
-
 
     # Takes about 4 seconds to execute. I can hash this too.
-
-    templatefile_json = read_json("009_define_file_templates.json")
-    tower_env = templatefile_json["locals"][0]["tower_env"]
-    tower_env = tower_env[2:-1]
-    print(tower_env)
-
-    result = sub_all_inputs(tower_env)
+    result = prepare_templatefile_payload("tower_env", outputs)
     outfile = "graham3.env"
-    result = subprocess.run(
-        ["terraform", "console"],
-        input=str(result),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        check=True
-    )
-    output = result.stdout
-    output = strip_eot_block(output)
-    write_file(outfile, output)
-
+    write_populated_templatefile(outfile, result)
     content = parse_key_value_file(outfile)
     print(content)
+
+    end_time = time.time() - start_time
+    print(f"{end_time=}")
 
 
     Path("009_define_file_templates.json").unlink(missing_ok=True)
