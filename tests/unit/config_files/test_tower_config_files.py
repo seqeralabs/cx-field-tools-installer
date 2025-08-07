@@ -141,7 +141,7 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
         # '\n' must be replace in  the extracted 009 payload so it can be passed to 'terraform console' via subprocess call.
 
         # Had to re-enable this for tower.sql but it breaks tower.env (the data_studio_options). Why?
-        # result = replace_vars_in_templatefile(input_str, vars, "tfvar")
+        result = replace_vars_in_templatefile(input_str, vars, "tfvar")
         # result = replace_vars_in_templatefile(result, outputs, "local")
         result = replace_vars_in_templatefile(input_str, outputs, "module.connection_strings")
         result = replace_vars_in_templatefile(result, tower_secrets, "tower_secrets")
@@ -179,7 +179,7 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
         # Strip '<<EOT' and 'EOT' appending to start and end of multi-line payload emitted by 'terraform console'.
         if output.startswith("<<EOT"):
             lines = output.splitlines()
-            return "\n".join(lines[1:-1])
+            output = "\n".join(lines[1:-1])
 
         write_file(outfile, output)
 
@@ -209,6 +209,19 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
     #     tower_secrets = json.load(f)
     # print(tower_secrets)
     # TODO: Figure out how to jam secrets into regex swap.
+
+    payload = subprocess.run(
+            ["terraform", "console"],
+            input=str("var.db_database_name"),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+    print("=========")
+    print(payload.stdout)    # Returns "tower" <-- console knows it
+    print("=========")
+    
     result = prepare_templatefile_payload("tower_sql", outputs)
     outfile = "graham4.sql"
     write_populated_templatefile(outfile, result)
@@ -216,6 +229,11 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
     print(content)
 
     
+    result = prepare_templatefile_payload("cleanse_and_configure_host", outputs)
+    outfile = "gavin.sh"
+    write_populated_templatefile(outfile, result)
+    content = read_file(outfile)
+    print(content)
 
     end_time = time.time() - start_time
     print(f"{end_time=}")
