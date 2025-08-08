@@ -220,7 +220,7 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
         write_file(outfile, output)
 
     def generate_interpolated_templatefile(key, extension, read_type):
-        outfile = Path(f"{templatefile_cache_dir_hash}/{key}.{extension}")
+        outfile = Path(f"{templatefile_cache_dir_hash}/{key}{extension}")
         if not outfile.exists():
             result = prepare_templatefile_payload(key, outputs)
             write_populated_templatefile(outfile, result)
@@ -229,7 +229,7 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
         print(content)
         return content
 
-    # TODO:
+    # Hash templatefiles to speed up n+1 tests
     #   1) Generate hash of tfvars variables and do cache check to speed this up.
     #   2) If cache miss, emit generated files as <CACHE_VALUE>_<FILENAME> and stick in 'tests/.templatfile_cache'.
     print("Hashing inputs")
@@ -242,21 +242,32 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
 
     templatefile_cache_dir_hash = f"{templatefile_cache_dir}/{hash}"
 
-    # NOTE:
-    #  - Logic varies a bit on read due to kind of file (e.g. YAML vs KV vs SQL)
+    template_files = {
+        "ansible_06_run_seqerakit": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        "tower_env": {
+            "extension" : ".env", 
+            "read_type" : parse_key_value_file,
+            "content"   : ""
+        },
+        "tower_sql": {
+            "extension" : ".yaml", 
+            "read_type" : read_file,
+            "content"   : ""
+        },
+        "cleanse_and_configure_host": {
+            "extension" : ".sh", 
+            "read_type" : read_file,
+            "content"   : ""
+        },
+    }
 
-    key = "ansible_06_run_seqerakit"
-    content = generate_interpolated_templatefile(key, ".yaml", read_yaml)
-
-    key = "tower_env"
-    content = generate_interpolated_templatefile(key, ".env", parse_key_value_file)
-
-    key = "tower_sql"
-    content = generate_interpolated_templatefile(key, "sql", read_file)
-
-    key = "cleanse_and_configure_host"
-    content = generate_interpolated_templatefile(key, "sh", read_file)
-
+    for k,v in template_files.items():
+        content = generate_interpolated_templatefile(k, v["extension"], v["read_type"])
+        template_files[k]["content"] = content
 
     end_time = time.time() - start_time
     print(f"{end_time=}")
