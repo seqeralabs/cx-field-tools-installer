@@ -249,31 +249,31 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
             "read_type" : parse_key_value_file,
             "content"   : ""
         },
-        # "tower_yml": {
-        #     "extension" : ".yaml", 
-        #     "read_type" : read_yaml,
-        #     "content"   : ""
-        # },
-        # "tower_sql": {
-        #     "extension" : ".sql", 
-        #     "read_type" : read_file,
-        #     "content"   : ""
-        # },
-        # "groundswell_sql": {
-        #     "extension" : ".sql", 
-        #     "read_type" : read_file,
-        #     "content"   : ""
-        # },
-        # "groundswell_env": {
-        #     "extension" : ".env", 
-        #     "read_type" : parse_key_value_file,
-        #     "content"   : ""
-        # },
-        # "data_studios_env": {
-        #     "extension" : ".env", 
-        #     "read_type" : parse_key_value_file,
-        #     "content"   : ""
-        # },
+        "tower_yml": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        "tower_sql": {
+            "extension" : ".sql", 
+            "read_type" : read_file,
+            "content"   : ""
+        },
+        "groundswell_sql": {
+            "extension" : ".sql", 
+            "read_type" : read_file,
+            "content"   : ""
+        },
+        "groundswell_env": {
+            "extension" : ".env", 
+            "read_type" : parse_key_value_file,
+            "content"   : ""
+        },
+        "data_studios_env": {
+            "extension" : ".env", 
+            "read_type" : parse_key_value_file,
+            "content"   : ""
+        },
         "wave_lite_yml": {
             "extension" : ".yaml", 
             "read_type" : read_yaml,
