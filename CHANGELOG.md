@@ -90,9 +90,3 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
 
 #### SSM Secrets
 - Added `templates/ssm_sensitivie_values_wave_lite.json`
-
-### Security Updates
-
-- TODO: Add the updates done (if any as part of Wave-Lite initial work)
-
-
