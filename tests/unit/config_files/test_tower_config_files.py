@@ -17,6 +17,8 @@ from tests.utils.local import get_reconciled_tfvars
 from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
 from tests.utils.local import templatefile_cache_dir
 
+from tests.utils.local import generate_namespaced_dictionaries, generate_interpolated_templatefile
+
 from testcontainers.mysql import MySqlContainer
 
 
@@ -25,210 +27,34 @@ from testcontainers.mysql import MySqlContainer
 ## ------------------------------------------------------------------------------------
 # NOTE: To avoid creating VPC assets, use an existing VPC in the account the AWS provider is configured to use.
 
-def generate_namespaced_dictionaries(dict: dict) -> tuple:
-
-    """
-    WARNING!!!!!!
-      - Plan keys are in Python dictionary form, so JSON "true" becomes True.  AFFECTS: `outputs` and `vars`
-      - Config file values are directly cracked from HCL so they are "true".
-    """
-
-    vars_dict = dict["variables"]
-    outputs_dict = dict["planned_values"]["outputs"]
-
-    with open('tests/datafiles/ssm_sensitive_values_tower_testing.json', 'r') as f:
-        tower_secrets = json.load(f)
-
-    with open('tests/datafiles/ssm_sensitive_values_groundswell_testing.json', 'r') as f:
-        groundswell_secrets = json.load(f)
-
-    with open('tests/datafiles/ssm_sensitive_values_seqerakit_testing.json', 'r') as f:
-        seqerakit_secrets = json.load(f)
-
-    with open('tests/datafiles/ssm_sensitive_values_wave_lite_testing.json', 'r') as f:
-        wave_lite_secrets = json.load(f)
-    
-
-    # https://dev.to/taqkarim/extending-simplenamespace-for-nested-dictionaries-58e8
-    # Avoids noisy dict notation ([""]) and constant repetition of `.value`.
-    # Variables have only one key (values); outputs may have 3 keys (sensitive, type, value).
-    # Example: `vars.tower_contact_email`
-    vars_flattened = {k: v.get("value", v) for k,v in vars_dict.items()}
-    outputs_flattened = {k: v.get("value", v) for k,v in outputs_dict.items()}
-
-    tower_secrets_flattened = {k: v.get("value", v) for k,v in tower_secrets.items()}
-    groundswell_secrets_flattened = {k: v.get("value", v) for k,v in groundswell_secrets.items()}
-    seqerakit_secrets_flattened = {k: v.get("value", v) for k,v in seqerakit_secrets.items()}
-    wave_lite_secrets_flattened = {k: v.get("value", v) for k,v in wave_lite_secrets.items()}
-    
-    # vars = json.loads(json.dumps(vars_flattened), object_hook=lambda item: SimpleNamespace(**item))
-    # outputs = json.loads(json.dumps(outputs_flattened), object_hook=lambda item: SimpleNamespace(**item))
-    # Only namespace the top level, preserve nested dictionaries as regular dicts
-    # Problem is that nested values like data_studios_options show up like:
-    # vscode-1-101-2-0-8-5=namespace(container='public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.8.5', icon='vscode', qualifier='VSCODE-1-101-2-0-8-5', status='recommended', tool='vscode')
-    # and this breaks the 'terraform console' template submission
-    vars = SimpleNamespace(**vars_flattened)
-    outputs = SimpleNamespace(**outputs_flattened)
-
-    tower_secrets_sn = SimpleNamespace(**tower_secrets_flattened)
-    groundswell_secrets_sn = SimpleNamespace(**groundswell_secrets_flattened)
-    seqerakit_secrets_sn = SimpleNamespace(**seqerakit_secrets_flattened)
-    wave_lite_secrets_sn = SimpleNamespace(**wave_lite_secrets_flattened)
-
-    # Group into two lists to make return disaggregation easier
-    return ([vars, outputs, vars_dict, outputs_dict], 
-            [tower_secrets_sn, groundswell_secrets_sn, seqerakit_secrets_sn, wave_lite_secrets_sn])
 
 
-def test_poc(backup_tfvars, config_baseline_settings_default):
+# def test_poc(backup_tfvars, config_baseline_settings_default):
+def test_poc(backup_tfvars):
     """
     Trying to create files directly via Terraform console.
     """
     start_time = time.time()
-    plan, secrets = generate_namespaced_dictionaries(config_baseline_settings_default)
+
+    override_data = """
+        # No override values needed. Testing baseline only.
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    plan = prepare_plan(override_data)
+
+    plan, secrets = generate_namespaced_dictionaries(plan)
     vars, outputs, vars_dict, _ = plan
     tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets = secrets
 
+    namespaces = [vars, outputs, tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets]
+
+    # TODO - Move this to 'backup_tbvars'
     # Transform template files into parseable JSON
     command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
     result = execute_subprocess(command)
     templatefile_json = read_json("009_define_file_templates.json")
 
-    # This part a big magical, from Claude: Here's how it works:
-    # 1. re.sub(pattern, replace_var, input_str) finds every occurrence of var.something
-    # 2. For each match, it calls replace_var(match)
-    # 3. replace_var extracts the variable name and returns the replacement value
-    # 4. re.sub substitutes each match with the returned value
-    # So for your input string, it will automatically find and replace var.app_name, var.flag_create_hosts_file_entry, and var.flag_do_not_use_https in a single call.
     import re
-
-    def replace_vars_in_templatefile(input_str, vars_obj, type) -> str:
-        """
-        input_str : The value of a key extracted from JSONified 009_define_file_templates.tf
-        vars_obj  : The SimpleNamespace object returned by generate_namespaced_dictionaries()
-        type      : The prefix we are looking to replace.
-
-        NOTE: This relies upon the emission of TF Locals values during testing via an extra outputs file definition
-        (created by tests/datafiles/generate_core_data.sh)
-        """
-
-        def replace_var(match):
-            try:
-                var_name = match.group(1)
-                if hasattr(vars_obj, var_name):
-                    value = getattr(vars_obj, var_name)
-                    if isinstance(value, str):
-                        return f'"{value}"'
-                    elif isinstance(value, bool):
-                        return str(value).lower()
-                    else:
-                        return str(value)
-            except IndexError:
-                return match.group(0)  # Return original if var not found
-
-        # The regex re.sub() function handles the "looping" automatically. Finds all matches of the defined pattern in the string 
-        # and calls the replace_var function for each.
-        if type == "module.connection_strings":
-            pattern = r'module.connection_strings\.(\w+)'
-            return re.sub(pattern, replace_var, input_str)
-
-        elif type == "tower_secrets":
-            pattern = r'local\.tower_secrets\["([^"]+)"\]\["[^"]+"\]'
-            return re.sub(pattern, replace_var, input_str)
-        
-        elif type == "groundswell_secrets":
-            pattern = r'local\.groundswell_secrets\["([^"]+)"\]\["[^"]+"\]'
-            return re.sub(pattern, replace_var, input_str)
-        
-        elif type == "seqerakit_secrets":
-            pattern = r'local\.seqerakit_secrets\["([^"]+)"\]\["[^"]+"\]'
-            return re.sub(pattern, replace_var, input_str)
-        
-        elif type == "wave_lite_secrets":
-            pattern = r'local\.wave_lite_secrets\["([^"]+)"\]\["[^"]+"\]'
-            return re.sub(pattern, replace_var, input_str)
-        
-        # Keeping these in just-in-case they are ever needed in future
-        elif type == "tfvar":
-            pattern = r'var\.(\w+)'
-            return re.sub(pattern, replace_var, input_str)
-        
-        elif type == "local":
-            pattern = r'local\.(\w+)'
-            return re.sub(pattern, replace_var, input_str)
-        else:
-            return "Error"
-        
-    def sub_templatefile_inputs(input_str):
-
-        # BACKGROUND:
-        # I'm sourcing the templatefile string directly from 009. A normal plan/apply would have all the input values availabe at execution.
-        # This is slow, however, so I'm trying to use the much faster 'terraform console' approach. Console appears to have access to 'tfvars' 
-        # and necessary 'locals', but not to the outputs of called modules (emitted file is "known after apply").
-        #
-        # To make this work, I need to run a 'terraform plan' (full) to generate all outputs (inclusive of module outputs), which can then 
-        # be used for substitution in the templatefile string passed by 'terraform console'. This feels like a Rube Goldberg, but it gets 
-        # test execution down from 30+ seconds (everytime) to ~4 seconds (first time, cacheable). 
-        # 
-        # TBD what happens with secrets
-        # 
-        # '\n' must be replace in  the extracted 009 payload so it can be passed to 'terraform console' via subprocess call.
-
-        # Had to re-enable this for tower.sql but it breaks tower.env (the data_studio_options). Why?
-        # result = replace_vars_in_templatefile(input_str, vars, "tfvar")
-        # result = replace_vars_in_templatefile(result, outputs, "local")
-        result = replace_vars_in_templatefile(input_str, outputs, "module.connection_strings")
-        result = replace_vars_in_templatefile(result, tower_secrets, "tower_secrets")
-        result = replace_vars_in_templatefile(result, groundswell_secrets, "groundswell_secrets")
-        result = replace_vars_in_templatefile(result, seqerakit_secrets, "seqerakit_secrets")
-        result = replace_vars_in_templatefile(result, wave_lite_secrets, "wave_lite_secrets")
-        result = result.replace("\n", "")   # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
-        # TODO: Figure out secrets
-
-        return result
-    
-    def prepare_templatefile_payload(key, outputs):
-        # The hcl2json conversion of 009 to JSON wraps the 'templatefile(...)' string we need with '${..}'.
-        # The wrapper needs to be removed or else it breaks 'terraform console'.
-        payload = templatefile_json["locals"][0][key]
-        payload = payload[2:-1]
-        payload = sub_templatefile_inputs(payload)
-        return payload
-    
-    def write_populated_templatefile(outfile, payload):
-        """
-        Example of how this calls 'terraform console':
-          > terraform console <<< 'templatefile("assets/src/ansible/06_run_seqerakit.yml.tpl", { app_name = "abc", flag_create_hosts_file_entry = false, flag_do_not_use_https = true })'
-        
-        'terraform console' command needs single quotes on outside and double-quotes within.
-        """
-        print(payload)
-        payload = subprocess.run(
-            ["terraform", "console"],
-            input=str(payload),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=True
-        )
-        output = payload.stdout
-
-        # Strip '<<EOT' and 'EOT' appending to start and end of multi-line payload emitted by 'terraform console'.
-        if output.startswith("<<EOT"):
-            lines = output.splitlines()
-            output = "\n".join(lines[1:-1])
-
-        write_file(outfile, output)
-
-    def generate_interpolated_templatefile(key, extension, read_type):
-        outfile = Path(f"{templatefile_cache_dir_hash}/{key}{extension}")
-        if not outfile.exists():
-            result = prepare_templatefile_payload(key, outputs)
-            write_populated_templatefile(outfile, result)
-        
-        content = read_type(outfile.as_posix())
-        print(content)
-        return content
 
     # Hash templatefiles to speed up n+1 tests
     #   1) Generate hash of tfvars variables and do cache check to speed this up.
@@ -331,13 +157,12 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
     }
 
     for k,v in template_files.items():
-        content = generate_interpolated_templatefile(k, v["extension"], v["read_type"])
+        content = generate_interpolated_templatefile(k, v["extension"], v["read_type"], namespaces, templatefile_cache_dir_hash)
         template_files[k]["content"] = content
 
     end_time = time.time() - start_time
     print(f"{end_time=}")
-
-
+    
     Path("009_define_file_templates.json").unlink(missing_ok=True)
 
 

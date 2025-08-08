@@ -56,10 +56,11 @@ def backup_tfvars():
     subprocess.run("make generate_test_data", shell=True, check=True)
 
     print(f"\nBacking up terraform.tfvars & Loading test tfvars (base) artefacts.")
+    # Backup existing tfvars
     move_file(tfvars_path, tfvars_backup_path)
+    # Swap in test tfvars, base-overrides tfvars, and test-specific override values.
     copy_file(test_tfvars_source, test_tfvars_target)
     copy_file(test_tfvars_override_source, test_tfvars_override_target)
-
     copy_file(test_case_override_outputs_source, test_case_override_outputs_target)
 
     yield
@@ -79,6 +80,8 @@ def backup_tfvars():
         Path(file).unlink(missing_ok=True)
 
     delete_pycache_folders(root)
+
+    # Restore original tfvars
     move_file(tfvars_backup_path, tfvars_path)
 
 
