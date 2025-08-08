@@ -3,13 +3,9 @@
 
 This file was created post 1.5.0 Release.
 
-```
+```bash
+# Example:
 $ git log origin/master..origin/gwright99/25_2_0_update --oneline
-$ git log origin/gwright99/25_2_0_update..origin/gwright99/25-2-fix-private-certs --oneline
-
-8a54dd1 Checkpoint: Make Studio distroless regex more flexible.
-
-e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying logic that does not conform with new one-time manual write flow.
 ```
 
 ## 2.0.0
@@ -20,49 +16,59 @@ e9b4f9e Checkpoint: Purged extraneous private certificate variables and copying 
 
 - **Notable Changes**:
     - **Seqera Ecosytem**
-        - (Platform) -- Bumped Platform version to `v25.2.0`.
-        - (Platform) -- Crypto secret rotation added.
+        - Platform
+            - Bumped Platform version to `v25.2.0`.
+            - Crypto secret rotation added.
 
-        - (Studios)  -- Bumped Studio version to `0.8.3`.
-        - (Studios)  -- Studios path-based routing supported for ALB & EC2-direct flow.
-        - (Studios)  -- Added `0.8.5` Studios client images.
+        - Studios
+            - Bumped Studio version to `0.8.3`.
+            - Studios path-based routing supported for ALB & EC2-direct flow.
+            - Added `0.8.5` Studios client images.
 
-        - (Wave) -- Wave-Lite support introduced.
+        - Wave
+            - Wave-Lite support introduced.
 
-        - (Groundswell) -- Bumping image to `0.4.3`.
+        - Groundswell
+            - Bumped image to `0.4.3`.
 
 
     - **CX Installer**
-        - (General) -- Began experimenting producing code with AI. Efforts are tightly scoped and 100% human supervised thus far.
+        - General
+            - Began experimenting producing code with AI. Efforts are tightly scoped and 100% human supervised thus far.
         <br /><br />
-        - (Architecture) -- Subnet reconcilation logic centralized in module `subnet_collector`.
-        - (Architecture) -- URL / connection string generation logic centralized in module `connection_strings`.
-        - (Architecture) -- Changed private certificate flow: Certs must now be pre-loaded to S3 bucket & are pulled at run-time.
-        - (Architecture) -- Refactored `assets/src/customcerts/`: Generation script supports multiple domains & removed placeholder files.
-        - (Architecture) -- Merged / broke out EC2 security groups for easier management and better permissions scoping. **This could break ancillary components if you reused the security groups elsewhere!**
-        - (Architecture) -- Refactored when most `assets/target/` files are produced. Rather than waiting for all infrastructure to be created, we now create files as soon as minimal dependencies are met (_to facilitate testing_).
-        - (Architecture) -- Added `... && !var.use_mock` to database and redis assets' `count` property to facilitate testing.
-        - (Architecture) -- Moved conditional Ansible steps from Bash environment logic to `.tpl` inclusion / exclusion.
-        - (Architecture) -- Modified `docker-compose.yml` so that all configuration files are mounted from their respective `target/**` folder.
-        - (Architecture) -- Bumped `seqerakit --> v0.5.5` and `tw --> 0.14.0`.
-        - (Architecture) -- Broke out monolithic step in `011_configure_vm.tf` into smaller chained resources for bettter visibility and reduced blast radius.
+        - Architecture
+            - Subnet reconcilation logic centralized in module `subnet_collector`.
+            - URL / connection string generation logic centralized in module `connection_strings`.
+            - Changed private certificate flow: Certs must now be pre-loaded to S3 bucket & are pulled at run-time.
+            - Refactored `assets/src/customcerts/`: Generation script supports multiple domains & removed placeholder files.
+            - Merged / broke out EC2 security groups for easier management and better permissions scoping. **This could break ancillary components if you reused the security groups elsewhere!**
+            - Refactored when most `assets/target/` files are produced. Rather than waiting for all infrastructure to be created, we now create files as soon as minimal dependencies are met (_to facilitate testing_).
+            - Added `... && !var.use_mock` to database and redis assets' `count` property to facilitate testing.
+            - Moved conditional Ansible steps from Bash environment logic to `.tpl` inclusion / exclusion.
+            - Modified `docker-compose.yml` so that all configuration files are mounted from their respective `target/**` folder.
+            - Bumped `seqerakit --> v0.5.5` and `tw --> 0.14.0`.
+            - Broke out monolithic step in `011_configure_vm.tf` into smaller chained resources for bettter visibility and reduced blast radius.
         <br /><br />
-        - (Security) -- Bumped `java-17-amazon-corretto-devel-1:17.0.14+7-1.amzn2023.1` to `java-17-amazon-corretto-devel-1:17.0.16+8-1.amzn2023.1`.
-        - (Security) -- Bumped docker version from `28.1.1` --> `28.3.3`.
+        - Security
+            - Bumped `java-17-amazon-corretto-devel-1:17.0.14+7-1.amzn2023.1` to `java-17-amazon-corretto-devel-1:17.0.16+8-1.amzn2023.1`.
+            - Bumped docker version from `28.1.1` --> `28.3.3`.
         <br /><br />
-        - (Documentation) -- Changed `TEMPLATE_terraform.tfvars` application name from `tower-dev` to `tower-template`.
-        - (Documentation) -- Added Design Decision explaining why Studio subdomain routing is the default over path-based routing.
-        - (Documentation) -- Added Setup guidance re: Platform crypto secret rotation.
-        - (Documentation) -- Added Setup guidance re: how to prepare / pre-loaded Private Certificates.
+        - Documentation
+            - Changed `TEMPLATE_terraform.tfvars` application name from `tower-dev` to `tower-template`.
+            - Added Design Decision explaining why Studio subdomain routing is the default over path-based routing.
+            - Added Setup guidance re: Platform crypto secret rotation.
+            - Added Setup guidance re: how to prepare / pre-loaded Private Certificates.
         <br /><br />
-        - (Validation) -- Added Studios path-based routing checks & warnings.
+        - Validation
+            - Added Studios path-based routing checks & warnings.
         <br /><br />
-        - (Testing) -- Added preliminary testing framework. Validates outputs of `module.connection_strings` and some files in `assets/target/`.
-        - (Testing) -- Added preliminary MySQL & Postgres & Docker Compose Testcontainers for local validation.
-        - (Testing) -- Added test data generation (tfvars & secrets) mechanism.
-        - (Testing) -- Added test logging facility (via Pytest lifecycle hooks) to facilitate human observability and AI agent resolution.
-        - (Testing) -- Added Pytest marks to allow for targeted test runs.
-        - (Testing) -- Added `terraform plan` caching mechanism to speed up n+1 tests.
+        - Testing
+            - Added preliminary testing framework. Validates outputs of `module.connection_strings` and some files in `assets/target/`.
+            - Added preliminary MySQL & Postgres & Docker Compose Testcontainers for local validation.
+            - Added test data generation (tfvars & secrets) mechanism.
+            - Added test logging facility (via Pytest lifecycle hooks) to facilitate human observability and AI agent resolution.
+            - Added Pytest marks to allow for targeted test runs.
+            - Added `terraform plan` caching mechanism to speed up n+1 tests.
 
 
 ### Configuration File Changes
