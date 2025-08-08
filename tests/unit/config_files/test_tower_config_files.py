@@ -4,6 +4,7 @@ import json
 import os
 import tempfile
 import time
+import hashlib
 from pathlib import Path
 
 from types import SimpleNamespace
@@ -14,6 +15,7 @@ from tests.utils.local import parse_key_value_file, read_file, read_yaml, read_j
 from tests.utils.local import get_reconciled_tfvars
 
 from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
+from tests.utils.local import templatefile_cache_dir
 
 from testcontainers.mysql import MySqlContainer
 
@@ -217,40 +219,44 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
 
         write_file(outfile, output)
 
+    def generate_interpolated_templatefile(key, extension, read_type):
+        outfile = Path(f"{templatefile_cache_dir_hash}/{key}.{extension}")
+        if not outfile.exists():
+            result = prepare_templatefile_payload(key, outputs)
+            write_populated_templatefile(outfile, result)
+        
+        content = read_type(outfile.as_posix())
+        print(content)
+        return content
+
     # TODO:
     #   1) Generate hash of tfvars variables and do cache check to speed this up.
     #   2) If cache miss, emit generated files as <CACHE_VALUE>_<FILENAME> and stick in 'tests/.templatfile_cache'.
+    print("Hashing inputs")
+    content_to_hash = f"{vars}\n{outputs}\n{tower_secrets}\n{groundswell_secrets}\n{seqerakit_secrets}\n{wave_lite_secrets}"
+    hash = hashlib.sha256(content_to_hash.encode("utf-8")).hexdigest()[:16]
+
+    # Make cache folder if missing
+    folder_path = Path(f"{templatefile_cache_dir}/{hash}")
+    folder_path.mkdir(parents=True, exist_ok=True)
+
+    templatefile_cache_dir_hash = f"{templatefile_cache_dir}/{hash}"
 
     # NOTE:
     #  - Logic varies a bit on read due to kind of file (e.g. YAML vs KV vs SQL)
 
-    # ansible_06_run_seqerakit
-    result = prepare_templatefile_payload("ansible_06_run_seqerakit", outputs)
-    outfile = "graham2.yml"
-    write_populated_templatefile(outfile, result)
-    content = read_yaml(outfile)
-    print(content)
+    key = "ansible_06_run_seqerakit"
+    content = generate_interpolated_templatefile(key, ".yaml", read_yaml)
 
-    # tower.env
-    result = prepare_templatefile_payload("tower_env", outputs)
-    outfile = "graham3.env"
-    write_populated_templatefile(outfile, result)
-    content = parse_key_value_file(outfile)
-    print(content)
+    key = "tower_env"
+    content = generate_interpolated_templatefile(key, ".env", parse_key_value_file)
 
-    # tower.sql
-    result = prepare_templatefile_payload("tower_sql", outputs)
-    outfile = "graham4.sql"
-    write_populated_templatefile(outfile, result)
-    content = read_file(outfile)
-    print(content)
+    key = "tower_sql"
+    content = generate_interpolated_templatefile(key, "sql", read_file)
 
-    # cleanse_and_configure
-    result = prepare_templatefile_payload("cleanse_and_configure_host", outputs)
-    outfile = "graham5.sh"
-    write_populated_templatefile(outfile, result)
-    content = read_file(outfile)
-    print(content)
+    key = "cleanse_and_configure_host"
+    content = generate_interpolated_templatefile(key, "sh", read_file)
+
 
     end_time = time.time() - start_time
     print(f"{end_time=}")

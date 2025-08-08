@@ -78,6 +78,8 @@ plan_cache_dir                      = f"{root}/tests/.plan_cache"
 test_case_tfplan_file               = f"{root}/tfplan"
 test_case_tfplan_json_file          = f"{root}/tfplan.json"
 
+templatefile_cache_dir            = f"{root}/tests/.templatefile_cache"
+
 
 ## ------------------------------------------------------------------------------------
 ## File Utility Functions
