@@ -17,7 +17,7 @@ from tests.utils.local import get_reconciled_tfvars
 from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
 from tests.utils.local import templatefile_cache_dir
 
-from tests.utils.local import generate_namespaced_dictionaries, generate_interpolated_templatefile
+from tests.utils.local import generate_namespaced_dictionaries, generate_all_interpolated_templatefiles
 
 from testcontainers.mysql import MySqlContainer
 
@@ -42,128 +42,21 @@ def test_poc(backup_tfvars):
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
     plan = prepare_plan(override_data)
 
+    # TODO: See if there's cleaner way to write this.
     plan, secrets = generate_namespaced_dictionaries(plan)
     vars, outputs, vars_dict, _ = plan
     tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets = secrets
-
     namespaces = [vars, outputs, tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets]
 
-    # TODO - Move this to 'backup_tbvars'
-    # Transform template files into parseable JSON
-    command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
-    result = execute_subprocess(command)
-    templatefile_json = read_json("009_define_file_templates.json")
-
-    import re
-
-    # Hash templatefiles to speed up n+1 tests
-    #   1) Generate hash of tfvars variables and do cache check to speed this up.
-    #   2) If cache miss, emit generated files as <CACHE_VALUE>_<FILENAME> and stick in 'tests/.templatfile_cache'.
-    print("Hashing inputs")
+    # Create hash of tfvars files (used by function 'generate_interpolated_templatefile' to speed up operations).
     content_to_hash = f"{vars}\n{outputs}\n{tower_secrets}\n{groundswell_secrets}\n{seqerakit_secrets}\n{wave_lite_secrets}"
     hash = hashlib.sha256(content_to_hash.encode("utf-8")).hexdigest()[:16]
 
-    # Make cache folder if missing
-    folder_path = Path(f"{templatefile_cache_dir}/{hash}")
-    folder_path.mkdir(parents=True, exist_ok=True)
-
-    templatefile_cache_dir_hash = f"{templatefile_cache_dir}/{hash}"
-
-    template_files = {
-        "tower_env": {
-            "extension" : ".env", 
-            "read_type" : parse_key_value_file,
-            "content"   : ""
-        },
-        "tower_yml": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        "tower_sql": {
-            "extension" : ".sql", 
-            "read_type" : read_file,
-            "content"   : ""
-        },
-        "groundswell_sql": {
-            "extension" : ".sql", 
-            "read_type" : read_file,
-            "content"   : ""
-        },
-        "groundswell_env": {
-            "extension" : ".env", 
-            "read_type" : parse_key_value_file,
-            "content"   : ""
-        },
-        "data_studios_env": {
-            "extension" : ".env", 
-            "read_type" : parse_key_value_file,
-            "content"   : ""
-        },
-        "wave_lite_yml": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        "docker_compose": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        "seqerakit_yml": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        # TODO: aws_batch_manual
-        # TODO: aws_batch_forge
-        "cleanse_and_configure_host": {
-            "extension" : ".sh", 
-            "read_type" : read_file,
-            "content"   : ""
-        },
-        "ansible_02_update_file_configurations": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        "ansible_03_pull_containers_and_run_tower": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        "ansible_05_patch_groundswell": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        "ansible_06_run_seqerakit": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        # TODO: codecommit_seqerakit
-        # TODO: ssh_config
-        "docker_logging": {
-            "extension" : ".json", 
-            "read_type" : read_json,
-            "content"   : ""
-        },
-        "private_ca_conf": {
-            "extension" : ".conf", 
-            "read_type" : read_file,
-            "content"   : ""
-        },
-    }
-
-    for k,v in template_files.items():
-        content = generate_interpolated_templatefile(k, v["extension"], v["read_type"], namespaces, templatefile_cache_dir_hash)
-        template_files[k]["content"] = content
+    templatefiles = generate_all_interpolated_templatefiles(hash, namespaces)
+    print(f"{templatefiles=}")
 
     end_time = time.time() - start_time
     print(f"{end_time=}")
-    
-    Path("009_define_file_templates.json").unlink(missing_ok=True)
 
 
 @pytest.mark.local

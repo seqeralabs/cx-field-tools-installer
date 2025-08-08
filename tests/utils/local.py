@@ -534,11 +534,118 @@ def generate_interpolated_templatefile(key, extension, read_type, namespaces, te
     read_type                   : Which utility helper to use to load the resulting file.
     """
 
+    # Hash templatefiles to speed up n+1 tests
+    #   1) Generate hash of tfvars variables and do cache check to speed this up.
+    #   2) If cache miss, emit generated files as <CACHE_VALUE>_<FILENAME> and stick in 'tests/.templatfile_cache'.
     outfile = Path(f"{templatefile_cache_dir_hash}/{key}{extension}")
     if not outfile.exists():
         result = prepare_templatefile_payload(key, namespaces)
         write_populated_templatefile(outfile, result)
     
     content = read_type(outfile.as_posix())
-    print(content)
+    # print(content)
     return content
+
+
+def generate_all_interpolated_templatefiles(hash, namespaces):
+    """
+    Create all templatefiles based on terraform values relevant to the specific testcase.
+    """
+    # Make cache folder if missing
+    folder_path = Path(f"{templatefile_cache_dir}/{hash}")
+    folder_path.mkdir(parents=True, exist_ok=True)
+
+    templatefile_cache_dir_hash = f"{templatefile_cache_dir}/{hash}"
+
+    template_files = {
+        "tower_env": {
+            "extension" : ".env", 
+            "read_type" : parse_key_value_file,
+            "content"   : ""
+        },
+        "tower_yml": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        "tower_sql": {
+            "extension" : ".sql", 
+            "read_type" : read_file,
+            "content"   : ""
+        },
+        "groundswell_sql": {
+            "extension" : ".sql", 
+            "read_type" : read_file,
+            "content"   : ""
+        },
+        "groundswell_env": {
+            "extension" : ".env", 
+            "read_type" : parse_key_value_file,
+            "content"   : ""
+        },
+        "data_studios_env": {
+            "extension" : ".env", 
+            "read_type" : parse_key_value_file,
+            "content"   : ""
+        },
+        "wave_lite_yml": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        "docker_compose": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        "seqerakit_yml": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        # TODO: aws_batch_manual
+        # TODO: aws_batch_forge
+        "cleanse_and_configure_host": {
+            "extension" : ".sh", 
+            "read_type" : read_file,
+            "content"   : ""
+        },
+        "ansible_02_update_file_configurations": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        "ansible_03_pull_containers_and_run_tower": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        "ansible_05_patch_groundswell": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        "ansible_06_run_seqerakit": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        # TODO: codecommit_seqerakit
+        # TODO: ssh_config
+        "docker_logging": {
+            "extension" : ".json", 
+            "read_type" : read_json,
+            "content"   : ""
+        },
+        "private_ca_conf": {
+            "extension" : ".conf", 
+            "read_type" : read_file,
+            "content"   : ""
+        },
+    }
+
+    for k,v in template_files.items():
+        content = generate_interpolated_templatefile(k, v["extension"], v["read_type"], namespaces, templatefile_cache_dir_hash)
+        template_files[k]["content"] = content
+
+    return template_files

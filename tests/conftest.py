@@ -63,6 +63,10 @@ def backup_tfvars():
     copy_file(test_tfvars_override_source, test_tfvars_override_target)
     copy_file(test_case_override_outputs_source, test_case_override_outputs_target)
 
+    # Prepare JSONified 009
+    command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
+    result = execute_subprocess(command)
+
     yield
 
     print("\nRestoring original environment.")
@@ -79,6 +83,7 @@ def backup_tfvars():
     ]:
         Path(file).unlink(missing_ok=True)
 
+    Path("009_define_file_templates.json").unlink(missing_ok=True)
     delete_pycache_folders(root)
 
     # Restore original tfvars
