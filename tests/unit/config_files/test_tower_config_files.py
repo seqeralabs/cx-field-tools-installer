@@ -202,6 +202,7 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
         
         'terraform console' command needs single quotes on outside and double-quotes within.
         """
+        print(payload)
         payload = subprocess.run(
             ["terraform", "console"],
             input=str(payload),
@@ -243,23 +244,87 @@ def test_poc(backup_tfvars, config_baseline_settings_default):
     templatefile_cache_dir_hash = f"{templatefile_cache_dir}/{hash}"
 
     template_files = {
-        "ansible_06_run_seqerakit": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
         "tower_env": {
             "extension" : ".env", 
             "read_type" : parse_key_value_file,
             "content"   : ""
         },
-        "tower_sql": {
+        # "tower_yml": {
+        #     "extension" : ".yaml", 
+        #     "read_type" : read_yaml,
+        #     "content"   : ""
+        # },
+        # "tower_sql": {
+        #     "extension" : ".sql", 
+        #     "read_type" : read_file,
+        #     "content"   : ""
+        # },
+        # "groundswell_sql": {
+        #     "extension" : ".sql", 
+        #     "read_type" : read_file,
+        #     "content"   : ""
+        # },
+        # "groundswell_env": {
+        #     "extension" : ".env", 
+        #     "read_type" : parse_key_value_file,
+        #     "content"   : ""
+        # },
+        # "data_studios_env": {
+        #     "extension" : ".env", 
+        #     "read_type" : parse_key_value_file,
+        #     "content"   : ""
+        # },
+        "wave_lite_yml": {
             "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        "docker_compose": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        "seqerakit_yml": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        # TODO: aws_batch_manual
+        # TODO: aws_batch_forge
+        "cleanse_and_configure_host": {
+            "extension" : ".sh", 
             "read_type" : read_file,
             "content"   : ""
         },
-        "cleanse_and_configure_host": {
-            "extension" : ".sh", 
+        "ansible_02_update_file_configurations": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        "ansible_03_pull_containers_and_run_tower": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        "ansible_05_patch_groundswell": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        "ansible_06_run_seqerakit": {
+            "extension" : ".yaml", 
+            "read_type" : read_yaml,
+            "content"   : ""
+        },
+        # TODO: codecommit_seqerakit
+        # TODO: ssh_config
+        "docker_logging": {
+            "extension" : ".json", 
+            "read_type" : read_json,
+            "content"   : ""
+        },
+        "private_ca_conf": {
+            "extension" : ".conf", 
             "read_type" : read_file,
             "content"   : ""
         },

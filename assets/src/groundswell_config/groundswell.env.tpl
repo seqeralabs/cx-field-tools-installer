@@ -13,7 +13,7 @@ SWELL_API_TRAIN_BATCH_SIZE=1000
 SWELL_API_PREDICT_FRACTIONAL_CPUS=false
 
 # Database settings
-# NOTE: DO NOT ADD 'jdbc' at the front (breaks migration)
+# NOTE: DO NOT ADD *jdbc* at the front (breaks migration)
 SWELL_DB_URL=${swell_db_url}
 SWELL_DB_USER=${swell_db_user}
 SWELL_DB_PASSWORD=${swell_db_password}
