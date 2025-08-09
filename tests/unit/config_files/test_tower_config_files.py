@@ -29,8 +29,8 @@ from testcontainers.mysql import MySqlContainer
 
 
 
-# def test_poc(backup_tfvars, config_baseline_settings_default):
-def test_poc(backup_tfvars):
+# def test_poc(session_setup, config_baseline_settings_default):
+def test_poc(session_setup):
     """
     Trying to create files directly via Terraform console.
     """
@@ -63,7 +63,7 @@ def test_poc(backup_tfvars):
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_default_config_tower_env(backup_tfvars, config_baseline_settings_default):  # teardown_tf_state_all):
+def test_default_config_tower_env(session_setup, config_baseline_settings_default):  # teardown_tf_state_all):
     """
     Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars.
     """
@@ -196,7 +196,7 @@ def test_default_config_tower_env(backup_tfvars, config_baseline_settings_defaul
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_default_config_tower_yml(backup_tfvars, config_baseline_settings_default):  # teardown_tf_state_all):
+def test_default_config_tower_yml(session_setup, config_baseline_settings_default):  # teardown_tf_state_all):
     """
     Test the target tower.yml generated from default test terraform.tfvars and base-override.auto.tfvars.
     """
@@ -248,7 +248,7 @@ def test_default_config_tower_yml(backup_tfvars, config_baseline_settings_defaul
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_default_config_data_studios_env(backup_tfvars, config_baseline_settings_default):
+def test_default_config_data_studios_env(session_setup, config_baseline_settings_default):
     """
     Test the target data-studio.env generated from default test terraform.tfvars and base-override.auto.tfvars.
     """
@@ -292,7 +292,7 @@ def test_default_config_data_studios_env(backup_tfvars, config_baseline_settings
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_default_config_tower_sql(backup_tfvars, config_baseline_settings_default):
+def test_default_config_tower_sql(session_setup, config_baseline_settings_default):
     """
     Test the target tower.sql generated from default test terraform.tfvars and base-override.auto.tfvars.
     """
@@ -332,7 +332,7 @@ def test_default_config_tower_sql(backup_tfvars, config_baseline_settings_defaul
 @pytest.mark.mysql_container
 @pytest.mark.long
 @pytest.mark.testcontainer
-def test_tower_sql_mysql_container_execution(backup_tfvars, config_baseline_settings_default):
+def test_tower_sql_mysql_container_execution(session_setup, config_baseline_settings_default):
     """
     Test that tower.sql successfully populates a MySQL8 database using Testcontainers.
     This validates the SQL file can create the database, user, and grant permissions.
@@ -437,7 +437,7 @@ def test_tower_sql_mysql_container_execution(backup_tfvars, config_baseline_sett
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_custom_config_files_01(backup_tfvars, config_baseline_settings_custom_01):
+def test_custom_config_files_01(session_setup, config_baseline_settings_custom_01):
     """
     Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars,
     PLUS custom overrides.
@@ -462,7 +462,7 @@ def test_custom_config_files_01(backup_tfvars, config_baseline_settings_custom_0
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_custom_config_files_02(backup_tfvars, config_baseline_settings_custom_02):
+def test_custom_config_files_02(session_setup, config_baseline_settings_custom_02):
     """
     Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars,
     PLUS custom overrides.
@@ -487,7 +487,7 @@ def test_custom_config_files_02(backup_tfvars, config_baseline_settings_custom_0
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_custom_config_files_03(backup_tfvars, config_baseline_settings_custom_03):
+def test_custom_config_files_03(session_setup, config_baseline_settings_custom_03):
     """
     Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars,
     PLUS custom overrides.
@@ -516,7 +516,7 @@ def test_custom_config_files_03(backup_tfvars, config_baseline_settings_custom_0
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_custom_config_docker_compose_with_reverse_proxy(backup_tfvars, config_baseline_settings_custom_docker_compose_reverse_proxy):
+def test_custom_config_docker_compose_with_reverse_proxy(session_setup, config_baseline_settings_custom_docker_compose_reverse_proxy):
     """
     Test the target docker-compose.yml generated from default test terraform.tfvars and base-override.auto.tfvars,
     PLUS custom overrides.
@@ -537,7 +537,7 @@ def test_custom_config_docker_compose_with_reverse_proxy(backup_tfvars, config_b
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_custom_config_docker_compose_with_no_https(backup_tfvars, config_baseline_settings_custom_docker_compose_no_https):
+def test_custom_config_docker_compose_with_no_https(session_setup, config_baseline_settings_custom_docker_compose_no_https):
     """
     Test the target docker-compose.yml generated from default test terraform.tfvars and base-override.auto.tfvars,
     PLUS custom overrides.

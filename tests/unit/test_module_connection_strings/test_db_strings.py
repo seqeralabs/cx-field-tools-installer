@@ -12,7 +12,7 @@ from tests.utils.local import prepare_plan
 @pytest.mark.local
 @pytest.mark.db
 @pytest.mark.db_new
-def test_external_new_db_url_full_ecoystem(backup_tfvars):
+def test_external_new_db_url_full_ecoystem(session_setup):
     """Test URLs targeting a new RDS instance."""
     # Given
     override_data = """
@@ -49,7 +49,7 @@ def test_external_new_db_url_full_ecoystem(backup_tfvars):
 @pytest.mark.local
 @pytest.mark.db
 @pytest.mark.db_new
-def test_external_new_db_url_no_ecoystem(backup_tfvars):
+def test_external_new_db_url_no_ecoystem(session_setup):
     """Test URLs targeting a new RDS instance."""
     # Given
     override_data = """
@@ -89,7 +89,7 @@ def test_external_new_db_url_no_ecoystem(backup_tfvars):
 @pytest.mark.local
 @pytest.mark.db
 @pytest.mark.db_existing
-def test_external_existing_db_url_all_ecosystem(backup_tfvars):
+def test_external_existing_db_url_all_ecosystem(session_setup):
     """Test URLs targeting an existing RDS instance."""
     # Given
     override_data = """
@@ -129,7 +129,7 @@ def test_external_existing_db_url_all_ecosystem(backup_tfvars):
 @pytest.mark.local
 @pytest.mark.db
 @pytest.mark.db_existing
-def test_external_existing_db_url_no_ecosystem(backup_tfvars):
+def test_external_existing_db_url_no_ecosystem(session_setup):
     """Test URLs targeting an existing RDS instance."""
     # Given
     override_data = """
@@ -172,7 +172,7 @@ def test_external_existing_db_url_no_ecosystem(backup_tfvars):
 @pytest.mark.db
 @pytest.mark.db_container
 @pytest.mark.container
-def test_container_db_url_full_ecosystem(backup_tfvars):
+def test_container_db_url_full_ecosystem(session_setup):
     """Test URLs targeting container database mode."""
     # Given
     override_data = """
@@ -211,7 +211,7 @@ def test_container_db_url_full_ecosystem(backup_tfvars):
 @pytest.mark.db
 @pytest.mark.db_container
 @pytest.mark.container
-def test_container_db_url_no_ecosystem(backup_tfvars):
+def test_container_db_url_no_ecosystem(session_setup):
     """Test Wave-Lite database URL with container database."""
     # Given
     override_data = """

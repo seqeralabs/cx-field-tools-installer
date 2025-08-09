@@ -31,7 +31,7 @@ from tests.utils.local import test_docker_compose_file
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_default_config_wave_lite_container_1_sql(backup_tfvars, config_baseline_settings_default):
+def test_default_config_wave_lite_container_1_sql(session_setup, config_baseline_settings_default):
     """
     Test the target wave-lite-container-1.sql generated from default test terraform.tfvars and base-override.auto.tfvars.
     """
@@ -68,7 +68,7 @@ def test_default_config_wave_lite_container_1_sql(backup_tfvars, config_baseline
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_default_config_wave_lite_container_2_sql(backup_tfvars, config_baseline_settings_default):
+def test_default_config_wave_lite_container_2_sql(session_setup, config_baseline_settings_default):
     """
     Test the target wave-lite-container-2.sql generated from default test terraform.tfvars and base-override.auto.tfvars.
     """
@@ -105,7 +105,7 @@ def test_default_config_wave_lite_container_2_sql(backup_tfvars, config_baseline
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_default_config_wave_lite_rds_sql(backup_tfvars, config_baseline_settings_default):
+def test_default_config_wave_lite_rds_sql(session_setup, config_baseline_settings_default):
     """
     Test the target wave-lite-rds.sql generated from default test terraform.tfvars and base-override.auto.tfvars.
     """
@@ -153,7 +153,7 @@ def test_default_config_wave_lite_rds_sql(backup_tfvars, config_baseline_setting
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_default_config_wave_lite_yml(backup_tfvars, config_baseline_settings_default):
+def test_default_config_wave_lite_yml(session_setup, config_baseline_settings_default):
     """
     Test the target wave-lite.yml generated from default test terraform.tfvars and base-override.auto.tfvars.
     Tests only interpolated variables, not static configuration values.
@@ -198,7 +198,7 @@ def test_default_config_wave_lite_yml(backup_tfvars, config_baseline_settings_de
 @pytest.mark.vpc_existing
 @pytest.mark.long
 @pytest.mark.testcontainer
-def test_wave_lite_sql_files_with_postgres_container(backup_tfvars, config_baseline_settings_default):
+def test_wave_lite_sql_files_with_postgres_container(session_setup, config_baseline_settings_default):
     """
     Test that the wave_lite_config SQL files successfully populate a PostgreSQL container.
     Uses testcontainers to spin up a local PostgreSQL instance with the same configuration
@@ -270,7 +270,7 @@ def test_wave_lite_sql_files_with_postgres_container(backup_tfvars, config_basel
 @pytest.mark.vpc_existing
 @pytest.mark.long
 @pytest.mark.testcontainer
-def test_wave_lite_compose_deployment(backup_tfvars, config_baseline_settings_default):
+def test_wave_lite_compose_deployment(session_setup, config_baseline_settings_default):
     """
     Test Wave containers (x4) in local docker-compose deployment.
     Creates a cut-down version of the full docker-compose.yml file generated for the EC2.

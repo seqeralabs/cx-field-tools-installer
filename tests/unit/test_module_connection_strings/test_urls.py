@@ -9,7 +9,7 @@ from tests.utils.local import prepare_plan
 @pytest.mark.local
 @pytest.mark.urls
 @pytest.mark.urls_secure
-def test_urls_alb_all_ecosystem(backup_tfvars):
+def test_urls_alb_all_ecosystem(session_setup):
     """Test URLS when using ALB."""
     # Given
     connect_secure_override_data = """
@@ -59,7 +59,7 @@ def test_urls_alb_all_ecosystem(backup_tfvars):
 @pytest.mark.local
 @pytest.mark.urls
 @pytest.mark.urls_secure
-def test_urls_alb_no_ecosystem(backup_tfvars):
+def test_urls_alb_no_ecosystem(session_setup):
     """Test URLS when using ALB."""
     # Given
     connect_secure_override_data = """
@@ -110,7 +110,7 @@ def test_urls_alb_no_ecosystem(backup_tfvars):
 @pytest.mark.local
 @pytest.mark.urls
 @pytest.mark.urls_insecure
-def test_urls_no_https_all_ecoystem(backup_tfvars):
+def test_urls_no_https_all_ecoystem(session_setup):
     """Check ecosystem URLS when no https active."""
     # Given
     connect_insecure_override_data = """
@@ -170,7 +170,7 @@ def test_urls_no_https_all_ecoystem(backup_tfvars):
 @pytest.mark.local
 @pytest.mark.urls
 @pytest.mark.urls_insecure
-def test_urls_no_https_no_ecoystem(backup_tfvars):
+def test_urls_no_https_no_ecoystem(session_setup):
     """Check ecosystem URLS when no https active."""
     # Given
     connect_insecure_override_data = """
@@ -233,7 +233,7 @@ def test_urls_no_https_no_ecoystem(backup_tfvars):
 @pytest.mark.local
 @pytest.mark.urls
 @pytest.mark.connect
-def test_connect_alb_no_subdomain(backup_tfvars):
+def test_connect_alb_no_subdomain(session_setup):
     """Test Conect path-based routing. Ensure default 'connect.' is not present.
     """
     # Given
@@ -264,7 +264,7 @@ def test_connect_alb_no_subdomain(backup_tfvars):
 @pytest.mark.local
 @pytest.mark.urls
 @pytest.mark.connect
-def test_connect_ec2_no_subdomain(backup_tfvars):
+def test_connect_ec2_no_subdomain(session_setup):
     """Test Conect path-based routing. Ensure default 'connect.' is not present.
     """
     # Given

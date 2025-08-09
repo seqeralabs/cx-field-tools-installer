@@ -24,7 +24,7 @@ from testcontainers.mysql import MySqlContainer
 @pytest.mark.ansible
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_002_update_file_configurations_all_present(backup_tfvars, config_ansible_02_should_be_present):  # teardown_tf_state_all):
+def test_002_update_file_configurations_all_present(session_setup, config_ansible_02_should_be_present):  # teardown_tf_state_all):
     """
     Test 
     """
@@ -59,7 +59,7 @@ def test_002_update_file_configurations_all_present(backup_tfvars, config_ansibl
 @pytest.mark.ansible
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_002_update_file_configurations_none_present(backup_tfvars, config_ansible_02_should_not_be_present):  # teardown_tf_state_all):
+def test_002_update_file_configurations_none_present(session_setup, config_ansible_02_should_not_be_present):  # teardown_tf_state_all):
     """
     Test 
     """
@@ -94,7 +94,7 @@ def test_002_update_file_configurations_none_present(backup_tfvars, config_ansib
 @pytest.mark.ansible
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_005_should_be_present(backup_tfvars, config_ansible_05_should_be_present):  # teardown_tf_state_all):
+def test_005_should_be_present(session_setup, config_ansible_05_should_be_present):  # teardown_tf_state_all):
     """
     Test 
     """
@@ -125,7 +125,7 @@ def test_005_should_be_present(backup_tfvars, config_ansible_05_should_be_presen
 @pytest.mark.ansible
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_005_should_not_be_present(backup_tfvars, config_ansible_05_should_not_be_present):  # teardown_tf_state_all):
+def test_005_should_not_be_present(session_setup, config_ansible_05_should_not_be_present):  # teardown_tf_state_all):
     """
     Test 
     """
@@ -156,7 +156,7 @@ def test_005_should_not_be_present(backup_tfvars, config_ansible_05_should_not_b
 @pytest.mark.ansible
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_006_should_be_present(backup_tfvars, config_ansible_06_should_be_present):  # teardown_tf_state_all):
+def test_006_should_be_present(session_setup, config_ansible_06_should_be_present):  # teardown_tf_state_all):
     """
     Test 
     """
@@ -189,7 +189,7 @@ def test_006_should_be_present(backup_tfvars, config_ansible_06_should_be_presen
 @pytest.mark.ansible
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_006_should_not_be_present(backup_tfvars, config_ansible_06_should_not_be_present):  # teardown_tf_state_all):
+def test_006_should_not_be_present(session_setup, config_ansible_06_should_not_be_present):  # teardown_tf_state_all):
     """
     Test 
     """

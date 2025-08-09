@@ -13,7 +13,7 @@ from tests.utils.local import prepare_plan
 @pytest.mark.redis
 @pytest.mark.redis_external
 @pytest.mark.tower
-def test_external_redis_url_full_ecosystem(backup_tfvars):
+def test_external_redis_url_full_ecosystem(session_setup):
     # Given
     override_data = """
         flag_create_external_redis                      = true
@@ -49,7 +49,7 @@ def test_external_redis_url_full_ecosystem(backup_tfvars):
 @pytest.mark.redis
 @pytest.mark.redis_external
 @pytest.mark.tower
-def test_external_redis_url_no_ecosystem(backup_tfvars):
+def test_external_redis_url_no_ecosystem(session_setup):
     # Given
     override_data = """
         flag_create_external_redis                      = true
@@ -88,7 +88,7 @@ def test_external_redis_url_no_ecosystem(backup_tfvars):
 @pytest.mark.redis_container
 @pytest.mark.container
 @pytest.mark.tower
-def test_container_redis_url_all_ecosystem(backup_tfvars):
+def test_container_redis_url_all_ecosystem(session_setup):
     """Test Tower with container Redis.
     NOTE: Studios and Wave-Lite default to local container paths when not activated.
     """
@@ -130,7 +130,7 @@ def test_container_redis_url_all_ecosystem(backup_tfvars):
 @pytest.mark.redis_container
 @pytest.mark.container
 @pytest.mark.tower
-def test_container_redis_url_no_ecosystem(backup_tfvars):
+def test_container_redis_url_no_ecosystem(session_setup):
     """Test Tower with container Redis.
     NOTE: Studios and Wave-Lite default to local container paths when not activated.
     """

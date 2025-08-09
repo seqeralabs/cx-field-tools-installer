@@ -9,7 +9,7 @@ from tests.utils.local import prepare_plan
 @pytest.mark.local
 @pytest.mark.urls
 @pytest.mark.wave
-def test_wave_url_wave_lite_enabled(backup_tfvars):
+def test_wave_url_wave_lite_enabled(session_setup):
     """Test Wave URL when Wave-Lite is enabled."""
     # Given
     override_data = """
@@ -34,7 +34,7 @@ def test_wave_url_wave_lite_enabled(backup_tfvars):
 @pytest.mark.local
 @pytest.mark.urls
 @pytest.mark.wave
-def test_wave_url_wave_lite_disabled(backup_tfvars):
+def test_wave_url_wave_lite_disabled(session_setup):
     """Test Wave URL when Wave-Lite is disabled."""
     # Given
     override_data = """
@@ -67,7 +67,7 @@ def test_wave_url_wave_lite_disabled(backup_tfvars):
 @pytest.mark.local
 @pytest.mark.urls
 @pytest.mark.wave
-def test_wave_nothing_enabled(backup_tfvars):
+def test_wave_nothing_enabled(session_setup):
     """Test Wave URL when Wave & Wave-Lite disabled."""
     # Given
     override_data = """

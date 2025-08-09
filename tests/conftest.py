@@ -51,14 +51,14 @@ testing loop to:
 ## Helper Fixtures
 ## ------------------------------------------------------------------------------------
 @pytest.fixture(scope="session")
-def backup_tfvars():
+def session_setup():
     # Create a fresh copy of the base testing terraform.tfvars file.
     subprocess.run("make generate_test_data", shell=True, check=True)
 
     print(f"\nBacking up terraform.tfvars & Loading test tfvars (base) artefacts.")
     # Backup existing tfvars
     move_file(tfvars_path, tfvars_backup_path)
-    # Swap in test tfvars, base-overrides tfvars, and test-specific override values.
+    # Swap in test tfvars, base-overrides tfvars, and testing-specific outputs (e.g. locals).
     copy_file(test_tfvars_source, test_tfvars_target)
     copy_file(test_tfvars_override_source, test_tfvars_override_target)
     copy_file(test_case_override_outputs_source, test_case_override_outputs_target)
@@ -72,18 +72,19 @@ def backup_tfvars():
     print("\nRestoring original environment.")
 
     # Single-source destroy at end of testing cycle to save time
-    run_terraform_destroy()
+    # Not actually running Terraform apply anymore, do I don't need to do a destroy
+    # run_terraform_destroy()
 
     # Remove testing files, delete __pycache__ folders, restore origin tfvars.
     for file in [
         test_case_override_target,
         test_tfvars_target,
         test_tfvars_override_target,
-        test_case_override_outputs_target
+        test_case_override_outputs_target,
+        "009_define_file_templates.json"
     ]:
         Path(file).unlink(missing_ok=True)
 
-    Path("009_define_file_templates.json").unlink(missing_ok=True)
     delete_pycache_folders(root)
 
     # Restore original tfvars
