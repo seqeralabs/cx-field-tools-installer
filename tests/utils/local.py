@@ -649,3 +649,26 @@ def generate_all_interpolated_templatefiles(hash, namespaces):
         template_files[k]["content"] = content
 
     return template_files
+
+
+## ------------------------------------------------------------------------------------
+## Helpers - Assertions
+## ------------------------------------------------------------------------------------
+def assert_key_value(entries: dict, file):
+    """Confirm key-values in provided dict are present in file."""
+    for k,v in entries.items():
+        assert file[k] == str(v)
+
+
+def assert_key_not_in_keys(entries: dict, file):
+    """Confirm keys in provided dict are not present in file."""
+    keys = file.keys()
+
+    for k,v in entries.items():
+        assert k not in keys
+
+
+def assert_present_and_omitted(entries: dict, file):
+    """Confirm key-values are present & keys are not present."""
+    assert_key_value(entries["present"], file)
+    assert_key_not_in_keys(entries["omitted"], file)
