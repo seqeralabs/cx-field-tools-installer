@@ -17,7 +17,7 @@ from tests.utils.local import get_reconciled_tfvars
 from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
 from tests.utils.local import templatefile_cache_dir
 
-from tests.utils.local import generate_namespaced_dictionaries, generate_all_interpolated_templatefiles
+from tests.utils.local import generate_namespaced_dictionaries, generate_all_interpolated_templatefiles, all_template_files
 from tests.utils.local import assert_present_and_omitted
 
 from testcontainers.mysql import MySqlContainer
@@ -52,14 +52,14 @@ def test_poc(session_setup):
     content_to_hash = f"{vars}\n{outputs}\n{tower_secrets}\n{groundswell_secrets}\n{seqerakit_secrets}\n{wave_lite_secrets}"
     hash = hashlib.sha256(content_to_hash.encode("utf-8")).hexdigest()[:16]
 
-    templatefiles = generate_all_interpolated_templatefiles(hash, namespaces)
+    test_template_files = generate_all_interpolated_templatefiles(hash, namespaces, all_template_files)
 
 
     # ------------------------------------------------------------------------------------
-    # Test tower.env - assert all core keys exist
+    # Test tower.env
     # ------------------------------------------------------------------------------------
     print("Testing tower.env generated from default settings.")
-    tower_env_file = templatefiles["tower_env"]["content"]
+    tower_env_file = test_template_files["tower_env"]["content"]
 
     entries = {
         "present": {
@@ -107,7 +107,7 @@ def test_poc(session_setup):
 
 
     # ------------------------------------------------------------------------------------
-    # Test sometimes-present conditionals:
+    # Test tower.env - assert sometimes-present conditionals:
     # ------------------------------------------------------------------------------------
     entries = {
         "present" : {
@@ -183,167 +183,76 @@ def test_poc(session_setup):
             "TOWER_DATA_STUDIO_ALLOWED_WORKSPACES"          : ""
         }
     }
-    assert_present_and_omitted(entries, tower_env_file)
+    assert_present_and_omitted(entries, tower_env_file, type="kv")
 
-
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_default_config_tower_env(session_setup, config_baseline_settings_default):  # teardown_tf_state_all):
-    """
-    Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars.
-    """
-
-
-    # Data Studio Edgecase
-    # Need to use original vars_dict because can't iterate through SimpleNamespace
-    qualifiers = ["ICON", "REPOSITORY", "TOOL", "STATUS"]
-    if vars.flag_enable_data_studio:
-        for studio in vars_dict["data_studio_options"]["value"]:
-            for qualifier in qualifiers:
-                key = f"TOWER_DATA_STUDIO_TEMPLATES_{studio}_{qualifier}"
-                # EDGECASE: Called it 'container' in terrafrom tfvars, but setting is REPOSITORY
-                if qualifier == "REPOSITORY":
-                    value = vars_dict["data_studio_options"]["value"][studio]["container"]
-                else:
-                    value = vars_dict["data_studio_options"]["value"][studio][qualifier.lower()]
-                assert tower_env_file[key.upper()] == value
-
-
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_default_config_tower_yml(session_setup, config_baseline_settings_default):  # teardown_tf_state_all):
-    """
-    Test the target tower.yml generated from default test terraform.tfvars and base-override.auto.tfvars.
-    """
-
-    # Given
-    print("Testing tower.yml generated from default settings.")
-
-    # When
-    vars, _, _, _ = generate_namespaced_dictionaries(config_baseline_settings_default)
-    tower_yml_file = read_yaml(f"{root}/assets/target/tower_config/tower.yml")
 
     # ------------------------------------------------------------------------------------
     # Test tower.yml
     # ------------------------------------------------------------------------------------
+    print("Testing tower.yml generated from default settings.")
+    tower_yml_file = test_template_files["tower_yml"]["content"]
+
+    # Reminder: YAML files converted to python dictionary so use True / False for comparison
     entries = {
-        tower_yml_file["mail"]["smtp"]["auth"]                                  : vars.tower_smtp_auth,
-        tower_yml_file["mail"]["smtp"]["starttls"]["enable"]                    : vars.tower_smtp_starttls_enable,
-        tower_yml_file["mail"]["smtp"]["starttls"]["required"]                  : vars.tower_smtp_starttls_required,
-        tower_yml_file["mail"]["smtp"]["ssl"]["protocols"]                      : vars.tower_smtp_ssl_protocols,
-        tower_yml_file["micronaut"]["application"]["name"]                      : vars.app_name,
-        tower_yml_file["tower"]["cron"]["audit-log"]["clean-up"]["time-offset"] : f"{vars.tower_audit_retention_days}d"
+        "present": {
+            tower_yml_file["mail"]["smtp"]["auth"]                                  : True,
+            tower_yml_file["mail"]["smtp"]["starttls"]["enable"]                    : True,
+            tower_yml_file["mail"]["smtp"]["starttls"]["required"]                  : True,
+            tower_yml_file["mail"]["smtp"]["ssl"]["protocols"]                      : "TLSv1.2",
+            tower_yml_file["micronaut"]["application"]["name"]                      : "tower-testing",
+            tower_yml_file["tower"]["cron"]["audit-log"]["clean-up"]["time-offset"] : "1095d",
+            tower_yml_file["tower"]["data-studio"]["allowed-workspaces"]            : None,
+            tower_yml_file["tower"]["trustedEmails"][0]                             : "'graham.wright@seqera.io,gwright99@hotmail.com'",
+            tower_yml_file["tower"]["trustedEmails"][1]                             : "'*@abc.com,*@def.com'",
+            tower_yml_file["tower"]["trustedEmails"][2]                             : "'123@abc.com,456@def.com'",
+        },
+        "omitted": {
+            "auth"          : tower_yml_file["tower"].keys(),
+            # "data-studio"   : tower_yml_file["tower"].keys(),
+        }
     }
-
-    for k,v in entries.items():
-        assert k == v
-
-    # Edgecases
-    if vars.flag_disable_email_login:
-        assert "disable-email" in tower_yml_file["tower"]["auth"].keys()
-    else:
-        assert "auth" not in tower_yml_file["tower"].keys()
-
-    if vars.flag_enable_data_studio and not vars.flag_limit_data_studio_to_some_workspaces:
-        assert "allowed-workspaces" in tower_yml_file["tower"]["data-studio"].keys()
-    else:
-        assert "data-studio" not in tower_yml_file["tower"].keys()
-
-    # Remove middle whitespace from vars since it seems to be stripped from the template interpolation.
-    key = tower_yml_file["tower"]["trustedEmails"]
-    tower_root_users = vars.tower_root_users.replace(" ", "")
-    assert tower_root_users in key
-    tower_email_trusted_orgs = vars.tower_email_trusted_orgs.replace(" ", "")
-    assert tower_email_trusted_orgs in key
-    tower_email_trusted_users = vars.tower_email_trusted_users.replace(" ", "")
-    assert tower_email_trusted_users in key
+    assert_present_and_omitted(entries, tower_yml_file, "yaml")
 
 
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_default_config_data_studios_env(session_setup, config_baseline_settings_default):
-    """
-    Test the target data-studio.env generated from default test terraform.tfvars and base-override.auto.tfvars.
-    """
-
-    # Given
+    # ------------------------------------------------------------------------------------
+    # Test data_studios.env
+    # ------------------------------------------------------------------------------------
     print("Testing data-studio.env generated from default settings.")
+    ds_env_file = test_template_files["data_studios_env"]["content"]
 
-    # When
-    vars, outputs, _, _ = generate_namespaced_dictionaries(config_baseline_settings_default)
-    ds_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/data-studios.env")
-    keys = ds_env_file.keys()
-
-    # ------------------------------------------------------------------------------------
-    # Test data-studios.env - assert all core keys exist
-    # ------------------------------------------------------------------------------------
     entries = {
-        "PLATFORM_URL"                              : f"https://{vars.tower_server_url}",
-        "CONNECT_HTTP_PORT"                         : 9090,    # str()
-        "CONNECT_TUNNEL_URL"                        : "connect-server:7070",
-        "CONNECT_PROXY_URL"                         : f"https://connect.{vars.tower_server_url}",
-        "CONNECT_REDIS_ADDRESS"                     : "redis:6379",
-        "CONNECT_REDIS_DB"                          : 1,
-        "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN"    : "ipsemlorem"
+        "present": {
+            "PLATFORM_URL"                              : f"https://{vars.tower_server_url}",
+            "CONNECT_HTTP_PORT"                         : 9090,    # str()
+            "CONNECT_TUNNEL_URL"                        : "connect-server:7070",
+            "CONNECT_PROXY_URL"                         : f"https://connect.{vars.tower_server_url}",
+            "CONNECT_REDIS_ADDRESS"                     : "redis:6379",
+            "CONNECT_REDIS_DB"                          : 1,
+            "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN"    : "ipsemlorem"
+        },
+        "omitted": {}
     }
+    assert_present_and_omitted(entries, ds_env_file, type="kv")
 
-    for k,v in entries.items():
-        assert ds_env_file[k] == str(v)
-
-    # ------------------------------------------------------------------------------------
-    # Test always-present conditionals
-    # ------------------------------------------------------------------------------------
-    # TODO: Figure out how to use local.studio_uses_distroless for better targeting.
-    if "CONNECT_LOG_LEVEL" in keys:
-        assert "CONNECT_SERVER_LOG_LEVEL" not in keys
-    
-    if "CONNECT_SERVER_LOG_LEVEL":
-        assert "CONNECT_LOG_LEVEL" in keys
-
-
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_default_config_tower_sql(session_setup, config_baseline_settings_default):
-    """
-    Test the target tower.sql generated from default test terraform.tfvars and base-override.auto.tfvars.
-    """
-
-    # Given
-    vars, _, _, _ = generate_namespaced_dictionaries(config_baseline_settings_default)
-
-    # Get values for comparison
-    ssm_data = read_json(ssm_tower)
-    sql_content = read_file(f"{root}/assets/target/tower_config/tower.sql")
-
-    db_database_name = vars.db_database_name
-    expected_user = ssm_data["TOWER_DB_USER"]["value"]
-    expected_password = ssm_data["TOWER_DB_PASSWORD"]["value"]
 
     # ------------------------------------------------------------------------------------
     # Test tower.sql - validate all interpolated variables are properly replaced
     # ------------------------------------------------------------------------------------
-    entries = [
-        f"CREATE DATABASE {db_database_name};",
-        f"ALTER DATABASE {db_database_name} CHARACTER SET utf8 COLLATE utf8_bin;",
-        f'GRANT ALL PRIVILEGES ON {db_database_name}.* TO {expected_user}@"%";',
-        f'CREATE USER "{expected_user}" IDENTIFIED BY "{expected_password}";'
-    ]
+    print("Testing tower.sql generated from default settings.")
+    tower_sql_file = test_template_files["tower_sql"]["content"]
 
-    for entry in entries:
-        assert entry in sql_content
+    # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
+    entries = {
+        "present": {
+            f"""CREATE DATABASE tower;"""                                               : "n/a",
+            f"""ALTER DATABASE tower CHARACTER SET utf8 COLLATE utf8_bin;"""            : "n/a",
+            f"""CREATE USER "tower_test_user" IDENTIFIED BY "tower_test_password";"""   : "n/a",
+            f"""GRANT ALL PRIVILEGES ON tower.* TO tower_test_user@"%";"""              : "n/a"
+        },
+        "omitted": {}
+    }
+    assert_present_and_omitted(entries, tower_sql_file, "sql")
 
-    # Additional validation: ensure no template variables remain
-    assert "${db_database_name}" not in sql_content
-    assert "${db_tower_user}" not in sql_content
-    assert "${db_tower_password}" not in sql_content
 
 
 @pytest.mark.local

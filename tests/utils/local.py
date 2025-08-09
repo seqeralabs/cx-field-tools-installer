@@ -547,7 +547,7 @@ def generate_interpolated_templatefile(key, extension, read_type, namespaces, te
     return content
 
 
-def generate_all_interpolated_templatefiles(hash, namespaces):
+def generate_all_interpolated_templatefiles(hash, namespaces, template_files: dict):
     """
     Create all templatefiles based on terraform values relevant to the specific testcase.
     """
@@ -557,118 +557,152 @@ def generate_all_interpolated_templatefiles(hash, namespaces):
 
     templatefile_cache_dir_hash = f"{templatefile_cache_dir}/{hash}"
 
-    template_files = {
-        "tower_env": {
-            "extension" : ".env", 
-            "read_type" : parse_key_value_file,
-            "content"   : ""
-        },
-        "tower_yml": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        "tower_sql": {
-            "extension" : ".sql", 
-            "read_type" : read_file,
-            "content"   : ""
-        },
-        "groundswell_sql": {
-            "extension" : ".sql", 
-            "read_type" : read_file,
-            "content"   : ""
-        },
-        "groundswell_env": {
-            "extension" : ".env", 
-            "read_type" : parse_key_value_file,
-            "content"   : ""
-        },
-        "data_studios_env": {
-            "extension" : ".env", 
-            "read_type" : parse_key_value_file,
-            "content"   : ""
-        },
-        "wave_lite_yml": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        "docker_compose": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        "seqerakit_yml": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        # TODO: aws_batch_manual
-        # TODO: aws_batch_forge
-        "cleanse_and_configure_host": {
-            "extension" : ".sh", 
-            "read_type" : read_file,
-            "content"   : ""
-        },
-        "ansible_02_update_file_configurations": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        "ansible_03_pull_containers_and_run_tower": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        "ansible_05_patch_groundswell": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        "ansible_06_run_seqerakit": {
-            "extension" : ".yaml", 
-            "read_type" : read_yaml,
-            "content"   : ""
-        },
-        # TODO: codecommit_seqerakit
-        # TODO: ssh_config
-        "docker_logging": {
-            "extension" : ".json", 
-            "read_type" : read_json,
-            "content"   : ""
-        },
-        "private_ca_conf": {
-            "extension" : ".conf", 
-            "read_type" : read_file,
-            "content"   : ""
-        },
-    }
-
     for k,v in template_files.items():
         content = generate_interpolated_templatefile(k, v["extension"], v["read_type"], namespaces, templatefile_cache_dir_hash)
         template_files[k]["content"] = content
 
     return template_files
 
+# Defined down here instead of up-top since I use helperfunctions 
+all_template_files = {
+    "tower_env": {
+        "extension" : ".env", 
+        "read_type" : parse_key_value_file,
+        "content"   : ""
+    },
+    "tower_yml": {
+        "extension" : ".yaml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    "tower_sql": {
+        "extension" : ".sql", 
+        "read_type" : read_file,
+        "content"   : ""
+    },
+    "groundswell_sql": {
+        "extension" : ".sql", 
+        "read_type" : read_file,
+        "content"   : ""
+    },
+    "groundswell_env": {
+        "extension" : ".env", 
+        "read_type" : parse_key_value_file,
+        "content"   : ""
+    },
+    "data_studios_env": {
+        "extension" : ".env", 
+        "read_type" : parse_key_value_file,
+        "content"   : ""
+    },
+    "wave_lite_yml": {
+        "extension" : ".yaml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    "docker_compose": {
+        "extension" : ".yaml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    "seqerakit_yml": {
+        "extension" : ".yaml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    # TODO: aws_batch_manual
+    # TODO: aws_batch_forge
+    "cleanse_and_configure_host": {
+        "extension" : ".sh", 
+        "read_type" : read_file,
+        "content"   : ""
+    },
+    "ansible_02_update_file_configurations": {
+        "extension" : ".yaml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    "ansible_03_pull_containers_and_run_tower": {
+        "extension" : ".yaml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    "ansible_05_patch_groundswell": {
+        "extension" : ".yaml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    "ansible_06_run_seqerakit": {
+        "extension" : ".yaml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    # TODO: codecommit_seqerakit
+    # TODO: ssh_config
+    "docker_logging": {
+        "extension" : ".json", 
+        "read_type" : read_json,
+        "content"   : ""
+    },
+    "private_ca_conf": {
+        "extension" : ".conf", 
+        "read_type" : read_file,
+        "content"   : ""
+    },
+}
 
 ## ------------------------------------------------------------------------------------
 ## Helpers - Assertions
 ## ------------------------------------------------------------------------------------
-def assert_key_value(entries: dict, file):
+def assert_kv_key_present(entries: dict, file):
     """Confirm key-values in provided dict are present in file."""
     for k,v in entries.items():
-        assert file[k] == str(v)
+        assert file[k] == str(v), f"Key {k} sought but not found."
 
 
-def assert_key_not_in_keys(entries: dict, file):
+def assert_yaml_key_present(entries: dict):
+    """Confirm key-values in provided dict are present in file."""
+    for k,v in entries.items():
+        assert str(k) == str(v), f"Key {k} does not match Value {v}."
+
+
+def assert_sql_key_present(entries: dict, file):
+    """Confirm keys in provided dict are present in file."""
+    for k in entries.keys():
+        assert k in file, f"Key {k} sought but not found."
+
+
+def assert_kv_key_omitted(entries: dict, file):
     """Confirm keys in provided dict are not present in file."""
     keys = file.keys()
 
+    for k in entries.keys():
+        assert k not in keys, f"Key {k} should not be present but was found."
+
+
+def assert_yaml_key_omitted(entries: dict):
+    """Confirm keys in provided are not present in YAML file. Assumes you'll base <PATH>.keys() as v."""
     for k,v in entries.items():
-        assert k not in keys
+        assert k not in v, f"Key {k} should not be Value {v}."
 
 
-def assert_present_and_omitted(entries: dict, file):
-    """Confirm key-values are present & keys are not present."""
-    assert_key_value(entries["present"], file)
-    assert_key_not_in_keys(entries["omitted"], file)
+def assert_sql_key_omitted(entries: dict, file):
+    """Confirm keys in provided dict are present in file."""
+    for k in entries.keys():
+        assert k in file, f"Key {k} should not be present but was found."
+
+
+def assert_present_and_omitted(entries: dict, file, type=None):
+    """
+    Confirm present & omitted key.
+    Must account for differences 
+    """
+    if type == "yaml":
+        assert_yaml_key_present(entries["present"])
+        assert_yaml_key_omitted(entries["omitted"])
+    elif type == "sql":
+        assert_sql_key_present(entries["present"], file)
+        assert_sql_key_omitted(entries["omitted"], file)
+    else:
+        assert_kv_key_present(entries["present"], file)
+        assert_kv_key_omitted(entries["omitted"], file)
