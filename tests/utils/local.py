@@ -253,6 +253,39 @@ def run_terraform_destroy(qualifier: str = "", auto_approve: bool = True) -> Non
 ## ------------------------------------------------------------------------------------
 ## Helpers
 ## ------------------------------------------------------------------------------------
+def check_aws_sso_token():
+    """
+    Check AWS SSO token validity by invoking AWS CLI via subprocess.
+    Raises RuntimeError if token is expired or invalid
+    """
+    try:
+        # Run AWS CLI command to get caller identity
+        result = subprocess.run(
+            ['aws', 'sts', 'get-caller-identity'],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+
+        # Parse the JSON output
+        identity = json.loads(result.stdout)
+
+        # Optional: Print account details
+        print(f"AWS Account: {identity['Account']}")
+        print(f"IAM User/Role: {identity['Arn']}")
+
+        return True
+
+    except subprocess.CalledProcessError as e:
+        # AWS CLI returned a non-zero exit code
+        raise RuntimeError(f"AWS SSO Authentication Failed: {e.stderr.strip()}")
+
+    except json.JSONDecodeError:
+        raise RuntimeError("Failed to parse AWS CLI output")
+
+    except Exception as e:
+        raise RuntimeError(f"Unexpected error checking AWS SSO token: {str(e)}")
+
 def prepare_plan(
     override_data: str,
     qualifier: str = "",
@@ -287,6 +320,17 @@ def prepare_plan(
         # Write override file in root and create plan files.
         print(f"Cache miss. Generating new plan for: {cache_key}")
         write_file(test_case_override_target, override_data)
+
+        # Check that AWS SSO token isnt expired (or else test fails obtusely)
+        try:
+          check_aws_sso_token()
+          print("AWS SSO Token is valid!")
+        except RuntimeError as e:
+            print(str(e), file=sys.stderr)
+            # Trigger SSO login
+            subprocess.run(["aws", "sso", "login"])
+            sys.exit(1)
+
         run_terraform_plan(qualifier)
 
         # Stash generated plan files in cachedir for future use.
@@ -547,7 +591,7 @@ def generate_interpolated_templatefile(key, extension, read_type, namespaces, te
     return content
 
 
-def generate_all_interpolated_templatefiles(hash, namespaces, template_files: dict):
+def generate_interpolated_templatefiles(hash, namespaces, template_files: dict):
     """
     Create all templatefiles based on terraform values relevant to the specific testcase.
     """
@@ -562,6 +606,23 @@ def generate_all_interpolated_templatefiles(hash, namespaces, template_files: di
         template_files[k]["content"] = content
 
     return template_files
+
+
+def testcase_setup(plan, needed_template_files):
+    plan, secrets = generate_namespaced_dictionaries(plan)
+    vars, outputs, vars_dict, _ = plan
+    tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets = secrets
+    namespaces = [vars, outputs, tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets]
+
+    # Create hash of tfvars files (used by function 'generate_interpolated_templatefile' to speed up operations).
+    content_to_hash = f"{vars}\n{outputs}\n{tower_secrets}\n{groundswell_secrets}\n{seqerakit_secrets}\n{wave_lite_secrets}"
+    hash = hashlib.sha256(content_to_hash.encode("utf-8")).hexdigest()[:16]
+
+    # needed_template_files = {k: v for k,v in all_template_files.items() if k in ["tower_env"]}
+    test_template_files = generate_interpolated_templatefiles(hash, namespaces, needed_template_files)
+
+    return test_template_files
+
 
 # Defined down here instead of up-top since I use helperfunctions 
 all_template_files = {

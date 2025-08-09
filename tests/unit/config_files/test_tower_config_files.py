@@ -6,6 +6,7 @@ import tempfile
 import time
 import hashlib
 from pathlib import Path
+import sys
 
 from types import SimpleNamespace
 
@@ -17,20 +18,18 @@ from tests.utils.local import get_reconciled_tfvars
 from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
 from tests.utils.local import templatefile_cache_dir
 
-from tests.utils.local import generate_namespaced_dictionaries, generate_all_interpolated_templatefiles, all_template_files
+from tests.utils.local import generate_namespaced_dictionaries, generate_interpolated_templatefiles, all_template_files
+from tests.utils.local import testcase_setup
 from tests.utils.local import assert_present_and_omitted
 
 from testcontainers.mysql import MySqlContainer
 
 
-## ------------------------------------------------------------------------------------
-## Tower Config File Checks
-## ------------------------------------------------------------------------------------
 # NOTE: To avoid creating VPC assets, use an existing VPC in the account the AWS provider is configured to use.
 
-
-
-# def test_poc(session_setup, config_baseline_settings_default):
+## ------------------------------------------------------------------------------------
+## Baseline Configuration File Check
+## ------------------------------------------------------------------------------------
 def test_poc(session_setup):
     """
     Trying to create files directly via Terraform console.
@@ -42,23 +41,14 @@ def test_poc(session_setup):
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
     plan = prepare_plan(override_data)
 
-    # TODO: See if there's cleaner way to write this.
-    plan, secrets = generate_namespaced_dictionaries(plan)
-    vars, outputs, vars_dict, _ = plan
-    tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets = secrets
-    namespaces = [vars, outputs, tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets]
-
-    # Create hash of tfvars files (used by function 'generate_interpolated_templatefile' to speed up operations).
-    content_to_hash = f"{vars}\n{outputs}\n{tower_secrets}\n{groundswell_secrets}\n{seqerakit_secrets}\n{wave_lite_secrets}"
-    hash = hashlib.sha256(content_to_hash.encode("utf-8")).hexdigest()[:16]
-
-    test_template_files = generate_all_interpolated_templatefiles(hash, namespaces, all_template_files)
+    needed_template_files = all_template_files
+    test_template_files = testcase_setup(plan, needed_template_files)
 
 
     # ------------------------------------------------------------------------------------
     # Test tower.env
     # ------------------------------------------------------------------------------------
-    print("Testing tower.env generated from default settings.")
+    print(f"Testing {sys._getframe().f_code.co_name}.tower.env generated from default settings.")
     tower_env_file = test_template_files["tower_env"]["content"]
 
     entries = {
@@ -189,7 +179,7 @@ def test_poc(session_setup):
     # ------------------------------------------------------------------------------------
     # Test tower.yml
     # ------------------------------------------------------------------------------------
-    print("Testing tower.yml generated from default settings.")
+    print(f"Testing {sys._getframe().f_code.co_name}.tower.yml generated from default settings.")
     tower_yml_file = test_template_files["tower_yml"]["content"]
 
     # Reminder: YAML files converted to python dictionary so use True / False for comparison
@@ -217,15 +207,15 @@ def test_poc(session_setup):
     # ------------------------------------------------------------------------------------
     # Test data_studios.env
     # ------------------------------------------------------------------------------------
-    print("Testing data-studio.env generated from default settings.")
+    print(f"Testing {sys._getframe().f_code.co_name}.data-studio.env generated from default settings.")
     ds_env_file = test_template_files["data_studios_env"]["content"]
 
     entries = {
         "present": {
-            "PLATFORM_URL"                              : f"https://{vars.tower_server_url}",
+            "PLATFORM_URL"                              : f"https://autodc.dev-seqera.net",
             "CONNECT_HTTP_PORT"                         : 9090,    # str()
             "CONNECT_TUNNEL_URL"                        : "connect-server:7070",
-            "CONNECT_PROXY_URL"                         : f"https://connect.{vars.tower_server_url}",
+            "CONNECT_PROXY_URL"                         : f"https://connect.autodc.dev-seqera.net",
             "CONNECT_REDIS_ADDRESS"                     : "redis:6379",
             "CONNECT_REDIS_DB"                          : 1,
             "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN"    : "ipsemlorem"
@@ -238,7 +228,7 @@ def test_poc(session_setup):
     # ------------------------------------------------------------------------------------
     # Test tower.sql - validate all interpolated variables are properly replaced
     # ------------------------------------------------------------------------------------
-    print("Testing tower.sql generated from default settings.")
+    print(f"Testing {sys._getframe().f_code.co_name}.tower.sql generated from default settings.")
     tower_sql_file = test_template_files["tower_sql"]["content"]
 
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
@@ -252,6 +242,168 @@ def test_poc(session_setup):
         "omitted": {}
     }
     assert_present_and_omitted(entries, tower_sql_file, "sql")
+
+
+## ------------------------------------------------------------------------------------
+## Custom Check - Studios Path-Based Routing Enabled
+## ------------------------------------------------------------------------------------
+def test_poc_custom(session_setup):
+    """
+    Trying to create files directly via Terraform console.
+    """
+
+    override_data = """
+        flag_enable_data_studio         = true
+        flag_studio_enable_path_routing = true
+        data_studio_path_routing_url    = "connect-example.com"
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    plan = prepare_plan(override_data)
+
+    target_keys = ["tower_env", "data_studios_env"]
+    needed_template_files = {k: v for k,v in all_template_files.items() if k in target_keys}
+    test_template_files = testcase_setup(plan, needed_template_files)
+
+
+    # ------------------------------------------------------------------------------------
+    # Test tower.env
+    # ------------------------------------------------------------------------------------
+    print(f"Testing {sys._getframe().f_code.co_name}.tower.env generated from default settings.")
+    tower_env_file = test_template_files["tower_env"]["content"]
+
+    entries = {
+        "present": {
+            "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"         : "true",
+            "TOWER_DATA_STUDIO_CONNECT_URL"                 : "https://connect-example.com",
+            # NO NEED TO TEST ANY OTHER STUDIOS CONFIG SINCE THESE DONT CHANGE.
+        },
+        "omitted": {}
+    }
+    assert_present_and_omitted(entries, tower_env_file, type="kv")
+
+
+    # ------------------------------------------------------------------------------------
+    # Test data_studios.env
+    # ------------------------------------------------------------------------------------
+    print(f"Testing {sys._getframe().f_code.co_name}.data_studios.env generated from default settings.")
+    ds_env_file = test_template_files["data_studios_env"]["content"]
+
+    entries = {
+        "present": {
+            "CONNECT_PROXY_URL"                             : "https://connect-example.com",
+            # NO NEED TO TEST ANY OTHER STUDIOS CONFIG SINCE THESE DONT CHANGE.
+        },
+        "omitted": {}
+    }
+    assert_present_and_omitted(entries, ds_env_file, type="kv")
+
+
+
+
+
+# ------------------------------------------------------------------------------------
+# CUSTOM CONFIG TESTS
+# ------------------------------------------------------------------------------------
+
+
+
+@pytest.mark.local
+@pytest.mark.config_keys
+@pytest.mark.vpc_existing
+@pytest.mark.long
+def test_custom_config_files_02(session_setup, config_baseline_settings_custom_02):
+    """
+    Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars,
+    PLUS custom overrides.
+
+    - Data Studios active & Path routing inactive
+    """
+
+    # When
+    tower_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/tower.env")
+    ds_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/data-studios.env")
+
+
+    # ------------------------------------------------------------------------------------
+    # Test conditionals - Tower Env File And Data Studios Env file
+    # ------------------------------------------------------------------------------------
+    assert tower_env_file["TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"]  == "false"
+    assert tower_env_file["TOWER_DATA_STUDIO_CONNECT_URL"]          == "https://connect.autodc.dev-seqera.net"
+    assert ds_env_file["CONNECT_PROXY_URL"]                         == "https://connect.autodc.dev-seqera.net"
+
+
+@pytest.mark.local
+@pytest.mark.config_keys
+@pytest.mark.vpc_existing
+@pytest.mark.long
+def test_custom_config_files_03(session_setup, config_baseline_settings_custom_03):
+    """
+    Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars,
+    PLUS custom overrides.
+
+    - Data Studios inactive & Path routing inactive
+    """
+
+    # When
+    tower_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/tower.env")
+    tower_env_file_keys = tower_env_file.keys()
+
+    ds_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/data-studios.env")
+    ds_env_file_keys = ds_env_file.keys()
+
+
+    # ------------------------------------------------------------------------------------
+    # Test conditionals - Tower Env File And Data Studios Env file
+    # ------------------------------------------------------------------------------------
+    assert "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING" not in tower_env_file_keys
+    assert "TOWER_DATA_STUDIO_CONNECT_URL" not in tower_env_file_keys
+
+    assert "CONNECT_PROXY_URL" in ds_env_file_keys
+
+
+@pytest.mark.local
+@pytest.mark.config_keys
+@pytest.mark.vpc_existing
+@pytest.mark.long
+def test_custom_config_docker_compose_with_reverse_proxy(session_setup, config_baseline_settings_custom_docker_compose_reverse_proxy):
+    """
+    Test the target docker-compose.yml generated from default test terraform.tfvars and base-override.auto.tfvars,
+    PLUS custom overrides.
+    """
+
+    # When
+    # n/a
+
+    dc_file = read_yaml(f"{root}/assets/target/docker_compose/docker-compose.yml")
+
+    # ------------------------------------------------------------------------------------
+    # Test data-studios.env - assert all core keys exist
+    # ------------------------------------------------------------------------------------
+    assert "reverseproxy" in dc_file["services"].keys()
+
+
+@pytest.mark.local
+@pytest.mark.config_keys
+@pytest.mark.vpc_existing
+@pytest.mark.long
+def test_custom_config_docker_compose_with_no_https(session_setup, config_baseline_settings_custom_docker_compose_no_https):
+    """
+    Test the target docker-compose.yml generated from default test terraform.tfvars and base-override.auto.tfvars,
+    PLUS custom overrides.
+    """
+
+    # When
+    # n/a
+
+    dc_file = read_yaml(f"{root}/assets/target/docker_compose/docker-compose.yml")
+
+    # ------------------------------------------------------------------------------------
+    # Test data-studios.env - assert all core keys exist
+    # ------------------------------------------------------------------------------------
+    assert "reverseproxy" not in dc_file["services"].keys()
+
+
+
 
 
 
@@ -356,127 +508,3 @@ def test_tower_sql_mysql_container_execution(session_setup, config_baseline_sett
             # Clean up temporary SQL file
             if os.path.exists(temp_sql_path):
                 os.unlink(temp_sql_path)
-
-
-# ------------------------------------------------------------------------------------
-# CUSTOM CONFIG TESTS
-# ------------------------------------------------------------------------------------
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_custom_config_files_01(session_setup, config_baseline_settings_custom_01):
-    """
-    Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars,
-    PLUS custom overrides.
-
-    - Data Studios active & Path routing active
-    """
-
-    # When
-    tower_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/tower.env")
-    ds_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/data-studios.env")
-
-
-    # ------------------------------------------------------------------------------------
-    # Test conditionals - Tower Env File And Data Studios Env file
-    # ------------------------------------------------------------------------------------
-    assert tower_env_file["TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"]  == "true"
-    assert tower_env_file["TOWER_DATA_STUDIO_CONNECT_URL"]          == "https://connect-example.com"
-    assert ds_env_file["CONNECT_PROXY_URL"]                         == "https://connect-example.com"
-
-
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_custom_config_files_02(session_setup, config_baseline_settings_custom_02):
-    """
-    Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars,
-    PLUS custom overrides.
-
-    - Data Studios active & Path routing inactive
-    """
-
-    # When
-    tower_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/tower.env")
-    ds_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/data-studios.env")
-
-
-    # ------------------------------------------------------------------------------------
-    # Test conditionals - Tower Env File And Data Studios Env file
-    # ------------------------------------------------------------------------------------
-    assert tower_env_file["TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"]  == "false"
-    assert tower_env_file["TOWER_DATA_STUDIO_CONNECT_URL"]          == "https://connect.autodc.dev-seqera.net"
-    assert ds_env_file["CONNECT_PROXY_URL"]                         == "https://connect.autodc.dev-seqera.net"
-
-
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_custom_config_files_03(session_setup, config_baseline_settings_custom_03):
-    """
-    Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars,
-    PLUS custom overrides.
-
-    - Data Studios inactive & Path routing inactive
-    """
-
-    # When
-    tower_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/tower.env")
-    tower_env_file_keys = tower_env_file.keys()
-
-    ds_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/data-studios.env")
-    ds_env_file_keys = ds_env_file.keys()
-
-
-    # ------------------------------------------------------------------------------------
-    # Test conditionals - Tower Env File And Data Studios Env file
-    # ------------------------------------------------------------------------------------
-    assert "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING" not in tower_env_file_keys
-    assert "TOWER_DATA_STUDIO_CONNECT_URL" not in tower_env_file_keys
-
-    assert "CONNECT_PROXY_URL" in ds_env_file_keys
-
-
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_custom_config_docker_compose_with_reverse_proxy(session_setup, config_baseline_settings_custom_docker_compose_reverse_proxy):
-    """
-    Test the target docker-compose.yml generated from default test terraform.tfvars and base-override.auto.tfvars,
-    PLUS custom overrides.
-    """
-
-    # When
-    # n/a
-
-    dc_file = read_yaml(f"{root}/assets/target/docker_compose/docker-compose.yml")
-
-    # ------------------------------------------------------------------------------------
-    # Test data-studios.env - assert all core keys exist
-    # ------------------------------------------------------------------------------------
-    assert "reverseproxy" in dc_file["services"].keys()
-
-
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_custom_config_docker_compose_with_no_https(session_setup, config_baseline_settings_custom_docker_compose_no_https):
-    """
-    Test the target docker-compose.yml generated from default test terraform.tfvars and base-override.auto.tfvars,
-    PLUS custom overrides.
-    """
-
-    # When
-    # n/a
-
-    dc_file = read_yaml(f"{root}/assets/target/docker_compose/docker-compose.yml")
-
-    # ------------------------------------------------------------------------------------
-    # Test data-studios.env - assert all core keys exist
-    # ------------------------------------------------------------------------------------
-    assert "reverseproxy" not in dc_file["services"].keys()
