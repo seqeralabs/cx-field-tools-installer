@@ -247,7 +247,7 @@ EOF
 
 
 ## ------------------------------------------------------------------------------------
-## WRITE TESTING SECRETS TO SSM
+## CREATE TESTING SECRETS / WRITE TO SSM
 ## ------------------------------------------------------------------------------------
 echo "Creating omnibus testing secrets."
 python3 generate_testing_secrets.py
@@ -294,14 +294,17 @@ update_ssm_parameter() {
 }
 
 # Update all SSM parameters
-if [ "$CX_SKIP_SSM" != "true" ]; then
-    update_ssm_parameter "/seqera/sensitive-values/tower-testing/tower" "ssm_sensitive_values_tower_testing.json"
-    update_ssm_parameter "/seqera/sensitive-values/tower-testing/groundswell" "ssm_sensitive_values_groundswell_testing.json"
-    update_ssm_parameter "/seqera/sensitive-values/tower-testing/seqerakit" "ssm_sensitive_values_seqerakit_testing.json"
-    update_ssm_parameter "/seqera/sensitive-values/tower-testing/wave-lite" "ssm_sensitive_values_wave_lite_testing.json"
-else
-    echo "Skipping SSM parameter updates (CX_SKIP_SSM=true)"
-fi
+# if [ "$CX_SKIP_SSM" != "true" ]; then
+#     update_ssm_parameter "/seqera/sensitive-values/tower-testing/tower" "ssm_sensitive_values_tower_testing.json"
+#     update_ssm_parameter "/seqera/sensitive-values/tower-testing/groundswell" "ssm_sensitive_values_groundswell_testing.json"
+#     update_ssm_parameter "/seqera/sensitive-values/tower-testing/seqerakit" "ssm_sensitive_values_seqerakit_testing.json"
+#     update_ssm_parameter "/seqera/sensitive-values/tower-testing/wave-lite" "ssm_sensitive_values_wave_lite_testing.json"
+# else
+#     echo "Skipping SSM parameter updates (CX_SKIP_SSM=true)"
+# fi
+
+# Skipping SSM check since this handles local testing.
+echo "Skipping SSM parameter updates (CX_SKIP_SSM=true)"
 
 
 # Delete test log file
@@ -309,7 +312,7 @@ echo '{"message": "Cleansing content for new test loop."}' > ../logs/pytest_stru
 
 
 ## ------------------------------------------------------------------------------------
-## WRITE TESTING SECRETS TO SSM
+## Create test-specific outputs (e.g. tf locals needed for assertions)
 ## ------------------------------------------------------------------------------------
 cat << 'EOF' > 012_testing_outputs.tf
 ## ------------------------------------------------------------------------------------
