@@ -173,7 +173,7 @@ tower_server_url  = "autodc.dev-seqera.net"
 
 # This must be a verified identity / domain.
 tower_contact_email    = "graham.wright@seqera.io" #"daniel.wood@seqera.io"
-tower_enable_platforms = "awsbatch-platform,azbatch-platform,googlebatch-platform,k8s-platform,slurm-platform,eks-platform"
+tower_enable_platforms = "awsbatch-platform,slurm-platform"
 
 
 tower_smtp_host = "email-smtp.us-east-1.amazonaws.com"

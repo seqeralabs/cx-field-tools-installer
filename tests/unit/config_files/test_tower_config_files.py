@@ -34,7 +34,6 @@ def test_poc(session_setup):
     """
     Trying to create files directly via Terraform console.
     """
-    start_time = time.time()
 
     override_data = """
         # No override values needed. Testing baseline only.
@@ -53,10 +52,53 @@ def test_poc(session_setup):
     hash = hashlib.sha256(content_to_hash.encode("utf-8")).hexdigest()[:16]
 
     templatefiles = generate_all_interpolated_templatefiles(hash, namespaces)
-    print(f"{templatefiles=}")
 
-    end_time = time.time() - start_time
-    print(f"{end_time=}")
+
+    # Test tower.env
+    print("Testing tower.env generated from default settings.")
+
+    # When
+    tower_env_file = templatefiles["tower_env"]["content"]
+    keys = tower_env_file.keys()
+
+    # ------------------------------------------------------------------------------------
+    # Test tower.env - assert all core keys exist
+    # ------------------------------------------------------------------------------------
+    # TODO: Refactor this to be more compact / efficient
+    entries = {
+        "TOWER_ENABLE_AWS_SSM"        : "true",
+        "LICENSE_SERVER_URL"          : "https://licenses.seqera.io",
+        "TOWER_SERVER_URL"            : "https://autodc.dev-seqera.net",
+        "TOWER_CONTACT_EMAIL"         : "graham.wright@seqera.io",
+        "TOWER_ENABLE_PLATFORMS"      : "awsbatch-platform,slurm-platform",
+        "TOWER_ROOT_USERS"            : "graham.wright@seqera.io,gwright99@hotmail.com",
+        "TOWER_DB_URL"                : "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+        "TOWER_DB_DRIVER"             : "org.mariadb.jdbc.Driver",
+        "TOWER_DB_DIALECT"            : "io.seqera.util.MySQL55DialectCollateBin",
+        "TOWER_DB_MIN_POOL_SIZE"      : 5,
+        "TOWER_DB_MAX_POOL_SIZE"      : 10,
+        "TOWER_DB_MAX_LIFETIME"       : 18000000,
+        "FLYWAY_LOCATIONS"            : "classpath:db-schema/mysql",
+        # TOWER_DB_USER               : DO NOT UNCOMMENT  
+        # TOWER_DB_PASSWORD           : DO NOT UNCOMMENT
+        "TOWER_REDIS_URL"             : "redis://redis:6379",
+        "TOWER_ENABLE_AWS_SES"        : "true",
+        "TOWER_ENABLE_UNSAFE_MODE"    : "false",
+        "WAVE_SERVER_URL"             : "https://wave.stage-seqera.io",
+        "TOWER_ENABLE_WAVE"           : "true",
+        "GROUNDSWELL_SERVER_URL"      : "http://groundswell:8090",
+        "TOWER_ENABLE_GROUNDSWELL"    : "true",
+        "TOWER_DATA_EXPLORER_ENABLED" : "true",
+        "TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES" : "",
+        # OIDC                        : N/A
+        "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING": "false",
+        "TOWER_DATA_STUDIO_CONNECT_URL"                 : "https://connect.autodc.dev-seqera.net",
+        "TOWER_OIDC_PEM_PATH"         : "/data-studios-rsa.pem",
+        "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN"  : "ipsemlorem"
+    }
+
+    for k,v  in entries.items():
+        assert tower_env_file[k] == str(v)
 
 
 @pytest.mark.local
@@ -83,38 +125,38 @@ def test_default_config_tower_env(session_setup, config_baseline_settings_defaul
     entries = {
         "TOWER_ENABLE_AWS_SSM"        : "true",
         "LICENSE_SERVER_URL"          : "https://licenses.seqera.io",
-        "TOWER_CONTACT_EMAIL"         : vars.tower_contact_email,
-        "TOWER_ENABLE_PLATFORMS"      : vars.tower_enable_platforms,
-        "TOWER_ROOT_USERS"            : vars.tower_root_users,
-        "TOWER_DB_DRIVER"             : vars.tower_db_driver,
-        "TOWER_DB_DIALECT"            : vars.tower_db_dialect,
-        "TOWER_DB_MIN_POOL_SIZE"      : vars.tower_db_min_pool_size,  # str()
-        "TOWER_DB_MAX_POOL_SIZE"      : vars.tower_db_max_pool_size,  # str()
-        "TOWER_DB_MAX_LIFETIME"       : vars.tower_db_max_lifetime,   # str()
-
-        "TOWER_SERVER_URL"            : outputs.tower_server_url,
-        "TOWER_DB_URL"                : outputs.tower_db_url,
-        "FLYWAY_LOCATIONS"            : vars.flyway_locations,
-        "TOWER_REDIS_URL"             : outputs.tower_redis_url,
-        "WAVE_SERVER_URL"             : outputs.tower_wave_url,
+        "TOWER_SERVER_URL"            : "https://autodc.dev-seqera.net",
+        "TOWER_CONTACT_EMAIL"         : "graham.wright@seqera.io",
+        "TOWER_ENABLE_PLATFORMS"      : "awsbatch-platform,slurm-platform",
+        "TOWER_ROOT_USERS"            : "graham.wright@seqera.io,gwright99@hotmail.com",
+        "TOWER_DB_URL"                : "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+        "TOWER_DB_DRIVER"             : "org.mariadb.jdbc.Driver",
+        "TOWER_DB_DIALECT"            : "io.seqera.util.MySQL55DialectCollateBin",
+        "TOWER_DB_MIN_POOL_SIZE"      : 5,
+        "TOWER_DB_MAX_POOL_SIZE"      : 10,
+        "TOWER_DB_MAX_LIFETIME"       : 18000000,
+        "FLYWAY_LOCATIONS"            : "classpath:db-schema/mysql",
+        # TOWER_DB_USER               : DO NOT UNCOMMENT  
+        # TOWER_DB_PASSWORD           : DO NOT UNCOMMENT
+        "TOWER_REDIS_URL"             : "redis://redis:6379",
+        "TOWER_ENABLE_AWS_SES"        : "true",
+        "TOWER_ENABLE_UNSAFE_MODE"    : "false",
+        "WAVE_SERVER_URL"             : "https://wave.stage-seqera.io",
+        "TOWER_ENABLE_WAVE"           : "true",
+        "GROUNDSWELL_SERVER_URL"      : "http://groundswell:8090",
+        "TOWER_ENABLE_GROUNDSWELL"    : "true",
+        "TOWER_DATA_EXPLORER_ENABLED" : "true",
+        "TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES" : "",
+        # OIDC                        : N/A
+        "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING": "false",
+        "TOWER_DATA_STUDIO_CONNECT_URL"                 : "https://connect.autodc.dev-seqera.net",
+        "TOWER_OIDC_PEM_PATH"         : "/data-studios-rsa.pem",
+        "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN"  : "ipsemlorem"
     }
 
     for k,v  in entries.items():
         assert tower_env_file[k] == str(v)
 
-    # ------------------------------------------------------------------------------------
-    # Test always-present conditionals
-    # ------------------------------------------------------------------------------------
-    entries = {
-        "TOWER_ENABLE_AWS_SES"        : vars.flag_use_aws_ses_iam_integration,
-        "TOWER_ENABLE_UNSAFE_MODE"    : vars.flag_do_not_use_https,
-        "TOWER_ENABLE_WAVE"           : vars.flag_use_wave or vars.flag_use_wave_lite,
-        "TOWER_ENABLE_GROUNDSWELL"    : vars.flag_enable_groundswell,
-        "TOWER_DATA_EXPLORER_ENABLED" : vars.flag_data_explorer_enabled
-    }
-
-    for k,v in entries.items():
-        assert tower_env_file[k] == ("true" if v else "false")
 
     # ------------------------------------------------------------------------------------
     # Test tower.env - assert some core keys NOT present
