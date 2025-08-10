@@ -119,6 +119,7 @@ locals {
 
   data_studios_env = templatefile("assets/src/tower_config/data-studios.env.tpl",
     {
+      flag_enable_data_studio  = var.flag_enable_data_studio,
       tower_server_url         = module.connection_strings.tower_server_url,
       tower_redis_url          = module.connection_strings.tower_connect_redis_url,
       tower_connect_server_url = module.connection_strings.tower_connect_server_url,

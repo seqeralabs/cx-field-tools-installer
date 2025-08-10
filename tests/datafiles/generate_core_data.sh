@@ -68,7 +68,7 @@ flag_use_wave          = false
 flag_use_wave_lite     = true
 
 num_wave_lite_replicas = 2
-wave_server_url        = "wave.stage-seqera.io"
+wave_server_url        = "wave.autodc.dev-seqera.net"
 
 
 ## ------------------------------------------------------------------------------------

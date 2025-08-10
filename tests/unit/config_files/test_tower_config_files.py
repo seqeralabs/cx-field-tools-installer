@@ -30,13 +30,18 @@ from testcontainers.mysql import MySqlContainer
 ## ------------------------------------------------------------------------------------
 ## Baseline Configuration File Check
 ## ------------------------------------------------------------------------------------
-def test_poc(session_setup):
+def test_baseline_all_enabled(session_setup):
     """
-    Trying to create files directly via Terraform console.
+    Baseline check of configuration.
+        - All services enabled (Wave Lite, Groundswell, Data Explorer, Studios)
+        - Use of machine identity whenever possible (SES).
+        - Use of HTTPS
+        - Use of container Redis & DB
+        - TODO: No OIDC (have not figured out how to configure in public yet -- maybe use pre-generated environment variables?)
     """
 
     override_data = """
-        # No override values needed. Testing baseline only.
+        # No override values needed. Using base template and base-overrides only.
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
     plan = prepare_plan(override_data)
@@ -68,13 +73,7 @@ def test_poc(session_setup):
             "FLYWAY_LOCATIONS"            : "classpath:db-schema/mysql",
             "TOWER_REDIS_URL"             : "redis://redis:6379",
             "TOWER_ENABLE_UNSAFE_MODE"    : "false",
-            "WAVE_SERVER_URL"             : "https://wave.stage-seqera.io",
-            "TOWER_ENABLE_WAVE"           : "true",
             # OIDC                                          : N/A
-            "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"         : "false",
-            "TOWER_DATA_STUDIO_CONNECT_URL"                 : "https://connect.autodc.dev-seqera.net",
-            "TOWER_OIDC_PEM_PATH"                           : "/data-studios-rsa.pem",
-            "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN"  : "ipsemlorem"
         },
         "omitted": {}
     }
@@ -106,9 +105,19 @@ def test_poc(session_setup):
         "omitted": {
             "TOWER_SMTP_HOST"       : "",
             "TOWER_SMTP_PORT"       : "",
-            # "TOWER_SMTP_PORT"     : N/A DO NOT UNCOMMENT,
-            # "TOWER_SMTP_PORT"     : N/A DO NOT UNCOMMENT,
+            # "TOWER_SMTP_USER"     : N/A DO NOT UNCOMMENT,
+            # "TOWER_SMTP_PASSWORD"     : N/A DO NOT UNCOMMENT,
         }
+    }
+    assert_present_and_omitted(entries, tower_env_file)
+
+
+    entries = {
+        "present": {
+            "TOWER_ENABLE_WAVE"           : "true",
+            "WAVE_SERVER_URL"             : "https://wave.autodc.dev-seqera.net",
+        },
+        "omitted": {}
     }
     assert_present_and_omitted(entries, tower_env_file)
 
@@ -168,10 +177,11 @@ def test_poc(session_setup):
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_REPOSITORY"    : "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.8.5",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_TOOL"          : "xpra",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_STATUS"        : "recommended",
+            "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES"                        : "DO_NOT_UNCOMMENT"
         },
         "omitted": {
-            "TOWER_DATA_STUDIO_ALLOWED_WORKSPACES"          : ""
-        }
+            "# STUDIOS_NOT_ENABLED"                                         : "DO_NOT_UNCOMMENT",
+        },
     }
     assert_present_and_omitted(entries, tower_env_file, type="kv")
 
@@ -220,7 +230,9 @@ def test_poc(session_setup):
             "CONNECT_REDIS_DB"                          : 1,
             "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN"    : "ipsemlorem"
         },
-        "omitted": {}
+        "omitted": {
+            "# STUDIOS_NOT_ENABLED"                     : "DO_NOT_UNCOMMENT",
+        }
     }
     assert_present_and_omitted(entries, ds_env_file, type="kv")
 
@@ -244,12 +256,249 @@ def test_poc(session_setup):
     assert_present_and_omitted(entries, tower_sql_file, "sql")
 
 
+def test_baseline_all_disabled(session_setup):
+    """
+    Baseline check of configuration.
+        - All services disabled (Wave Lite, Groundswell, Data Explorer, Studios)
+        - No machine identity (SES).
+        - Use of HTTPS
+        - Use of container Redis & DB
+        - TODO: No OIDC (have not figured out how to configure in public yet -- maybe use pre-generated environment variables?)
+    """
+
+    override_data = """
+        flag_use_aws_ses_iam_integration    = false
+        flag_use_existing_smtp              = true
+        flag_enable_groundswell             = false
+        flag_data_explorer_enabled          = false
+        flag_enable_data_studio             = false
+        flag_use_wave                       = false
+        flag_use_wave_lite                  = false
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    plan = prepare_plan(override_data)
+
+    needed_template_files = all_template_files
+    test_template_files = testcase_setup(plan, needed_template_files)
+
+
+    # ------------------------------------------------------------------------------------
+    # Test tower.env
+    # ------------------------------------------------------------------------------------
+    print(f"Testing {sys._getframe().f_code.co_name}.tower.env generated from default settings.")
+    tower_env_file = test_template_files["tower_env"]["content"]
+
+    entries = {
+        "present": {
+            "TOWER_ENABLE_AWS_SSM"        : "true",
+            "LICENSE_SERVER_URL"          : "https://licenses.seqera.io",
+            "TOWER_SERVER_URL"            : "https://autodc.dev-seqera.net",
+            "TOWER_CONTACT_EMAIL"         : "graham.wright@seqera.io",
+            "TOWER_ENABLE_PLATFORMS"      : "awsbatch-platform,slurm-platform",
+            "TOWER_ROOT_USERS"            : "graham.wright@seqera.io,gwright99@hotmail.com",
+            "TOWER_DB_URL"                : "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_DRIVER"             : "org.mariadb.jdbc.Driver",
+            "TOWER_DB_DIALECT"            : "io.seqera.util.MySQL55DialectCollateBin",
+            "TOWER_DB_MIN_POOL_SIZE"      : 5,
+            "TOWER_DB_MAX_POOL_SIZE"      : 10,
+            "TOWER_DB_MAX_LIFETIME"       : 18000000,
+            "FLYWAY_LOCATIONS"            : "classpath:db-schema/mysql",
+            "TOWER_REDIS_URL"             : "redis://redis:6379",
+            "TOWER_ENABLE_UNSAFE_MODE"    : "false",
+            # OIDC                                          : N/A
+        },
+        "omitted": {}
+    }
+    assert_present_and_omitted(entries, tower_env_file)
+
+
+    # ------------------------------------------------------------------------------------
+    # Test tower.env - assert some core keys NOT present ever
+    # ------------------------------------------------------------------------------------
+    entries = {
+        "present": {},
+        "omitted": {
+            "TOWER_DB_USER"         : "",
+            "TOWER_DB_PASSWORD"     : "", 
+            "TOWER_SMTP_USER"       : "",
+            "TOWER_SMTP_PASSWORD"   : "",
+        }
+    }
+    assert_present_and_omitted(entries, tower_env_file)
+
+
+    # ------------------------------------------------------------------------------------
+    # Test tower.env - assert sometimes-present conditionals:
+    # ------------------------------------------------------------------------------------
+    entries = {
+        "present" : {
+            "TOWER_ENABLE_AWS_SES"  : "false",
+            "TOWER_SMTP_HOST"       : "email-smtp.us-east-1.amazonaws.com",
+            "TOWER_SMTP_PORT"       : "587",
+        },
+        "omitted": {
+            ## "TOWER_SMTP_USER"     : N/A DO NOT UNCOMMENT,
+            # "TOWER_SMTP_PASSWORD"     : N/A DO NOT UNCOMMENT,
+        }
+    }
+    assert_present_and_omitted(entries, tower_env_file)
+
+
+    entries = {
+        "present": {
+            "TOWER_ENABLE_WAVE"           : "false",
+            "WAVE_SERVER_URL"             : "N/A",
+        },
+        "omitted": {}
+    }
+    assert_present_and_omitted(entries, tower_env_file)
+
+
+    entries = {
+        "present": {
+            "TOWER_ENABLE_GROUNDSWELL"  : "false",
+        },
+        "omitted": {
+            "GROUNDSWELL_SERVER_URL"    : "N/A",
+        }
+    }
+    assert_present_and_omitted(entries, tower_env_file)
+
+
+    entries = {
+        "present": {
+            "TOWER_DATA_EXPLORER_ENABLED"                   : "false",
+        },
+        "omitted": {
+            "TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES" : "",
+        }
+    }
+    assert_present_and_omitted(entries, tower_env_file)
+
+
+    entries = {
+        "present": {
+            "# STUDIOS_NOT_ENABLED"                           : "DO_NOT_UNCOMMENT",
+        },
+        "omitted": {
+            "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"         : "",
+            "TOWER_DATA_STUDIO_CONNECT_URL"                 : "",
+            "TOWER_OIDC_PEM_PATH"                           : "",
+            "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN"  : "",
+
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-0_ICON"          : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-0_REPOSITORY"    : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-0_TOOL"          : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-0_STATUS"        : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_ICON"          : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_REPOSITORY"    : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_TOOL"          : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_STATUS"        : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_ICON"         : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_REPOSITORY"   : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_TOOL"         : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_STATUS"       : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_ICON"         : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_REPOSITORY"   : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_TOOL"         : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_STATUS"       : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-83-0-0-8-0_ICON"          : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-83-0-0-8-0_REPOSITORY"    : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-83-0-0-8-0_TOOL"          : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-83-0-0-8-0_STATUS"        : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R0-0-8-0_ICON"            : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R0-0-8-0_REPOSITORY"      : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R0-0-8-0_TOOL"            : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R0-0-8-0_STATUS"          : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_ICON"          : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_REPOSITORY"    : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_TOOL"          : "",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_STATUS"        : "",
+            "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES"                        : ""
+        }
+    }
+    assert_present_and_omitted(entries, tower_env_file, type="kv")
+
+
+    # ------------------------------------------------------------------------------------
+    # Test tower.yml
+    # ------------------------------------------------------------------------------------
+    print(f"Testing {sys._getframe().f_code.co_name}.tower.yml generated from default settings.")
+    tower_yml_file = test_template_files["tower_yml"]["content"]
+
+    # Reminder: YAML files converted to python dictionary so use True / False for comparison
+    entries = {
+        "present": {
+            tower_yml_file["mail"]["smtp"]["auth"]                                  : True,
+            tower_yml_file["mail"]["smtp"]["starttls"]["enable"]                    : True,
+            tower_yml_file["mail"]["smtp"]["starttls"]["required"]                  : True,
+            tower_yml_file["mail"]["smtp"]["ssl"]["protocols"]                      : "TLSv1.2",
+            tower_yml_file["micronaut"]["application"]["name"]                      : "tower-testing",
+            tower_yml_file["tower"]["cron"]["audit-log"]["clean-up"]["time-offset"] : "1095d",
+            tower_yml_file["tower"]["trustedEmails"][0]                             : "'graham.wright@seqera.io,gwright99@hotmail.com'",
+            tower_yml_file["tower"]["trustedEmails"][1]                             : "'*@abc.com,*@def.com'",
+            tower_yml_file["tower"]["trustedEmails"][2]                             : "'123@abc.com,456@def.com'",
+        },
+        "omitted": {
+            "auth"          : tower_yml_file["tower"].keys(),
+            "data-studio"   : tower_yml_file["tower"].keys(),
+        }
+    }
+    assert_present_and_omitted(entries, tower_yml_file, "yaml")
+
+
+    # ------------------------------------------------------------------------------------
+    # Test data_studios.env
+    # ------------------------------------------------------------------------------------
+    print(f"Testing {sys._getframe().f_code.co_name}.data-studio.env generated from default settings.")
+    ds_env_file = test_template_files["data_studios_env"]["content"]
+
+    entries = {
+        "present": {
+            "# STUDIOS_NOT_ENABLED"                     : "DO_NOT_UNCOMMENT",
+        },
+        "omitted": {
+            "PLATFORM_URL"                              : "",
+            "CONNECT_HTTP_PORT"                         : "",
+            "CONNECT_TUNNEL_URL"                        : "",
+            "CONNECT_PROXY_URL"                         : "",
+            "CONNECT_REDIS_ADDRESS"                     : "",
+            "CONNECT_REDIS_DB"                          : "",
+            "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN"    : "",
+        } 
+    }
+    assert_present_and_omitted(entries, ds_env_file, type="kv")
+
+
+    # ------------------------------------------------------------------------------------
+    # Test tower.sql - validate all interpolated variables are properly replaced
+    # ------------------------------------------------------------------------------------
+    print(f"Testing {sys._getframe().f_code.co_name}.tower.sql generated from default settings.")
+    tower_sql_file = test_template_files["tower_sql"]["content"]
+
+    # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
+    entries = {
+        "present": {
+            f"""CREATE DATABASE tower;"""                                               : "n/a",
+            f"""ALTER DATABASE tower CHARACTER SET utf8 COLLATE utf8_bin;"""            : "n/a",
+            f"""CREATE USER "tower_test_user" IDENTIFIED BY "tower_test_password";"""   : "n/a",
+            f"""GRANT ALL PRIVILEGES ON tower.* TO tower_test_user@"%";"""              : "n/a"
+        },
+        "omitted": {}
+    }
+    assert_present_and_omitted(entries, tower_sql_file, "sql")
+
+
+
 ## ------------------------------------------------------------------------------------
 ## Custom Check - Studios Path-Based Routing Enabled
 ## ------------------------------------------------------------------------------------
-def test_poc_custom(session_setup):
+def test_studio_path_routing_enabled(session_setup):
     """
-    Trying to create files directly via Terraform console.
+    Confirm configurations when Studio active and path-routing enabled.
+    Affects files: 
+        - tower.env
+        - data_studios.env
     """
 
     override_data = """
@@ -300,36 +549,9 @@ def test_poc_custom(session_setup):
 
 
 
-
 # ------------------------------------------------------------------------------------
 # CUSTOM CONFIG TESTS
 # ------------------------------------------------------------------------------------
-
-
-
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_custom_config_files_02(session_setup, config_baseline_settings_custom_02):
-    """
-    Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars,
-    PLUS custom overrides.
-
-    - Data Studios active & Path routing inactive
-    """
-
-    # When
-    tower_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/tower.env")
-    ds_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/data-studios.env")
-
-
-    # ------------------------------------------------------------------------------------
-    # Test conditionals - Tower Env File And Data Studios Env file
-    # ------------------------------------------------------------------------------------
-    assert tower_env_file["TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"]  == "false"
-    assert tower_env_file["TOWER_DATA_STUDIO_CONNECT_URL"]          == "https://connect.autodc.dev-seqera.net"
-    assert ds_env_file["CONNECT_PROXY_URL"]                         == "https://connect.autodc.dev-seqera.net"
 
 
 @pytest.mark.local
