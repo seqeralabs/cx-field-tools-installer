@@ -146,30 +146,27 @@ def generate_tower_sql_entries_all_active():
     }
 
 
-def generate_docker_compose_yml_entries_all_active():
+def generate_docker_compose_yml_entries_all_active(docker_compose_file):
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
     return {
-        "present": {
-            f"""CREATE DATABASE tower;"""                                               : "n/a",
-            f"""ALTER DATABASE tower CHARACTER SET utf8 COLLATE utf8_bin;"""            : "n/a",
-            f"""CREATE USER "tower_test_user" IDENTIFIED BY "tower_test_password";"""   : "n/a",
-            f"""GRANT ALL PRIVILEGES ON tower.* TO tower_test_user@"%";"""              : "n/a"
-        },
-        "omitted": {}
+        "present": {},
+        "omitted": {
+            "reverseproxy"  : docker_compose_file["services"].keys(),
+        }
     }
 
 
 def generate_baseline_all_entries(template_files):
 
     tower_yml_file = template_files["tower_yml"]["content"]
+    docker_compose_file = template_files["docker_compose"]["content"]
 
     entries = {
         "tower_env"         : generate_tower_env_entries_all_active(),
         "tower_yml"         : generate_tower_yml_entries_all_active(tower_yml_file),
         "data_studios_env"  : generate_data_studios_env_entries_all_active(),
-        "tower_sql"         : generate_tower_env_entries_all_active(),
-        "docker_compose_yml": generate_docker_compose_yml_entries_all_active(),
-        
+        "tower_sql"         : generate_tower_sql_entries_all_active(),
+        "docker_compose"    : generate_docker_compose_yml_entries_all_active(docker_compose_file),
 
     }
 

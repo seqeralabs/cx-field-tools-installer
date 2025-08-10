@@ -93,22 +93,15 @@ def test_baseline_all_enabled(session_setup):
     entries = baseline_all_entries[key]
     assert_present_and_omitted(entries, file, "sql")
 
-    
-
-
 
     # ------------------------------------------------------------------------------------
     # Test docker-compose.yml
     # ------------------------------------------------------------------------------------
-    print(f"Testing {sys._getframe().f_code.co_name}.docker-compose.yml generated without reverseproxy.")
-    docker_compose_file = test_template_files["docker_compose"]["content"]
-
-    entries = {
-        "present": {},
-        "omitted": {
-            "reverseproxy"  : docker_compose_file["services"].keys(),
-        }
-    }
+    key = "docker_compose"
+    print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+    file = test_template_files[key]["content"]
+    entries = baseline_all_entries[key]
+    assert_present_and_omitted(entries, file, "yaml")
 
 
 ## ------------------------------------------------------------------------------------
