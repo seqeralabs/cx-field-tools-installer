@@ -7,6 +7,7 @@ import time
 import hashlib
 from pathlib import Path
 import sys
+from copy import deepcopy
 
 from types import SimpleNamespace
 
@@ -21,6 +22,8 @@ from tests.utils.local import templatefile_cache_dir
 from tests.utils.local import generate_namespaced_dictionaries, generate_interpolated_templatefiles, all_template_files
 from tests.utils.local import set_up_testcase
 from tests.utils.local import assert_present_and_omitted
+
+from tests.datafiles.expected_results import generate_baseline_all_entries
 
 from testcontainers.mysql import MySqlContainer
 
@@ -49,211 +52,49 @@ def test_baseline_all_enabled(session_setup):
     needed_template_files = all_template_files
     test_template_files = set_up_testcase(plan, needed_template_files)
 
+    baseline_all_entries = generate_baseline_all_entries(test_template_files)
 
     # ------------------------------------------------------------------------------------
     # Test tower.env
     # ------------------------------------------------------------------------------------
-    print(f"Testing {sys._getframe().f_code.co_name}.tower.env generated from default settings.")
-    tower_env_file = test_template_files["tower_env"]["content"]
-
-    entries = {
-        "present": {
-            "TOWER_ENABLE_AWS_SSM"        : "true",
-            "LICENSE_SERVER_URL"          : "https://licenses.seqera.io",
-            "TOWER_SERVER_URL"            : "https://autodc.dev-seqera.net",
-            "TOWER_CONTACT_EMAIL"         : "graham.wright@seqera.io",
-            "TOWER_ENABLE_PLATFORMS"      : "awsbatch-platform,slurm-platform",
-            "TOWER_ROOT_USERS"            : "graham.wright@seqera.io,gwright99@hotmail.com",
-            "TOWER_DB_URL"                : "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
-            "TOWER_DB_DRIVER"             : "org.mariadb.jdbc.Driver",
-            "TOWER_DB_DIALECT"            : "io.seqera.util.MySQL55DialectCollateBin",
-            "TOWER_DB_MIN_POOL_SIZE"      : 5,
-            "TOWER_DB_MAX_POOL_SIZE"      : 10,
-            "TOWER_DB_MAX_LIFETIME"       : 18000000,
-            "FLYWAY_LOCATIONS"            : "classpath:db-schema/mysql",
-            "TOWER_REDIS_URL"             : "redis://redis:6379",
-            "TOWER_ENABLE_UNSAFE_MODE"    : "false",
-            # OIDC                                          : N/A
-        },
-        "omitted": {}
-    }
-    assert_present_and_omitted(entries, tower_env_file)
-
-
-    # ------------------------------------------------------------------------------------
-    # Test tower.env - assert some core keys NOT present ever
-    # ------------------------------------------------------------------------------------
-    entries = {
-        "present": {},
-        "omitted": {
-            "TOWER_DB_USER"         : "",
-            "TOWER_DB_PASSWORD"     : "", 
-            "TOWER_SMTP_USER"       : "",
-            "TOWER_SMTP_PASSWORD"   : "",
-        }
-    }
-    assert_present_and_omitted(entries, tower_env_file)
-
-
-    # ------------------------------------------------------------------------------------
-    # Test tower.env - assert sometimes-present conditionals:
-    # ------------------------------------------------------------------------------------
-    entries = {
-        "present" : {
-            "TOWER_ENABLE_AWS_SES"  : "true",
-        },
-        "omitted": {
-            "TOWER_SMTP_HOST"       : "",
-            "TOWER_SMTP_PORT"       : "",
-            # "TOWER_SMTP_USER"     : N/A DO NOT UNCOMMENT,
-            # "TOWER_SMTP_PASSWORD"     : N/A DO NOT UNCOMMENT,
-        }
-    }
-    assert_present_and_omitted(entries, tower_env_file)
-
-
-    entries = {
-        "present": {
-            "TOWER_ENABLE_WAVE"           : "true",
-            "WAVE_SERVER_URL"             : "https://wave.autodc.dev-seqera.net",
-        },
-        "omitted": {}
-    }
-    assert_present_and_omitted(entries, tower_env_file)
-
-
-    entries = {
-        "present": {
-            "TOWER_ENABLE_GROUNDSWELL"  : "true",
-            "GROUNDSWELL_SERVER_URL"    : "http://groundswell:8090",
-        },
-        "omitted": {}
-    }
-    assert_present_and_omitted(entries, tower_env_file)
-
-
-    entries = {
-        "present": {
-            "TOWER_DATA_EXPLORER_ENABLED"                   : "true",
-            "TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES" : "",
-        },
-        "omitted": {}
-    }
-    assert_present_and_omitted(entries, tower_env_file)
-
-
-    entries = {
-        "present": {
-            "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"         : "false",
-            "TOWER_DATA_STUDIO_CONNECT_URL"                 : "https://connect.autodc.dev-seqera.net",
-            "TOWER_OIDC_PEM_PATH"                           : "/data-studios-rsa.pem",
-            "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN"  : "ipsemlorem",
-
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-0_ICON"          : "jupyter",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-0_REPOSITORY"    : "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.0",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-0_TOOL"          : "jupyter",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-0_STATUS"        : "deprecated",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_ICON"          : "jupyter",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_REPOSITORY"    : "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.5",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_TOOL"          : "jupyter",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_STATUS"        : "recommended",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_ICON"         : "rstudio",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_REPOSITORY"   : "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.8.5",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_TOOL"         : "rstudio",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_STATUS"       : "recommended",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_ICON"         : "vscode",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_REPOSITORY"   : "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.8.5",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_TOOL"         : "vscode",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_STATUS"       : "recommended",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-83-0-0-8-0_ICON"          : "vscode",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-83-0-0-8-0_REPOSITORY"    : "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.8.0",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-83-0-0-8-0_TOOL"          : "vscode",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-83-0-0-8-0_STATUS"        : "deprecated",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R0-0-8-0_ICON"            : "xpra",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R0-0-8-0_REPOSITORY"      : "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.8.0",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R0-0-8-0_TOOL"            : "xpra",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R0-0-8-0_STATUS"          : "recommended",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_ICON"          : "xpra",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_REPOSITORY"    : "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.8.5",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_TOOL"          : "xpra",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_STATUS"        : "recommended",
-            "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES"                        : "DO_NOT_UNCOMMENT"
-        },
-        "omitted": {
-            "# STUDIOS_NOT_ENABLED"                                         : "DO_NOT_UNCOMMENT",
-        },
-    }
-    assert_present_and_omitted(entries, tower_env_file, type="kv")
+    key = "tower_env"
+    print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+    file = test_template_files[key]["content"]
+    entries = baseline_all_entries[key]
+    assert_present_and_omitted(entries, file, type="kv")
 
 
     # ------------------------------------------------------------------------------------
     # Test tower.yml
     # ------------------------------------------------------------------------------------
-    print(f"Testing {sys._getframe().f_code.co_name}.tower.yml generated from default settings.")
-    tower_yml_file = test_template_files["tower_yml"]["content"]
-
-    # Reminder: YAML files converted to python dictionary so use True / False for comparison
-    entries = {
-        "present": {
-            tower_yml_file["mail"]["smtp"]["auth"]                                  : True,
-            tower_yml_file["mail"]["smtp"]["starttls"]["enable"]                    : True,
-            tower_yml_file["mail"]["smtp"]["starttls"]["required"]                  : True,
-            tower_yml_file["mail"]["smtp"]["ssl"]["protocols"]                      : "TLSv1.2",
-            tower_yml_file["micronaut"]["application"]["name"]                      : "tower-testing",
-            tower_yml_file["tower"]["cron"]["audit-log"]["clean-up"]["time-offset"] : "1095d",
-            tower_yml_file["tower"]["data-studio"]["allowed-workspaces"]            : None,
-            tower_yml_file["tower"]["trustedEmails"][0]                             : "'graham.wright@seqera.io,gwright99@hotmail.com'",
-            tower_yml_file["tower"]["trustedEmails"][1]                             : "'*@abc.com,*@def.com'",
-            tower_yml_file["tower"]["trustedEmails"][2]                             : "'123@abc.com,456@def.com'",
-        },
-        "omitted": {
-            "auth"          : tower_yml_file["tower"].keys(),
-            # "data-studio"   : tower_yml_file["tower"].keys(),
-        }
-    }
-    assert_present_and_omitted(entries, tower_yml_file, "yaml")
+    key = "tower_yml"
+    print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+    file = test_template_files[key]["content"]
+    entries = baseline_all_entries[key]
+    assert_present_and_omitted(entries, file, "yaml")
 
 
     # ------------------------------------------------------------------------------------
     # Test data_studios.env
     # ------------------------------------------------------------------------------------
-    print(f"Testing {sys._getframe().f_code.co_name}.data-studio.env generated from default settings.")
-    ds_env_file = test_template_files["data_studios_env"]["content"]
-
-    entries = {
-        "present": {
-            "PLATFORM_URL"                              : f"https://autodc.dev-seqera.net",
-            "CONNECT_HTTP_PORT"                         : 9090,    # str()
-            "CONNECT_TUNNEL_URL"                        : "connect-server:7070",
-            "CONNECT_PROXY_URL"                         : f"https://connect.autodc.dev-seqera.net",
-            "CONNECT_REDIS_ADDRESS"                     : "redis:6379",
-            "CONNECT_REDIS_DB"                          : 1,
-            "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN"    : "ipsemlorem"
-        },
-        "omitted": {
-            "# STUDIOS_NOT_ENABLED"                     : "DO_NOT_UNCOMMENT",
-        }
-    }
-    assert_present_and_omitted(entries, ds_env_file, type="kv")
+    key = "data_studios_env"
+    print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+    file = test_template_files[key]["content"]
+    entries = baseline_all_entries[key]
+    assert_present_and_omitted(entries, file, type="kv")
 
 
     # ------------------------------------------------------------------------------------
-    # Test tower.sql - validate all interpolated variables are properly replaced
+    # Test tower.sql
     # ------------------------------------------------------------------------------------
-    print(f"Testing {sys._getframe().f_code.co_name}.tower.sql generated from default settings.")
-    tower_sql_file = test_template_files["tower_sql"]["content"]
+    key = "tower_sql"
+    print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+    file = test_template_files[key]["content"]
+    entries = baseline_all_entries[key]
+    assert_present_and_omitted(entries, file, "sql")
 
-    # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
-    entries = {
-        "present": {
-            f"""CREATE DATABASE tower;"""                                               : "n/a",
-            f"""ALTER DATABASE tower CHARACTER SET utf8 COLLATE utf8_bin;"""            : "n/a",
-            f"""CREATE USER "tower_test_user" IDENTIFIED BY "tower_test_password";"""   : "n/a",
-            f"""GRANT ALL PRIVILEGES ON tower.* TO tower_test_user@"%";"""              : "n/a"
-        },
-        "omitted": {}
-    }
-    assert_present_and_omitted(entries, tower_sql_file, "sql")
+    
+
 
 
     # ------------------------------------------------------------------------------------
