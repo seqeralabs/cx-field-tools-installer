@@ -55,53 +55,61 @@ def test_baseline_all_enabled(session_setup):
     baseline_all_entries = generate_baseline_all_entries(test_template_files)
 
     # ------------------------------------------------------------------------------------
-    # Test tower.env
+    # Test files
     # ------------------------------------------------------------------------------------
-    key = "tower_env"
-    print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-    file = test_template_files[key]["content"]
-    entries = baseline_all_entries[key]
-    assert_present_and_omitted(entries, file, type="kv")
+    keys = {
+        "tower_env"         : "kv",
+        "tower_yml"         : "yml",
+        "data_studios_env"  : "kv",
+        "tower_sql"         : "sql",
+        "docker_compose"    : "yml",
+    }
+    
+    for key, type in keys.items():
+        print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+        file = test_template_files[key]["content"]
+        entries = baseline_all_entries[key]
+        assert_present_and_omitted(entries, file, type)
 
 
-    # ------------------------------------------------------------------------------------
-    # Test tower.yml
-    # ------------------------------------------------------------------------------------
-    key = "tower_yml"
-    print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-    file = test_template_files[key]["content"]
-    entries = baseline_all_entries[key]
-    assert_present_and_omitted(entries, file, "yaml")
+    # # ------------------------------------------------------------------------------------
+    # # Test tower.yml
+    # # ------------------------------------------------------------------------------------
+    # key = "tower_yml"
+    # print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+    # file = test_template_files[key]["content"]
+    # entries = baseline_all_entries[key]
+    # assert_present_and_omitted(entries, file, "yml")
 
 
-    # ------------------------------------------------------------------------------------
-    # Test data_studios.env
-    # ------------------------------------------------------------------------------------
-    key = "data_studios_env"
-    print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-    file = test_template_files[key]["content"]
-    entries = baseline_all_entries[key]
-    assert_present_and_omitted(entries, file, type="kv")
+    # # ------------------------------------------------------------------------------------
+    # # Test data_studios.env
+    # # ------------------------------------------------------------------------------------
+    # key = "data_studios_env"
+    # print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+    # file = test_template_files[key]["content"]
+    # entries = baseline_all_entries[key]
+    # assert_present_and_omitted(entries, file, type="kv")
 
 
-    # ------------------------------------------------------------------------------------
-    # Test tower.sql
-    # ------------------------------------------------------------------------------------
-    key = "tower_sql"
-    print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-    file = test_template_files[key]["content"]
-    entries = baseline_all_entries[key]
-    assert_present_and_omitted(entries, file, "sql")
+    # # ------------------------------------------------------------------------------------
+    # # Test tower.sql
+    # # ------------------------------------------------------------------------------------
+    # key = "tower_sql"
+    # print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+    # file = test_template_files[key]["content"]
+    # entries = baseline_all_entries[key]
+    # assert_present_and_omitted(entries, file, "sql")
 
 
-    # ------------------------------------------------------------------------------------
-    # Test docker-compose.yml
-    # ------------------------------------------------------------------------------------
-    key = "docker_compose"
-    print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-    file = test_template_files[key]["content"]
-    entries = baseline_all_entries[key]
-    assert_present_and_omitted(entries, file, "yaml")
+    # # ------------------------------------------------------------------------------------
+    # # Test docker-compose.yml
+    # # ------------------------------------------------------------------------------------
+    # key = "docker_compose"
+    # print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+    # file = test_template_files[key]["content"]
+    # entries = baseline_all_entries[key]
+    # assert_present_and_omitted(entries, file, "yml")
 
 
 ## ------------------------------------------------------------------------------------
@@ -295,7 +303,7 @@ def test_baseline_all_disabled(session_setup):
             "data-studio"   : tower_yml_file["tower"].keys(),
         }
     }
-    assert_present_and_omitted(entries, tower_yml_file, "yaml")
+    assert_present_and_omitted(entries, tower_yml_file, "yml")
 
 
     # ------------------------------------------------------------------------------------
@@ -448,7 +456,7 @@ def test_private_ca_reverse_proxy_active(session_setup):
         },
         "omitted": {}
     }
-    assert_present_and_omitted(entries, docker_compose_file, type="yaml")
+    assert_present_and_omitted(entries, docker_compose_file, type="yml")
 
 
 

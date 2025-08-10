@@ -73,8 +73,7 @@ def generate_tower_env_entries_all_active():
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_REPOSITORY"    : "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.8.5",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_TOOL"          : "xpra",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_STATUS"        : "recommended",
-            "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES"                        : "DO_NOT_UNCOMMENT"
-
+            "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES"                        : "DO_NOT_UNCOMMENT",
         },
         "omitted": {
             # DB                      Never generated in file

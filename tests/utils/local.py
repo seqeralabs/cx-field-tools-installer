@@ -718,13 +718,21 @@ all_template_files = {
 def assert_kv_key_present(entries: dict, file):
     """Confirm key-values in provided dict are present in file."""
     for k,v in entries.items():
-        assert file[k] == str(v), f"Key {k} sought but not found."
+        try:
+            print(f"{k=}; {type(k)=}")
+            print(f"{v=}; {type(v)=}")
+            assert file[k] == str(v), f"Key {k} sought but not found."
+        except AssertionError as e:
+            pytest.fail(f"Assertion failed for {k}: {str(e)}")     
 
 
 def assert_yaml_key_present(entries: dict):
     """Confirm key-values in provided dict are present in file."""
     for k,v in entries.items():
-        assert str(k) == str(v), f"Key {k} does not match Value {v}."
+        try:
+            assert str(k) == str(v), f"Key {k} does not match Value {v}."
+        except AssertionError as e:
+            pytest.fail(f"Assertion failed for {k}: {str(e)}")
 
 
 def assert_sql_key_present(entries: dict, file):
@@ -758,12 +766,15 @@ def assert_present_and_omitted(entries: dict, file, type=None):
     Confirm present & omitted key.
     Must account for differences 
     """
-    if type == "yaml":
+
+    if type == "yml":
         assert_yaml_key_present(entries["present"])
         assert_yaml_key_omitted(entries["omitted"])
     elif type == "sql":
         assert_sql_key_present(entries["present"], file)
         assert_sql_key_omitted(entries["omitted"], file)
-    else:
+    elif type == "kv":
         assert_kv_key_present(entries["present"], file)
         assert_kv_key_omitted(entries["omitted"], file)
+    else:
+        raise ValueError(f"Expected type to be in 'yml', 'sql', or 'kv'], got '{type}'")
