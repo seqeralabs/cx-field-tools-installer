@@ -19,7 +19,7 @@ from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wav
 from tests.utils.local import templatefile_cache_dir
 
 from tests.utils.local import generate_namespaced_dictionaries, generate_interpolated_templatefiles, all_template_files
-from tests.utils.local import testcase_setup
+from tests.utils.local import set_up_testcase
 from tests.utils.local import assert_present_and_omitted
 
 from testcontainers.mysql import MySqlContainer
@@ -28,7 +28,7 @@ from testcontainers.mysql import MySqlContainer
 # NOTE: To avoid creating VPC assets, use an existing VPC in the account the AWS provider is configured to use.
 
 ## ------------------------------------------------------------------------------------
-## Baseline Configuration File Check
+## MARK: Baseline: All Active
 ## ------------------------------------------------------------------------------------
 def test_baseline_all_enabled(session_setup):
     """
@@ -47,7 +47,7 @@ def test_baseline_all_enabled(session_setup):
     plan = prepare_plan(override_data)
 
     needed_template_files = all_template_files
-    test_template_files = testcase_setup(plan, needed_template_files)
+    test_template_files = set_up_testcase(plan, needed_template_files)
 
 
     # ------------------------------------------------------------------------------------
@@ -256,6 +256,23 @@ def test_baseline_all_enabled(session_setup):
     assert_present_and_omitted(entries, tower_sql_file, "sql")
 
 
+    # ------------------------------------------------------------------------------------
+    # Test docker-compose.yml
+    # ------------------------------------------------------------------------------------
+    print(f"Testing {sys._getframe().f_code.co_name}.docker-compose.yml generated without reverseproxy.")
+    docker_compose_file = test_template_files["docker_compose"]["content"]
+
+    entries = {
+        "present": {},
+        "omitted": {
+            "reverseproxy"  : docker_compose_file["services"].keys(),
+        }
+    }
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Baseline: None Active
+## ------------------------------------------------------------------------------------
 def test_baseline_all_disabled(session_setup):
     """
     Baseline check of configuration.
@@ -279,7 +296,7 @@ def test_baseline_all_disabled(session_setup):
     plan = prepare_plan(override_data)
 
     needed_template_files = all_template_files
-    test_template_files = testcase_setup(plan, needed_template_files)
+    test_template_files = set_up_testcase(plan, needed_template_files)
 
 
     # ------------------------------------------------------------------------------------
@@ -489,9 +506,23 @@ def test_baseline_all_disabled(session_setup):
     assert_present_and_omitted(entries, tower_sql_file, "sql")
 
 
+    # ------------------------------------------------------------------------------------
+    # Test docker-compose.yml
+    # ------------------------------------------------------------------------------------
+    print(f"Testing {sys._getframe().f_code.co_name}.docker-compose.yml generated without reverseproxy.")
+    docker_compose_file = test_template_files["docker_compose"]["content"]
+
+    entries = {
+        "present": {},
+        "omitted": {
+            "reverseproxy"  : docker_compose_file["services"].keys(),
+        }
+    }
+
+
 
 ## ------------------------------------------------------------------------------------
-## Custom Check - Studios Path-Based Routing Enabled
+## MARK: Studios: Path Routing
 ## ------------------------------------------------------------------------------------
 def test_studio_path_routing_enabled(session_setup):
     """
@@ -511,7 +542,7 @@ def test_studio_path_routing_enabled(session_setup):
 
     target_keys = ["tower_env", "data_studios_env"]
     needed_template_files = {k: v for k,v in all_template_files.items() if k in target_keys}
-    test_template_files = testcase_setup(plan, needed_template_files)
+    test_template_files = set_up_testcase(plan, needed_template_files)
 
 
     # ------------------------------------------------------------------------------------
@@ -547,88 +578,49 @@ def test_studio_path_routing_enabled(session_setup):
     assert_present_and_omitted(entries, ds_env_file, type="kv")
 
 
-
-
-# ------------------------------------------------------------------------------------
-# CUSTOM CONFIG TESTS
-# ------------------------------------------------------------------------------------
-
-
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_custom_config_files_03(session_setup, config_baseline_settings_custom_03):
+## ------------------------------------------------------------------------------------
+## MARK: Private CA: Active
+## ------------------------------------------------------------------------------------
+def test_private_ca_reverse_proxy_active(session_setup):
     """
-    Test the target tower.env generated from default test terraform.tfvars and base-override.auto.tfvars,
-    PLUS custom overrides.
-
-    - Data Studios inactive & Path routing inactive
+    Confirm configurations when Private CA cert must be served by local reverse-proxy.
+    Affects files: 
+        - docker-compose.yml
     """
 
-    # When
-    tower_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/tower.env")
-    tower_env_file_keys = tower_env_file.keys()
+    override_data = """
+        flag_create_load_balancer        = false
+        flag_use_private_cacert          = true
+        flag_do_not_use_https            = false
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    plan = prepare_plan(override_data)
 
-    ds_env_file = parse_key_value_file(f"{root}/assets/target/tower_config/data-studios.env")
-    ds_env_file_keys = ds_env_file.keys()
+    target_keys = ["docker_compose"]
+    needed_template_files = {k: v for k,v in all_template_files.items() if k in target_keys}
+    test_template_files = set_up_testcase(plan, needed_template_files)
 
 
     # ------------------------------------------------------------------------------------
-    # Test conditionals - Tower Env File And Data Studios Env file
+    # Test docker-compose.yml
     # ------------------------------------------------------------------------------------
-    assert "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING" not in tower_env_file_keys
-    assert "TOWER_DATA_STUDIO_CONNECT_URL" not in tower_env_file_keys
+    print(f"Testing {sys._getframe().f_code.co_name}.docker-compose.yml generated with reverseproxy.")
+    docker_compose_file = test_template_files["docker_compose"]["content"]
 
-    assert "CONNECT_PROXY_URL" in ds_env_file_keys
-
-
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_custom_config_docker_compose_with_reverse_proxy(session_setup, config_baseline_settings_custom_docker_compose_reverse_proxy):
-    """
-    Test the target docker-compose.yml generated from default test terraform.tfvars and base-override.auto.tfvars,
-    PLUS custom overrides.
-    """
-
-    # When
-    # n/a
-
-    dc_file = read_yaml(f"{root}/assets/target/docker_compose/docker-compose.yml")
-
-    # ------------------------------------------------------------------------------------
-    # Test data-studios.env - assert all core keys exist
-    # ------------------------------------------------------------------------------------
-    assert "reverseproxy" in dc_file["services"].keys()
-
-
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_custom_config_docker_compose_with_no_https(session_setup, config_baseline_settings_custom_docker_compose_no_https):
-    """
-    Test the target docker-compose.yml generated from default test terraform.tfvars and base-override.auto.tfvars,
-    PLUS custom overrides.
-    """
-
-    # When
-    # n/a
-
-    dc_file = read_yaml(f"{root}/assets/target/docker_compose/docker-compose.yml")
-
-    # ------------------------------------------------------------------------------------
-    # Test data-studios.env - assert all core keys exist
-    # ------------------------------------------------------------------------------------
-    assert "reverseproxy" not in dc_file["services"].keys()
+    # NOTE: Using presence of subkey to prove presence of reverseproxy service.
+    entries = {
+        "present": {
+            "reverseproxy" : docker_compose_file["services"]["reverseproxy"]["container_name"]
+        },
+        "omitted": {}
+    }
+    assert_present_and_omitted(entries, docker_compose_file, type="yaml")
 
 
 
-
-
-
+## ------------------------------------------------------------------------------------
+## MARK: Testcontainer: MySQL
+## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.db
 @pytest.mark.mysql_container

@@ -608,7 +608,7 @@ def generate_interpolated_templatefiles(hash, namespaces, template_files: dict):
     return template_files
 
 
-def testcase_setup(plan, needed_template_files):
+def set_up_testcase(plan, needed_template_files):
     plan, secrets = generate_namespaced_dictionaries(plan)
     vars, outputs, vars_dict, _ = plan
     tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets = secrets
