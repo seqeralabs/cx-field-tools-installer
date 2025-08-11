@@ -329,6 +329,7 @@ def test_baseline_all_disabled(session_setup):
 def test_studio_path_routing_enabled(session_setup):
     """
     Confirm configurations when Studio active and path-routing enabled.
+    Requires Studios to be active so use 'generate_baseline_all_entries'.
     Affects files: 
         - tower.env
         - data_studios.env
@@ -391,25 +392,56 @@ def test_private_ca_reverse_proxy_active(session_setup):
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
     plan = prepare_plan(override_data)
 
-    target_keys = ["docker_compose"]
-    needed_template_files = {k: v for k,v in all_template_files.items() if k in target_keys}
+    # target_keys = ["docker_compose"]
+    # needed_template_files = {k: v for k,v in all_template_files.items() if k in target_keys}
+    # test_template_files = set_up_testcase(plan, needed_template_files)
+    needed_template_files = all_template_files
     test_template_files = set_up_testcase(plan, needed_template_files)
-
-
-    # ------------------------------------------------------------------------------------
-    # Test docker-compose.yml
-    # ------------------------------------------------------------------------------------
-    print(f"Testing {sys._getframe().f_code.co_name}.docker-compose.yml generated with reverseproxy.")
+    
+    # Edgecase! YAML files can't have values overriden same way since we need access to the file, since the test involves
+    # running the YAML in the file and comparing against existing result.
+    # IDEA: could I wrap these in quotes and then use exec / ast to turn back into real thing?
+    # Define overrides as stringified dictionary, pass in to assertion call, extend each file function call with ast.literal_eval? 
+    # Nope too hard. Just extract the YAML files for setup.
     docker_compose_file = test_template_files["docker_compose"]["content"]
-
-    # NOTE: Using presence of subkey to prove presence of reverseproxy service.
-    entries = {
+    overrides = {}
+    overrides["docker_compose"]= {
         "present": {
             "reverseproxy" : docker_compose_file["services"]["reverseproxy"]["container_name"]
         },
         "omitted": {}
     }
-    assert_present_and_omitted(entries, docker_compose_file, type="yml")
+    baseline_all_entries = generate_baseline_all_entries(test_template_files, overrides)
+
+    # ------------------------------------------------------------------------------------
+    # Test docker-compose.yml
+    # ------------------------------------------------------------------------------------
+    keys = {
+        "tower_env"         : "kv",
+        "tower_yml"         : "yml",
+        "data_studios_env"  : "kv",
+        "tower_sql"         : "sql",
+        "docker_compose"    : "yml",
+    }
+    
+    for key, type in keys.items():
+        print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+        file = test_template_files[key]["content"]
+        entries = baseline_all_entries[key]
+        assert_present_and_omitted(entries, file, type)
+
+    # print(f"Testing {sys._getframe().f_code.co_name}.docker-compose.yml generated with reverseproxy.")
+    # docker_compose_file = test_template_files["docker_compose"]["content"]
+
+    # NOTE: Using presence of subkey to prove presence of reverseproxy service.
+    # entries = {
+    #     "present": {
+    #         "reverseproxy" : docker_compose_file["services"]["reverseproxy"]["container_name"]
+    #     },
+    #     "omitted": {}
+    # }
+
+    # assert_present_and_omitted(entries, docker_compose_file, type="yml")
 
 
 

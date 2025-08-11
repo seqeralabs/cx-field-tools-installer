@@ -6,6 +6,9 @@ Generate two sets of baseline value sets.
   Does not include edgecases like private CA reverseproxy.
 """
 
+import ast
+import json
+
 ## ------------------------------------------------------------------------------------
 ## MARK: Config - All Active
 ## ------------------------------------------------------------------------------------
@@ -145,17 +148,33 @@ def generate_tower_sql_entries_all_active():
     }
 
 
-def generate_docker_compose_yml_entries_all_active(docker_compose_file):
+def generate_docker_compose_yml_entries_all_active(docker_compose_file, overrides={}):
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
-    return {
+    baseline = {
         "present": {},
         "omitted": {
             "reverseproxy"  : docker_compose_file["services"].keys(),
         }
     }
 
+    if len(overrides.keys()) > 0:
+        for key in overrides["present"].keys():
+            try:
+                baseline["omitted"].pop(key)
+            except KeyError:
+                pass
 
-def generate_baseline_all_entries(template_files):
+        for key in overrides["omitted"].keys():
+            try:
+                baseline["present"].pop(key)
+            except KeyError:
+                pass
+    
+    print({**baseline, **overrides})
+    return {**baseline, **overrides}
+
+
+def generate_baseline_all_entries(template_files, overrides):
 
     tower_yml_file = template_files["tower_yml"]["content"]
     docker_compose_file = template_files["docker_compose"]["content"]
@@ -165,7 +184,7 @@ def generate_baseline_all_entries(template_files):
         "tower_yml"         : generate_tower_yml_entries_all_active(tower_yml_file),
         "data_studios_env"  : generate_data_studios_env_entries_all_active(),
         "tower_sql"         : generate_tower_sql_entries_all_active(),
-        "docker_compose"    : generate_docker_compose_yml_entries_all_active(docker_compose_file),
+        "docker_compose"    : generate_docker_compose_yml_entries_all_active(docker_compose_file, overrides["docker_compose"]),
 
     }
 
