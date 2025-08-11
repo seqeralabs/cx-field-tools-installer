@@ -342,42 +342,35 @@ def test_studio_path_routing_enabled(session_setup):
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
     plan = prepare_plan(override_data)
 
-    target_keys = ["tower_env", "data_studios_env"]
-    needed_template_files = {k: v for k,v in all_template_files.items() if k in target_keys}
+    needed_template_files = all_template_files
     test_template_files = set_up_testcase(plan, needed_template_files)
 
+    baseline_all_entries = generate_baseline_all_entries(test_template_files)
+    baseline_all_entries["tower_env"]["present"]["TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"]   = "true"
+    baseline_all_entries["tower_env"]["present"]["TOWER_DATA_STUDIO_CONNECT_URL"]           = "https://connect-example.com"
+    baseline_all_entries["data_studios_env"]["present"]["CONNECT_PROXY_URL"]                = "https://connect-example.com"
 
     # ------------------------------------------------------------------------------------
-    # Test tower.env
+    # Test files
     # ------------------------------------------------------------------------------------
-    print(f"Testing {sys._getframe().f_code.co_name}.tower.env generated from default settings.")
-    tower_env_file = test_template_files["tower_env"]["content"]
+    # HOW I WAS TARGETING LIMITED FILES BEFORE
+    # target_keys = ["tower_env", "data_studios_env"]
+    # needed_template_files = {k: v for k,v in all_template_files.items() if k in target_keys}
+    # test_template_files = set_up_testcase(plan, needed_template_files)
 
-    entries = {
-        "present": {
-            "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"         : "true",
-            "TOWER_DATA_STUDIO_CONNECT_URL"                 : "https://connect-example.com",
-            # NO NEED TO TEST ANY OTHER STUDIOS CONFIG SINCE THESE DONT CHANGE.
-        },
-        "omitted": {}
+    keys = {
+        "tower_env"         : "kv",
+        "tower_yml"         : "yml",
+        "data_studios_env"  : "kv",
+        "tower_sql"         : "sql",
+        "docker_compose"    : "yml",
     }
-    assert_present_and_omitted(entries, tower_env_file, type="kv")
-
-
-    # ------------------------------------------------------------------------------------
-    # Test data_studios.env
-    # ------------------------------------------------------------------------------------
-    print(f"Testing {sys._getframe().f_code.co_name}.data_studios.env generated from default settings.")
-    ds_env_file = test_template_files["data_studios_env"]["content"]
-
-    entries = {
-        "present": {
-            "CONNECT_PROXY_URL"                             : "https://connect-example.com",
-            # NO NEED TO TEST ANY OTHER STUDIOS CONFIG SINCE THESE DONT CHANGE.
-        },
-        "omitted": {}
-    }
-    assert_present_and_omitted(entries, ds_env_file, type="kv")
+    
+    for key, type in keys.items():
+        print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+        file = test_template_files[key]["content"]
+        entries = baseline_all_entries[key]
+        assert_present_and_omitted(entries, file, type)
 
 
 ## ------------------------------------------------------------------------------------
