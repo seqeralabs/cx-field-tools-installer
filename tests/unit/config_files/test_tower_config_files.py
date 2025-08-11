@@ -72,46 +72,6 @@ def test_baseline_all_enabled(session_setup):
         assert_present_and_omitted(entries, file, type)
 
 
-    # # ------------------------------------------------------------------------------------
-    # # Test tower.yml
-    # # ------------------------------------------------------------------------------------
-    # key = "tower_yml"
-    # print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-    # file = test_template_files[key]["content"]
-    # entries = baseline_all_entries[key]
-    # assert_present_and_omitted(entries, file, "yml")
-
-
-    # # ------------------------------------------------------------------------------------
-    # # Test data_studios.env
-    # # ------------------------------------------------------------------------------------
-    # key = "data_studios_env"
-    # print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-    # file = test_template_files[key]["content"]
-    # entries = baseline_all_entries[key]
-    # assert_present_and_omitted(entries, file, type="kv")
-
-
-    # # ------------------------------------------------------------------------------------
-    # # Test tower.sql
-    # # ------------------------------------------------------------------------------------
-    # key = "tower_sql"
-    # print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-    # file = test_template_files[key]["content"]
-    # entries = baseline_all_entries[key]
-    # assert_present_and_omitted(entries, file, "sql")
-
-
-    # # ------------------------------------------------------------------------------------
-    # # Test docker-compose.yml
-    # # ------------------------------------------------------------------------------------
-    # key = "docker_compose"
-    # print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-    # file = test_template_files[key]["content"]
-    # entries = baseline_all_entries[key]
-    # assert_present_and_omitted(entries, file, "yml")
-
-
 ## ------------------------------------------------------------------------------------
 ## MARK: Baseline: None Active
 ## ------------------------------------------------------------------------------------

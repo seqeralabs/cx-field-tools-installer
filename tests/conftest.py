@@ -64,7 +64,9 @@ def session_setup():
     copy_file(test_case_override_outputs_source, test_case_override_outputs_target)
 
     # Prepare JSONified 009
-    command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
+    # ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json
+    # command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
+    command = f"docker run --rm -v {root}:/tmp ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:vendored /tmp/009_define_file_templates.tf > {root}/009_define_file_templates.json"
     result = execute_subprocess(command)
 
     yield

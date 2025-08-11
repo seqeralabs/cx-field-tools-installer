@@ -632,7 +632,7 @@ all_template_files = {
         "content"   : ""
     },
     "tower_yml": {
-        "extension" : ".yaml", 
+        "extension" : ".yml", 
         "read_type" : read_yaml,
         "content"   : ""
     },
@@ -657,17 +657,17 @@ all_template_files = {
         "content"   : ""
     },
     "wave_lite_yml": {
-        "extension" : ".yaml", 
+        "extension" : ".yml", 
         "read_type" : read_yaml,
         "content"   : ""
     },
     "docker_compose": {
-        "extension" : ".yaml", 
+        "extension" : ".yml", 
         "read_type" : read_yaml,
         "content"   : ""
     },
     "seqerakit_yml": {
-        "extension" : ".yaml", 
+        "extension" : ".yml", 
         "read_type" : read_yaml,
         "content"   : ""
     },
@@ -679,22 +679,22 @@ all_template_files = {
         "content"   : ""
     },
     "ansible_02_update_file_configurations": {
-        "extension" : ".yaml", 
+        "extension" : ".yml", 
         "read_type" : read_yaml,
         "content"   : ""
     },
     "ansible_03_pull_containers_and_run_tower": {
-        "extension" : ".yaml", 
+        "extension" : ".yml", 
         "read_type" : read_yaml,
         "content"   : ""
     },
     "ansible_05_patch_groundswell": {
-        "extension" : ".yaml", 
+        "extension" : ".yml", 
         "read_type" : read_yaml,
         "content"   : ""
     },
     "ansible_06_run_seqerakit": {
-        "extension" : ".yaml", 
+        "extension" : ".yml", 
         "read_type" : read_yaml,
         "content"   : ""
     },
