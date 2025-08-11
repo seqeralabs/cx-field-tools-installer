@@ -12,8 +12,8 @@ import json
 ## ------------------------------------------------------------------------------------
 ## MARK: Config - All Active
 ## ------------------------------------------------------------------------------------
-def generate_tower_env_entries_all_active():
-    return {
+def generate_tower_env_entries_all_active(overrides={}):
+    baseline = {
         "present": {
             "TOWER_ENABLE_AWS_SSM"        : "true",
             "LICENSE_SERVER_URL"          : "https://licenses.seqera.io",
@@ -95,10 +95,13 @@ def generate_tower_env_entries_all_active():
             "# STUDIOS_NOT_ENABLED"     : "DO_NOT_UNCOMMENT",
         }
     }
+    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
+    return {**baseline, **overrides}
 
 
 def generate_tower_yml_entries_all_active(tower_yml_file):
     return {
+        # PROBLEM - Leftside will resolve to True multiple times. Earlier keys overwritten by later keys.
         "present": {
             tower_yml_file["mail"]["smtp"]["auth"]                                  : True,
             tower_yml_file["mail"]["smtp"]["starttls"]["enable"]                    : True,
@@ -118,8 +121,8 @@ def generate_tower_yml_entries_all_active(tower_yml_file):
     }
 
 
-def generate_data_studios_env_entries_all_active():
-    return {
+def generate_data_studios_env_entries_all_active(overrides={}):
+    baseline = {
         "present": {
             "PLATFORM_URL"                              : f"https://autodc.dev-seqera.net",
             "CONNECT_HTTP_PORT"                         : 9090,    # str()
@@ -133,11 +136,13 @@ def generate_data_studios_env_entries_all_active():
             "# STUDIOS_NOT_ENABLED"                     : "DO_NOT_UNCOMMENT",
         }
     }
+    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
+    return {**baseline, **overrides}
 
 
-def generate_tower_sql_entries_all_active():
+def generate_tower_sql_entries_all_active(overrides={}):
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
-    return {
+    baseline = {
         "present": {
             f"""CREATE DATABASE tower;"""                                               : "n/a",
             f"""ALTER DATABASE tower CHARACTER SET utf8 COLLATE utf8_bin;"""            : "n/a",
@@ -146,6 +151,8 @@ def generate_tower_sql_entries_all_active():
         },
         "omitted": {}
     }
+    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
+    return {**baseline, **overrides}
 
 
 def generate_docker_compose_yml_entries_all_active(docker_compose_file, overrides={}):
@@ -156,7 +163,31 @@ def generate_docker_compose_yml_entries_all_active(docker_compose_file, override
             "reverseproxy"  : docker_compose_file["services"].keys(),
         }
     }
+    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
+    return {**baseline, **overrides}
 
+
+def generate_baseline_all_entries(template_files, overrides):
+
+    tower_yml_file = template_files["tower_yml"]["content"]
+    docker_compose_file = template_files["docker_compose"]["content"]
+
+    entries = {
+        "tower_env"         : generate_tower_env_entries_all_active(overrides["tower_env"]),
+        "tower_yml"         : generate_tower_yml_entries_all_active(tower_yml_file),
+        "data_studios_env"  : generate_data_studios_env_entries_all_active(overrides["data_studios_env"]),
+        "tower_sql"         : generate_tower_sql_entries_all_active(overrides["tower_sql"]),
+        "docker_compose"    : generate_docker_compose_yml_entries_all_active(docker_compose_file, overrides["docker_compose"]),
+
+    }
+    return entries
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Helpers - Purge overrides
+## ------------------------------------------------------------------------------------
+def purge_baseline_of_specified_overrides(baseline, overrides):
+    """Overrides could be inverse of baseline. Purge baseline of matches so subsequent merge is clean."""
     if len(overrides.keys()) > 0:
         for key in overrides["present"].keys():
             try:
@@ -169,23 +200,5 @@ def generate_docker_compose_yml_entries_all_active(docker_compose_file, override
                 baseline["present"].pop(key)
             except KeyError:
                 pass
-    
-    print({**baseline, **overrides})
-    return {**baseline, **overrides}
 
-
-def generate_baseline_all_entries(template_files, overrides):
-
-    tower_yml_file = template_files["tower_yml"]["content"]
-    docker_compose_file = template_files["docker_compose"]["content"]
-
-    entries = {
-        "tower_env"         : generate_tower_env_entries_all_active(),
-        "tower_yml"         : generate_tower_yml_entries_all_active(tower_yml_file),
-        "data_studios_env"  : generate_data_studios_env_entries_all_active(),
-        "tower_sql"         : generate_tower_sql_entries_all_active(),
-        "docker_compose"    : generate_docker_compose_yml_entries_all_active(docker_compose_file, overrides["docker_compose"]),
-
-    }
-
-    return entries
+    return baseline

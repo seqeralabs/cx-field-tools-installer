@@ -30,6 +30,29 @@ from testcontainers.mysql import MySqlContainer
 
 # NOTE: To avoid creating VPC assets, use an existing VPC in the account the AWS provider is configured to use.
 
+
+
+overrides_template = {
+    "tower_env"         : {},
+    "tower_yml"         : {},
+    "data_studios_env"  : {},
+    "tower_sql"         : {},
+    "docker_compose"    : {},
+}
+
+file_targets_all = {
+    "tower_env"         : "kv",
+    "tower_yml"         : "yml",
+    "data_studios_env"  : "kv",
+    "tower_sql"         : "sql",
+    "docker_compose"    : "yml",
+}
+# REFERENCE: How to target a subset of files in each testcase versus full set."""
+# target_keys = ["docker_compose"]
+# needed_template_files = {k: v for k,v in all_template_files.items() if k in target_keys}
+# test_template_files = set_up_testcase(plan, needed_template_files)
+
+
 ## ------------------------------------------------------------------------------------
 ## MARK: Baseline: All Active
 ## ------------------------------------------------------------------------------------
@@ -346,26 +369,28 @@ def test_studio_path_routing_enabled(session_setup):
     needed_template_files = all_template_files
     test_template_files = set_up_testcase(plan, needed_template_files)
 
-    baseline_all_entries = generate_baseline_all_entries(test_template_files)
-    baseline_all_entries["tower_env"]["present"]["TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"]   = "true"
-    baseline_all_entries["tower_env"]["present"]["TOWER_DATA_STUDIO_CONNECT_URL"]           = "https://connect-example.com"
-    baseline_all_entries["data_studios_env"]["present"]["CONNECT_PROXY_URL"]                = "https://connect-example.com"
+    overrides = deepcopy(overrides_template)
+    overrides["tower_env"]= {
+        "present": {
+            "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"     : "true",
+            "TOWER_DATA_STUDIO_CONNECT_URL"             : "https://connect-example.com"
+        },
+        "omitted": {}
+    }
+
+    overrides["data_studios_env"]= {
+        "present": {
+            "CONNECT_PROXY_URL"                         : "https://connect-example.com"
+        },
+        "omitted": {}
+    }
+
+    baseline_all_entries = generate_baseline_all_entries(test_template_files, overrides)
 
     # ------------------------------------------------------------------------------------
     # Test files
     # ------------------------------------------------------------------------------------
-    # HOW I WAS TARGETING LIMITED FILES BEFORE
-    # target_keys = ["tower_env", "data_studios_env"]
-    # needed_template_files = {k: v for k,v in all_template_files.items() if k in target_keys}
-    # test_template_files = set_up_testcase(plan, needed_template_files)
-
-    keys = {
-        "tower_env"         : "kv",
-        "tower_yml"         : "yml",
-        "data_studios_env"  : "kv",
-        "tower_sql"         : "sql",
-        "docker_compose"    : "yml",
-    }
+    keys = file_targets_all
     
     for key, type in keys.items():
         print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
@@ -392,19 +417,17 @@ def test_private_ca_reverse_proxy_active(session_setup):
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
     plan = prepare_plan(override_data)
 
-    # target_keys = ["docker_compose"]
-    # needed_template_files = {k: v for k,v in all_template_files.items() if k in target_keys}
-    # test_template_files = set_up_testcase(plan, needed_template_files)
     needed_template_files = all_template_files
     test_template_files = set_up_testcase(plan, needed_template_files)
     
     # Edgecase! YAML files can't have values overriden same way since we need access to the file, since the test involves
     # running the YAML in the file and comparing against existing result.
-    # IDEA: could I wrap these in quotes and then use exec / ast to turn back into real thing?
-    # Define overrides as stringified dictionary, pass in to assertion call, extend each file function call with ast.literal_eval? 
-    # Nope too hard. Just extract the YAML files for setup.
+    # IDEA: Define overrides as stringified dictionary, pass in to assertion call, extend each file function call with ast.literal_eval? 
+    # A    : Nope too hard and errors galore. Just extract the YAML files for setup.
+    #        I don't love a YAML-only flow, but it's clean(ish) and mostly mirrors other flow.
     docker_compose_file = test_template_files["docker_compose"]["content"]
-    overrides = {}
+
+    overrides = deepcopy(overrides_template)
     overrides["docker_compose"]= {
         "present": {
             "reverseproxy" : docker_compose_file["services"]["reverseproxy"]["container_name"]
@@ -416,33 +439,13 @@ def test_private_ca_reverse_proxy_active(session_setup):
     # ------------------------------------------------------------------------------------
     # Test docker-compose.yml
     # ------------------------------------------------------------------------------------
-    keys = {
-        "tower_env"         : "kv",
-        "tower_yml"         : "yml",
-        "data_studios_env"  : "kv",
-        "tower_sql"         : "sql",
-        "docker_compose"    : "yml",
-    }
-    
+    keys = file_targets_all
+
     for key, type in keys.items():
         print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
         file = test_template_files[key]["content"]
         entries = baseline_all_entries[key]
         assert_present_and_omitted(entries, file, type)
-
-    # print(f"Testing {sys._getframe().f_code.co_name}.docker-compose.yml generated with reverseproxy.")
-    # docker_compose_file = test_template_files["docker_compose"]["content"]
-
-    # NOTE: Using presence of subkey to prove presence of reverseproxy service.
-    # entries = {
-    #     "present": {
-    #         "reverseproxy" : docker_compose_file["services"]["reverseproxy"]["container_name"]
-    #     },
-    #     "omitted": {}
-    # }
-
-    # assert_present_and_omitted(entries, docker_compose_file, type="yml")
-
 
 
 ## ------------------------------------------------------------------------------------
