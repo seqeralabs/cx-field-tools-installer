@@ -103,19 +103,19 @@ def generate_tower_yml_entries_all_active(tower_yml_file):
     return {
         # PROBLEM - Leftside will resolve to True multiple times. Earlier keys overwritten by later keys.
         "present": {
-            tower_yml_file["mail"]["smtp"]["auth"]                                  : True,
-            tower_yml_file["mail"]["smtp"]["starttls"]["enable"]                    : True,
-            tower_yml_file["mail"]["smtp"]["starttls"]["required"]                  : True,
-            tower_yml_file["mail"]["smtp"]["ssl"]["protocols"]                      : "TLSv1.2",
-            tower_yml_file["micronaut"]["application"]["name"]                      : "tower-testing",
-            tower_yml_file["tower"]["cron"]["audit-log"]["clean-up"]["time-offset"] : "1095d",
-            tower_yml_file["tower"]["data-studio"]["allowed-workspaces"]            : None,
-            tower_yml_file["tower"]["trustedEmails"][0]                             : "'graham.wright@seqera.io,gwright99@hotmail.com'",
-            tower_yml_file["tower"]["trustedEmails"][1]                             : "'*@abc.com,*@def.com'",
-            tower_yml_file["tower"]["trustedEmails"][2]                             : "'123@abc.com,456@def.com'",
+            'mail.smtp.auth'                                : True,
+            'mail.smtp.starttls.enable'                     : True,
+            'mail.smtp.starttls.required'                   : True,
+            'mail.smtp.ssl.protocols'                       : "TLSv1.2",
+            'micronaut.application.name'                    : "tower-testing",
+            'tower.cron.audit-log.clean-up.time-offset'     : "1095d",
+            'tower.data-studio.allowed-workspaces'          : None,
+            'tower.trustedEmails[0]'                        : "'graham.wright@seqera.io,gwright99@hotmail.com'",
+            'tower.trustedEmails[1]'                        : "'*@abc.com,*@def.com'",
+            'tower.trustedEmails[2]'                        : "'123@abc.com,456@def.com'",
         },
-        "omitted": {
-            "auth"      : tower_yml_file["tower"].keys(),
+        "omitted": {  # GET RID OF KEYS
+            "auth"      : 'tower"].keys()',
             # Optionally, you can make the omitted keys configurable
         }
     }

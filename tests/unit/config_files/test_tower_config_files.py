@@ -75,7 +75,8 @@ def test_baseline_all_enabled(session_setup):
     needed_template_files = all_template_files
     test_template_files = set_up_testcase(plan, needed_template_files)
 
-    baseline_all_entries = generate_baseline_all_entries(test_template_files)
+    overrides = deepcopy(overrides_template)
+    baseline_all_entries = generate_baseline_all_entries(test_template_files, overrides)
 
     # ------------------------------------------------------------------------------------
     # Test files

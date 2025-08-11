@@ -2,6 +2,7 @@ from pickle import FALSE
 from numpy.core.fromnumeric import nonzero
 import pytest
 
+import ast
 import os
 from pathlib import Path
 import shutil
@@ -17,6 +18,19 @@ import yaml
 from types import SimpleNamespace
 
 from scripts.installer.utils.purge_folders import delete_pycache_folders
+
+# https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
+from yamlpath import Processor
+from yamlpath import YAMLPath
+from yamlpath.common import Parsers
+from yamlpath.exceptions import YAMLPathException
+from yamlpath.wrappers import ConsolePrinter
+from yamlpath.wrappers import NodeCoords
+
+loggingArgs = SimpleNamespace(quiet=True, verbose=False, debug=False)
+logger = ConsolePrinter(loggingArgs)
+yamlParser = Parsers.get_yaml_editor()
+
 
 
 """
@@ -726,11 +740,34 @@ def assert_kv_key_present(entries: dict, file):
             pytest.fail(f"Assertion failed for {k}: {str(e)}")     
 
 
-def assert_yaml_key_present(entries: dict):
-    """Confirm key-values in provided dict are present in file."""
+def assert_yaml_key_present(entries: dict, file):
+    """
+    Confirm key-values in provided dict are present in file. WARNING -- THIS IS UGLY.
+    Uses 3rd party library. Acceptable since testing is only essential to Seqera staff.
+    Found necessary code implementation at: https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
+    """
+
+    print(file)
+    # file content is passes as a dictionary, I need to write out yaml
+    with open("/tmp/tower.yml", 'w') as f:
+        yaml.dump(file, f)
+
+    # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
+    (yamlData, documentLoaded) = Parsers.get_yaml_data(yamlParser, logger, "/tmp/tower.yml")
+    if not documentLoaded:
+        # an error message has already been printed via ConsolePrinter
+        exit(1)
+    processor = Processor(logger, yamlData)
+
     for k,v in entries.items():
         try:
-            assert str(k) == str(v), f"Key {k} does not match Value {v}."
+            # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
+            dataYamlPath = YAMLPath(k)
+            for nodeCoordinate in processor.get_nodes(dataYamlPath, mustexist=True):
+                nodeData = NodeCoords.unwrap_node_coords(nodeCoordinate)
+                # print(nodeData)
+
+                assert str(nodeData) == str(v), f"Key {k} does not match Value {v}."
         except AssertionError as e:
             pytest.fail(f"Assertion failed for {k}: {str(e)}")
 
@@ -749,7 +786,7 @@ def assert_kv_key_omitted(entries: dict, file):
         assert k not in keys, f"Key {k} should not be present but was found."
 
 
-def assert_yaml_key_omitted(entries: dict):
+def assert_yaml_key_omitted(entries: dict, yml_file):
     """Confirm keys in provided are not present in YAML file. Assumes you'll base <PATH>.keys() as v."""
     for k,v in entries.items():
         assert k not in v, f"Key {k} should not be Value {v}."
@@ -768,8 +805,8 @@ def assert_present_and_omitted(entries: dict, file, type=None):
     """
 
     if type == "yml":
-        assert_yaml_key_present(entries["present"])
-        assert_yaml_key_omitted(entries["omitted"])
+        assert_yaml_key_present(entries["present"], file)
+        assert_yaml_key_omitted(entries["omitted"], yml_file=file)
     elif type == "sql":
         assert_sql_key_present(entries["present"], file)
         assert_sql_key_omitted(entries["omitted"], file)
