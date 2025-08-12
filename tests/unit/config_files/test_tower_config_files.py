@@ -23,7 +23,7 @@ from tests.utils.local import generate_namespaced_dictionaries, generate_interpo
 from tests.utils.local import set_up_testcase
 from tests.utils.local import assert_present_and_omitted
 
-from tests.datafiles.expected_results import generate_baseline_all_entries
+from tests.datafiles.expected_results import generate_baseline_entries_all_active, generate_baseline_entries_all_disabled
 
 from testcontainers.mysql import MySqlContainer
 
@@ -76,18 +76,12 @@ def test_baseline_all_enabled(session_setup):
     test_template_files = set_up_testcase(plan, needed_template_files)
 
     overrides = deepcopy(overrides_template)
-    baseline_all_entries = generate_baseline_all_entries(test_template_files, overrides)
+    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
 
     # ------------------------------------------------------------------------------------
     # Test files
     # ------------------------------------------------------------------------------------
-    keys = {
-        "tower_env"         : "kv",
-        "tower_yml"         : "yml",
-        "data_studios_env"  : "kv",
-        "tower_sql"         : "sql",
-        "docker_compose"    : "yml",
-    }
+    keys = file_targets_all
     
     for key, type in keys.items():
         print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
@@ -97,7 +91,7 @@ def test_baseline_all_enabled(session_setup):
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Baseline: None Active
+## MARK: Baseline: All Disabled
 ## ------------------------------------------------------------------------------------
 def test_baseline_all_disabled(session_setup):
     """
@@ -124,226 +118,19 @@ def test_baseline_all_disabled(session_setup):
     needed_template_files = all_template_files
     test_template_files = set_up_testcase(plan, needed_template_files)
 
+    overrides = deepcopy(overrides_template)
+    baseline_all_entries = generate_baseline_entries_all_disabled(test_template_files, overrides)
 
     # ------------------------------------------------------------------------------------
-    # Test tower.env
+    # Test files
     # ------------------------------------------------------------------------------------
-    print(f"Testing {sys._getframe().f_code.co_name}.tower.env generated from default settings.")
-    tower_env_file = test_template_files["tower_env"]["content"]
-
-    entries = {
-        "present": {
-            "TOWER_ENABLE_AWS_SSM"        : "true",
-            "LICENSE_SERVER_URL"          : "https://licenses.seqera.io",
-            "TOWER_SERVER_URL"            : "https://autodc.dev-seqera.net",
-            "TOWER_CONTACT_EMAIL"         : "graham.wright@seqera.io",
-            "TOWER_ENABLE_PLATFORMS"      : "awsbatch-platform,slurm-platform",
-            "TOWER_ROOT_USERS"            : "graham.wright@seqera.io,gwright99@hotmail.com",
-            "TOWER_DB_URL"                : "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
-            "TOWER_DB_DRIVER"             : "org.mariadb.jdbc.Driver",
-            "TOWER_DB_DIALECT"            : "io.seqera.util.MySQL55DialectCollateBin",
-            "TOWER_DB_MIN_POOL_SIZE"      : 5,
-            "TOWER_DB_MAX_POOL_SIZE"      : 10,
-            "TOWER_DB_MAX_LIFETIME"       : 18000000,
-            "FLYWAY_LOCATIONS"            : "classpath:db-schema/mysql",
-            "TOWER_REDIS_URL"             : "redis://redis:6379",
-            "TOWER_ENABLE_UNSAFE_MODE"    : "false",
-            # OIDC                                          : N/A
-        },
-        "omitted": {}
-    }
-    assert_present_and_omitted(entries, tower_env_file)
-
-
-    # ------------------------------------------------------------------------------------
-    # Test tower.env - assert some core keys NOT present ever
-    # ------------------------------------------------------------------------------------
-    entries = {
-        "present": {},
-        "omitted": {
-            "TOWER_DB_USER"         : "",
-            "TOWER_DB_PASSWORD"     : "", 
-            "TOWER_SMTP_USER"       : "",
-            "TOWER_SMTP_PASSWORD"   : "",
-        }
-    }
-    assert_present_and_omitted(entries, tower_env_file)
-
-
-    # ------------------------------------------------------------------------------------
-    # Test tower.env - assert sometimes-present conditionals:
-    # ------------------------------------------------------------------------------------
-    entries = {
-        "present" : {
-            "TOWER_ENABLE_AWS_SES"  : "false",
-            "TOWER_SMTP_HOST"       : "email-smtp.us-east-1.amazonaws.com",
-            "TOWER_SMTP_PORT"       : "587",
-        },
-        "omitted": {
-            ## "TOWER_SMTP_USER"     : N/A DO NOT UNCOMMENT,
-            # "TOWER_SMTP_PASSWORD"     : N/A DO NOT UNCOMMENT,
-        }
-    }
-    assert_present_and_omitted(entries, tower_env_file)
-
-
-    entries = {
-        "present": {
-            "TOWER_ENABLE_WAVE"           : "false",
-            "WAVE_SERVER_URL"             : "N/A",
-        },
-        "omitted": {}
-    }
-    assert_present_and_omitted(entries, tower_env_file)
-
-
-    entries = {
-        "present": {
-            "TOWER_ENABLE_GROUNDSWELL"  : "false",
-        },
-        "omitted": {
-            "GROUNDSWELL_SERVER_URL"    : "N/A",
-        }
-    }
-    assert_present_and_omitted(entries, tower_env_file)
-
-
-    entries = {
-        "present": {
-            "TOWER_DATA_EXPLORER_ENABLED"                   : "false",
-        },
-        "omitted": {
-            "TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES" : "",
-        }
-    }
-    assert_present_and_omitted(entries, tower_env_file)
-
-
-    entries = {
-        "present": {
-            "# STUDIOS_NOT_ENABLED"                           : "DO_NOT_UNCOMMENT",
-        },
-        "omitted": {
-            "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"         : "",
-            "TOWER_DATA_STUDIO_CONNECT_URL"                 : "",
-            "TOWER_OIDC_PEM_PATH"                           : "",
-            "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN"  : "",
-
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-0_ICON"          : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-0_REPOSITORY"    : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-0_TOOL"          : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-0_STATUS"        : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_ICON"          : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_REPOSITORY"    : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_TOOL"          : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_STATUS"        : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_ICON"         : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_REPOSITORY"   : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_TOOL"         : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_STATUS"       : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_ICON"         : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_REPOSITORY"   : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_TOOL"         : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_STATUS"       : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-83-0-0-8-0_ICON"          : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-83-0-0-8-0_REPOSITORY"    : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-83-0-0-8-0_TOOL"          : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-83-0-0-8-0_STATUS"        : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R0-0-8-0_ICON"            : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R0-0-8-0_REPOSITORY"      : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R0-0-8-0_TOOL"            : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R0-0-8-0_STATUS"          : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_ICON"          : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_REPOSITORY"    : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_TOOL"          : "",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_STATUS"        : "",
-            "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES"                        : ""
-        }
-    }
-    assert_present_and_omitted(entries, tower_env_file, type="kv")
-
-
-    # ------------------------------------------------------------------------------------
-    # Test tower.yml
-    # ------------------------------------------------------------------------------------
-    print(f"Testing {sys._getframe().f_code.co_name}.tower.yml generated from default settings.")
-    tower_yml_file = test_template_files["tower_yml"]["content"]
-
-    # Reminder: YAML files converted to python dictionary so use True / False for comparison
-    entries = {
-        "present": {
-            tower_yml_file["mail"]["smtp"]["auth"]                                  : True,
-            tower_yml_file["mail"]["smtp"]["starttls"]["enable"]                    : True,
-            tower_yml_file["mail"]["smtp"]["starttls"]["required"]                  : True,
-            tower_yml_file["mail"]["smtp"]["ssl"]["protocols"]                      : "TLSv1.2",
-            tower_yml_file["micronaut"]["application"]["name"]                      : "tower-testing",
-            tower_yml_file["tower"]["cron"]["audit-log"]["clean-up"]["time-offset"] : "1095d",
-            tower_yml_file["tower"]["trustedEmails"][0]                             : "'graham.wright@seqera.io,gwright99@hotmail.com'",
-            tower_yml_file["tower"]["trustedEmails"][1]                             : "'*@abc.com,*@def.com'",
-            tower_yml_file["tower"]["trustedEmails"][2]                             : "'123@abc.com,456@def.com'",
-        },
-        "omitted": {
-            "auth"          : tower_yml_file["tower"].keys(),
-            "data-studio"   : tower_yml_file["tower"].keys(),
-        }
-    }
-    assert_present_and_omitted(entries, tower_yml_file, "yml")
-
-
-    # ------------------------------------------------------------------------------------
-    # Test data_studios.env
-    # ------------------------------------------------------------------------------------
-    print(f"Testing {sys._getframe().f_code.co_name}.data-studio.env generated from default settings.")
-    ds_env_file = test_template_files["data_studios_env"]["content"]
-
-    entries = {
-        "present": {
-            "# STUDIOS_NOT_ENABLED"                     : "DO_NOT_UNCOMMENT",
-        },
-        "omitted": {
-            "PLATFORM_URL"                              : "",
-            "CONNECT_HTTP_PORT"                         : "",
-            "CONNECT_TUNNEL_URL"                        : "",
-            "CONNECT_PROXY_URL"                         : "",
-            "CONNECT_REDIS_ADDRESS"                     : "",
-            "CONNECT_REDIS_DB"                          : "",
-            "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN"    : "",
-        } 
-    }
-    assert_present_and_omitted(entries, ds_env_file, type="kv")
-
-
-    # ------------------------------------------------------------------------------------
-    # Test tower.sql - validate all interpolated variables are properly replaced
-    # ------------------------------------------------------------------------------------
-    print(f"Testing {sys._getframe().f_code.co_name}.tower.sql generated from default settings.")
-    tower_sql_file = test_template_files["tower_sql"]["content"]
-
-    # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
-    entries = {
-        "present": {
-            f"""CREATE DATABASE tower;"""                                               : "n/a",
-            f"""ALTER DATABASE tower CHARACTER SET utf8 COLLATE utf8_bin;"""            : "n/a",
-            f"""CREATE USER "tower_test_user" IDENTIFIED BY "tower_test_password";"""   : "n/a",
-            f"""GRANT ALL PRIVILEGES ON tower.* TO tower_test_user@"%";"""              : "n/a"
-        },
-        "omitted": {}
-    }
-    assert_present_and_omitted(entries, tower_sql_file, "sql")
-
-
-    # ------------------------------------------------------------------------------------
-    # Test docker-compose.yml
-    # ------------------------------------------------------------------------------------
-    print(f"Testing {sys._getframe().f_code.co_name}.docker-compose.yml generated without reverseproxy.")
-    docker_compose_file = test_template_files["docker_compose"]["content"]
-
-    entries = {
-        "present": {},
-        "omitted": {
-            "reverseproxy"  : docker_compose_file["services"].keys(),
-        }
-    }
+    keys = file_targets_all
+    
+    for key, type in keys.items():
+        print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+        file = test_template_files[key]["content"]
+        entries = baseline_all_entries[key]
+        assert_present_and_omitted(entries, file, type)
 
 
 
@@ -353,7 +140,7 @@ def test_baseline_all_disabled(session_setup):
 def test_studio_path_routing_enabled(session_setup):
     """
     Confirm configurations when Studio active and path-routing enabled.
-    Requires Studios to be active so use 'generate_baseline_all_entries'.
+    Requires Studios to be active so use 'generate_baseline_entries_all_active'.
     Affects files: 
         - tower.env
         - data_studios.env
@@ -386,7 +173,7 @@ def test_studio_path_routing_enabled(session_setup):
         "omitted": {}
     }
 
-    baseline_all_entries = generate_baseline_all_entries(test_template_files, overrides)
+    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
 
     # ------------------------------------------------------------------------------------
     # Test files
@@ -420,22 +207,15 @@ def test_private_ca_reverse_proxy_active(session_setup):
 
     needed_template_files = all_template_files
     test_template_files = set_up_testcase(plan, needed_template_files)
-    
-    # Edgecase! YAML files can't have values overriden same way since we need access to the file, since the test involves
-    # running the YAML in the file and comparing against existing result.
-    # IDEA: Define overrides as stringified dictionary, pass in to assertion call, extend each file function call with ast.literal_eval? 
-    # A    : Nope too hard and errors galore. Just extract the YAML files for setup.
-    #        I don't love a YAML-only flow, but it's clean(ish) and mostly mirrors other flow.
-    docker_compose_file = test_template_files["docker_compose"]["content"]
 
     overrides = deepcopy(overrides_template)
     overrides["docker_compose"]= {
         "present": {
-            "reverseproxy" : docker_compose_file["services"]["reverseproxy"]["container_name"]
+            "services.reverseproxy.container_name" : 'reverseproxy'
         },
         "omitted": {}
     }
-    baseline_all_entries = generate_baseline_all_entries(test_template_files, overrides)
+    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
 
     # ------------------------------------------------------------------------------------
     # Test docker-compose.yml

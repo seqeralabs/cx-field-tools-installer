@@ -748,11 +748,11 @@ def assert_yaml_key_present(entries: dict, file):
     """
 
     # file content is passes as a dictionary, I need to write out yaml
-    with open("/tmp/tower.yml", 'w') as f:
+    with open("/tmp/cx-testing-yml", 'w') as f:
         yaml.dump(file, f)
 
     # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
-    (yamlData, documentLoaded) = Parsers.get_yaml_data(yamlParser, logger, "/tmp/tower.yml")
+    (yamlData, documentLoaded) = Parsers.get_yaml_data(yamlParser, logger, "/tmp/cx-testing-yml")
     if not documentLoaded:
         # an error message has already been printed via ConsolePrinter
         exit(1)
@@ -790,11 +790,11 @@ def assert_yaml_key_omitted(entries: dict, file):
     Found necessary code implementation at: https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7"""
 
     # file content is passes as a dictionary, I need to write out yaml
-    with open("/tmp/tower.yml", 'w') as f:
+    with open("/tmp/cx-testing-yml", 'w') as f:
         yaml.dump(file, f)
 
     # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
-    (yamlData, documentLoaded) = Parsers.get_yaml_data(yamlParser, logger, "/tmp/tower.yml")
+    (yamlData, documentLoaded) = Parsers.get_yaml_data(yamlParser, logger, "/tmp/cx-testing-yml")
     if not documentLoaded:
         exit(1)
     processor = Processor(logger, yamlData)
