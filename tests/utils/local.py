@@ -599,13 +599,13 @@ def generate_interpolated_templatefile(key, extension, read_type, namespaces, te
     if not outfile.exists():
         result = prepare_templatefile_payload(key, namespaces)
         write_populated_templatefile(outfile, result)
-    
+
     content = read_type(outfile.as_posix())
     # print(content)
     return content
 
 
-def generate_interpolated_templatefiles(hash, namespaces, template_files: dict):
+def generate_interpolated_templatefiles(hash, namespaces, template_files: dict, testcase_name):
     """
     Create all templatefiles based on terraform values relevant to the specific testcase.
     """
@@ -618,11 +618,15 @@ def generate_interpolated_templatefiles(hash, namespaces, template_files: dict):
     for k,v in template_files.items():
         content = generate_interpolated_templatefile(k, v["extension"], v["read_type"], namespaces, templatefile_cache_dir_hash)
         template_files[k]["content"] = content
+        
+        # Create a mapping document
+        with open(f"{templatefile_cache_dir}/mappings", "a") as f:
+            f.write(f"{testcase_name}: {hash}\n")
 
     return template_files
 
 
-def set_up_testcase(plan, needed_template_files):
+def set_up_testcase(plan, needed_template_files, testcase_name):
     plan, secrets = generate_namespaced_dictionaries(plan)
     vars, outputs, vars_dict, _ = plan
     tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets = secrets
@@ -633,7 +637,7 @@ def set_up_testcase(plan, needed_template_files):
     hash = hashlib.sha256(content_to_hash.encode("utf-8")).hexdigest()[:16]
 
     # needed_template_files = {k: v for k,v in all_template_files.items() if k in ["tower_env"]}
-    test_template_files = generate_interpolated_templatefiles(hash, namespaces, needed_template_files)
+    test_template_files = generate_interpolated_templatefiles(hash, namespaces, needed_template_files, testcase_name)
 
     return test_template_files
 

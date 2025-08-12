@@ -73,7 +73,7 @@ def test_baseline_all_enabled(session_setup):
     plan = prepare_plan(override_data)
 
     needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files)
+    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
 
     overrides = deepcopy(overrides_template)
     baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
@@ -116,7 +116,7 @@ def test_baseline_all_disabled(session_setup):
     plan = prepare_plan(override_data)
 
     needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files)
+    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
 
     overrides = deepcopy(overrides_template)
     baseline_all_entries = generate_baseline_entries_all_disabled(test_template_files, overrides)
@@ -155,7 +155,7 @@ def test_studio_path_routing_enabled(session_setup):
     plan = prepare_plan(override_data)
 
     needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files)
+    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
 
     overrides = deepcopy(overrides_template)
     overrides["tower_env"]= {
@@ -206,7 +206,7 @@ def test_private_ca_reverse_proxy_active(session_setup):
     plan = prepare_plan(override_data)
 
     needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files)
+    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
 
     overrides = deepcopy(overrides_template)
     overrides["docker_compose"]= {
