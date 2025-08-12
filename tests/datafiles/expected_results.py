@@ -115,8 +115,7 @@ def generate_tower_yml_entries_all_active(tower_yml_file):
             'tower.trustedEmails[2]'                        : "'123@abc.com,456@def.com'",
         },
         "omitted": {  # GET RID OF KEYS
-            "auth"      : 'tower"].keys()',
-            # Optionally, you can make the omitted keys configurable
+            "tower.auth"                                    : 'N/A',
         }
     }
 

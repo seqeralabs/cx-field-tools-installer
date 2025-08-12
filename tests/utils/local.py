@@ -23,7 +23,7 @@ from scripts.installer.utils.purge_folders import delete_pycache_folders
 from yamlpath import Processor
 from yamlpath import YAMLPath
 from yamlpath.common import Parsers
-from yamlpath.exceptions import YAMLPathException
+from yamlpath.exceptions import YAMLPathException, UnmatchedYAMLPathException
 from yamlpath.wrappers import ConsolePrinter
 from yamlpath.wrappers import NodeCoords
 
@@ -747,7 +747,6 @@ def assert_yaml_key_present(entries: dict, file):
     Found necessary code implementation at: https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
     """
 
-    print(file)
     # file content is passes as a dictionary, I need to write out yaml
     with open("/tmp/tower.yml", 'w') as f:
         yaml.dump(file, f)
@@ -765,8 +764,6 @@ def assert_yaml_key_present(entries: dict, file):
             dataYamlPath = YAMLPath(k)
             for nodeCoordinate in processor.get_nodes(dataYamlPath, mustexist=True):
                 nodeData = NodeCoords.unwrap_node_coords(nodeCoordinate)
-                # print(nodeData)
-
                 assert str(nodeData) == str(v), f"Key {k} does not match Value {v}."
         except AssertionError as e:
             pytest.fail(f"Assertion failed for {k}: {str(e)}")
@@ -786,10 +783,29 @@ def assert_kv_key_omitted(entries: dict, file):
         assert k not in keys, f"Key {k} should not be present but was found."
 
 
-def assert_yaml_key_omitted(entries: dict, yml_file):
-    """Confirm keys in provided are not present in YAML file. Assumes you'll base <PATH>.keys() as v."""
+def assert_yaml_key_omitted(entries: dict, file):
+    """
+    Confirm keys in provided are not present in YAML file. Assumes you'll base <PATH>.keys() as v.
+    Uses 3rd party library. Acceptable since testing is only essential to Seqera staff.
+    Found necessary code implementation at: https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7"""
+
+    # file content is passes as a dictionary, I need to write out yaml
+    with open("/tmp/tower.yml", 'w') as f:
+        yaml.dump(file, f)
+
+    # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
+    (yamlData, documentLoaded) = Parsers.get_yaml_data(yamlParser, logger, "/tmp/tower.yml")
+    if not documentLoaded:
+        exit(1)
+    processor = Processor(logger, yamlData)
+
+    # This one is a bit odd because of how the library works. I WANT to have Exceptions raised when trying to find the YAMLPath 
+    # (i.e. path doesnt exist). The most concise code block avoids try/except but doesn't identify an key that actually does exist.
+    # Using slightly more convoluted code.
     for k,v in entries.items():
-        assert k not in v, f"Key {k} should not be Value {v}."
+        dataYamlPath = YAMLPath(k)
+        with pytest.raises(UnmatchedYAMLPathException):
+            list(processor.get_nodes(dataYamlPath, mustexist=True))
 
 
 def assert_sql_key_omitted(entries: dict, file):
@@ -806,7 +822,7 @@ def assert_present_and_omitted(entries: dict, file, type=None):
 
     if type == "yml":
         assert_yaml_key_present(entries["present"], file)
-        assert_yaml_key_omitted(entries["omitted"], yml_file=file)
+        assert_yaml_key_omitted(entries["omitted"], file)
     elif type == "sql":
         assert_sql_key_present(entries["present"], file)
         assert_sql_key_omitted(entries["omitted"], file)
