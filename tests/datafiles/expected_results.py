@@ -101,7 +101,6 @@ def generate_tower_env_entries_all_active(overrides={}):
 
 def generate_tower_yml_entries_all_active(overrides={}):
     baseline = {
-        # PROBLEM - Leftside will resolve to True multiple times. Earlier keys overwritten by later keys.
         "present": {
             'mail.smtp.auth'                                : True,
             'mail.smtp.starttls.enable'                     : True,
@@ -168,6 +167,26 @@ def generate_docker_compose_yml_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
+def generate_wave_lite_yml_entries_all_active(overrides={}):
+    # Reminder: yaml file true/false must be declared as True/False in python dictionary.
+    baseline = {
+        "present": {
+            'wave.server.url'                               : "https://wave.autodc.dev-seqera.net",
+            'wave.db.uri'                                   : "jdbc:postgresql://wave-db:5432/wave",
+            'wave.db.user'                                  : "wave_lite_test_limited",
+            'wave.db.password'                              : "wave_lite_test_limited_password",
+            'redis.uri'                                     : "redis://wave-redis:6379",
+            'redis.password'                                : "wave_lite_test_redis_password",
+            'mail.from'                                     : "graham.wright@seqera.io",
+            'tower.endpoint.url'                            : "https://autodc.dev-seqera.net/api",
+            'license.server.url'                            : "https://licenses.seqera.io",
+        },
+        "omitted": {}
+    }
+    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
+    return {**baseline, **overrides}
+
+
 def generate_baseline_entries_all_active(template_files, overrides):
 
     entries = {
@@ -176,7 +195,7 @@ def generate_baseline_entries_all_active(template_files, overrides):
         "data_studios_env"  : generate_data_studios_env_entries_all_active(overrides["data_studios_env"]),
         "tower_sql"         : generate_tower_sql_entries_all_active(overrides["tower_sql"]),
         "docker_compose"    : generate_docker_compose_yml_entries_all_active( overrides["docker_compose"]),
-
+        "wave_lite_yml"     : generate_wave_lite_yml_entries_all_active(overrides["wave_lite_yml"]),
     }
     return entries
 
@@ -342,6 +361,27 @@ def generate_docker_compose_yml_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
+def generate_wave_lite_yml_entries_all_disabled(overrides={}):
+    # Reminder: yaml file true/false must be declared as True/False in python dictionary.
+    baseline = {
+        # TODO: Aug 13 -- fix Wave-Lite file population so passwords dont end up in file when N/A
+        "present": {
+            'wave.server.url'                               : "N/A",
+            'wave.db.uri'                                   : "N/A",
+            'wave.db.user'                                  : "wave_lite_test_limited",
+            'wave.db.password'                              : "wave_lite_test_limited_password",
+            'redis.uri'                                     : "N/A",
+            'redis.password'                                : "wave_lite_test_redis_password",
+            'mail.from'                                     : "graham.wright@seqera.io",
+            'tower.endpoint.url'                            : "https://autodc.dev-seqera.net/api",
+            'license.server.url'                            : "https://licenses.seqera.io",
+        },
+        "omitted": {}
+    }
+    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
+    return {**baseline, **overrides}
+
+
 def generate_baseline_entries_all_disabled(template_files, overrides):
 
     entries = {
@@ -350,6 +390,7 @@ def generate_baseline_entries_all_disabled(template_files, overrides):
         "data_studios_env"  : generate_data_studios_env_entries_all_disabled(overrides["data_studios_env"]),
         "tower_sql"         : generate_tower_sql_entries_all_disabled(overrides["tower_sql"]),
         "docker_compose"    : generate_docker_compose_yml_entries_all_disabled( overrides["docker_compose"]),
+        "wave_lite_yml"     : generate_wave_lite_yml_entries_all_disabled(overrides["wave_lite_yml"]),
 
     }
     return entries

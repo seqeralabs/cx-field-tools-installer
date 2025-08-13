@@ -38,6 +38,7 @@ overrides_template = {
     "data_studios_env"  : {},
     "tower_sql"         : {},
     "docker_compose"    : {},
+    "wave_lite_yml"     : {},
 }
 
 file_targets_all = {
@@ -46,6 +47,7 @@ file_targets_all = {
     "data_studios_env"  : "kv",
     "tower_sql"         : "sql",
     "docker_compose"    : "yml",
+    "wave_lite_yml"     : "yml",
 }
 # REFERENCE: How to target a subset of files in each testcase versus full set."""
 # target_keys = ["docker_compose"]

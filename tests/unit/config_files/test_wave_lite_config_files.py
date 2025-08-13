@@ -153,50 +153,6 @@ def test_default_config_wave_lite_rds_sql(session_setup, config_baseline_setting
 @pytest.mark.config_keys
 @pytest.mark.vpc_existing
 @pytest.mark.long
-def test_default_config_wave_lite_yml(session_setup, config_baseline_settings_default):
-    """
-    Test the target wave-lite.yml generated from default test terraform.tfvars and base-override.auto.tfvars.
-    Tests only interpolated variables, not static configuration values.
-    """
-
-    # Given
-    tfvars = get_reconciled_tfvars()
-
-    # When
-    outputs = config_baseline_settings_default["planned_values"]["outputs"]
-    variables = config_baseline_settings_default["variables"]
-
-    wave_lite_yml_file = read_yaml(f"{root}/assets/target/wave_lite_config/wave-lite.yml")
-    ssm_data = read_json(ssm_wave_lite)
-
-    # ------------------------------------------------------------------------------------
-    # Test interpolated variables only
-    # ------------------------------------------------------------------------------------
-    # Wave server URL
-    assert wave_lite_yml_file["wave"]["server"]["url"] == outputs["tower_wave_url"]["value"]
-
-    # Database configuration
-    expected_db_uri = f"jdbc:postgresql://{outputs['wave_lite_db_dns']['value']}:5432/wave"
-    assert wave_lite_yml_file["wave"]["db"]["uri"] == expected_db_uri
-    assert wave_lite_yml_file["wave"]["db"]["user"] == ssm_data["WAVE_LITE_DB_LIMITED_USER"]["value"]
-    assert wave_lite_yml_file["wave"]["db"]["password"] == ssm_data["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]
-
-    # Redis configuration
-    assert wave_lite_yml_file["redis"]["uri"] == outputs["wave_lite_redis_url"]["value"]
-    assert wave_lite_yml_file["redis"]["password"] == ssm_data["WAVE_LITE_REDIS_AUTH"]["value"]
-
-    # Mail configuration
-    assert wave_lite_yml_file["mail"]["from"] == variables["tower_contact_email"]["value"]
-
-    # Tower endpoint
-    expected_tower_endpoint = f"{outputs['tower_server_url']['value']}/api"
-    assert wave_lite_yml_file["tower"]["endpoint"]["url"] == expected_tower_endpoint
-
-
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
 @pytest.mark.testcontainer
 def test_wave_lite_sql_files_with_postgres_container(session_setup, config_baseline_settings_default):
     """

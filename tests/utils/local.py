@@ -768,6 +768,8 @@ def assert_yaml_key_present(entries: dict, file):
             dataYamlPath = YAMLPath(k)
             for nodeCoordinate in processor.get_nodes(dataYamlPath, mustexist=True):
                 nodeData = NodeCoords.unwrap_node_coords(nodeCoordinate)
+                print(f"yaml_key{k}")
+                print(f"nodeData={str(nodeData)}")
                 assert str(nodeData) == str(v), f"Key {k} does not match Value {v}."
         except AssertionError as e:
             pytest.fail(f"Assertion failed for {k}: {str(e)}")
