@@ -62,12 +62,8 @@ file_targets_all = {
 @pytest.mark.container
 def test_baseline_all_enabled(session_setup):
     """
-    Baseline check of configuration.
-        - All services enabled (Wave Lite, Groundswell, Data Explorer, Studios)
-        - Use of machine identity whenever possible (SES).
-        - Use of HTTPS
-        - Use of container Redis & DB
-        - TODO: No OIDC (have not figured out how to configure in public yet -- maybe use pre-generated environment variables?)
+    Scenario:
+        - Baseline all enable: core terraform.tfvars + base-overrides.auto.tfvars
     """
 
     override_data = """
@@ -101,12 +97,8 @@ def test_baseline_all_enabled(session_setup):
 @pytest.mark.container
 def test_baseline_all_disabled(session_setup):
     """
-    Baseline check of configuration.
-        - All services disabled (Wave Lite, Groundswell, Data Explorer, Studios)
-        - No machine identity (SES).
-        - Use of HTTPS
-        - Use of container Redis & DB
-        - TODO: No OIDC (have not figured out how to configure in public yet -- maybe use pre-generated environment variables?)
+    Scenario:
+        - Baseline all disabled: core terraform.tfvars + base-overrides.auto.tfvars
     """
 
     override_data = """
@@ -139,7 +131,6 @@ def test_baseline_all_disabled(session_setup):
         assert_present_and_omitted(entries, file, type)
 
 
-
 ## ------------------------------------------------------------------------------------
 ## MARK: Studios: Path Routing
 ## ------------------------------------------------------------------------------------
@@ -147,11 +138,9 @@ def test_baseline_all_disabled(session_setup):
 @pytest.mark.studios
 def test_studio_path_routing_enabled(session_setup):
     """
-    Confirm configurations when Studio active and path-routing enabled.
-    Requires Studios to be active so use 'generate_baseline_entries_all_active'.
-    Affects files: 
-        - tower.env
-        - data_studios.env
+    Scenario:
+        - Baseline all enabled.
+        - Studios path-routing enabled.
     """
 
     override_data = """
@@ -202,9 +191,9 @@ def test_studio_path_routing_enabled(session_setup):
 @pytest.mark.private_ca
 def test_private_ca_reverse_proxy_active(session_setup):
     """
-    Confirm configurations when Private CA cert must be served by local reverse-proxy.
-    Affects files: 
-        - docker-compose.yml
+    Scenario:
+        - Baseline all enabled.
+        - Reverseproxy with self-signed private CA active.
     """
 
     override_data = """
@@ -246,12 +235,9 @@ def test_private_ca_reverse_proxy_active(session_setup):
 @pytest.mark.db_new
 def test_new_db_all_enabled(session_setup):
     """
-    Baseline check of configuration.
-        - All services enabled (Wave Lite, Groundswell, Data Explorer, Studios)
-        - Use of machine identity whenever possible (SES).
-        - Use of HTTPS
-        - Use of container Redis & DB
-        - TODO: No OIDC (have not figured out how to configure in public yet -- maybe use pre-generated environment variables?)
+    Scenario:
+        - Baseline all enabled.
+        - New RDS active.
     """
 
     override_data = """
@@ -308,12 +294,9 @@ def test_new_db_all_enabled(session_setup):
 @pytest.mark.db_new
 def test_new_db_all_disabled(session_setup):
     """
-    Baseline check of configuration.
-        - All services disabled (Wave Lite, Groundswell, Data Explorer, Studios)
-        - No machine identity (SES).
-        - Use of HTTPS
-        - Use of container Redis & DB
-        - TODO: No OIDC (have not figured out how to configure in public yet -- maybe use pre-generated environment variables?)
+    Scenario:
+        - Baseline all disabled.
+        - New RDS active.
     """
 
     override_data = """
@@ -375,12 +358,9 @@ def test_new_db_all_disabled(session_setup):
 @pytest.mark.db_existing
 def test_existing_db_all_enabled(session_setup):
     """
-    Baseline check of configuration.
-        - All services enabled (Wave Lite, Groundswell, Data Explorer, Studios)
-        - Use of machine identity whenever possible (SES).
-        - Use of HTTPS
-        - Use of container Redis & DB
-        - TODO: No OIDC (have not figured out how to configure in public yet -- maybe use pre-generated environment variables?)
+    Scenario:
+        - Baseline all enabled.
+        - Existing RDS active.
     """
 
     override_data = """
@@ -434,18 +414,15 @@ def test_existing_db_all_enabled(session_setup):
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: New DB: All Disabled
+## MARK: Existing DB: All Disabled
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.db_existing
 def test_existing_db_all_disabled(session_setup):
     """
-    Baseline check of configuration.
-        - All services disabled (Wave Lite, Groundswell, Data Explorer, Studios)
-        - No machine identity (SES).
-        - Use of HTTPS
-        - Use of container Redis & DB
-        - TODO: No OIDC (have not figured out how to configure in public yet -- maybe use pre-generated environment variables?)
+    Scenario:
+        - Baseline all disabled.
+        - Existing RDS active.
     """
 
     override_data = """
@@ -508,12 +485,9 @@ def test_existing_db_all_disabled(session_setup):
 @pytest.mark.redis_external
 def test_new_redis_all_enabled(session_setup):
     """
-    Baseline check of configuration.
-        - All services enabled (Wave Lite, Groundswell, Data Explorer, Studios)
-        - Use of machine identity whenever possible (SES).
-        - Use of HTTPS
-        - Use of container Redis & DB
-        - TODO: No OIDC (have not figured out how to configure in public yet -- maybe use pre-generated environment variables?)
+    Scenario:
+        - Baseline all enabled.
+        - Elasticache Redis active.
     """
 
     override_data = """
@@ -569,12 +543,9 @@ def test_new_redis_all_enabled(session_setup):
 @pytest.mark.redis_external
 def test_new_redis_all_disabled(session_setup):
     """
-    Baseline check of configuration.
-        - All services disabled (Wave Lite, Groundswell, Data Explorer, Studios)
-        - No machine identity (SES).
-        - Use of HTTPS
-        - Use of container Redis & DB
-        - TODO: No OIDC (have not figured out how to configure in public yet -- maybe use pre-generated environment variables?)
+    Scenario:
+        - Baseline all disabled.
+        - Elasticache Redis active.
     """
 
     override_data = """
@@ -615,6 +586,64 @@ def test_new_redis_all_disabled(session_setup):
     overrides["wave_lite_yml"]= {
         "present": {
             'redis.uri'                      : "N/A",
+        },
+        "omitted": {}
+    }
+    baseline_all_entries = generate_baseline_entries_all_disabled(test_template_files, overrides)
+
+    # ------------------------------------------------------------------------------------
+    # Test files
+    # ------------------------------------------------------------------------------------
+    keys = file_targets_all
+    
+    for key, type in keys.items():
+        print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+        file = test_template_files[key]["content"]
+        entries = baseline_all_entries[key]
+        assert_present_and_omitted(entries, file, type)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Seqera Wave: Active
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.wave
+def test_seqera_hosted_wave_active(session_setup):
+    """
+    Scenario:
+        - Baseline all disabled.
+        - Seqera-hosted Wave active.
+    """
+
+    override_data = """
+        flag_use_aws_ses_iam_integration    = false
+        flag_use_existing_smtp              = true
+        flag_enable_groundswell             = false
+        flag_data_explorer_enabled          = false
+        flag_enable_data_studio             = false
+        # flag_use_wave                     = false
+        flag_use_wave_lite                  = false
+
+        flag_use_wave                       = true
+        wave_server_url                     = "wave.seqera.io"
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    plan = prepare_plan(override_data)
+
+    needed_template_files = all_template_files
+    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+
+    overrides = deepcopy(overrides_template)
+    overrides["tower_env"]= {
+        "present": {
+            "WAVE_SERVER_URL"                : "https://wave.seqera.io",
+        },
+        "omitted": {}
+    }
+
+    overrides["wave_lite_yml"]= {
+        "present": {
+            'wave.server.url'                : "https://wave.seqera.io",
         },
         "omitted": {}
     }
