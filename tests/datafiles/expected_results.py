@@ -203,6 +203,17 @@ def generate_baseline_entries_all_active(template_files, overrides):
 ## ------------------------------------------------------------------------------------
 ## MARK: Config - All Disabled
 ## ------------------------------------------------------------------------------------
+"""
+# Trigger these settings with the following TF overrides set:
+    flag_use_aws_ses_iam_integration    = false
+    flag_use_existing_smtp              = true
+    flag_enable_groundswell             = false
+    flag_data_explorer_enabled          = false
+    flag_enable_data_studio             = false
+    flag_use_wave                       = false
+    flag_use_wave_lite                  = false
+"""
+
 def generate_tower_env_entries_all_disabled(overrides={}):
     baseline = {
         "present": {
