@@ -10,7 +10,7 @@ import urllib.error
 
 from tests.utils.local import root, test_tfvars_target, test_tfvars_override_target, test_case_override_target
 from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
-from tests.utils.local import parse_key_value_file, read_file, read_yaml, read_json
+from tests.utils.local import parse_key_value_file, read_file, read_yaml, read_json, write_file
 from tests.utils.local import get_reconciled_tfvars
 
 from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
@@ -21,132 +21,53 @@ from testcontainers.postgres import PostgresContainer
 from tests.utils.docker_compose import prepare_wave_only_docker_compose
 from tests.utils.local import test_docker_compose_file
 
+from tests.utils.local import root
+from pathlib import Path
+import shutil
 ## ------------------------------------------------------------------------------------
 ## Wave Lite Config File Checks
 ## ------------------------------------------------------------------------------------
 # NOTE: To avoid creating VPC assets, use an existing VPC in the account the AWS provider is configured to use.
 
-
 @pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_default_config_wave_lite_container_1_sql(session_setup, config_baseline_settings_default):
+@pytest.mark.wave
+def test_wave_sql_files(session_setup):
     """
-    Test the target wave-lite-container-1.sql generated from default test terraform.tfvars and base-override.auto.tfvars.
+    Scenario:
+        - Does not use baseline terraform variables or `terraform template`
+        - Copy original .sql files from source to test location, process via sedalternative.py.
+        - Compare transformed files vs pre-transformed test references in `tests/datafiles/expected_results/expected_sql/`
     """
+    # Copy source to test target so sedalternative.py can modify in place.
+    test_root             = "/tmp/cx-testing/wave"
+    source_root           = f"{root}/assets/src/wave_lite_config/"
+    script_path           = f"{root}/scripts/installer/utils/sedalternative.py"
 
-    # Given
-    tfvars = get_reconciled_tfvars()
+    Path(test_root).mkdir(parents=True, exist_ok=True)
+    shutil.copy(f"{source_root}/wave-lite-container-1.sql", f"{test_root}/wave-lite-container-1.sql")
+    shutil.copy(f"{source_root}/wave-lite-container-2.sql", f"{test_root}/wave-lite-container-2.sql")
+    shutil.copy(f"{source_root}/wave-lite-rds.sql", f"{test_root}/wave-lite-rds.sql")
 
-    # Get values for comparison
-    ssm_data = read_json(ssm_wave_lite)
-    sql_content = read_file(f"{root}/assets/target/wave_lite_config/wave-lite-container-1.sql")
+    command = f"python3 {script_path} wave_lite_test_limited wave_lite_test_limited_password {test_root}"
+    subprocess.run(
+        command,
+        shell=True,
+        text=True,
+        capture_output=False,
+    )
 
-    # Get expected values
-    expected_user = ssm_data["WAVE_LITE_DB_LIMITED_USER"]["value"]
-    expected_password = ssm_data["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]
+    wave_lite_container_1 = read_file(f"{test_root}/wave-lite-container-1.sql")
+    wave_lite_container_2 = read_file(f"{test_root}/wave-lite-container-2.sql")
+    wave_lite_rds         = read_file(f"{test_root}/wave-lite-rds.sql")
 
-    # ------------------------------------------------------------------------------------
-    # Test wave-lite-container-1.sql - validate all interpolated variables are properly replaced
-    # ------------------------------------------------------------------------------------
+    ref_root                  = f"{root}/tests/datafiles/expected_results/expected_sql"
+    ref_wave_lite_container_1 = read_file(f"{ref_root}/wave-lite-container-1.sql")
+    ref_wave_lite_container_2 = read_file(f"{ref_root}/wave-lite-container-2.sql")
+    ref_wave_lite_rds         = read_file(f"{ref_root}/wave-lite-rds.sql")
 
-    # Verify PostgreSQL user creation with conditional logic
-    assert f"WHERE rolname = '{expected_user}'" in sql_content
-    assert f"CREATE ROLE {expected_user} LOGIN PASSWORD '{expected_password}'" in sql_content
-
-    # Verify database creation
-    assert "CREATE DATABASE wave" in sql_content
-    assert "WHERE datname = 'wave'" in sql_content
-
-    # Ensure no placeholder values remain
-    assert "replace_me_wave_lite_db_limited_user" not in sql_content
-    assert "replace_me_wave_lite_db_limited_password" not in sql_content
-
-
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_default_config_wave_lite_container_2_sql(session_setup, config_baseline_settings_default):
-    """
-    Test the target wave-lite-container-2.sql generated from default test terraform.tfvars and base-override.auto.tfvars.
-    """
-
-    # Given
-    tfvars = get_reconciled_tfvars()
-
-    # Get values for comparison
-    ssm_data = read_json(ssm_wave_lite)
-    sql_content = read_file(f"{root}/assets/target/wave_lite_config/wave-lite-container-2.sql")
-
-    # Get expected values
-    expected_user = ssm_data["WAVE_LITE_DB_LIMITED_USER"]["value"]
-
-    # ------------------------------------------------------------------------------------
-    # Test wave-lite-container-2.sql - validate all interpolated variables are properly replaced
-    # ------------------------------------------------------------------------------------
-
-    # Verify GRANT statements contain correct username
-    assert f"GRANT ALL PRIVILEGES ON DATABASE wave TO {expected_user}" in sql_content
-    assert f"GRANT ALL ON SCHEMA public TO {expected_user}" in sql_content
-    assert f"GRANT ALL ON ALL TABLES IN SCHEMA public TO {expected_user}" in sql_content
-    assert f"GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO {expected_user}" in sql_content
-
-    # Verify database connection command
-    assert "\\c wave" in sql_content
-
-    # Ensure no placeholder values remain
-    assert "replace_me_wave_lite_db_limited_user" not in sql_content
-    assert "replace_me_wave_lite_db_limited_password" not in sql_content
-
-
-@pytest.mark.local
-@pytest.mark.config_keys
-@pytest.mark.vpc_existing
-@pytest.mark.long
-def test_default_config_wave_lite_rds_sql(session_setup, config_baseline_settings_default):
-    """
-    Test the target wave-lite-rds.sql generated from default test terraform.tfvars and base-override.auto.tfvars.
-    """
-
-    # Given
-    tfvars = get_reconciled_tfvars()
-
-    # Get values for comparison
-    ssm_data = read_json(ssm_wave_lite)
-    sql_content = read_file(f"{root}/assets/target/wave_lite_config/wave-lite-rds.sql")
-
-    # Get expected values
-    expected_user = ssm_data["WAVE_LITE_DB_LIMITED_USER"]["value"]
-    expected_password = ssm_data["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]
-
-    # ------------------------------------------------------------------------------------
-    # Test wave-lite-rds.sql - validate all interpolated variables are properly replaced
-    # ------------------------------------------------------------------------------------
-
-    # Verify RDS-specific user creation with \gexec syntax
-    assert f"CREATE ROLE {expected_user} LOGIN PASSWORD ''{expected_password}''" in sql_content
-    assert f"WHERE rolname = '{expected_user}'" in sql_content
-    assert "\\gexec" in sql_content
-
-    # Verify database creation with \gexec syntax
-    assert "CREATE DATABASE wave" in sql_content
-    assert "WHERE datname = 'wave'" in sql_content
-
-    # Verify permissions and privileges
-    assert f"GRANT ALL PRIVILEGES ON DATABASE wave TO {expected_user}" in sql_content
-    assert f"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO {expected_user}" in sql_content
-    assert f"GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO {expected_user}" in sql_content
-    assert f"GRANT USAGE, CREATE ON SCHEMA public TO {expected_user}" in sql_content
-    assert f"GRANT ALL PRIVILEGES ON TABLES TO {expected_user}" in sql_content
-
-    # Verify database connection command
-    assert "\\c wave" in sql_content
-
-    # Ensure no placeholder values remain
-    assert "replace_me_wave_lite_db_limited_user" not in sql_content
-    assert "replace_me_wave_lite_db_limited_password" not in sql_content
+    assert ref_wave_lite_container_1 == wave_lite_container_1
+    assert ref_wave_lite_container_2 == wave_lite_container_2
+    assert ref_wave_lite_rds == wave_lite_rds
 
 
 @pytest.mark.local
