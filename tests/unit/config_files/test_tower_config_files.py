@@ -243,7 +243,6 @@ def test_private_ca_reverse_proxy_active(session_setup):
 ## MARK: New DB: All Active
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
-@pytest.mark.container
 @pytest.mark.db_new
 def test_new_db_all_enabled(session_setup):
     """
@@ -306,7 +305,6 @@ def test_new_db_all_enabled(session_setup):
 ## MARK: New DB: All Disabled
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
-@pytest.mark.container
 @pytest.mark.db_new
 def test_new_db_all_disabled(session_setup):
     """
@@ -374,7 +372,6 @@ def test_new_db_all_disabled(session_setup):
 ## MARK: Existing DB: All Active
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
-@pytest.mark.container
 @pytest.mark.db_existing
 def test_existing_db_all_enabled(session_setup):
     """
@@ -440,7 +437,6 @@ def test_existing_db_all_enabled(session_setup):
 ## MARK: New DB: All Disabled
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
-@pytest.mark.container
 @pytest.mark.db_existing
 def test_existing_db_all_disabled(session_setup):
     """
@@ -489,6 +485,137 @@ def test_existing_db_all_disabled(session_setup):
     # No need for custom overrides -- core testcase handles this one.
     overrides["wave_lite_yml"]= {
         "present": {},
+        "omitted": {}
+    }
+    baseline_all_entries = generate_baseline_entries_all_disabled(test_template_files, overrides)
+
+    # ------------------------------------------------------------------------------------
+    # Test files
+    # ------------------------------------------------------------------------------------
+    keys = file_targets_all
+    
+    for key, type in keys.items():
+        print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+        file = test_template_files[key]["content"]
+        entries = baseline_all_entries[key]
+        assert_present_and_omitted(entries, file, type)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: New Redis: All Active
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.redis_external
+def test_new_redis_all_enabled(session_setup):
+    """
+    Baseline check of configuration.
+        - All services enabled (Wave Lite, Groundswell, Data Explorer, Studios)
+        - Use of machine identity whenever possible (SES).
+        - Use of HTTPS
+        - Use of container Redis & DB
+        - TODO: No OIDC (have not figured out how to configure in public yet -- maybe use pre-generated environment variables?)
+    """
+
+    override_data = """
+        flag_create_external_redis                      = true
+        flag_use_container_redis                        = false
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    plan = prepare_plan(override_data)
+
+    needed_template_files = all_template_files
+    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+
+    overrides = deepcopy(overrides_template)
+    overrides["tower_env"]= {
+        "present": {
+            "TOWER_REDIS_URL"                : "redis://mock.tower-redis.com:6379",
+        },
+        "omitted": {}
+    }
+
+    overrides["data_studios_env"]= {
+        "present": {
+            "CONNECT_REDIS_ADDRESS"          : "mock.tower-redis.com:6379",
+        },
+        "omitted": {}
+    }
+
+    overrides["wave_lite_yml"]= {
+        "present": {
+            'redis.uri'                      : "rediss://mock.wave-redis.com:6379",
+        },
+        "omitted": {}
+    }
+
+    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
+
+    # ------------------------------------------------------------------------------------
+    # Test files
+    # ------------------------------------------------------------------------------------
+    keys = file_targets_all
+    
+    for key, type in keys.items():
+        print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+        file = test_template_files[key]["content"]
+        entries = baseline_all_entries[key]
+        assert_present_and_omitted(entries, file, type)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: New Redis: All Disabled
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.redis_external
+def test_new_redis_all_disabled(session_setup):
+    """
+    Baseline check of configuration.
+        - All services disabled (Wave Lite, Groundswell, Data Explorer, Studios)
+        - No machine identity (SES).
+        - Use of HTTPS
+        - Use of container Redis & DB
+        - TODO: No OIDC (have not figured out how to configure in public yet -- maybe use pre-generated environment variables?)
+    """
+
+    override_data = """
+        flag_use_aws_ses_iam_integration    = false
+        flag_use_existing_smtp              = true
+        flag_enable_groundswell             = false
+        flag_data_explorer_enabled          = false
+        flag_enable_data_studio             = false
+        flag_use_wave                       = false
+        flag_use_wave_lite                  = false
+
+        flag_create_external_redis          = true
+        flag_use_container_redis            = false
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    plan = prepare_plan(override_data)
+
+    needed_template_files = all_template_files
+    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+
+    overrides = deepcopy(overrides_template)
+    overrides["tower_env"]= {
+        "present": {
+            "TOWER_REDIS_URL"                : "redis://mock.tower-redis.com:6379",
+        },
+        "omitted": {}
+    }
+
+    # When disabled, none of the settings are present other than comment explaining why.
+    # TODO: Harmonize behaviour with other files like Groundswell / Wave-Lite.
+    overrides["data_studios_env"]= {
+        "present": {},
+        "omitted": {
+            "CONNECT_REDIS_ADDRESS"          : "N/A",
+        }
+    }
+
+    overrides["wave_lite_yml"]= {
+        "present": {
+            'redis.uri'                      : "N/A",
+        },
         "omitted": {}
     }
     baseline_all_entries = generate_baseline_entries_all_disabled(test_template_files, overrides)
