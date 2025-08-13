@@ -58,6 +58,8 @@ file_targets_all = {
 ## ------------------------------------------------------------------------------------
 ## MARK: Baseline: All Active
 ## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.container
 def test_baseline_all_enabled(session_setup):
     """
     Baseline check of configuration.
