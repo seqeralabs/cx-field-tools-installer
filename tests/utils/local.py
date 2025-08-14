@@ -614,14 +614,40 @@ def generate_interpolated_templatefiles(hash, namespaces, template_files: dict, 
     folder_path.mkdir(parents=True, exist_ok=True)
 
     templatefile_cache_dir_hash = f"{templatefile_cache_dir}/{hash}"
+    sql_exception_files = ["wave-lite-container-1", "wave-lite-container-2", "wave-lite-rds"]
+
+    # Create a mapping document
+    with open(f"{templatefile_cache_dir}/mappings", "a") as f:
+        f.write(f"{testcase_name}: {hash}\n")
 
     for k,v in template_files.items():
+        if k in sql_exception_files:
+            continue
         content = generate_interpolated_templatefile(k, v["extension"], v["read_type"], namespaces, templatefile_cache_dir_hash)
         template_files[k]["content"] = content
-        
-        # Create a mapping document
-        with open(f"{templatefile_cache_dir}/mappings", "a") as f:
-            f.write(f"{testcase_name}: {hash}\n")
+
+    # Edgecase: Wave-Lite SQL (not .tpl due to postgres single-quote needs).
+    # Cant use `terraform template`. Use copy and conversion method instead.
+    if any(k in template_files.keys() for k in sql_exception_files):
+        source_dir            = Path(f"{root}/assets/src/wave_lite_config/")
+        script_path           = f"{root}/scripts/installer/utils/sedalternative.py"
+
+        for sql_file in source_dir.glob('*.sql'):
+            shutil.copy(sql_file, templatefile_cache_dir_hash)
+
+        # Hardcoded -- not sure I love this.
+        command = f"python3 {script_path} wave_lite_test_limited wave_lite_test_limited_password {templatefile_cache_dir_hash}"
+        subprocess.run(
+            command,
+            shell=True,
+            text=True,
+            capture_output=False,
+        )
+
+        template_files["wave-lite-container-1"]["content"] = read_file(f"{templatefile_cache_dir_hash}/wave-lite-container-1.sql")
+        template_files["wave-lite-container-2"]["content"] = read_file(f"{templatefile_cache_dir_hash}/wave-lite-container-2.sql")
+        template_files["wave-lite-rds"]["content"]         = read_file(f"{templatefile_cache_dir_hash}/wave-lite-rds.sql")
+
 
     return template_files
 
@@ -725,6 +751,22 @@ all_template_files = {
     },
     "private_ca_conf": {
         "extension" : ".conf", 
+        "read_type" : read_file,
+        "content"   : ""
+    },
+    # TESTING
+    "wave-lite-container-1": {
+        "extension" : ".sql", 
+        "read_type" : read_file,
+        "content"   : ""
+    },
+    "wave-lite-container-2": {
+        "extension" : ".sql", 
+        "read_type" : read_file,
+        "content"   : ""
+    },
+    "wave-lite-rds": {
+        "extension" : ".sql", 
         "read_type" : read_file,
         "content"   : ""
     },

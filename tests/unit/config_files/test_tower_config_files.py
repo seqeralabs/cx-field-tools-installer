@@ -33,21 +33,28 @@ from testcontainers.mysql import MySqlContainer
 
 
 overrides_template = {
-    "tower_env"         : {},
-    "tower_yml"         : {},
-    "data_studios_env"  : {},
-    "tower_sql"         : {},
-    "docker_compose"    : {},
-    "wave_lite_yml"     : {},
+    "tower_env"                 : {},
+    "tower_yml"                 : {},
+    "data_studios_env"          : {},
+    "tower_sql"                 : {},
+    "docker_compose"            : {},
+    "wave_lite_yml"             : {},
+    # "wave-lite-container-1"     : {},
+    # "wave-lite-container-1"     : {},
+    # "wave-lite-rds"             : {},
 }
 
 file_targets_all = {
-    "tower_env"         : "kv",
-    "tower_yml"         : "yml",
-    "data_studios_env"  : "kv",
-    "tower_sql"         : "sql",
-    "docker_compose"    : "yml",
-    "wave_lite_yml"     : "yml",
+    "tower_env"                 : "kv",
+    "tower_yml"                 : "yml",
+    "data_studios_env"          : "kv",
+    "tower_sql"                 : "sql",
+    "docker_compose"            : "yml",
+    "wave_lite_yml"             : "yml",
+    "wave-lite-container-1"     : "sql",
+    "wave-lite-container-2"     : "sql",
+    "wave-lite-rds"             : "sql",
+
 }
 # REFERENCE: How to target a subset of files in each testcase versus full set."""
 # target_keys = ["docker_compose"]
