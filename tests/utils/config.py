@@ -1,0 +1,144 @@
+from pathlib import Path
+
+from tests.utils.filehandling import read_json, read_yaml, read_file
+from tests.utils.filehandling import write_file, move_file, copy_file
+from tests.utils.filehandling import parse_key_value_file
+
+
+## ------------------------------------------------------------------------------------
+## Universal Configuration
+## ------------------------------------------------------------------------------------
+# Assumes this file lives at 3rd layer of project (i.e. PROJECT_ROOT/tests/utils/local.py)
+root = str(Path(__file__).parent.parent.parent.resolve())
+
+# Tfvars and override files filepaths
+tfvars_path                         = f"{root}/terraform.tfvars"
+tfvars_backup_path                  = f"{root}/terraform.tfvars.backup"
+
+test_tfvars_source                  = f"{root}/tests/datafiles/terraform.tfvars"
+test_tfvars_target                  = f"{root}/terraform.tfvars"
+test_tfvars_override_source         = f"{root}/tests/datafiles/base-overrides.auto.tfvars"
+test_tfvars_override_target         = f"{root}/base-overrides.auto.tfvars"
+
+test_case_override_target           = f"{root}/override.auto.tfvars"
+test_case_override_outputs_source   = f"{root}/tests/datafiles/012_testing_outputs.tf"
+test_case_override_outputs_target   = f"{root}/012_testing_outputs.tf"
+
+test_docker_compose_file            = f"/tmp/cx-testing-docker-compose.yml"
+
+# SSM (testing) secrets
+ssm_tower                           = f"{root}/tests/datafiles/ssm_sensitive_values_tower_testing.json"
+ssm_groundswell                     = f"{root}/tests/datafiles/ssm_sensitive_values_groundswell_testing.json"
+ssm_seqerakit                       = f"{root}/tests/datafiles/ssm_sensitive_values_seqerakit_testing.json"
+ssm_wave_lite                       = f"{root}/tests/datafiles/ssm_sensitive_values_wave_lite_testing.json"
+
+# Tfplan files and caching folder
+plan_cache_dir                      = f"{root}/tests/.plan_cache"
+
+test_case_tfplan_file               = f"{root}/tfplan"
+test_case_tfplan_json_file          = f"{root}/tfplan.json"
+
+templatefile_cache_dir              = f"{root}/tests/.templatefile_cache"
+
+all_template_files = {
+    "tower_env": {
+        "extension" : ".env", 
+        "read_type" : parse_key_value_file,
+        "content"   : ""
+    },
+    "tower_yml": {
+        "extension" : ".yml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    "tower_sql": {
+        "extension" : ".sql", 
+        "read_type" : read_file,
+        "content"   : ""
+    },
+    "groundswell_sql": {
+        "extension" : ".sql", 
+        "read_type" : read_file,
+        "content"   : ""
+    },
+    "groundswell_env": {
+        "extension" : ".env", 
+        "read_type" : parse_key_value_file,
+        "content"   : ""
+    },
+    "data_studios_env": {
+        "extension" : ".env", 
+        "read_type" : parse_key_value_file,
+        "content"   : ""
+    },
+    "wave_lite_yml": {
+        "extension" : ".yml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    "docker_compose": {
+        "extension" : ".yml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    "seqerakit_yml": {
+        "extension" : ".yml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    # TODO: aws_batch_manual
+    # TODO: aws_batch_forge
+    "cleanse_and_configure_host": {
+        "extension" : ".sh", 
+        "read_type" : read_file,
+        "content"   : ""
+    },
+    "ansible_02_update_file_configurations": {
+        "extension" : ".yml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    "ansible_03_pull_containers_and_run_tower": {
+        "extension" : ".yml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    "ansible_05_patch_groundswell": {
+        "extension" : ".yml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    "ansible_06_run_seqerakit": {
+        "extension" : ".yml", 
+        "read_type" : read_yaml,
+        "content"   : ""
+    },
+    # TODO: codecommit_seqerakit
+    # TODO: ssh_config
+    "docker_logging": {
+        "extension" : ".json", 
+        "read_type" : read_json,
+        "content"   : ""
+    },
+    "private_ca_conf": {
+        "extension" : ".conf", 
+        "read_type" : read_file,
+        "content"   : ""
+    },
+    # TESTING
+    "wave-lite-container-1": {
+        "extension" : ".sql", 
+        "read_type" : read_file,
+        "content"   : ""
+    },
+    "wave-lite-container-2": {
+        "extension" : ".sql", 
+        "read_type" : read_file,
+        "content"   : ""
+    },
+    "wave-lite-rds": {
+        "extension" : ".sql", 
+        "read_type" : read_file,
+        "content"   : ""
+    },
+}

@@ -27,6 +27,18 @@ from yamlpath.exceptions import YAMLPathException, UnmatchedYAMLPathException
 from yamlpath.wrappers import ConsolePrinter
 from yamlpath.wrappers import NodeCoords
 
+from tests.utils.config import root
+from tests.utils.config import tfvars_path
+from tests.utils.config import test_tfvars_source, test_tfvars_target
+from tests.utils.config import test_tfvars_override_source, test_tfvars_override_target
+from tests.utils.config import test_case_override_target, test_case_override_outputs_source, test_case_override_outputs_target
+from tests.utils.config import plan_cache_dir, templatefile_cache_dir
+from tests.utils.config import test_case_tfplan_file, test_case_tfplan_json_file
+
+from tests.utils.filehandling import read_json, read_yaml, read_file
+from tests.utils.filehandling import write_file, move_file, copy_file
+from tests.utils.filehandling import parse_key_value_file
+
 loggingArgs = SimpleNamespace(quiet=True, verbose=False, debug=False)
 logger = ConsolePrinter(loggingArgs)
 yamlParser = Parsers.get_yaml_editor()
@@ -58,124 +70,7 @@ Originally tried using [tftest](https://pypi.org/project/tftest/). Too complicat
 """
 
 
-## ------------------------------------------------------------------------------------
-## Universal Configuration
-## ------------------------------------------------------------------------------------
-# Assumes this file lives at 3rd layer of project (i.e. PROJECT_ROOT/tests/utils/local.py)
-root = str(Path(__file__).parent.parent.parent.resolve())
 
-# Tfvars and override files filepaths
-tfvars_path                         = f"{root}/terraform.tfvars"
-tfvars_backup_path                  = f"{root}/terraform.tfvars.backup"
-
-test_tfvars_source                  = f"{root}/tests/datafiles/terraform.tfvars"
-test_tfvars_target                  = f"{root}/terraform.tfvars"
-test_tfvars_override_source         = f"{root}/tests/datafiles/base-overrides.auto.tfvars"
-test_tfvars_override_target         = f"{root}/base-overrides.auto.tfvars"
-
-test_case_override_target           = f"{root}/override.auto.tfvars"
-test_case_override_outputs_source   = f"{root}/tests/datafiles/012_testing_outputs.tf"
-test_case_override_outputs_target   = f"{root}/012_testing_outputs.tf"
-                
-
-test_docker_compose_file  = f"/tmp/cx-testing-docker-compose.yml"
-
-# SSM (testing) secrets
-ssm_tower                           = f"{root}/tests/datafiles/ssm_sensitive_values_tower_testing.json"
-ssm_groundswell                     = f"{root}/tests/datafiles/ssm_sensitive_values_groundswell_testing.json"
-ssm_seqerakit                       = f"{root}/tests/datafiles/ssm_sensitive_values_seqerakit_testing.json"
-ssm_wave_lite                       = f"{root}/tests/datafiles/ssm_sensitive_values_wave_lite_testing.json"
-
-# Tfplan files and caching folder
-plan_cache_dir                      = f"{root}/tests/.plan_cache"
-
-test_case_tfplan_file               = f"{root}/tfplan"
-test_case_tfplan_json_file          = f"{root}/tfplan.json"
-
-templatefile_cache_dir            = f"{root}/tests/.templatefile_cache"
-
-
-## ------------------------------------------------------------------------------------
-## File Utility Functions
-## ------------------------------------------------------------------------------------
-def read_json(file_path: str) -> dict:
-    """Read a JSON plan file."""
-    with open(file_path, "r") as f:
-        return json.load(f)
-
-
-def read_yaml(file_path: str) -> Any:
-    """Read a JSON plan file."""
-    with open(file_path, "r") as f:
-        return yaml.safe_load(f)
-
-
-def read_file(file_path: str) -> str:
-    """Read a file."""
-    with open(file_path, "r") as f:
-        return f.read()
-
-
-def write_file(file_path: str, content: str | bytes) -> None:
-    """Write content to a file."""
-    if isinstance(content, bytes):
-        content = content.decode("utf-8")
-    with open(file_path, "w") as f:
-        f.write(content)
-
-
-def move_file(source: str, target: str) -> None:
-    """Move a file."""
-    try:
-        shutil.move(source, target)
-    except FileNotFoundError as e:
-        print(f"File not found: {e}")
-        sys.exit(1)
-
-
-def copy_file(source: str, target: str) -> None:
-    """Move a file."""
-    try:
-        shutil.copy2(source, target)
-    except FileNotFoundError as e:
-        print(f"File not found: {e}")
-        sys.exit(1)
-
-
-def parse_key_value_file(file_path: str) -> Dict[str, Any]:
-    """Parse a file containing KEY=VALUE pairs. Function intended to be used with tfvars files.
-
-    Args:
-        file_path: Path to the file to parse
-
-    Returns:
-        Dictionary containing key-value pairs
-
-    NOTE:
-        Double-quotes / single-quottes as part of string messes up pytest string assertions. Remove these to normalize.
-        Terraform always hasd double-quotes.
-        Env files can be either double-quotes or single-quotes.
-    """
-    result = {}
-    raw = read_file(file_path)
-
-    for line in raw.splitlines():
-        line = line.strip()
-        if line and "=" in line:
-            key, value = line.split("=", 1)
-            value = value.strip()
-
-            # Edgecase: Empty strings represented by "" or '' but this confuses python (e.g. '""')
-            if (value == '""') or (value == "''"):
-                value = ""
-            elif value.startswith("'") and value.endswith("'"):
-                value = value.strip("'")
-            elif value.startswith('"') and value.endswith('"'):
-                value = value.strip('"')
-
-            result[key.strip()] = value.strip()
-
-    return result
 
 
 ## ------------------------------------------------------------------------------------

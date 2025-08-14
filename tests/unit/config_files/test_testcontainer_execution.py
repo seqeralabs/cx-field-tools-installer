@@ -11,21 +11,26 @@ from copy import deepcopy
 
 from types import SimpleNamespace
 
-from tests.utils.local import root, test_tfvars_target, test_tfvars_override_target, test_case_override_target
+from tests.utils.config import root, test_tfvars_target, test_tfvars_override_target, test_case_override_target
+from tests.utils.config import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
+from tests.utils.config import templatefile_cache_dir, all_template_files
+
 from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
-from tests.utils.local import parse_key_value_file, read_file, read_yaml, read_json, write_file
 from tests.utils.local import get_reconciled_tfvars
 
-from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
-from tests.utils.local import templatefile_cache_dir
 
-from tests.utils.local import generate_namespaced_dictionaries, generate_interpolated_templatefiles, all_template_files
-from tests.utils.local import set_up_testcase
-from tests.utils.local import assert_present_and_omitted
+
+
+from tests.utils.local import generate_namespaced_dictionaries, generate_interpolated_templatefiles
+from tests.utils.local import set_up_testcase, assert_present_and_omitted
 
 from tests.datafiles.expected_results import generate_baseline_entries_all_active, generate_baseline_entries_all_disabled
 
 from testcontainers.mysql import MySqlContainer
+
+from tests.utils.filehandling import read_json, read_yaml, read_file
+from tests.utils.filehandling import write_file, move_file, copy_file
+from tests.utils.filehandling import parse_key_value_file
 
 
 # NOTE: To avoid creating VPC assets, use an existing VPC in the account the AWS provider is configured to use.

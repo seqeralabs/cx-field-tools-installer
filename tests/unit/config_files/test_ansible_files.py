@@ -4,14 +4,19 @@ import json
 import os
 import tempfile
 
-from tests.utils.local import root, test_tfvars_target, test_tfvars_override_target, test_case_override_target
+from tests.utils.config import root, test_tfvars_target, test_tfvars_override_target, test_case_override_target
+from tests.utils.config import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
+
 from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
-from tests.utils.local import parse_key_value_file, read_file, read_yaml, read_json
 from tests.utils.local import get_reconciled_tfvars
 
-from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
+
 
 from testcontainers.mysql import MySqlContainer
+
+from tests.utils.filehandling import read_json, read_yaml, read_file
+from tests.utils.filehandling import write_file, move_file, copy_file
+from tests.utils.filehandling import parse_key_value_file
 
 
 ## ------------------------------------------------------------------------------------

@@ -12,14 +12,15 @@ import pytest
 
 from scripts.installer.utils.purge_folders import delete_pycache_folders
 
-from tests.utils.local import root, tfvars_path, tfvars_backup_path
-from tests.utils.local import test_tfvars_source, test_tfvars_target
-from tests.utils.local import test_tfvars_override_source, test_tfvars_override_target
-from tests.utils.local import test_case_override_target
-from tests.utils.local import test_case_override_outputs_source, test_case_override_outputs_target
+from tests.utils.config import root, tfvars_path, tfvars_backup_path
+from tests.utils.config import test_tfvars_source, test_tfvars_target
+from tests.utils.config import test_tfvars_override_source, test_tfvars_override_target
+from tests.utils.config import test_case_override_target
+from tests.utils.config import test_case_override_outputs_source, test_case_override_outputs_target
+from tests.utils.config import root
 
-from tests.utils.local import root
-from tests.utils.local import copy_file, move_file
+from tests.utils.filehandling import copy_file, move_file
+
 from tests.utils.local import prepare_plan
 from tests.utils.local import run_terraform_apply, run_terraform_destroy
 from tests.utils.local import execute_subprocess

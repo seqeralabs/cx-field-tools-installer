@@ -8,22 +8,26 @@ import yaml
 import urllib.request
 import urllib.error
 
-from tests.utils.local import root, test_tfvars_target, test_tfvars_override_target, test_case_override_target
-from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
-from tests.utils.local import parse_key_value_file, read_file, read_yaml, read_json, write_file
-from tests.utils.local import get_reconciled_tfvars
+from tests.utils.config import root, test_tfvars_target, test_tfvars_override_target, test_case_override_target
+from tests.utils.config import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
+from tests.utils.config import test_docker_compose_file
 
-from tests.utils.local import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
+from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
+from tests.utils.local import get_reconciled_tfvar
 
 from testcontainers.compose import DockerCompose
 from testcontainers.postgres import PostgresContainer
 
 from tests.utils.docker_compose import prepare_wave_only_docker_compose
-from tests.utils.local import test_docker_compose_file
+
 
 from tests.utils.local import root
 from pathlib import Path
 import shutil
+
+from tests.utils.filehandling import read_json, read_yaml, read_file
+from tests.utils.filehandling import write_file, move_file, copy_file
+from tests.utils.filehandling import parse_key_value_file
 ## ------------------------------------------------------------------------------------
 ## Wave Lite Config File Checks
 ## ------------------------------------------------------------------------------------

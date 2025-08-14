@@ -12,7 +12,7 @@ import pytest
 from pathlib import Path
 
 from tests.utils.local import root
-from tests.utils.local import read_json
+from tests.utils.filehandling import read_json
 
 
 templates_dir = Path(root) / "templates"
