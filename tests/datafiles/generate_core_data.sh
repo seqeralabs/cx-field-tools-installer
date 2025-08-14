@@ -10,7 +10,7 @@ echo "generate_core_data.sh: Current directory is $PWD"
 # Removing existing files
 echo "Removing existing files."
 rm -f *.tfvars
-rm -f ssm_sensitive_values_*_testing.json
+rm -f secrets/ssm_sensitive_values_*_testing.json
 
 # Generate core terraform.tfvars file from template
 echo "Generating base terraform.tfvars file from templates/TEMPLATE_terraform.tfvars"

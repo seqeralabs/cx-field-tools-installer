@@ -21,7 +21,8 @@ def modify_all_ssm_json_for_testing():
 
     # Get the project root directory
     templates_dir = Path(root) / "templates"
-    test_data_dir = Path(root) / "tests" / "datafiles"
+    test_data_dir = Path(root) / "tests" / "datafiles" / "secrets"
+    Path(test_data_dir).mkdir(parents=True, exist_ok=True)
 
     # Find all SSM JSON files
     json_files = list(templates_dir.glob("ssm_sensitive_values_*.json"))

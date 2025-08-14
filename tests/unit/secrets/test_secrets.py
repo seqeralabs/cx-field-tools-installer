@@ -16,7 +16,7 @@ from tests.utils.filehandling import read_json
 
 
 templates_dir = Path(root) / "templates"
-test_data_dir = Path(root) / "tests" / "datafiles"
+test_data_dir = Path(root) / "tests" / "datafiles" / "secrets"
 json_files = list(templates_dir.glob("ssm_sensitive_values_*.json"))
 
 

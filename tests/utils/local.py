@@ -34,6 +34,7 @@ from tests.utils.config import test_tfvars_override_source, test_tfvars_override
 from tests.utils.config import test_case_override_target, test_case_override_outputs_source, test_case_override_outputs_target
 from tests.utils.config import plan_cache_dir, templatefile_cache_dir
 from tests.utils.config import test_case_tfplan_file, test_case_tfplan_json_file
+from tests.utils.config import secrets_dir
 
 from tests.utils.filehandling import read_json, read_yaml, read_file
 from tests.utils.filehandling import write_file, move_file, copy_file
@@ -286,16 +287,16 @@ def generate_namespaced_dictionaries(plan: dict) -> tuple:
     vars_dict = plan["variables"]
     outputs_dict = plan["planned_values"]["outputs"]
 
-    with open('tests/datafiles/ssm_sensitive_values_tower_testing.json', 'r') as f:
+    with open(f"{secrets_dir}/ssm_sensitive_values_tower_testing.json", 'r') as f:
         tower_secrets = json.load(f)
 
-    with open('tests/datafiles/ssm_sensitive_values_groundswell_testing.json', 'r') as f:
+    with open(f"{secrets_dir}/ssm_sensitive_values_groundswell_testing.json", 'r') as f:
         groundswell_secrets = json.load(f)
 
-    with open('tests/datafiles/ssm_sensitive_values_seqerakit_testing.json', 'r') as f:
+    with open(f"{secrets_dir}/ssm_sensitive_values_seqerakit_testing.json", 'r') as f:
         seqerakit_secrets = json.load(f)
 
-    with open('tests/datafiles/ssm_sensitive_values_wave_lite_testing.json', 'r') as f:
+    with open(f"{secrets_dir}/ssm_sensitive_values_wave_lite_testing.json", 'r') as f:
         wave_lite_secrets = json.load(f)
     
 

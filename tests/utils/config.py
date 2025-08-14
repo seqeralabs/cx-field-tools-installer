@@ -27,10 +27,11 @@ test_case_override_outputs_target   = f"{root}/012_testing_outputs.tf"
 test_docker_compose_file            = f"/tmp/cx-testing-docker-compose.yml"
 
 # SSM (testing) secrets
-ssm_tower                           = f"{root}/tests/datafiles/ssm_sensitive_values_tower_testing.json"
-ssm_groundswell                     = f"{root}/tests/datafiles/ssm_sensitive_values_groundswell_testing.json"
-ssm_seqerakit                       = f"{root}/tests/datafiles/ssm_sensitive_values_seqerakit_testing.json"
-ssm_wave_lite                       = f"{root}/tests/datafiles/ssm_sensitive_values_wave_lite_testing.json"
+secrets_dir                         = f"{root}/tests/datafiles/secrets"
+ssm_tower                           = f"{secrets_dir}/ssm_sensitive_values_tower_testing.json"
+ssm_groundswell                     = f"{secrets_dir}/ssm_sensitive_values_groundswell_testing.json"
+ssm_seqerakit                       = f"{secrets_dir}/ssm_sensitive_values_seqerakit_testing.json"
+ssm_wave_lite                       = f"{secrets_dir}/ssm_sensitive_values_wave_lite_testing.json"
 
 # Tfplan files and caching folder
 plan_cache_dir                      = f"{root}/tests/.plan_cache"
