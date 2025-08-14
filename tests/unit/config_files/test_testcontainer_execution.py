@@ -24,7 +24,7 @@ from tests.utils.local import get_reconciled_tfvars
 from tests.utils.local import generate_namespaced_dictionaries, generate_interpolated_templatefiles
 from tests.utils.local import set_up_testcase, assert_present_and_omitted
 
-from tests.datafiles.expected_results import generate_baseline_entries_all_active, generate_baseline_entries_all_disabled
+from tests.datafiles.expected_results.expected_results import generate_baseline_entries_all_active, generate_baseline_entries_all_disabled
 
 from testcontainers.mysql import MySqlContainer
 

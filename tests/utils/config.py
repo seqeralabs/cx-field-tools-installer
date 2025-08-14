@@ -39,6 +39,7 @@ test_case_tfplan_file               = f"{root}/tfplan"
 test_case_tfplan_json_file          = f"{root}/tfplan.json"
 
 templatefile_cache_dir              = f"{root}/tests/.templatefile_cache"
+expected_sql                        = f"{root}/tests/datafiles/expected_results/expected_sql"
 
 all_template_files = {
     "tower_env": {
@@ -126,17 +127,17 @@ all_template_files = {
         "content"   : ""
     },
     # TESTING
-    "wave-lite-container-1": {
+    "wave_lite_container_1": {
         "extension" : ".sql", 
         "read_type" : read_file,
         "content"   : ""
     },
-    "wave-lite-container-2": {
+    "wave_lite_container_2": {
         "extension" : ".sql", 
         "read_type" : read_file,
         "content"   : ""
     },
-    "wave-lite-rds": {
+    "wave_lite_rds": {
         "extension" : ".sql", 
         "read_type" : read_file,
         "content"   : ""

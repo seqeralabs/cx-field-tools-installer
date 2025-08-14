@@ -509,7 +509,7 @@ def generate_interpolated_templatefiles(hash, namespaces, template_files: dict, 
     folder_path.mkdir(parents=True, exist_ok=True)
 
     templatefile_cache_dir_hash = f"{templatefile_cache_dir}/{hash}"
-    sql_exception_files = ["wave-lite-container-1", "wave-lite-container-2", "wave-lite-rds"]
+    sql_exception_files = ["wave_lite_container_1", "wave_lite_container_2", "wave_lite_rds"]
 
     # Create a mapping document
     with open(f"{templatefile_cache_dir}/mappings", "a") as f:
@@ -539,9 +539,9 @@ def generate_interpolated_templatefiles(hash, namespaces, template_files: dict, 
             capture_output=False,
         )
 
-        template_files["wave-lite-container-1"]["content"] = read_file(f"{templatefile_cache_dir_hash}/wave-lite-container-1.sql")
-        template_files["wave-lite-container-2"]["content"] = read_file(f"{templatefile_cache_dir_hash}/wave-lite-container-2.sql")
-        template_files["wave-lite-rds"]["content"]         = read_file(f"{templatefile_cache_dir_hash}/wave-lite-rds.sql")
+        template_files["wave_lite_container_1"]["content"] = read_file(f"{templatefile_cache_dir_hash}/wave-lite-container-1.sql")
+        template_files["wave_lite_container_2"]["content"] = read_file(f"{templatefile_cache_dir_hash}/wave-lite-container-2.sql")
+        template_files["wave_lite_rds"]["content"]         = read_file(f"{templatefile_cache_dir_hash}/wave-lite-rds.sql")
 
 
     return template_files
@@ -562,110 +562,6 @@ def set_up_testcase(plan, needed_template_files, testcase_name):
 
     return test_template_files
 
-
-# Defined down here instead of up-top since I use helperfunctions 
-all_template_files = {
-    "tower_env": {
-        "extension" : ".env", 
-        "read_type" : parse_key_value_file,
-        "content"   : ""
-    },
-    "tower_yml": {
-        "extension" : ".yml", 
-        "read_type" : read_yaml,
-        "content"   : ""
-    },
-    "tower_sql": {
-        "extension" : ".sql", 
-        "read_type" : read_file,
-        "content"   : ""
-    },
-    "groundswell_sql": {
-        "extension" : ".sql", 
-        "read_type" : read_file,
-        "content"   : ""
-    },
-    "groundswell_env": {
-        "extension" : ".env", 
-        "read_type" : parse_key_value_file,
-        "content"   : ""
-    },
-    "data_studios_env": {
-        "extension" : ".env", 
-        "read_type" : parse_key_value_file,
-        "content"   : ""
-    },
-    "wave_lite_yml": {
-        "extension" : ".yml", 
-        "read_type" : read_yaml,
-        "content"   : ""
-    },
-    "docker_compose": {
-        "extension" : ".yml", 
-        "read_type" : read_yaml,
-        "content"   : ""
-    },
-    "seqerakit_yml": {
-        "extension" : ".yml", 
-        "read_type" : read_yaml,
-        "content"   : ""
-    },
-    # TODO: aws_batch_manual
-    # TODO: aws_batch_forge
-    "cleanse_and_configure_host": {
-        "extension" : ".sh", 
-        "read_type" : read_file,
-        "content"   : ""
-    },
-    "ansible_02_update_file_configurations": {
-        "extension" : ".yml", 
-        "read_type" : read_yaml,
-        "content"   : ""
-    },
-    "ansible_03_pull_containers_and_run_tower": {
-        "extension" : ".yml", 
-        "read_type" : read_yaml,
-        "content"   : ""
-    },
-    "ansible_05_patch_groundswell": {
-        "extension" : ".yml", 
-        "read_type" : read_yaml,
-        "content"   : ""
-    },
-    "ansible_06_run_seqerakit": {
-        "extension" : ".yml", 
-        "read_type" : read_yaml,
-        "content"   : ""
-    },
-    # TODO: codecommit_seqerakit
-    # TODO: ssh_config
-    "docker_logging": {
-        "extension" : ".json", 
-        "read_type" : read_json,
-        "content"   : ""
-    },
-    "private_ca_conf": {
-        "extension" : ".conf", 
-        "read_type" : read_file,
-        "content"   : ""
-    },
-    # TESTING
-    "wave-lite-container-1": {
-        "extension" : ".sql", 
-        "read_type" : read_file,
-        "content"   : ""
-    },
-    "wave-lite-container-2": {
-        "extension" : ".sql", 
-        "read_type" : read_file,
-        "content"   : ""
-    },
-    "wave-lite-rds": {
-        "extension" : ".sql", 
-        "read_type" : read_file,
-        "content"   : ""
-    },
-}
 
 ## ------------------------------------------------------------------------------------
 ## Helpers - Assertions
@@ -714,8 +610,11 @@ def assert_yaml_key_present(entries: dict, file):
 
 def assert_sql_key_present(entries: dict, file):
     """Confirm keys in provided dict are present in file."""
-    for k in entries.keys():
-        assert k in file, f"Key {k} sought but not found."
+    # for k in entries.keys():
+    #     assert k in file, f"Key {k} sought but not found."
+    reference = entries["payload"]
+    assert reference == file, f"SQL files did not match."
+
 
 
 def assert_kv_key_omitted(entries: dict, file):
@@ -751,10 +650,11 @@ def assert_yaml_key_omitted(entries: dict, file):
             list(processor.get_nodes(dataYamlPath, mustexist=True))
 
 
-def assert_sql_key_omitted(entries: dict, file):
-    """Confirm keys in provided dict are present in file."""
-    for k in entries.keys():
-        assert k in file, f"Key {k} should not be present but was found."
+# Omission test no longer required since I'm doing direct file comparison.
+# def assert_sql_key_omitted(entries: dict, file):
+#     """Confirm keys in provided dict are present in file."""
+#     for k in entries.keys():
+#         assert k in file, f"Key {k} should not be present but was found."
 
 
 def assert_present_and_omitted(entries: dict, file, type=None):
@@ -767,8 +667,9 @@ def assert_present_and_omitted(entries: dict, file, type=None):
         assert_yaml_key_present(entries["present"], file)
         assert_yaml_key_omitted(entries["omitted"], file)
     elif type == "sql":
+        print(entries)
         assert_sql_key_present(entries["present"], file)
-        assert_sql_key_omitted(entries["omitted"], file)
+        # assert_sql_key_omitted(entries["omitted"], file)
     elif type == "kv":
         assert_kv_key_present(entries["present"], file)
         assert_kv_key_omitted(entries["omitted"], file)

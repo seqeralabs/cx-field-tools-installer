@@ -24,7 +24,7 @@ from tests.utils.local import get_reconciled_tfvars
 from tests.utils.local import generate_namespaced_dictionaries, generate_interpolated_templatefiles
 from tests.utils.local import set_up_testcase, assert_present_and_omitted
 
-from tests.datafiles.expected_results import generate_baseline_entries_all_active, generate_baseline_entries_all_disabled
+from tests.datafiles.expected_results.expected_results import generate_baseline_entries_all_active, generate_baseline_entries_all_disabled
 
 from testcontainers.mysql import MySqlContainer
 
@@ -44,9 +44,9 @@ overrides_template = {
     "tower_sql"                 : {},
     "docker_compose"            : {},
     "wave_lite_yml"             : {},
-    # "wave-lite-container-1"     : {},
-    # "wave-lite-container-1"     : {},
-    # "wave-lite-rds"             : {},
+    "wave_lite_container_1"     : {},
+    "wave_lite_container_2"     : {},
+    "wave_lite_rds"             : {},
 }
 
 file_targets_all = {
@@ -56,9 +56,9 @@ file_targets_all = {
     "tower_sql"                 : "sql",
     "docker_compose"            : "yml",
     "wave_lite_yml"             : "yml",
-    "wave-lite-container-1"     : "sql",
-    "wave-lite-container-2"     : "sql",
-    "wave-lite-rds"             : "sql",
+    "wave_lite_container_1"     : "sql",
+    "wave_lite_container_2"     : "sql",
+    "wave_lite_rds"             : "sql",
 
 }
 # REFERENCE: How to target a subset of files in each testcase versus full set."""

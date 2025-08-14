@@ -9,6 +9,11 @@ Generate two sets of baseline value sets.
 import ast
 import json
 
+from tests.utils.filehandling import read_file
+
+from tests.utils.config import expected_sql
+
+
 ## ------------------------------------------------------------------------------------
 ## MARK: Config - All Active
 ## ------------------------------------------------------------------------------------
@@ -144,10 +149,7 @@ def generate_tower_sql_entries_all_active(overrides={}):
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
     baseline = {
         "present": {
-            f"""CREATE DATABASE tower;"""                                               : "n/a",
-            f"""ALTER DATABASE tower CHARACTER SET utf8 COLLATE utf8_bin;"""            : "n/a",
-            f"""CREATE USER "tower_test_user" IDENTIFIED BY "tower_test_password";"""   : "n/a",
-            f"""GRANT ALL PRIVILEGES ON tower.* TO tower_test_user@"%";"""              : "n/a"
+            'payload'                               : read_file(f"{expected_sql}/tower.sql"),
         },
         "omitted": {}
     }
@@ -187,15 +189,54 @@ def generate_wave_lite_yml_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
+def generate_wave_lite_container_1_entries_all_active(overrides={}):
+    # Reminder: yaml file true/false must be declared as True/False in python dictionary.
+    baseline = {
+        "present": {
+            'payload'                               : read_file(f"{expected_sql}/wave-lite-container-1.sql"),
+        },
+        "omitted": {}
+    }
+    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
+    return {**baseline, **overrides}
+
+
+def generate_wave_lite_container_2_entries_all_active(overrides={}):
+    # Reminder: yaml file true/false must be declared as True/False in python dictionary.
+    baseline = {
+        "present": {
+            'payload'                               : read_file(f"{expected_sql}/wave-lite-container-2.sql"),
+        },
+        "omitted": {}
+    }
+    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
+    return {**baseline, **overrides}
+
+
+def generate_wave_lite_rds_entries_all_active(overrides={}):
+    # Reminder: yaml file true/false must be declared as True/False in python dictionary.
+    baseline = {
+        "present": {
+            'payload'                               : read_file(f"{expected_sql}/wave-lite-rds.sql"),
+        },
+        "omitted": {}
+    }
+    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
+    return {**baseline, **overrides}
+
+
 def generate_baseline_entries_all_active(template_files, overrides):
 
     entries = {
-        "tower_env"         : generate_tower_env_entries_all_active(overrides["tower_env"]),
-        "tower_yml"         : generate_tower_yml_entries_all_active(overrides["tower_yml"]),
-        "data_studios_env"  : generate_data_studios_env_entries_all_active(overrides["data_studios_env"]),
-        "tower_sql"         : generate_tower_sql_entries_all_active(overrides["tower_sql"]),
-        "docker_compose"    : generate_docker_compose_yml_entries_all_active( overrides["docker_compose"]),
-        "wave_lite_yml"     : generate_wave_lite_yml_entries_all_active(overrides["wave_lite_yml"]),
+        "tower_env"             : generate_tower_env_entries_all_active(overrides["tower_env"]),
+        "tower_yml"             : generate_tower_yml_entries_all_active(overrides["tower_yml"]),
+        "data_studios_env"      : generate_data_studios_env_entries_all_active(overrides["data_studios_env"]),
+        "tower_sql"             : generate_tower_sql_entries_all_active(overrides["tower_sql"]),
+        "docker_compose"        : generate_docker_compose_yml_entries_all_active( overrides["docker_compose"]),
+        "wave_lite_yml"         : generate_wave_lite_yml_entries_all_active(overrides["wave_lite_yml"]),
+        "wave_lite_container_1" : generate_wave_lite_container_1_entries_all_active(overrides["wave_lite_container_1"]),
+        "wave_lite_container_2" : generate_wave_lite_container_2_entries_all_active(overrides["wave_lite_container_2"]),
+        "wave_lite_rds"         : generate_wave_lite_rds_entries_all_active(overrides["wave_lite_rds"]),
     }
     return entries
 
@@ -349,10 +390,7 @@ def generate_tower_sql_entries_all_disabled(overrides={}):
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
     baseline = {
         "present": {
-            f"""CREATE DATABASE tower;"""                                               : "n/a",
-            f"""ALTER DATABASE tower CHARACTER SET utf8 COLLATE utf8_bin;"""            : "n/a",
-            f"""CREATE USER "tower_test_user" IDENTIFIED BY "tower_test_password";"""   : "n/a",
-            f"""GRANT ALL PRIVILEGES ON tower.* TO tower_test_user@"%";"""              : "n/a"
+            'payload'                               : read_file(f"{expected_sql}/tower.sql"),
         },
         "omitted": {}
     }
@@ -393,15 +431,54 @@ def generate_wave_lite_yml_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
+def generate_wave_lite_container_1_entries_all_disabled(overrides={}):
+    # Reminder: yaml file true/false must be declared as True/False in python dictionary.
+    baseline = {
+        "present": {
+            'payload'                               : read_file(f"{expected_sql}/wave-lite-container-1.sql"),
+        },
+        "omitted": {}
+    }
+    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
+    return {**baseline, **overrides}
+
+
+def generate_wave_lite_container_2_entries_all_disabled(overrides={}):
+    # Reminder: yaml file true/false must be declared as True/False in python dictionary.
+    baseline = {
+        "present": {
+            'payload'                               : read_file(f"{expected_sql}/wave-lite-container-2.sql"),
+        },
+        "omitted": {}
+    }
+    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
+    return {**baseline, **overrides}
+
+
+def generate_wave_lite_rds_entries_all_disabled(overrides={}):
+    # Reminder: yaml file true/false must be declared as True/False in python dictionary.
+    baseline = {
+        "present": {
+            'payload'                               : read_file(f"{expected_sql}/wave-lite-rds.sql"),
+        },
+        "omitted": {}
+    }
+    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
+    return {**baseline, **overrides}
+
+
 def generate_baseline_entries_all_disabled(template_files, overrides):
 
     entries = {
-        "tower_env"         : generate_tower_env_entries_all_disabled(overrides["tower_env"]),
-        "tower_yml"         : generate_tower_yml_entries_all_disabled(overrides["tower_yml"]),
-        "data_studios_env"  : generate_data_studios_env_entries_all_disabled(overrides["data_studios_env"]),
-        "tower_sql"         : generate_tower_sql_entries_all_disabled(overrides["tower_sql"]),
-        "docker_compose"    : generate_docker_compose_yml_entries_all_disabled( overrides["docker_compose"]),
-        "wave_lite_yml"     : generate_wave_lite_yml_entries_all_disabled(overrides["wave_lite_yml"]),
+        "tower_env"             : generate_tower_env_entries_all_disabled(overrides["tower_env"]),
+        "tower_yml"             : generate_tower_yml_entries_all_disabled(overrides["tower_yml"]),
+        "data_studios_env"      : generate_data_studios_env_entries_all_disabled(overrides["data_studios_env"]),
+        "tower_sql"             : generate_tower_sql_entries_all_disabled(overrides["tower_sql"]),
+        "docker_compose"        : generate_docker_compose_yml_entries_all_disabled( overrides["docker_compose"]),
+        "wave_lite_yml"         : generate_wave_lite_yml_entries_all_disabled(overrides["wave_lite_yml"]),
+        "wave_lite_container_1" : generate_wave_lite_container_1_entries_all_disabled(overrides["wave_lite_container_1"]),
+        "wave_lite_container_2" : generate_wave_lite_container_2_entries_all_disabled(overrides["wave_lite_container_2"]),
+        "wave_lite_rds"         : generate_wave_lite_rds_entries_all_disabled(overrides["wave_lite_rds"]),
 
     }
     return entries
