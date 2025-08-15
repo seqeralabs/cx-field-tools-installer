@@ -1,29 +1,32 @@
 # Optional Config - Using AWS EC2 Instance Role
-When integrating Seqera Platform with AWS, enabling an optional configuration allows for Seqera Platform credentials to solely rely on EC2 Instance Roles with the ability to assume IAM Roles for further granular permissions. Using instance roles removes the need to provide Seqera Platform with AWS long-lived credentials such as AWS secret key and secret access keys.
+If you run Seqera Platform on AWS infrastructure, an optional configuration is available that allows your AWS-type credentials to leverge the EC2 Instance Role identity rather than a discrete AWS User (_thereby avoiding the need to input the User's long-lived AWS secret key and secret access keys_).
 
 **AWS EC2 Instance Role**
 
-- **Description**: EC2 instances can be assigned IAM Roles that grant them permissions to interact with AWS services. This avoids the need for long-lived credentials by allowing the instance to retrieve temporary credentials via the EC2 metadata service.
+- **Description**: [EC2 instances can be assigned IAM Roles](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) that grant them permissions to interact with AWS services. This avoids the need for long-lived credentials by allowing the instance to retrieve temporary credentials via the EC2 metadata service.
 - **Seamless Integration**: Applications running on EC2 instances can automatically use these roles to authenticate to AWS services without managing separate credentials.
 - **Tower Configuration**: The `TOWER_ALLOW_INSTANCE_CREDENTIALS` setting allows Tower to use the EC2 instance's IAM role instead of AWS long-lived credentials if no other credentials are provided.
+
 
 ## Security Considerations 
 
 While using an EC2 Instance Role improves security by eliminating stored keys, it still requires trust in workspace-level administrators who are allowed to create Credentials in Seqera Workspaces.
 
-Any user with adequate permissions (Admin) to create Credentials in workspaces will have the ability to use the IAM Role associated with a credential to gain access to any/all resources available to the IAM Role. 
+[Any user with adequate permissions (Admin)](https://docs.seqera.io/platform-cloud/orgs-and-teams/roles) to create Credentials in workspaces will have the ability to leverage the EC2 Instance Role to access any other IAM Role which the EC2 Instance Role has access to. 
 
 Risk Scenario:
 
 1. Workspace A is set up with Credentials defined to use IAM Role A with isolated access to specific AWS resources for privileged members of the workspace.
 
 2. An Admin in Workspace B with knowledge of IAM Role A's ARN can technically create a new Credential in Workspace B defined to use IAM Role A ARN.
-    - This allows members of Workspace B to access any/all AWS resources intended for Workspace A as defined by the policies of IAM Role A.
+
+    This allows members of Workspace B to access any/all AWS resources intended for Workspace A as defined by the policies of IAM Role A.
 
 
 ## Implementation Steps
 
 #### Update Platform Configuration
+Due to security consideration above, this solution does not provide the abillity to activate this capability via `terraform.tfvars` settings. You can still enable your deployment to use this feature, with a small change to configuraiton assets (_either within the repository prior to deployment, which will affect all future deployments; or direct modification of the asset on the EC2, which will persist only until the next deployment_).
 
 1. Update the `tower.env` file to contain the following configuration and re-start deployment for changes to propagate:
 
