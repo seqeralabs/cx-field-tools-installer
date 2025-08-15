@@ -22,13 +22,21 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - B
         <br /><br />
         - Documentation
-            - Renamed Changelog entry from `2.0.0` to `1.6.0`.
+            - Renamed _Changelog_ entry from `2.0.0` to `1.6.0`.
+            - Added discrete _Upgrade Steps_ page.
+            - Added warning re: EBS volume during multi-version upgrade cycle.
         <br /><br />
         - Validation
             - 
         <br /><br />
         - Testing
             - 
+
+### Configuration File Changes
+#### `terraform.tfvars`
+| Status | Component | Parameter Name | Description |
+| ------ | --------- | -------------- | ----------- |
+| Modified | Platform | `ec2_root_volume_size` | Changed from `8` to `16` to provide more storage buffer. |
 
 
 ## 1.6.0
