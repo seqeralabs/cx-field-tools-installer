@@ -140,6 +140,9 @@ The following configuration actions are encouraged but not mandatory.
 #### 05: Using a Private Certificate Authority (ADVANCED)
 1. Follow the instructions in [Private Certificates](./documentation/setup/optional_private_certificates.md)
 
+#### 06: Enable EC2 Instance Role Authentication
+1. Follow the instructions in [Using AWS EC2 Instance Role](./documentation/setup/optional_allow_instance_credentials.md)
+
 <br />
 
 ## Execution Steps
