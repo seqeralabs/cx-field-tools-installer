@@ -311,7 +311,8 @@ what the impact would be on sites that:
 In order to support an orderly transition, I am reintroducing ALL the old 1.5.0 SGs. The reintroduction will ensure that any of the
 existing deloyments still find the assets they need prior to upgrade and then be able to transition to the new SG model introduced in 1.6.0.
 
-In a subsequent release, the resources below will be removed and documentation will clearly reflect that < 1.6.1 needs to upgrade to 1
+In a subsequent release, the resources below will be removed and documentation will clearly reflect that < 1.6.1 needs to upgrade to 1.6.1 
+prior to upgrading to any future release > 1.6.1
 
 */
 
@@ -393,8 +394,8 @@ module "tower_ec2_direct_connect_sg" {
   name        = "${local.global_prefix}_ec2_direct_connect_sg"
   description = "Direct HTTP to Tower EC2 host when Connect active."
 
-  vpc_id              = local.vpc_id
-  ingress_with_cidr_blocks = local.tower_ec2_direct_connect_sg_final
+  vpc_id = local.vpc_id
+  # ingress_with_cidr_blocks = ["local.tower_ec2_direct_connect_sg_final"]
 }
 
 
@@ -442,11 +443,11 @@ module "tower_ec2_alb_connect_sg" {
   name        = "${local.global_prefix}_ec2_alb_connect_sg"
   description = "Direct HTTP to Tower EC2 host when Connect active."
 
-  vpc_id              = local.vpc_id
+  vpc_id = local.vpc_id
   # computed_ingress_with_cidr_blocks = local.tower_ec2_alb_connect_sg_final
   # computed_ingress_with_cidr_blocks = local.tower_ec2_alb_connect_sg_final
-  computed_ingress_with_source_security_group_id= local.tower_ec2_alb_connect_sg_final
-  number_of_computed_ingress_with_source_security_group_id = 1
+  #computed_ingress_with_source_security_group_id= local.tower_ec2_alb_connect_sg_final
+  # number_of_computed_ingress_with_source_security_group_id = 1
 }
 
 ## ------------------------------------------------------------------------------------
