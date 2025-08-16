@@ -1,6 +1,6 @@
 # https://medium.com/@leslie.alldridge/terraform-external-data-source-using-custom-python-script-with-example-cea5e618d83e
 data "external" "generate_db_connection_string" {
-  program = ["python3", "${path.module}/../../../scripts/installer/data_external/generate_db_connection_string.py"]
+  program = ["python3", "${abspath(path.root)}/scripts/installer/data_external/generate_db_connection_string.py"]
   query   = {}
 
   # Example how to use:
