@@ -27,6 +27,7 @@ If multiple jumps are needed to reach the most recent Seqera Platform release, y
 1. [Update your `~/.ssh/config`](../documentation/setup/prepare_openssh.md) to point to the new release folder.
 1. Update your `terraform.tfvars` & SSM secrets as per guidance in [CHANGELOG](../CHANGELOG.md#configuration-file-changes).
 1. [OPTIONAL] Re-implement any customizations you've added to your current deployment.
+1. Run `terraform init -upgrade` to register new modules.
 1. Run `terraform plan` and ensure no errors are thrown.
 1. Run `terraform apply`.
 

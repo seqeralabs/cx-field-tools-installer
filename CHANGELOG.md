@@ -16,7 +16,10 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Patched issues reported in [234 - Release 1.6.0 deployment issues](https://github.com/seqeralabs/cx-field-tools-installer/issues/234)
         <br /><br />
         - Architecture
-            - S
+            - All Security Group resources from 1.5.0 reintroduced in a deprecation section at bottom of `002_security_groups.tf`. This is to help existing sites transition to the new 1.6.0+ SG model.
+                - Commented out ingress rules for deprecated SG `tower_ec2_direct_connect_sg` due to `local.tower_ec2_direct_connect_sg_final` no longer existing.
+                - Commented out ingress rules for deprecated SG `tower_ec2_alb_connect_sg` due to `local.tower_ec2_alb_connect_sg_final` no longer existing.
+            - Modified `connection_strings` module `data.external.generate_db_connection_string` to use absolute path from module root rather than relative path.
         <br /><br />
         - Security
             - B
