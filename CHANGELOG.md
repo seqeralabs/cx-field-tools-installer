@@ -14,6 +14,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
     - **CX Installer**
         - General
             - Patched issues reported in [234 - Release 1.6.0 deployment issues](https://github.com/seqeralabs/cx-field-tools-installer/issues/234)
+            - Added explicit call-out in 1.6.0 section that new variable `use_mocks` was added.
         <br /><br />
         - Architecture
             - All Security Group resources from 1.5.0 reintroduced in a deprecation section at bottom of `002_security_groups.tf`. This is to help existing sites transition to the new 1.6.0+ SG model.
@@ -77,6 +78,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Refactored `assets/src/customcerts/`: Generation script supports multiple domains & removed placeholder files.
             - Merged / broke out EC2 security groups for easier management and better permissions scoping. **This could break ancillary components if you reused the security groups elsewhere!**
             - Refactored when most `assets/target/` files are produced. Rather than waiting for all infrastructure to be created, we now create files as soon as minimal dependencies are met (_to facilitate testing_).
+            - Added new variable `use_mocks`to `variables.tf`. This value defaults to `false` since it should only be `true` during testing.
             - Added `... && !var.use_mock` to database and redis assets' `count` property to facilitate testing.
             - Moved conditional Ansible steps from Bash environment logic to `.tpl` inclusion / exclusion.
             - Modified `docker-compose.yml` so that all configuration files are mounted from their respective `target/**` folder.
