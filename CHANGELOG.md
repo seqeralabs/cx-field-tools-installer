@@ -1,5 +1,5 @@
 # CHANGELOG
-> Last updated: July 27, 2025
+> Last updated: Aug 18, 2025
 
 This file was created post 1.5.0 Release.
 
@@ -20,21 +20,16 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - All Security Group resources from 1.5.0 reintroduced in a deprecation section at bottom of `002_security_groups.tf`. This is to help existing sites transition to the new 1.6.0+ SG model.
                 - Commented out ingress rules for deprecated SG `tower_ec2_direct_connect_sg` due to `local.tower_ec2_direct_connect_sg_final` no longer existing.
                 - Commented out ingress rules for deprecated SG `tower_ec2_alb_connect_sg` due to `local.tower_ec2_alb_connect_sg_final` no longer existing.
-            - Modified `connection_strings` module `data.external.generate_db_connection_string` to use absolute path from module root rather than relative path.
-        <br /><br />
-        - Security
-            - B
+            - Modified `connection_strings` module:
+                - `data.external.generate_db_connection_string` to use absolute path from module root rather than relative path.
+                - Added `wave_lite_enabled` qualifier to variables associated with Wave Lite external DB and external Redis.
         <br /><br />
         - Documentation
             - Renamed _Changelog_ entry from `2.0.0` to `1.6.0`.
             - Added discrete _Upgrade Steps_ page.
             - Added warning re: EBS volume during multi-version upgrade cycle.
-        <br /><br />
-        - Validation
-            - 
-        <br /><br />
-        - Testing
-            - 
+            - Added escape hatch documentation is deployed resource doesn't reflect expected changes.
+
 
 ### Configuration File Changes
 #### `terraform.tfvars`
