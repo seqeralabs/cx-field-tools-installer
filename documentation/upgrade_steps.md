@@ -2,9 +2,31 @@
 Steps for existing implementations to follow when upgrading your current deployment to a new release (_current for Releases <= `1.6.1`_).
 
 
-## Expected Filesystem Deployment
+## Expected Filesystem Deployment (Example)
+
 ```bash
-TODO: ADD diagram while doing real-world fix test
+├── multideploy
+│   ├── 1-5-0
+│   │   ├── DONTDELETE
+│   │   ├── assets
+│   │   ├── documentation
+│   │   ├── scripts
+│   │   └── templates
+│   ├── 1-6-0
+│   │   ├── DONTDELETE
+│   │   ├── assets
+│   │   ├── documentation
+│   │   ├── modules
+│   │   ├── scratch
+│   │   ├── scripts
+│   │   ├── templates
+│   │   └── tests
+│   ├── 1-6-1
+│   │   ├── DONTDELETE
+│   │   ├── assets
+│   │   ├── modules
+│   │   └── scripts
+│   │   └── ...
 ```
 
 
@@ -27,8 +49,26 @@ If multiple jumps are needed to reach the most recent Seqera Platform release, y
 1. [Update your `~/.ssh/config`](../documentation/setup/prepare_openssh.md) to point to the new release folder.
 1. Update your `terraform.tfvars` & SSM secrets as per guidance in [CHANGELOG](../CHANGELOG.md#configuration-file-changes).
 1. [OPTIONAL] Re-implement any customizations you've added to your current deployment.
+1. Run `terraform init -upgrade` to register new modules.
 1. Run `terraform plan` and ensure no errors are thrown.
 1. Run `terraform apply`.
 
 
+## Escape Hatch
+The solution should normally be able to conduct a full end-to-end upgrade without requiring intervention. Sometimes, however, Terraform assets can get "stuck" in a way that precludes this. For example:
 
+1. Modifying your deployment options in a such a way that a new Security Group needs to be added to the EC2, but the EC2 is not recreated so the new SG on the Launch Template fails to apply.
+
+1. A resource is removed from the project but still attached to a pre-existing asset and cannot be removed, thereby causing Terraform to throw an error (e.g. SG on EC2).
+
+In such cases, it is often best to delete the offending resource and redeploy (**WARNING: Be extra careful about deletions that can impact your database**). This can be done by:
+
+1. Deleting the offending resource from within the AWS console.
+
+1. Deleting via Terraform.
+
+    ```bash
+    terraform refresh
+    terraform state list                                    # (look for targeted resource)
+    terraform delete destroy -target=aws_instance.ec2       # (e.g. delete EC2)
+    ```

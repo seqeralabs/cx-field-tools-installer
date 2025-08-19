@@ -1,5 +1,5 @@
 # CHANGELOG
-> Last updated: July 27, 2025
+> Last updated: Aug 18, 2025
 
 This file was created post 1.5.0 Release.
 
@@ -14,23 +14,22 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
     - **CX Installer**
         - General
             - Patched issues reported in [234 - Release 1.6.0 deployment issues](https://github.com/seqeralabs/cx-field-tools-installer/issues/234)
+            - Added explicit call-out in 1.6.0 section that new variable `use_mocks` was added.
         <br /><br />
         - Architecture
-            - S
-        <br /><br />
-        - Security
-            - B
+            - All Security Group resources from 1.5.0 reintroduced in a deprecation section at bottom of `002_security_groups.tf`. This is to help existing sites transition to the new 1.6.0+ SG model.
+                - Commented out ingress rules for deprecated SG `tower_ec2_direct_connect_sg` due to `local.tower_ec2_direct_connect_sg_final` no longer existing.
+                - Commented out ingress rules for deprecated SG `tower_ec2_alb_connect_sg` due to `local.tower_ec2_alb_connect_sg_final` no longer existing.
+            - Modified `connection_strings` module:
+                - `data.external.generate_db_connection_string` to use absolute path from module root rather than relative path.
+                - Added `wave_lite_enabled` qualifier to variables associated with Wave Lite external DB and external Redis.
         <br /><br />
         - Documentation
             - Renamed _Changelog_ entry from `2.0.0` to `1.6.0`.
             - Added discrete _Upgrade Steps_ page.
             - Added warning re: EBS volume during multi-version upgrade cycle.
-        <br /><br />
-        - Validation
-            - 
-        <br /><br />
-        - Testing
-            - 
+            - Added escape hatch documentation is deployed resource doesn't reflect expected changes.
+
 
 ### Configuration File Changes
 #### `terraform.tfvars`
@@ -74,6 +73,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Refactored `assets/src/customcerts/`: Generation script supports multiple domains & removed placeholder files.
             - Merged / broke out EC2 security groups for easier management and better permissions scoping. **This could break ancillary components if you reused the security groups elsewhere!**
             - Refactored when most `assets/target/` files are produced. Rather than waiting for all infrastructure to be created, we now create files as soon as minimal dependencies are met (_to facilitate testing_).
+            - Added new variable `use_mocks`to `variables.tf`. This value defaults to `false` since it should only be `true` during testing.
             - Added `... && !var.use_mock` to database and redis assets' `count` property to facilitate testing.
             - Moved conditional Ansible steps from Bash environment logic to `.tpl` inclusion / exclusion.
             - Modified `docker-compose.yml` so that all configuration files are mounted from their respective `target/**` folder.
