@@ -75,8 +75,8 @@ file_targets_all = {
 @pytest.mark.testcontainer
 def test_tower_sql_mysql_container_execution(session_setup):
     """
-    Test that tower.sql successfully populates a MySQL8 database using Testcontainers.
-    This validates the SQL file can create the database, user, and grant permissions.
+    Test that tower.sql successfully populates a MySQL8 database as expected (via Testcontainer). 
+    Emulates execution of RDS prepping script in Ansilble.
 
     NOTE:
     Container DB cant be connected to via master creds like standard RDS.
@@ -100,10 +100,11 @@ def test_tower_sql_mysql_container_execution(session_setup):
     overrides = deepcopy(overrides_template)
     baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
 
-    # TODO: Use the master user / password from the SSM values. WARNING: DONT CHANGE THESE OR TEST FAILS.
-    mock_master_user        = "root"
-    mock_master_password    = "test"
-    mock_db_name            = "test"
+    # WARNING: DONT CHANGE THESE OR TEST FAILS.
+    # https://hub.docker.com/_/mysql
+    master_user             = "root"
+    master_password         = "test"
+    master_db_name          = "test"
 
     # User & Password set in 'tower_secrets'.
     tower_db_user           = "tower_test_user"
@@ -111,8 +112,13 @@ def test_tower_sql_mysql_container_execution(session_setup):
     tower_db_name           = "tower"
 
 
-    def run_mysql_query(query, user=mock_master_user, password=mock_master_password, database=None):
-        """Helper function to run MySQL queries using container commands"""
+    def run_mysql_query(query, user=master_user, password=master_password, database=None):
+        """
+        Helper function to run MySQL queries using container commands
+        -  Write desired SQL command to temporary file.
+        -  Volume mounts temporary file into a runner MySQL8 container (for access to CLI).
+        -  Establishes connection to testcontainer MySQL and runs command.
+        """
 
         # Create temporary SQL file for docker volume mount (avoids nested quotes nightmare)
         with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as query_sql:
@@ -132,62 +138,39 @@ def test_tower_sql_mysql_container_execution(session_setup):
         return result.stdout.strip()
 
 
-    # When - Execute SQL against MySQL container
     with (
-        MySqlContainer("mysql:8.0", root_password=mock_master_password)
-        .with_env("MYSQL_USER", mock_master_user)
-        .with_env("MYSQL_PASSWORD", mock_master_password)
-        .with_env("MYSQL_DATABASE", mock_db_name)
+        MySqlContainer("mysql:8.0", root_password=master_password)
+        .with_env("MYSQL_USER", master_user)
+        .with_env("MYSQL_PASSWORD", master_password)
+        .with_env("MYSQL_DATABASE", master_db_name)
         .with_bind_ports(3306, 3306)
     ) as mysql_container:
 
-        # Create temporary SQL file for docker volume mount
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as temp_sql:
-            # temp_sql.write(sql_content)
-            content = test_template_files["tower_sql"]["content"]
-            temp_sql.write(content)
-            temp_sql_path = temp_sql.name
 
-        try:
-            # Emulate execution of RDS prepping script in Ansilble.
-            # NOTE: Since we cant change the container master user from 'root', fudging login with another "master" user.
-            #   This is a hack, but it serves its purpose given the constraints.
-            docker_cmd = f"""
-                docker run --rm -t \
-                    -v {temp_sql_path}:/tower.sql \
-                    -e MYSQL_PWD={mock_master_password} \
-                    --entrypoint /bin/bash \
-                    --add-host host.docker.internal:host-gateway mysql:8.0 \
-                    -c 'mysql --host host.docker.internal --port=3306 --user={mock_master_user} < tower.sql'
-            """
-            result = subprocess.run(docker_cmd, shell=True, capture_output=True, text=True, timeout=60)
-            assert result.returncode == 0
-
-            # Then - Verify database operations using MySQL container commands
+        # POPULATE
+        # Run initial population script.
+        query = test_template_files["tower_sql"]["content"]
+        db_result = run_mysql_query(query, master_user, master_password)
 
 
-            # Verify database creation
-            query = f"SHOW DATABASES LIKE '{tower_db_name}';"
-            db_result = run_mysql_query(query, mock_master_user, mock_master_password)
-            assert db_result == tower_db_name
+        # VERIFY
+        # Verify database creation.
+        query = f"SHOW DATABASES LIKE '{tower_db_name}';"
+        db_result = run_mysql_query(query, master_user, master_password)
+        assert db_result == tower_db_name
 
-            # Verify user creation
-            query = f"SELECT user FROM mysql.user WHERE user='{tower_db_user}';"
-            user_result = run_mysql_query(query, mock_master_user, mock_master_password)
-            assert user_result == tower_db_user
+        # Verify user creation
+        query = f"SELECT user FROM mysql.user WHERE user='{tower_db_user}';"
+        user_result = run_mysql_query(query, master_user, master_password)
+        assert user_result == tower_db_user
 
-            # Verify user permissions
-            query = f"SHOW GRANTS FOR '{tower_db_user}'@'%';"
-            grants_result = run_mysql_query(query, mock_master_user, mock_master_password)
-            assert "ALL PRIVILEGES" in grants_result
-            assert f"`{tower_db_name}`" in grants_result
+        # Verify user permissions
+        query = f"SHOW GRANTS FOR '{tower_db_user}'@'%';"
+        grants_result = run_mysql_query(query, master_user, master_password)
+        assert "ALL PRIVILEGES" in grants_result
+        assert f"`{tower_db_name}`" in grants_result
 
-            # Verify connection with new user credentials by running a simple query
-            query = "SELECT 1"
-            test_result = run_mysql_query(query, tower_db_user, tower_db_password, tower_db_name)
-            assert test_result == "1"
-
-        finally:
-
-            if os.path.exists(temp_sql_path):
-                os.unlink(temp_sql_path)
+        # Verify connection with new user credentials by running a simple query
+        query = "SELECT 1"
+        test_result = run_mysql_query(query, tower_db_user, tower_db_password, tower_db_name)
+        assert test_result == "1"

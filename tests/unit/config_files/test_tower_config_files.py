@@ -59,8 +59,8 @@ file_targets_all = {
     "wave_lite_container_1"     : "sql",
     "wave_lite_container_2"     : "sql",
     "wave_lite_rds"             : "sql",
-
 }
+
 # REFERENCE: How to target a subset of files in each testcase versus full set."""
 # target_keys = ["docker_compose"]
 # needed_template_files = {k: v for k,v in all_template_files.items() if k in target_keys}
@@ -83,7 +83,6 @@ def test_baseline_all_enabled(session_setup):
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
     plan = prepare_plan(override_data)
-
     needed_template_files = all_template_files
     test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
 
