@@ -40,6 +40,8 @@ test_case_tfplan_file               = f"{root}/tfplan"
 test_case_tfplan_json_file          = f"{root}/tfplan.json"
 
 templatefile_cache_dir              = f"{root}/tests/.templatefile_cache"
+
+sql_test_scratch_dir                     = "/tmp/cx-testing/sql"
 expected_sql                        = f"{root}/tests/datafiles/expected_results/expected_sql"
 
 all_template_files = {
