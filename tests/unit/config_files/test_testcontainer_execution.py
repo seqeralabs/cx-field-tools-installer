@@ -19,8 +19,6 @@ from tests.utils.local import prepare_plan, run_terraform_apply, execute_subproc
 from tests.utils.local import get_reconciled_tfvars
 
 
-
-
 from tests.utils.local import generate_namespaced_dictionaries, generate_interpolated_templatefiles
 from tests.utils.local import set_up_testcase, assert_present_and_omitted
 
@@ -38,20 +36,29 @@ from tests.utils.filehandling import parse_key_value_file
 
 
 overrides_template = {
-    "tower_env"         : {},
-    "tower_yml"         : {},
-    "data_studios_env"  : {},
-    "tower_sql"         : {},
-    "docker_compose"    : {},
+    "tower_env"                 : {},
+    "tower_yml"                 : {},
+    "data_studios_env"          : {},
+    "tower_sql"                 : {},
+    "docker_compose"            : {},
+    "wave_lite_yml"             : {},
+    "wave_lite_container_1"     : {},
+    "wave_lite_container_2"     : {},
+    "wave_lite_rds"             : {},
 }
 
 file_targets_all = {
-    "tower_env"         : "kv",
-    "tower_yml"         : "yml",
-    "data_studios_env"  : "kv",
-    "tower_sql"         : "sql",
-    "docker_compose"    : "yml",
+    "tower_env"                 : "kv",
+    "tower_yml"                 : "yml",
+    "data_studios_env"          : "kv",
+    "tower_sql"                 : "sql",
+    "docker_compose"            : "yml",
+    "wave_lite_yml"             : "yml",
+    "wave_lite_container_1"     : "sql",
+    "wave_lite_container_2"     : "sql",
+    "wave_lite_rds"             : "sql",
 }
+
 # REFERENCE: How to target a subset of files in each testcase versus full set."""
 # target_keys = ["docker_compose"]
 # needed_template_files = {k: v for k,v in all_template_files.items() if k in target_keys}
@@ -79,43 +86,51 @@ def test_tower_sql_mysql_container_execution(session_setup):
     Cant use `mysql_container.get_container_host_ip()` because it returns `localhost` and we need the host's actual IP.
     """
 
-    # return ([vars, outputs, vars_dict, outputs_dict], 
-    #         [tower_secrets_sn, groundswell_secrets_sn, seqerakit_secrets_sn, wave_lite_secrets_sn])
+    ## SETUP
+    ## =======================================================================================
 
-    # Given
     override_data = """
         # No override values needed. Using base template and base-overrides only.
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
     plan = prepare_plan(override_data)
-    plan, secrets = generate_namespaced_dictionaries(plan)
-    vars, outputs, vars_dict, _ = plan
-    tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets = secrets
-    namespaces = [vars, outputs, tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets]
+    needed_template_files = all_template_files
+    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
 
-    # Create hash of tfvars files (used by function 'generate_interpolated_templatefile' to speed up operations).
-    content_to_hash = f"{vars}\n{outputs}\n{tower_secrets}\n{groundswell_secrets}\n{seqerakit_secrets}\n{wave_lite_secrets}"
-    hash = hashlib.sha256(content_to_hash.encode("utf-8")).hexdigest()[:16]
+    overrides = deepcopy(overrides_template)
+    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
 
-    needed_template_files = {k: v for k,v in all_template_files.items() if k in ["tower_sql"]}
-    test_template_files = generate_interpolated_templatefiles(hash, namespaces, needed_template_files)
-
-    sql_content = test_template_files["tower_sql"]["content"]
-
-
-    # ssm_data = read_json(ssm_tower)
-    # sql_content = read_file(f"{root}/assets/target/tower_config/tower.sql")
-
-    # Note: Hack to emulate RDS master user / password.
     # TODO: Use the master user / password from the SSM values. WARNING: DONT CHANGE THESE OR TEST FAILS.
-    mock_master_user = "root"
-    mock_master_password = "test"
-    mock_db_name = "test"
+    mock_master_user        = "root"
+    mock_master_password    = "test"
+    mock_db_name            = "test"
 
-    # User & Password pulled from 'tower_secrets'
-    tower_db_user = "tower_test_user"
-    tower_db_password = "tower_test_password"
-    tower_db_name = "tower"
+    # User & Password set in 'tower_secrets'.
+    tower_db_user           = "tower_test_user"
+    tower_db_password       = "tower_test_password"
+    tower_db_name           = "tower"
+
+
+    def run_mysql_query(query, user=mock_master_user, password=mock_master_password, database=None):
+        """Helper function to run MySQL queries using container commands"""
+
+        # Create temporary SQL file for docker volume mount (avoids nested quotes nightmare)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as query_sql:
+            query_sql.write(query)
+            query_sql_path = query_sql.name
+
+        mysql_cmd = f"""
+            docker run --rm -t \
+                -v {query_sql_path}:/query.sql \
+                -e MYSQL_PWD={password} \
+                --entrypoint /bin/bash \
+                --add-host host.docker.internal:host-gateway mysql:8.0 \
+                -c 'mysql --host host.docker.internal --port=3306 --user={user} --silent --skip-column-names < query.sql'
+        """
+        result = subprocess.run(mysql_cmd, shell=True, capture_output=True, text=True, timeout=30)
+        assert result.returncode == 0
+        return result.stdout.strip()
+
 
     # When - Execute SQL against MySQL container
     with (
@@ -125,9 +140,12 @@ def test_tower_sql_mysql_container_execution(session_setup):
         .with_env("MYSQL_DATABASE", mock_db_name)
         .with_bind_ports(3306, 3306)
     ) as mysql_container:
+
         # Create temporary SQL file for docker volume mount
         with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as temp_sql:
-            temp_sql.write(sql_content)
+            # temp_sql.write(sql_content)
+            content = test_template_files["tower_sql"]["content"]
+            temp_sql.write(content)
             temp_sql_path = temp_sql.name
 
         try:
@@ -135,53 +153,41 @@ def test_tower_sql_mysql_container_execution(session_setup):
             # NOTE: Since we cant change the container master user from 'root', fudging login with another "master" user.
             #   This is a hack, but it serves its purpose given the constraints.
             docker_cmd = f"""
-                docker run --rm -t -v {temp_sql_path}:/tower.sql \
-                  -e MYSQL_PWD={mock_master_password} --entrypoint /bin/bash \
-                  --add-host host.docker.internal:host-gateway mysql:8.0 \
-                  -c 'mysql --host host.docker.internal --port=3306 --user={mock_master_user} < tower.sql'
+                docker run --rm -t \
+                    -v {temp_sql_path}:/tower.sql \
+                    -e MYSQL_PWD={mock_master_password} \
+                    --entrypoint /bin/bash \
+                    --add-host host.docker.internal:host-gateway mysql:8.0 \
+                    -c 'mysql --host host.docker.internal --port=3306 --user={mock_master_user} < tower.sql'
             """
             result = subprocess.run(docker_cmd, shell=True, capture_output=True, text=True, timeout=60)
             assert result.returncode == 0
 
             # Then - Verify database operations using MySQL container commands
-            def run_mysql_query(query, user=mock_master_user, password=mock_master_password, database=None):
-                """Helper function to run MySQL queries using container commands"""
 
-                # Create temporary SQL file for docker volume mount (avoids nested quotes nightmare)
-                with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as query_sql:
-                    query_sql.write(query)
-                    query_sql_path = query_sql.name
-
-                mysql_cmd = f"""
-                    docker run --rm -t -v {query_sql_path}:/query.sql \
-                      -e MYSQL_PWD={password} --entrypoint /bin/bash \
-                      --add-host host.docker.internal:host-gateway mysql:8.0 \
-                      -c 'mysql --host host.docker.internal --port=3306 --user={user} --silent --skip-column-names < query.sql'
-                """
-                result = subprocess.run(mysql_cmd, shell=True, capture_output=True, text=True, timeout=30)
-                assert result.returncode == 0
-                return result.stdout.strip()
 
             # Verify database creation
-            db_result = run_mysql_query(f"SHOW DATABASES LIKE '{tower_db_name}';")
+            query = f"SHOW DATABASES LIKE '{tower_db_name}';"
+            db_result = run_mysql_query(query, mock_master_user, mock_master_password)
             assert db_result == tower_db_name
 
             # Verify user creation
-            user_result = run_mysql_query(f"SELECT user FROM mysql.user WHERE user='{tower_db_user}';")
+            query = f"SELECT user FROM mysql.user WHERE user='{tower_db_user}';"
+            user_result = run_mysql_query(query, mock_master_user, mock_master_password)
             assert user_result == tower_db_user
 
             # Verify user permissions
-            grants_result = run_mysql_query(f"SHOW GRANTS FOR '{tower_db_user}'@'%';")
+            query = f"SHOW GRANTS FOR '{tower_db_user}'@'%';"
+            grants_result = run_mysql_query(query, mock_master_user, mock_master_password)
             assert "ALL PRIVILEGES" in grants_result
             assert f"`{tower_db_name}`" in grants_result
 
             # Verify connection with new user credentials by running a simple query
-            test_result = run_mysql_query(
-                "SELECT 1;", user=tower_db_user, password=tower_db_password, database=tower_db_name
-            )
+            query = "SELECT 1"
+            test_result = run_mysql_query(query, tower_db_user, tower_db_password, tower_db_name)
             assert test_result == "1"
 
         finally:
-            # Clean up temporary SQL file
+
             if os.path.exists(temp_sql_path):
                 os.unlink(temp_sql_path)
