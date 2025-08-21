@@ -302,19 +302,8 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
     THis should simplify file generation / testing / and harmonize behaviours between the two.
     """
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as init_sql_01:
-            init_sql_01.write(test_template_files["wave_lite_container_1"]["content"])
-            init_sql_01_path = init_sql_01.name
-
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as init_sql_02:
-            init_sql_02.write(test_template_files["wave_lite_container_2"]["content"])
-            init_sql_02_path = init_sql_02.name
-
-    # Have to chmod to avoid 'Permission denied issue since tempfile writes permission as 0700 whereas init.d in postgres belongs to user postgres.
-    init_sql_01.close()
-    init_sql_02.close()
-    os.chmod(init_sql_01_path, 0o755)
-    os.chmod(init_sql_02_path, 0o755)
+    init_sql_01_path = test_template_files["wave_lite_container_1"]["filepath"]
+    init_sql_02_path = test_template_files["wave_lite_container_2"]["filepath"]
 
     # Changing dbname to "wave" avoiding the transaction exeuction error in sql-1 due to `CREATE DATABASE cannot be executed from a function`
     with (
@@ -327,10 +316,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
     ) as postgres_container2:
 
         # POPULATE
-        # Run initial population script.
         # No need to populate since volume mounting should hanlde for us on initial boot.
-        # query = test_template_files["wave_lite_rds"]["content"]
-        # db_result = run_postgres_query(query, master_user, master_password, master_db_name)
 
         # VERIFY
         # Test master user connection to wave database
@@ -359,14 +345,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
     ## ==================================================================================
     ## SCENARIO3: Volume Mount RDS file to run on container init
     ## ==================================================================================
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as init_sql_rds:
-            init_sql_rds.write(test_template_files["wave_lite_rds"]["content"])
-            init_sql_rds_path = init_sql_rds.name
-
-
-    # Have to chmod to avoid 'Permission denied issue since tempfile writes permission as 0700 whereas init.d in postgres belongs to user postgres.
-    init_sql_rds.close()
-    os.chmod(init_sql_rds_path, 0o755)
+    init_sql_rds_path = test_template_files["wave_lite_rds"]["filepath"]
 
     with (
         # PostgresContainer("postgres:latest", username="postgres", password="postgres", dbname="wave")
@@ -400,3 +379,8 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
         query = "CREATE TABLE test_table (id INT); DROP TABLE test_table;"
         create_table_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
         assert "DROP TABLE" in create_table_test
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Compose (Wave)
+## ------------------------------------------------------------------------------------
