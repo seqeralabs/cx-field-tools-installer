@@ -8,6 +8,9 @@ import hashlib
 from pathlib import Path
 import sys
 from copy import deepcopy
+import urllib.request
+import urllib.error
+import yaml
 
 from types import SimpleNamespace
 
@@ -384,3 +387,104 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
 ## ------------------------------------------------------------------------------------
 ## MARK: Compose (Wave)
 ## ------------------------------------------------------------------------------------
+## ------------------------------------------------------------------------------------
+## MARK: MySQL (Platform)
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.long
+@pytest.mark.testcontainer
+def test_wave_containers(session_setup):
+    """
+    Ensure the entire Wave containerized ecosystem can run.
+
+    How it works:
+        1. Read in content of generated docker-compose file.
+        2. Purge any key in ["services"] if it's not in ["wave-lite", "wave-lite-reverse-proxy", "wave-db", "wave-redis"]
+        3. Purge ['wave-lite']['volumes'] and replace with path to test-generated YAML.
+        4. Purge ['wave-lite-reverse-proxy']['volumes'] and replace with path to target. TODO: FIX THIS.
+        5. Purge ['wave-db]['volumes'] and replace with path to test-generated SQL.
+        6. Purge ['wave-redis']['volumes'].
+    """
+
+    ## SETUP
+    ## =======================================================================================
+    override_data = """
+        # No override values needed. Using base template and base-overrides only.
+        # Wave-LIte active, containers active.
+    """
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    plan = prepare_plan(override_data)
+    needed_template_files = all_template_files
+    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+
+    overrides = deepcopy(overrides_template)
+    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
+
+
+    def prepare_wave_only_docker_compose():
+        docker_compose_data = read_yaml(test_template_files["docker_compose"]["filepath"])
+
+        # Purge all containers except those tied to Wave Lite.
+        desired_services = ["wave-lite", "wave-lite-reverse-proxy", "wave-db", "wave-redis"]
+        all_services = list(docker_compose_data["services"].keys())
+        services_to_purge = [k for k in all_services if k not in desired_services]
+
+        for k in services_to_purge:
+            docker_compose_data["services"].pop(k)
+
+        # Add generated Wave Lite YAML file
+        wave_lite_yaml_path = test_template_files["wave_lite_yml"]["filepath"]
+        volume_mount = f"{wave_lite_yaml_path}:/work/config.yml"
+        docker_compose_data["services"]["wave-lite"]["volumes"] = []
+        docker_compose_data["services"]["wave-lite"]["volumes"].append(volume_mount)
+
+        # TODO: Add NGINX CONFIG WHEN GENERATED AT AS TEMPLATEFILE
+        volume_mount = f"{root}/assets/target/wave_lite_config/nginx.conf:/etc/nginx/nginx.conf:ro"
+        docker_compose_data["services"]["wave-lite-reverse-proxy"]["volumes"] = []
+        docker_compose_data["services"]["wave-lite-reverse-proxy"]["volumes"].append(volume_mount)
+
+        # Add SQL & remove stateful storage from wave lite db
+        wave_lite_rds_path = test_template_files["wave_lite_rds"]["filepath"]
+        volume_mount = f"{wave_lite_rds_path}:/docker-entrypoint-initdb.d/01-init.sql"
+        docker_compose_data["services"]["wave-db"]["volumes"] = []
+        docker_compose_data["services"]["wave-db"]["volumes"].append(volume_mount)
+
+        # Remove stateful storage from wave lite redis.
+        docker_compose_data["services"]["wave-redis"]["volumes"] = []
+
+        return docker_compose_data
+
+    # Generate the Wave-Lite-only content
+    wave_content = prepare_wave_only_docker_compose()
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as wave_docker_compose:
+        wave_docker_compose.write(str(wave_content))
+        wave_docker_compose_path = wave_docker_compose.name
+
+    folder_path = os.path.dirname(wave_docker_compose_path)
+    filename = os.path.basename(wave_docker_compose_path)
+
+    # Start docker-compose deployment and test wave-lite service-info endpoint
+    with DockerCompose(context=folder_path, compose_file_name=filename, pull=True) as compose:
+
+        service_url = "http://localhost:9099/service-info"
+        max_retries = 10
+        delay = 3
+
+        for attempt in range(max_retries):
+            try:
+                with urllib.request.urlopen(service_url, timeout=10) as response:
+                    assert response.status == 200, f"Expected HTTP 200, got {response.status}"
+                    response_data = json.loads(response.read().decode("utf-8"))
+
+                print(f"{response_data=}")
+                assert "serviceInfo" in response_data
+                service_info = response_data["serviceInfo"]
+                assert "version" in service_info
+                assert "commitId" in service_info
+
+            except (urllib.error.URLError, json.JSONDecodeError, AssertionError) as e:
+                if attempt == max_retries:
+                    pytest.fail(
+                        f"Failed to connect to wave-lite service at {service_url} after {max_retries} retries: {e}"
+                    )
+                time.sleep(delay)

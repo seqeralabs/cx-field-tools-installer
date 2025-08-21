@@ -575,9 +575,6 @@ def set_up_testcase(plan, needed_template_files, testcase_name):
     # needed_template_files = {k: v for k,v in all_template_files.items() if k in ["tower_env"]}
     test_template_files = generate_interpolated_templatefiles(hash, namespaces, needed_template_files, testcase_name)
 
-    import pprint
-    pprint.pprint(f"{test_template_files=}")
-
     return test_template_files
 
 
