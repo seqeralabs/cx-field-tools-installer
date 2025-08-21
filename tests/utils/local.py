@@ -501,9 +501,11 @@ def generate_interpolated_templatefile(key, extension, read_type, namespaces, te
     return content
 
 
-def generate_interpolated_templatefiles(hash, namespaces, template_files: dict, testcase_name):
+def generate_interpolated_templatefiles(hash, namespaces, template_files, testcase_name):
     """
     Create all templatefiles based on terraform values relevant to the specific testcase.
+
+    I don't seem able to put the file cache dir as a top-level key, so adding in to the dictionary for each individual file.
     """
     # Make cache folder if missing
     folder_path = Path(f"{templatefile_cache_dir}/{hash}")
@@ -521,6 +523,7 @@ def generate_interpolated_templatefiles(hash, namespaces, template_files: dict, 
             continue
         content = generate_interpolated_templatefile(k, v["extension"], v["read_type"], namespaces, templatefile_cache_dir_hash)
         template_files[k]["content"] = content
+        template_files[k]["filepath"] = f"{templatefile_cache_dir_hash}/{k}{v['extension']}"
 
     # Edgecase: Wave-Lite SQL (not .tpl due to postgres single-quote needs).
     # Cant use `terraform template`. Use copy and conversion method instead.
@@ -541,9 +544,15 @@ def generate_interpolated_templatefiles(hash, namespaces, template_files: dict, 
         )
 
         template_files["wave_lite_container_1"]["content"] = read_file(f"{templatefile_cache_dir_hash}/wave-lite-container-1.sql")
+        template_files["wave_lite_container_1"]["filepath"] = f"{templatefile_cache_dir_hash}/wave-lite-container-1.sql"
         template_files["wave_lite_container_2"]["content"] = read_file(f"{templatefile_cache_dir_hash}/wave-lite-container-2.sql")
+        template_files["wave_lite_container_2"]["filepath"] = f"{templatefile_cache_dir_hash}/wave-lite-container-2.sql"
         template_files["wave_lite_rds"]["content"]         = read_file(f"{templatefile_cache_dir_hash}/wave-lite-rds.sql")
+        template_files["wave_lite_rds"]["filepath"] = f"{templatefile_cache_dir_hash}/wave-lite-rds.sql"
 
+    # Add hash to returned dict to make it easier to mount files directly rather than use tempfile
+    # This messes up things re string indicies for reasons I dont understand.
+    # template_files["templatefile_cache_dir_hash"] = f"{templatefile_cache_dir_hash}"
 
     return template_files
 
@@ -565,6 +574,9 @@ def set_up_testcase(plan, needed_template_files, testcase_name):
 
     # needed_template_files = {k: v for k,v in all_template_files.items() if k in ["tower_env"]}
     test_template_files = generate_interpolated_templatefiles(hash, namespaces, needed_template_files, testcase_name)
+
+    import pprint
+    pprint.pprint(f"{test_template_files=}")
 
     return test_template_files
 

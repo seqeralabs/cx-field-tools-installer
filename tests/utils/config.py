@@ -48,22 +48,26 @@ all_template_files = {
     "tower_env": {
         "extension" : ".env", 
         "read_type" : parse_key_value_file,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     "tower_yml": {
         "extension" : ".yml", 
         "read_type" : read_yaml,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     "tower_sql": {
         "extension" : ".sql", 
         "read_type" : read_file,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     "groundswell_sql": {
         "extension" : ".sql", 
         "read_type" : read_file,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     "groundswell_env": {
         "extension" : ".env", 
@@ -73,76 +77,90 @@ all_template_files = {
     "data_studios_env": {
         "extension" : ".env", 
         "read_type" : parse_key_value_file,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     "wave_lite_yml": {
         "extension" : ".yml", 
         "read_type" : read_yaml,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     "docker_compose": {
         "extension" : ".yml", 
         "read_type" : read_yaml,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     "seqerakit_yml": {
         "extension" : ".yml", 
         "read_type" : read_yaml,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     # TODO: aws_batch_manual
     # TODO: aws_batch_forge
     "cleanse_and_configure_host": {
         "extension" : ".sh", 
         "read_type" : read_file,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     "ansible_02_update_file_configurations": {
         "extension" : ".yml", 
         "read_type" : read_yaml,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     "ansible_03_pull_containers_and_run_tower": {
         "extension" : ".yml", 
         "read_type" : read_yaml,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     "ansible_05_patch_groundswell": {
         "extension" : ".yml", 
         "read_type" : read_yaml,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     "ansible_06_run_seqerakit": {
         "extension" : ".yml", 
         "read_type" : read_yaml,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     # TODO: codecommit_seqerakit
     # TODO: ssh_config
     "docker_logging": {
         "extension" : ".json", 
         "read_type" : read_json,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     "private_ca_conf": {
         "extension" : ".conf", 
         "read_type" : read_file,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     # TESTING
     "wave_lite_container_1": {
         "extension" : ".sql", 
         "read_type" : read_file,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     "wave_lite_container_2": {
         "extension" : ".sql", 
         "read_type" : read_file,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
     "wave_lite_rds": {
         "extension" : ".sql", 
         "read_type" : read_file,
-        "content"   : ""
+        "content"   : "",
+        "filepath"  : "",
     },
 }
