@@ -71,7 +71,7 @@ file_targets_all = {
 ## MARK: MySQL (Platform)
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
-@pytest.mark.db
+@pytest.mark.sql
 @pytest.mark.mysql_container
 @pytest.mark.long
 @pytest.mark.testcontainer
@@ -181,7 +181,7 @@ def test_tower_sql_population(session_setup):
 ## MARK: Postgres (Wave)
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
-@pytest.mark.config_keys
+@pytest.mark.sql
 @pytest.mark.vpc_existing
 @pytest.mark.long
 @pytest.mark.testcontainer
@@ -245,124 +245,120 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
         return result.stdout.strip()
 
 
-    # Read SQL files that will be executed
-    # sql_container_init_path = f"{root}/assets/target/wave_lite_config/wave-lite-rds.sql"
-
     # Reference connection string.
     # `PGPASSWORD=abc123 psql --host localhost --port 5432 --user root -d wave`
 
-    # # Test RDS flow
-    # with (
-    #     PostgresContainer("postgres:latest", username=master_user, password=master_password, dbname=master_db_name)
-    #     .with_env("GRAHAM", "graham")
-    #     .with_bind_ports(5432, 5432)
-    # ) as postgres_container:
+    ## ==================================================================================
+    ## SCENARIO 1: Execute RDS SQL against posttgres via other postgres container
+    ## ==================================================================================
+    with (
+        PostgresContainer("postgres:latest", username=master_user, password=master_password, dbname=master_db_name)
+        .with_env("GRAHAM", "graham")
+        .with_bind_ports(5432, 5432)
+    ) as postgres_container:
+
+        # POPULATE
+        # Run initial population script.
+        query = test_template_files["wave_lite_rds"]["content"]
+        db_result = run_postgres_query(query, master_user, master_password, master_db_name)
+
+        # VERIFY
+        # Test master user connection to wave database
+        query = "SELECT current_database();"
+        master_conn_test = run_postgres_query(query, master_user, master_password, master_db_name)
+        assert master_conn_test == "test"
+
+        # Test Wave user connection to wave database
+        query = "SELECT current_database();"
+        limited_conn_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
+        assert limited_conn_test == "wave"
+
+        # Verify Wave user has expected permissions
+        query = "SELECT has_database_privilege(current_user, 'wave', 'CREATE');"
+        permissions_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
+        assert "t" in permissions_test  # 't' means true in PostgreSQL
+
+        # Test Wave user can create tables (verifying ALL privileges)
+        query = "CREATE TABLE test_table (id INT); DROP TABLE test_table;"
+        create_table_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
+        assert "DROP TABLE" in create_table_test
 
 
-    #     # POPULATE
-    #     # Run initial population script.
-    #     query = test_template_files["wave_lite_rds"]["content"]
-    #     db_result = run_postgres_query(query, master_user, master_password, master_db_name)
+
+    ## ==================================================================================
+    ## SCENARIO 2: Volume Mount x2 SQL files to run on container init
+    ## TODO: Delete this as part of Issue 239 resolution: https://github.com/seqeralabs/cx-field-tools-installer/issues/239
+    ## ==================================================================================
+    """
+    I can get this to work if I hack.
+    The wave-lite-container-1.sql will fail with "CREATE DATABASE cannot be executed from a function" if I try to run it and the starting DB is NOT called "wave" (
+        I suspect this is because it already exists as the starting DB and thus the create-if-not-exists wins out). 
+    Since I change the core-db I need to change anything else involving the master user too. 
+    This is bad since I'm granted the limited user all permissions on the 'wave' DB -- not a big deal if it's not the master table, but big deal if it's not.
+    Good news is that this only affects the containerized Wave flow. To remediate I think:
+        1. Abandon generation and use of the non-RDS files.
+        1. Use RDS file for both the population of the container and RDS instance.
+
+    THis should simplify file generation / testing / and harmonize behaviours between the two.
+    """
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as init_sql_01:
+            init_sql_01.write(test_template_files["wave_lite_container_1"]["content"])
+            init_sql_01_path = init_sql_01.name
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as init_sql_02:
+            init_sql_02.write(test_template_files["wave_lite_container_2"]["content"])
+            init_sql_02_path = init_sql_02.name
+
+    # Have to chmod to avoid 'Permission denied issue since tempfile writes permission as 0700 whereas init.d in postgres belongs to user postgres.
+    init_sql_01.close()
+    init_sql_02.close()
+    os.chmod(init_sql_01_path, 0o755)
+    os.chmod(init_sql_02_path, 0o755)
+
+    # Changing dbname to "wave" avoiding the transaction exeuction error in sql-1 due to `CREATE DATABASE cannot be executed from a function`
+    with (
+        # PostgresContainer("postgres:latest", username="postgres", password="postgres", dbname="wave")
+        PostgresContainer("postgres:latest", username=master_user, password=master_password, dbname="wave")
+        .with_env("GRAHAM", "graham")
+        .with_bind_ports(5432, 5432)
+        .with_volume_mapping(init_sql_01_path, "/docker-entrypoint-initdb.d/01-init.sql")
+        .with_volume_mapping(init_sql_02_path, "/docker-entrypoint-initdb.d/02-init.sql")
+    ) as postgres_container2:
+
+        # POPULATE
+        # Run initial population script.
+        # No need to populate since volume mounting should hanlde for us on initial boot.
+        # query = test_template_files["wave_lite_rds"]["content"]
+        # db_result = run_postgres_query(query, master_user, master_password, master_db_name)
+
+        # VERIFY
+        # Test master user connection to wave database
+        query = "SELECT current_database();"
+        # master_conn_test = run_postgres_query(query, master_user, master_password, master_db_name)
+        master_conn_test = run_postgres_query(query, master_user, master_password, "wave")
+        # assert master_conn_test == "test"
+        assert master_conn_test == "wave"
+
+        # Test Wave user connection to wave database
+        query = "SELECT current_database();"
+        limited_conn_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
+        assert limited_conn_test == "wave"
+
+        # Verify Wave user has expected permissions
+        query = "SELECT has_database_privilege(current_user, 'wave', 'CREATE');"
+        permissions_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
+        assert "t" in permissions_test  # 't' means true in PostgreSQL
+
+        # Test Wave user can create tables (verifying ALL privileges)
+        query = "CREATE TABLE test_table (id INT); DROP TABLE test_table;"
+        create_table_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
+        assert "DROP TABLE" in create_table_test
 
 
-    #     # VERIFY
-    #     # Test master user connection to wave database
-    #     query = "SELECT current_database();"
-    #     master_conn_test = run_postgres_query(query, master_user, master_password, master_db_name)
-    #     assert master_conn_test == "test"
-
-    #     # Test Wave user connection to wave database
-    #     query = "SELECT current_database();"
-    #     limited_conn_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
-    #     assert limited_conn_test == "wave"
-
-    #     # Verify Wave user has expected permissions
-    #     query = "SELECT has_database_privilege(current_user, 'wave', 'CREATE');"
-    #     permissions_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
-    #     assert "t" in permissions_test  # 't' means true in PostgreSQL
-
-    #     # Test Wave user can create tables (verifying ALL privileges)
-    #     query = "CREATE TABLE test_table (id INT); DROP TABLE test_table;"
-    #     create_table_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
-    #     assert "DROP TABLE" in create_table_test
-
-
-    # # Test local container flow
-    # import time
-    # time.sleep(5)
-
-    # with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as init_sql_01:
-    #         init_sql_01.write(test_template_files["wave_lite_container_1"]["content"])
-    #         init_sql_01_path = init_sql_01.name
-
-
-    # with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as init_sql_02:
-    #         init_sql_02.write(test_template_files["wave_lite_container_2"]["content"])
-    #         init_sql_02_path = init_sql_02.name
-
-    # # Have to chmod to avoid 'Permission denied issue since tempfile writes permission as 0700 whereas init.d in postgres belongs to user postgres.
-    # init_sql_01.close()
-    # init_sql_02.close()
-    # os.chmod(init_sql_01_path, 0o755)
-    # os.chmod(init_sql_02_path, 0o755)
-
-    # # Changing dbname to "wave" avoiding the transaction exeuction error in sql-1 due to `CREATE DATABASE cannot be executed from a function`
-    # with (
-    #     # PostgresContainer("postgres:latest", username="postgres", password="postgres", dbname="wave")
-    #     PostgresContainer("postgres:latest", username=master_user, password=master_password, dbname="wave")
-    #     .with_env("GRAHAM", "graham")
-    #     .with_bind_ports(5432, 5432)
-    #     .with_volume_mapping(init_sql_01_path, "/docker-entrypoint-initdb.d/01-init.sql")
-    #     .with_volume_mapping(init_sql_02_path, "/docker-entrypoint-initdb.d/02-init.sql")
-    # ) as postgres_container2:
-
-
-    #     # POPULATE
-    #     # Run initial population script.
-    #     # No need to populate since volume mounting should hanlde for us on initial boot.
-    #     # query = test_template_files["wave_lite_rds"]["content"]
-    #     # db_result = run_postgres_query(query, master_user, master_password, master_db_name)
-
-
-    #     # VERIFY
-    #     # Test master user connection to wave database
-    #     query = "SELECT current_database();"
-    #     # master_conn_test = run_postgres_query(query, master_user, master_password, master_db_name)
-    #     master_conn_test = run_postgres_query(query, master_user, master_password, "wave")
-    #     # assert master_conn_test == "test"
-    #     assert master_conn_test == "wave"
-
-    #     # Test Wave user connection to wave database
-    #     query = "SELECT current_database();"
-    #     limited_conn_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
-    #     assert limited_conn_test == "wave"
-
-    #     # Verify Wave user has expected permissions
-    #     query = "SELECT has_database_privilege(current_user, 'wave', 'CREATE');"
-    #     permissions_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
-    #     assert "t" in permissions_test  # 't' means true in PostgreSQL
-
-    #     # Test Wave user can create tables (verifying ALL privileges)
-    #     query = "CREATE TABLE test_table (id INT); DROP TABLE test_table;"
-    #     create_table_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
-    #     assert "DROP TABLE" in create_table_test
-
-
-        """
-        I can get this to pass if I hack.
-        The wave-lite-container-1.sql will fail with "CREATE DATABASE cannot be executed from a function" if I try to run it and the starting DB is NOT called "wave" (
-          I suspect this is because it already exists as the starting DB and thus the create-if-not-exists wins out). 
-        Since I change the core-db I need to change anything else involving the master user too. 
-        This is bad since I'm granted the limited user all permissions on the 'wave' DB -- not a big deal if it's not the master table, but big deal if it's not.
-        Good news is that this only affects the containerized Wave flow. To remediate I think:
-          1. Abandon generation and use of the non-RDS files.
-          1. Use RDS file for both the population of the container and RDS instance.
-
-        THis should simplify file generation / testing / and harmonize behaviours between the two.
-        """
-
-
-    # Mount the RDS-targeted file on the local container
+    ## ==================================================================================
+    ## SCENARIO3: Volume Mount RDS file to run on container init
+    ## ==================================================================================
     with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as init_sql_rds:
             init_sql_rds.write(test_template_files["wave_lite_rds"]["content"])
             init_sql_rds_path = init_sql_rds.name
@@ -372,30 +368,23 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
     init_sql_rds.close()
     os.chmod(init_sql_rds_path, 0o755)
 
-    # Changing dbname to "wave" avoiding the transaction exeuction error in sql-1 due to `CREATE DATABASE cannot be executed from a function`
     with (
         # PostgresContainer("postgres:latest", username="postgres", password="postgres", dbname="wave")
         PostgresContainer("postgres:latest", username=master_user, password=master_password, dbname=master_db_name)
         .with_env("GRAHAM", "graham")
         .with_bind_ports(5432, 5432)
         .with_volume_mapping(init_sql_rds_path, "/docker-entrypoint-initdb.d/01-init.sql")
-    ) as postgres_container2:
-
+    ) as postgres_container3:
 
         # POPULATE
-        # Run initial population script.
-        # No need to populate since volume mounting should hanlde for us on initial boot.
-        # query = test_template_files["wave_lite_rds"]["content"]
-        # db_result = run_postgres_query(query, master_user, master_password, master_db_name)
-
+        # No need to run explicit population step since volume mounting should hanlde for us on initial boot.
 
         # VERIFY
         # Test master user connection to wave database
         query = "SELECT current_database();"
         # master_conn_test = run_postgres_query(query, master_user, master_password, master_db_name)
-        master_conn_test = run_postgres_query(query, master_user, master_password, "wave")
-        # assert master_conn_test == "test"
-        assert master_conn_test == "wave"
+        master_conn_test = run_postgres_query(query, master_user, master_password, master_db_name)  #"wave")
+        assert master_conn_test == "test"
 
         # Test Wave user connection to wave database
         query = "SELECT current_database();"
