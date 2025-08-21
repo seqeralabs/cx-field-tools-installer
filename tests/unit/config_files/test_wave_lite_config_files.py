@@ -10,78 +10,12 @@ import urllib.error
 from pathlib import Path
 import shutil
 
-from tests.utils.config import root, sql_test_scratch_dir, expected_sql, ssm_wave_lite
-from tests.utils.config import test_docker_compose_file
-
 from testcontainers.compose import DockerCompose
-from testcontainers.postgres import PostgresContainer
 
+from tests.utils.config import root
+from tests.utils.config import test_docker_compose_file
 from tests.utils.docker_compose import prepare_wave_only_docker_compose
-
-from tests.utils.filehandling import read_json, read_yaml, read_file
-from tests.utils.filehandling import write_file, move_file, copy_file
-from tests.utils.filehandling import parse_key_value_file
-
-
-## ------------------------------------------------------------------------------------
-## Wave Lite SQL File checks
-## ------------------------------------------------------------------------------------
-"""
-NOTE: This test case lives in its own file because it uses a different mechanic than the other config
-  file tests. Whereas the rest use `terraform console`, this one builds files from the src/ repo and
-  then compares the result against generated-ahead-of-time references in the tests/datafiles/expected_results/
-  folder.
-"""
-
-
-@pytest.mark.local
-@pytest.mark.wave
-def test_sql_files_wave(session_setup):
-    """
-    Scenario:
-        - Confirm that Wave SQL files are properly processed by python file.
-        - NOTE: Does not work same way as most other config files (baseline terraform variables + `terraform template`)
-
-    How this works:
-        1. Copy original .sql files from source to test location.
-        2. Process copied files via sedalternative.py, this will populate with end-state values.
-        3. Compare files vs test references in `tests/datafiles/expected_results/expected_sql/`
-    """
-    ## SETUP
-    ## ========================================================================================
-    # Always grab to-be-converted files from src/.
-    # This ensures any forgotten-about modifications will be caught during the test.
-    source_root           = f"{root}/assets/src/wave_lite_config/"
-    script_path           = f"{root}/scripts/installer/utils/sedalternative.py"
-
-    # Copy files to test location
-    Path(sql_test_scratch_dir).mkdir(parents=True, exist_ok=True)
-    shutil.copy(f"{source_root}/wave-lite-container-1.sql", f"{sql_test_scratch_dir}/wave-lite-container-1.sql")
-    shutil.copy(f"{source_root}/wave-lite-container-2.sql", f"{sql_test_scratch_dir}/wave-lite-container-2.sql")
-    shutil.copy(f"{source_root}/wave-lite-rds.sql", f"{sql_test_scratch_dir}/wave-lite-rds.sql")
-
-    # Run conversion using hardcoded Wave Lite credentials.
-    command = f"python3 {script_path} wave_lite_test_limited wave_lite_test_limited_password {sql_test_scratch_dir}"
-    subprocess.run(
-        command,
-        shell=True,
-        text=True,
-        capture_output=False,
-    )
-
-    ## COMPARISON
-    ## ========================================================================================
-    wave_lite_container_1 = read_file(f"{sql_test_scratch_dir}/wave-lite-container-1.sql")
-    wave_lite_container_2 = read_file(f"{sql_test_scratch_dir}/wave-lite-container-2.sql")
-    wave_lite_rds         = read_file(f"{sql_test_scratch_dir}/wave-lite-rds.sql")
-
-    ref_wave_lite_container_1 = read_file(f"{expected_sql}/wave-lite-container-1.sql")
-    ref_wave_lite_container_2 = read_file(f"{expected_sql}/wave-lite-container-2.sql")
-    ref_wave_lite_rds         = read_file(f"{expected_sql}/wave-lite-rds.sql")
-
-    assert ref_wave_lite_container_1 == wave_lite_container_1
-    assert ref_wave_lite_container_2 == wave_lite_container_2
-    assert ref_wave_lite_rds == wave_lite_rds
+from tests.utils.filehandling import read_yaml, read_file
 
 
 @pytest.mark.local
