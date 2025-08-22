@@ -17,7 +17,7 @@ from tests.utils.config import templatefile_cache_dir, all_template_files
 
 from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
 from tests.utils.local import get_reconciled_tfvars
-from tests.utils.config import root, sql_test_scratch_dir, expected_sql
+from tests.utils.config import root, sql_test_scratch_dir, expected_sql, kitchen_sink
 
 
 
@@ -69,26 +69,62 @@ file_targets_all = {
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Baseline: All Active
+## MARK: Baseline ON/OFF
 ## ------------------------------------------------------------------------------------
+## This establishes a baseline set of files using testing defaults: 
+##    - ALB is active, 
+##    - Containerized DB / Redis
+##    - Wave Lite & Groundswell & Data Explorer are active / inactive.
+
 @pytest.mark.local
-@pytest.mark.container
-def test_baseline_all_enabled(session_setup):
-    """
-    Scenario:
-        - Baseline all enable: core terraform.tfvars + base-overrides.auto.tfvars
-    """
+def test_baseline_alb_all_enabled(session_setup):
 
     override_data = """
         # No override values needed. Using base template and base-overrides only.
     """
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+
+    # Create all config files since this scenario is used often. Good bang-for-buck.
     plan = prepare_plan(override_data)
+    
     needed_template_files = all_template_files
     test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
 
     overrides = deepcopy(overrides_template)
     baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
+
+    # Test files
+    # ------------------------------------------------------------------------------------
+    keys = file_targets_all
+    
+    for key, type in keys.items():
+        print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
+        file = test_template_files[key]["content"]
+        entries = baseline_all_entries[key]
+        assert_present_and_omitted(entries, file, type)
+
+
+@pytest.mark.local
+def test_baseline_alb_all_disabled(session_setup):
+
+    # TODO: Get rid of email disabling. This should be a discrete check.
+    override_data = """
+        flag_use_aws_ses_iam_integration    = false
+        flag_use_existing_smtp              = true
+        flag_enable_groundswell             = false
+        flag_data_explorer_enabled          = false
+        flag_enable_data_studio             = false
+        flag_use_wave                       = false
+        flag_use_wave_lite                  = false
+    """
+
+    # Create all config files since this scenario is used often. Good bang-for-buck.
+    plan = prepare_plan(override_data)
+
+    needed_template_files = all_template_files
+    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+
+    overrides = deepcopy(overrides_template)
+    baseline_all_entries = generate_baseline_entries_all_disabled(test_template_files, overrides)
 
     # ------------------------------------------------------------------------------------
     # Test files
@@ -103,24 +139,21 @@ def test_baseline_all_enabled(session_setup):
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Baseline: All Disabled
+## MARK: Private CA: Active
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
-@pytest.mark.container
-def test_baseline_all_disabled(session_setup):
+@pytest.mark.private_ca
+def test_private_ca_reverse_proxy_active(session_setup):
     """
     Scenario:
-        - Baseline all disabled: core terraform.tfvars + base-overrides.auto.tfvars
+        - Baseline all enabled.
+        - Reverseproxy with self-signed private CA active.
     """
 
     override_data = """
-        flag_use_aws_ses_iam_integration    = false
-        flag_use_existing_smtp              = true
-        flag_enable_groundswell             = false
-        flag_data_explorer_enabled          = false
-        flag_enable_data_studio             = false
-        flag_use_wave                       = false
-        flag_use_wave_lite                  = false
+        flag_create_load_balancer        = false
+        flag_use_private_cacert          = true
+        flag_do_not_use_https            = false
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
     plan = prepare_plan(override_data)
@@ -129,13 +162,19 @@ def test_baseline_all_disabled(session_setup):
     test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
 
     overrides = deepcopy(overrides_template)
-    baseline_all_entries = generate_baseline_entries_all_disabled(test_template_files, overrides)
+    overrides["docker_compose"]= {
+        "present": {
+            "services.reverseproxy.container_name" : 'reverseproxy'
+        },
+        "omitted": {}
+    }
+    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
 
     # ------------------------------------------------------------------------------------
-    # Test files
+    # Test docker-compose.yml
     # ------------------------------------------------------------------------------------
     keys = file_targets_all
-    
+
     for key, type in keys.items():
         print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
         file = test_template_files[key]["content"]
@@ -196,48 +235,7 @@ def test_studio_path_routing_enabled(session_setup):
         assert_present_and_omitted(entries, file, type)
 
 
-## ------------------------------------------------------------------------------------
-## MARK: Private CA: Active
-## ------------------------------------------------------------------------------------
-@pytest.mark.local
-@pytest.mark.private_ca
-def test_private_ca_reverse_proxy_active(session_setup):
-    """
-    Scenario:
-        - Baseline all enabled.
-        - Reverseproxy with self-signed private CA active.
-    """
 
-    override_data = """
-        flag_create_load_balancer        = false
-        flag_use_private_cacert          = true
-        flag_do_not_use_https            = false
-    """
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
-
-    needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
-
-    overrides = deepcopy(overrides_template)
-    overrides["docker_compose"]= {
-        "present": {
-            "services.reverseproxy.container_name" : 'reverseproxy'
-        },
-        "omitted": {}
-    }
-    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
-
-    # ------------------------------------------------------------------------------------
-    # Test docker-compose.yml
-    # ------------------------------------------------------------------------------------
-    keys = file_targets_all
-
-    for key, type in keys.items():
-        print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-        file = test_template_files[key]["content"]
-        entries = baseline_all_entries[key]
-        assert_present_and_omitted(entries, file, type)
 
 
 ## ------------------------------------------------------------------------------------

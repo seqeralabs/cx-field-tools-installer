@@ -463,9 +463,10 @@ def test_wave_containers(session_setup):
     folder_path = os.path.dirname(wave_docker_compose_path)
     filename = os.path.basename(wave_docker_compose_path)
 
-    # Start docker-compose deployment and test wave-lite service-info endpoint
+    # Start docker-compose deployment and run tests
     with DockerCompose(context=folder_path, compose_file_name=filename, pull=True) as compose:
 
+        # Test wave-lite service-info endpoint
         service_url = "http://localhost:9099/service-info"
         max_retries = 10
         delay = 3
@@ -488,3 +489,5 @@ def test_wave_containers(session_setup):
                         f"Failed to connect to wave-lite service at {service_url} after {max_retries} retries: {e}"
                     )
                 time.sleep(delay)
+
+        # TODO: Add other tests

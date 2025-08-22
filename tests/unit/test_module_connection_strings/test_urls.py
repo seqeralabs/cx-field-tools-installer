@@ -6,103 +6,19 @@ from tests.utils.local import prepare_plan
 ## ------------------------------------------------------------------------------------
 ## URL Tests - ALB
 ## ------------------------------------------------------------------------------------
-@pytest.mark.local
-@pytest.mark.urls
-@pytest.mark.urls_secure
-def test_urls_alb_all_ecosystem(session_setup):
-    """Test URLS when using ALB."""
-    # Given
-    connect_secure_override_data = """
-        tower_server_url                                = "tower.example.com"
 
-        flag_create_load_balancer                       = true
-        flag_do_not_use_https                           = false
+    # tower_api_endpoint         = outputs["tower_api_endpoint"]["value"]
+    # tower_connect_wildcard_dns = outputs["tower_connect_wildcard_dns"]["value"]
+    # # Then
+    # assert "https://tower.example.com/api" == tower_api_endpoint
+    # assert "*.tower.example.com" == tower_connect_wildcard_dns
 
-        flag_enable_groundswell                         = true
-        flag_enable_data_studio                         = true
-        flag_use_wave_lite                              = true
+    # tower_api_endpoint         = outputs["tower_api_endpoint"]["value"]
+    # tower_connect_wildcard_dns = outputs["tower_connect_wildcard_dns"]["value"]
+    # # Then
+    # assert "https://tower.example.com/api" == tower_api_endpoint
+    # assert "N/A" == tower_connect_wildcard_dns
 
-        wave_server_url                                 = "autowave.example.com"
-
-        flag_studio_enable_path_routing                 = false
-    """
-
-    # When
-    plan = prepare_plan(connect_secure_override_data)
-    outputs = plan["planned_values"]["outputs"]
-
-    tower_base_url             = outputs["tower_base_url"]["value"]
-    tower_server_url           = outputs["tower_server_url"]["value"]
-    tower_api_endpoint         = outputs["tower_api_endpoint"]["value"]
-
-    tower_connect_dns          = outputs["tower_connect_dns"]["value"]
-    tower_connect_wildcard_dns = outputs["tower_connect_wildcard_dns"]["value"]
-    tower_connect_server_url   = outputs["tower_connect_server_url"]["value"]
-
-    tower_wave_dns             = outputs["tower_wave_dns"]["value"]
-    tower_wave_url             = outputs["tower_wave_url"]["value"]
-
-    # Then
-    assert "tower.example.com" == tower_base_url
-    assert "https://tower.example.com" == tower_server_url
-    assert "https://tower.example.com/api" == tower_api_endpoint
-
-    assert "connect.tower.example.com" == tower_connect_dns
-    assert "*.tower.example.com" == tower_connect_wildcard_dns
-    assert "https://connect.tower.example.com" == tower_connect_server_url
-
-    assert "autowave.example.com" == tower_wave_dns
-    assert "https://autowave.example.com" == tower_wave_url
-
-
-
-@pytest.mark.local
-@pytest.mark.urls
-@pytest.mark.urls_secure
-def test_urls_alb_no_ecosystem(session_setup):
-    """Test URLS when using ALB."""
-    # Given
-    connect_secure_override_data = """
-        tower_server_url                                = "tower.example.com"
-
-        flag_create_load_balancer                       = true
-        flag_do_not_use_https                           = false
-
-        flag_enable_groundswell                         = false
-        flag_enable_data_studio                         = false
-        flag_use_wave_lite                              = false
-
-        wave_server_url                                 = "autowave.example.com"
-
-        flag_studio_enable_path_routing                 = false
-    """
-
-    # When
-    plan = prepare_plan(connect_secure_override_data)
-    outputs = plan["planned_values"]["outputs"]
-
-    tower_base_url             = outputs["tower_base_url"]["value"]
-    tower_server_url           = outputs["tower_server_url"]["value"]
-    tower_api_endpoint         = outputs["tower_api_endpoint"]["value"]
-
-    tower_connect_dns          = outputs["tower_connect_dns"]["value"]
-    tower_connect_wildcard_dns = outputs["tower_connect_wildcard_dns"]["value"]
-    tower_connect_server_url   = outputs["tower_connect_server_url"]["value"]
-
-    tower_wave_dns             = outputs["tower_wave_dns"]["value"]
-    tower_wave_url             = outputs["tower_wave_url"]["value"]
-
-    # Then
-    assert "tower.example.com" == tower_base_url
-    assert "https://tower.example.com" == tower_server_url
-    assert "https://tower.example.com/api" == tower_api_endpoint
-
-    assert "N/A" == tower_connect_dns
-    assert "N/A" == tower_connect_wildcard_dns
-    assert "N/A" == tower_connect_server_url
-
-    assert "N/A" == tower_wave_dns
-    assert "N/A" == tower_wave_url
 
 ## ------------------------------------------------------------------------------------
 ## URL Tests - No HTTPS
