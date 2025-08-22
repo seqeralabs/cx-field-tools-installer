@@ -35,33 +35,12 @@ from tests.utils.filehandling import parse_key_value_file
 # NOTE: To avoid creating VPC assets, use an existing VPC in the account the AWS provider is configured to use.
 
 
-
-# assertion_modifiers_template = {
-#     "tower_env"                 : {},
-#     "tower_yml"                 : {},
-#     "data_studios_env"          : {},
-#     "tower_sql"                 : {},
-#     "docker_compose"            : {},
-#     "wave_lite_yml"             : {},
-#     "wave_lite_container_1"     : {},
-#     "wave_lite_container_2"     : {},
-#     "wave_lite_rds"             : {},
-# }
 def assertion_modifiers_template():
+    """
+    Generate a blank dict for each testcase file to attach test-specific assertion modifiers to.
+    These are then reconciled with the core set of assertions in `expected_results.py` (via `generate_assertions_xxx`).
+    """
     return {k: {} for k in config_file_list}
-
-# tc_targets = {
-#     "tower_env"                 : "kv",
-#     "tower_yml"                 : "yml",
-#     "data_studios_env"          : "kv",
-#     "tower_sql"                 : "sql",
-#     "docker_compose"            : "yml",
-#     "wave_lite_yml"             : "yml",
-#     "wave_lite_container_1"     : "sql",
-#     "wave_lite_container_2"     : "sql",
-#     "wave_lite_rds"             : "sql",
-# }
-
 
 
 ## ------------------------------------------------------------------------------------
@@ -74,9 +53,10 @@ def assertion_modifiers_template():
 
 @pytest.mark.local
 def test_baseline_alb_all_enabled(session_setup):
+    """Conduct baseline assertions when all SP services turned on."""
 
     tf_modifiers        = """#NONE"""
-    plan                = prepare_plan(tf_modifiers)
+    plan                           = prepare_plan(tf_modifiers)
 
     # Create all config files since this scenario is used often. Good bang-for-buck. No assertion_modifiers
     desired_files       = []
@@ -90,6 +70,7 @@ def test_baseline_alb_all_enabled(session_setup):
 
 @pytest.mark.local
 def test_baseline_alb_all_disabled(session_setup):
+    """Conduct baseline assertions when all SP services turned off."""
 
     # TODO: Get rid of email disabling. This should be a discrete check.
     tf_modifiers = """
@@ -101,7 +82,7 @@ def test_baseline_alb_all_disabled(session_setup):
         flag_use_wave                       = false
         flag_use_wave_lite                  = false
     """
-    plan                = prepare_plan(tf_modifiers)
+    plan                           = prepare_plan(tf_modifiers)
 
     # Create all config files since this scenario is used often. Good bang-for-buck. No assertion_modifiers
     desired_files       = []
@@ -568,11 +549,11 @@ def test_wave_sql_file_content(session_setup):
     ## ========================================================================================
     plan                = prepare_plan(tf_modifiers)
 
-    desired_files       = ["tower_env", "data_studios_env", "wave_lite_yml"]
+    desired_files       = ["wave_lite_container_1", "wave_lite_container_2", "wave_lite_rds"]
     assertion_modifiers = assertion_modifiers_template()
     tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
-    assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    # No assertions for this since it's file-comparison based.
 
     ## COMPARISON
     ## ========================================================================================

@@ -14,6 +14,16 @@ from tests.utils.filehandling import read_file
 from tests.utils.config import expected_sql
 
 
+# TODO: Aug 22/25 - consider simplifying this structure with discrete YAML file
+"""
+# Example: test_cases.yaml
+  test_baseline_all_enabled:
+    tower_env:
+      present:
+        TOWER_DB_URL: "jdbc:mysql://mock.tower-db.com:3306/tower"
+      omitted: []
+"""
+
 ## ------------------------------------------------------------------------------------
 ## MARK: Config - All Active
 ## ------------------------------------------------------------------------------------
@@ -225,6 +235,23 @@ def generate_wave_lite_rds_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
+def generate_groundswell_env_entries_all_active(overrides={}):
+    baseline = {
+        "present": {
+            "TOWER_DB_URL"                : "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_USER"               : "tower_test_user",
+            "TOWER_DB_PASSWORD"           : "tower_test_password",
+
+            "SWELL_DB_URL"                : "mysql://db:3306/swell",
+            "SWELL_DB_USER"               : "swell_test_user",
+            "SWELL_DB_PASSWORD"           : "swell_test_password",
+        },
+        "omitted": {}
+    }
+    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
+    return {**baseline, **overrides}
+
+
 def generate_assertions_all_active(template_files, overrides):
 
     entries = {
@@ -237,6 +264,7 @@ def generate_assertions_all_active(template_files, overrides):
         "wave_lite_container_1" : generate_wave_lite_container_1_entries_all_active(overrides["wave_lite_container_1"]),
         "wave_lite_container_2" : generate_wave_lite_container_2_entries_all_active(overrides["wave_lite_container_2"]),
         "wave_lite_rds"         : generate_wave_lite_rds_entries_all_active(overrides["wave_lite_rds"]),
+        "groundswell_env"       : generate_groundswell_env_entries_all_active(overrides["groundswell_env"]),
     }
     return entries
 
@@ -467,6 +495,17 @@ def generate_wave_lite_rds_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
+def generate_groundswell_env_entries_all_disabled(overrides={}):
+    baseline = {
+        "present": {
+            "SWELL_DB_URL"                : "N/A",
+        },
+        "omitted": {}
+    }
+    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
+    return {**baseline, **overrides}
+
+
 def generate_assertions_all_disabled(template_files, overrides):
 
     entries = {
@@ -479,6 +518,7 @@ def generate_assertions_all_disabled(template_files, overrides):
         "wave_lite_container_1" : generate_wave_lite_container_1_entries_all_disabled(overrides["wave_lite_container_1"]),
         "wave_lite_container_2" : generate_wave_lite_container_2_entries_all_disabled(overrides["wave_lite_container_2"]),
         "wave_lite_rds"         : generate_wave_lite_rds_entries_all_disabled(overrides["wave_lite_rds"]),
+        "groundswell_env"       : generate_groundswell_env_entries_all_disabled(overrides["groundswell_env"]),
 
     }
     return entries

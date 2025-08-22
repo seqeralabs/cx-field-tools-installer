@@ -706,6 +706,7 @@ def assert_present_and_omitted(entries: dict, file, type=None):
 
 
 def verify_all_assertions(tc_files, tc_assertions):
+    """Use the keyset of the testcase files to control which asserttions are used (for limited & kitchen sink)."""
     for k, v in tc_files.items():
         print(f"Testing {sys._getframe().f_code.co_name}.{k}.")
         content         = v["content"]
