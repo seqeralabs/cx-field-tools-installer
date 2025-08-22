@@ -209,6 +209,7 @@ config_file_list = [
     "wave_lite_container_1",
     "wave_lite_container_2",
     "wave_lite_rds",
+    "groundswell_env",
 ]
 
 all_config_files = {k:v for k,v in all_template_files.items() if k in config_file_list}
