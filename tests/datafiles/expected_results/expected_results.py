@@ -225,7 +225,7 @@ def generate_wave_lite_rds_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_baseline_entries_all_active(template_files, overrides):
+def generate_assertions_all_active(template_files, overrides):
 
     entries = {
         "tower_env"             : generate_tower_env_entries_all_active(overrides["tower_env"]),
@@ -467,7 +467,7 @@ def generate_wave_lite_rds_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_baseline_entries_all_disabled(template_files, overrides):
+def generate_assertions_all_disabled(template_files, overrides):
 
     entries = {
         "tower_env"             : generate_tower_env_entries_all_disabled(overrides["tower_env"]),

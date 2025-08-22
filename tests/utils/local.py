@@ -27,6 +27,7 @@ from yamlpath.exceptions import YAMLPathException, UnmatchedYAMLPathException
 from yamlpath.wrappers import ConsolePrinter
 from yamlpath.wrappers import NodeCoords
 
+from tests.utils.config import kitchen_sink
 from tests.utils.config import root
 from tests.utils.config import tfvars_path
 from tests.utils.config import test_tfvars_source, test_tfvars_target
@@ -35,6 +36,7 @@ from tests.utils.config import test_case_override_target, test_case_override_out
 from tests.utils.config import plan_cache_dir, templatefile_cache_dir
 from tests.utils.config import test_case_tfplan_file, test_case_tfplan_json_file
 from tests.utils.config import secrets_dir
+from tests.utils.config import all_template_files, config_file_list, all_config_files
 
 from tests.utils.filehandling import read_json, read_yaml, read_file
 from tests.utils.filehandling import write_file, move_file, copy_file
@@ -77,25 +79,25 @@ Originally tried using [tftest](https://pypi.org/project/tftest/). Too complicat
 ## ------------------------------------------------------------------------------------
 ## Cache Utility Functions
 ## ------------------------------------------------------------------------------------
-def get_cache_key(override_data: str, qualifier: str = "") -> str:
+def get_cache_key(tf_modifiers: str, qualifier: str = "") -> str:
     """Generate SHA-256 hash of override data and tfvars content for cache key."""
-    override_data = override_data.strip()
+    tf_modifiers = tf_modifiers.strip()
     qualifier = qualifier.strip()
 
     tfvars_content = read_file(tfvars_path).strip()
 
     # Create combined cache key
-    combined_content = f"{override_data}\n---TFVARS---\n{qualifier}\n---QUALIFIER---\n{tfvars_content}"
+    combined_content = f"{tf_modifiers}\n---TFVARS---\n{qualifier}\n---QUALIFIER---\n{tfvars_content}"
     return hashlib.sha256(combined_content.encode("utf-8")).hexdigest()[:16]
 
 
-def strip_overide_whitespace(override_data: str) -> str:
+def strip_overide_whitespace(tf_modifiers: str) -> str:
     """
     Purges intermediate whitespace (extra space makes same keys hash to different values).
     Convert multiple spaces to single space (ASSUMPTION: Python tabs insert spaces!)
     NOTE: Need to keep `\n` to not break HCL formatting expectations.
     """
-    return "\n".join(re.sub(r"\s+", " ", line) for line in override_data.splitlines())
+    return "\n".join(re.sub(r"\s+", " ", line) for line in tf_modifiers.splitlines())
 
 
 ## ------------------------------------------------------------------------------------
@@ -197,14 +199,14 @@ def check_aws_sso_token():
         raise RuntimeError(f"Unexpected error checking AWS SSO token: {str(e)}")
 
 def prepare_plan(
-    override_data: str,
+    tf_modifiers: str,
     qualifier: str = "",
     use_cache: bool = True,
 ) -> dict:
     """Generate override.auto.tfvars and run terraform plan with caching.
 
     Args:
-        override_data: Terraform variable overrides
+        tf_modifiers: Terraform variable overrides
         qualifier: Additional modifier to add to cache key (e.g '-target=null_resource.my_resource')
         use_cache: Whether to use cached results (default: True)
 
@@ -212,9 +214,9 @@ def prepare_plan(
         Terraform plan JSON data
     """
 
-    override_data = strip_overide_whitespace(override_data)
+    tf_modifiers = strip_overide_whitespace(tf_modifiers)
 
-    cache_key = get_cache_key(override_data, qualifier)
+    cache_key = get_cache_key(tf_modifiers, qualifier)
     cached_plan_file = f"{plan_cache_dir}/plan_{cache_key}"
     cached_plan_json_file = f"{plan_cache_dir}/plan_{cache_key}.json"
 
@@ -225,11 +227,11 @@ def prepare_plan(
 
         execute_subprocess(f"cp {cached_plan_file} {test_case_tfplan_file}")
         execute_subprocess(f"cp {cached_plan_json_file} {test_case_tfplan_json_file}")
-        write_file(test_case_override_target, override_data)
+        write_file(test_case_override_target, tf_modifiers)
     else:
         # Write override file in root and create plan files.
         print(f"Cache miss. Generating new plan for: {cache_key}")
-        write_file(test_case_override_target, override_data)
+        write_file(test_case_override_target, tf_modifiers)
 
         # Check that AWS SSO token isnt expired (or else test fails obtusely)
         try:
@@ -557,12 +559,13 @@ def generate_interpolated_templatefiles(hash, namespaces, template_files, testca
     return template_files
 
 
-def set_up_testcase(plan, needed_template_files, testcase_name):
+def generate_tc_files(plan, desired_files, testcase_name):
     """
     - Generates namespaced dictionaries.
     - Generates scenario hash.
     - Generates and returns necessary template files
     """
+    # Handle various entities extracted from `terraform plan` JSON file.
     plan, secrets = generate_namespaced_dictionaries(plan)
     vars, outputs, vars_dict, _ = plan
     tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets = secrets
@@ -572,10 +575,20 @@ def set_up_testcase(plan, needed_template_files, testcase_name):
     content_to_hash = f"{vars}\n{outputs}\n{tower_secrets}\n{groundswell_secrets}\n{seqerakit_secrets}\n{wave_lite_secrets}"
     hash = hashlib.sha256(content_to_hash.encode("utf-8")).hexdigest()[:16]
 
-    # needed_template_files = {k: v for k,v in all_template_files.items() if k in ["tower_env"]}
-    test_template_files = generate_interpolated_templatefiles(hash, namespaces, needed_template_files, testcase_name)
+    # If `kitchen_sink = True` or `desired_files = []` create every config file. If not, filter.
+    if kitchen_sink:
+        desired_files = []
+        
+    if desired_files:
+        # needed_template_files = {k: v for k, v in all_template_files.items() if k in desired_files}
+        needed_template_files = {k: v for k, v in all_config_files.items() if k in desired_files}
+    else:
+        # needed_template_files = all_template_files
+        needed_template_files = all_config_files
 
-    return test_template_files
+    tc_files = generate_interpolated_templatefiles(hash, namespaces, needed_template_files, testcase_name)
+
+    return tc_files
 
 
 ## ------------------------------------------------------------------------------------
@@ -690,3 +703,12 @@ def assert_present_and_omitted(entries: dict, file, type=None):
         assert_kv_key_omitted(entries["omitted"], file)
     else:
         raise ValueError(f"Expected type to be in 'yml', 'sql', or 'kv'], got '{type}'")
+
+
+def verify_all_assertions(tc_files, tc_assertions):
+    for k, v in tc_files.items():
+        print(f"Testing {sys._getframe().f_code.co_name}.{k}.")
+        content         = v["content"]
+        validation_type = v["validation_type"]
+        assertions      = tc_assertions[k]
+        assert_present_and_omitted(assertions, content, validation_type)

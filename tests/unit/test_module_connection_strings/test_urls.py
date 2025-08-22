@@ -29,7 +29,7 @@ from tests.utils.local import prepare_plan
 def test_urls_no_https_all_ecoystem(session_setup):
     """Check ecosystem URLS when no https active."""
     # Given
-    connect_insecure_override_data = """
+    connect_insecure_tf_modifiers = """
         tower_server_url                                = "tower.example.com"
 
         flag_create_load_balancer                       = false
@@ -44,7 +44,7 @@ def test_urls_no_https_all_ecoystem(session_setup):
     """
 
     # When
-    plan = prepare_plan(connect_insecure_override_data)
+    plan = prepare_plan(connect_insecure_tf_modifiers)
     outputs = plan["planned_values"]["outputs"]
 
     tower_base_url             = outputs["tower_base_url"]["value"]
@@ -89,7 +89,7 @@ def test_urls_no_https_all_ecoystem(session_setup):
 def test_urls_no_https_no_ecoystem(session_setup):
     """Check ecosystem URLS when no https active."""
     # Given
-    connect_insecure_override_data = """
+    connect_insecure_tf_modifiers = """
         tower_server_url                                = "tower.example.com"
 
         flag_create_load_balancer                       = false
@@ -104,7 +104,7 @@ def test_urls_no_https_no_ecoystem(session_setup):
     """
 
     # When
-    plan = prepare_plan(connect_insecure_override_data)
+    plan = prepare_plan(connect_insecure_tf_modifiers)
     outputs = plan["planned_values"]["outputs"]
 
     tower_base_url             = outputs["tower_base_url"]["value"]
@@ -153,7 +153,7 @@ def test_connect_alb_no_subdomain(session_setup):
     """Test Conect path-based routing. Ensure default 'connect.' is not present.
     """
     # Given
-    connect_dns_override_data = """
+    connect_dns_tf_modifiers = """
         tower_server_url                                = "tower.example.com"
 
         flag_create_load_balancer                       = true
@@ -164,7 +164,7 @@ def test_connect_alb_no_subdomain(session_setup):
     """
 
     # When
-    plan = prepare_plan(connect_dns_override_data)
+    plan = prepare_plan(connect_dns_tf_modifiers)
     outputs = plan["planned_values"]["outputs"]
 
     tower_connect_dns          = outputs["tower_connect_dns"]["value"]
@@ -184,7 +184,7 @@ def test_connect_ec2_no_subdomain(session_setup):
     """Test Conect path-based routing. Ensure default 'connect.' is not present.
     """
     # Given
-    connect_dns_override_data = """
+    connect_dns_tf_modifiers = """
         tower_server_url                                = "tower.example.com"
 
         flag_create_load_balancer                       = false
@@ -196,7 +196,7 @@ def test_connect_ec2_no_subdomain(session_setup):
     """
 
     # When
-    plan = prepare_plan(connect_dns_override_data)
+    plan = prepare_plan(connect_dns_tf_modifiers)
     outputs = plan["planned_values"]["outputs"]
 
     tower_connect_dns          = outputs["tower_connect_dns"]["value"]

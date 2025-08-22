@@ -100,11 +100,11 @@ def session_setup():
 #     Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars.
 #     """
 
-#     override_data = """
+#     tf_modifiers = """
 #         # No override values needed. Testing baseline only.
 #     """
 #     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-#     plan = prepare_plan(override_data)
+#     plan = prepare_plan(tf_modifiers)
 #     qualifier = "-target=null_resource.generate_independent_config_files"
 #     run_terraform_apply(qualifier)
 
@@ -120,11 +120,11 @@ def config_baseline_settings_default():
     Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars.
     """
 
-    override_data = """
+    tf_modifiers = """
         # No override values needed. Testing baseline only.
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
 
     yield plan
 
@@ -139,13 +139,13 @@ def config_baseline_settings_custom_docker_compose_no_https():
     PLUS deviations.
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_create_load_balancer        = false
         flag_use_private_cacert          = false
         flag_do_not_use_https            = true
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
     qualifier = "-target=null_resource.generate_independent_config_files"
     run_terraform_apply(qualifier)
 
@@ -161,7 +161,7 @@ def config_ansible_02_should_be_present():
     Test conditional blocks in Ansible 02_update_file_configurations.yml.tpl
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_create_external_db       = true
         flag_use_container_db         = false
 
@@ -176,7 +176,7 @@ def config_ansible_02_should_be_present():
         flag_use_wave_lite            = true
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
     qualifier = "-target=null_resource.generate_independent_config_files"
     run_terraform_apply(qualifier)
 
@@ -192,7 +192,7 @@ def config_ansible_02_should_not_be_present():
     Test conditional blocks in Ansible 02_update_file_configurations.yml.tpl
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_create_external_db       = false
         flag_use_container_db         = true
 
@@ -207,7 +207,7 @@ def config_ansible_02_should_not_be_present():
         flag_use_wave_lite            = false
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
     qualifier = "-target=null_resource.generate_independent_config_files"
     run_terraform_apply(qualifier)
 
@@ -223,7 +223,7 @@ def config_ansible_05_should_be_present():
     Test conditional blocks in Ansible 05_patch_groundswell.yml
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_create_external_db       = false
         flag_use_container_db         = true
 
@@ -231,7 +231,7 @@ def config_ansible_05_should_be_present():
 
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
     qualifier = "-target=null_resource.generate_independent_config_files"
     run_terraform_apply(qualifier)
 
@@ -247,7 +247,7 @@ def config_ansible_05_should_not_be_present():
     Test conditional blocks in Ansible 05_patch_groundswell.yml
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_create_external_db       = false
         flag_use_container_db         = true
 
@@ -255,7 +255,7 @@ def config_ansible_05_should_not_be_present():
 
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
     qualifier = "-target=null_resource.generate_independent_config_files"
     run_terraform_apply(qualifier)
 
@@ -271,13 +271,13 @@ def config_ansible_06_should_be_present():
     Test conditional blocks in Ansible 06_run_seqerakit.yml
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_create_hosts_file_entry  = true
         flag_do_not_use_https         = true
 
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
     qualifier = "-target=null_resource.generate_independent_config_files"
     run_terraform_apply(qualifier)
 
@@ -293,13 +293,13 @@ def config_ansible_06_should_not_be_present():
     Test conditional blocks in Ansible 06_run_seqerakit.yml
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_create_hosts_file_entry  = false
         flag_do_not_use_https         = false
 
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
     qualifier = "-target=null_resource.generate_independent_config_files"
     run_terraform_apply(qualifier)
 

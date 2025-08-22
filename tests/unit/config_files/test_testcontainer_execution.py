@@ -23,9 +23,9 @@ from tests.utils.local import get_reconciled_tfvars
 
 
 from tests.utils.local import generate_namespaced_dictionaries, generate_interpolated_templatefiles
-from tests.utils.local import set_up_testcase, assert_present_and_omitted
+from tests.utils.local import generate_tc_files, assert_present_and_omitted
 
-from tests.datafiles.expected_results.expected_results import generate_baseline_entries_all_active, generate_baseline_entries_all_disabled
+from tests.datafiles.expected_results.expected_results import generate_assertions_all_active, generate_assertions_all_disabled
 
 from testcontainers.compose import DockerCompose
 from testcontainers.mysql import MySqlContainer
@@ -40,7 +40,7 @@ from tests.utils.filehandling import parse_key_value_file
 
 
 
-overrides_template = {
+assertion_modifiers_template = {
     "tower_env"                 : {},
     "tower_yml"                 : {},
     "data_studios_env"          : {},
@@ -52,7 +52,7 @@ overrides_template = {
     "wave_lite_rds"             : {},
 }
 
-file_targets_all = {
+tc_targets = {
     "tower_env"                 : "kv",
     "tower_yml"                 : "yml",
     "data_studios_env"          : "kv",
@@ -67,7 +67,7 @@ file_targets_all = {
 # REFERENCE: How to target a subset of files in each testcase versus full set."""
 # target_keys = ["docker_compose"]
 # needed_template_files = {k: v for k,v in all_template_files.items() if k in target_keys}
-# test_template_files = set_up_testcase(plan, needed_template_files)
+# tc_files = generate_tc_files(plan, needed_template_files)
 
 
 ## ------------------------------------------------------------------------------------
@@ -93,16 +93,15 @@ def test_tower_sql_population(session_setup):
 
     ## SETUP
     ## =======================================================================================
-    override_data = """
-        # No override values needed. Using base template and base-overrides only.
-    """
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
-    needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+    tf_modifiers = """#NONE"""
 
-    overrides = deepcopy(overrides_template)
-    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
+    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    plan = prepare_plan(tf_modifiers)
+    needed_template_files = all_template_files
+    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
+
+    assertion_modifiers = deepcopy(assertion_modifiers_template)
+    assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     # WARNING: DONT CHANGE THESE OR TEST FAILS.
     # https://hub.docker.com/_/mysql
@@ -153,7 +152,7 @@ def test_tower_sql_population(session_setup):
 
         # POPULATE
         # Run initial population script.
-        query = test_template_files["tower_sql"]["content"]
+        query = tc_files["tower_sql"]["content"]
         db_result = run_mysql_query(query, master_user, master_password)
 
 
@@ -203,16 +202,14 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
 
     ## SETUP
     ## =======================================================================================
-    override_data = """
-        # No override values needed. Using base template and base-overrides only.
-    """
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
-    needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+    tf_modifiers = """#NONE"""
 
-    overrides = deepcopy(overrides_template)
-    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
+    plan = prepare_plan(tf_modifiers)
+    needed_template_files = all_template_files
+    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
+
+    assertion_modifiers = deepcopy(assertion_modifiers_template)
+    assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     # https://hub.docker.com/_/postgres
     master_user             = "wave_lite_test_master"
@@ -262,7 +259,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
 
         # POPULATE
         # Run initial population script.
-        query = test_template_files["wave_lite_rds"]["content"]
+        query = tc_files["wave_lite_rds"]["content"]
         db_result = run_postgres_query(query, master_user, master_password, master_db_name)
 
         # VERIFY
@@ -305,8 +302,8 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
     THis should simplify file generation / testing / and harmonize behaviours between the two.
     """
 
-    init_sql_01_path = test_template_files["wave_lite_container_1"]["filepath"]
-    init_sql_02_path = test_template_files["wave_lite_container_2"]["filepath"]
+    init_sql_01_path = tc_files["wave_lite_container_1"]["filepath"]
+    init_sql_02_path = tc_files["wave_lite_container_2"]["filepath"]
 
     # Changing dbname to "wave" avoiding the transaction exeuction error in sql-1 due to `CREATE DATABASE cannot be executed from a function`
     with (
@@ -348,7 +345,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
     ## ==================================================================================
     ## SCENARIO3: Volume Mount RDS file to run on container init
     ## ==================================================================================
-    init_sql_rds_path = test_template_files["wave_lite_rds"]["filepath"]
+    init_sql_rds_path = tc_files["wave_lite_rds"]["filepath"]
 
     with (
         # PostgresContainer("postgres:latest", username="postgres", password="postgres", dbname="wave")
@@ -408,21 +405,18 @@ def test_wave_containers(session_setup):
 
     ## SETUP
     ## =======================================================================================
-    override_data = """
-        # No override values needed. Using base template and base-overrides only.
-        # Wave-LIte active, containers active.
-    """
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
-    needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+    tf_modifiers = """#NONE"""
 
-    overrides = deepcopy(overrides_template)
-    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
+    plan = prepare_plan(tf_modifiers)
+    needed_template_files = all_template_files
+    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
+
+    assertion_modifiers = deepcopy(assertion_modifiers_template)
+    assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
 
     def prepare_wave_only_docker_compose():
-        docker_compose_data = read_yaml(test_template_files["docker_compose"]["filepath"])
+        docker_compose_data = read_yaml(tc_files["docker_compose"]["filepath"])
 
         # Purge all containers except those tied to Wave Lite.
         desired_services = ["wave-lite", "wave-lite-reverse-proxy", "wave-db", "wave-redis"]
@@ -433,7 +427,7 @@ def test_wave_containers(session_setup):
             docker_compose_data["services"].pop(k)
 
         # Add generated Wave Lite YAML file
-        wave_lite_yaml_path = test_template_files["wave_lite_yml"]["filepath"]
+        wave_lite_yaml_path = tc_files["wave_lite_yml"]["filepath"]
         volume_mount = f"{wave_lite_yaml_path}:/work/config.yml"
         docker_compose_data["services"]["wave-lite"]["volumes"] = []
         docker_compose_data["services"]["wave-lite"]["volumes"].append(volume_mount)
@@ -444,7 +438,7 @@ def test_wave_containers(session_setup):
         docker_compose_data["services"]["wave-lite-reverse-proxy"]["volumes"].append(volume_mount)
 
         # Add SQL & remove stateful storage from wave lite db
-        wave_lite_rds_path = test_template_files["wave_lite_rds"]["filepath"]
+        wave_lite_rds_path = tc_files["wave_lite_rds"]["filepath"]
         volume_mount = f"{wave_lite_rds_path}:/docker-entrypoint-initdb.d/01-init.sql"
         docker_compose_data["services"]["wave-db"]["volumes"] = []
         docker_compose_data["services"]["wave-db"]["volumes"].append(volume_mount)

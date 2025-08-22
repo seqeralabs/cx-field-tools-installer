@@ -18,14 +18,12 @@ from tests.utils.config import templatefile_cache_dir, all_template_files
 from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
 from tests.utils.local import get_reconciled_tfvars
 from tests.utils.config import root, sql_test_scratch_dir, expected_sql, kitchen_sink
-
-
-
+from tests.utils.config import config_file_list
 
 from tests.utils.local import generate_namespaced_dictionaries, generate_interpolated_templatefiles
-from tests.utils.local import set_up_testcase, assert_present_and_omitted
+from tests.utils.local import generate_tc_files, assert_present_and_omitted, verify_all_assertions
 
-from tests.datafiles.expected_results.expected_results import generate_baseline_entries_all_active, generate_baseline_entries_all_disabled
+from tests.datafiles.expected_results.expected_results import generate_assertions_all_active, generate_assertions_all_disabled
 
 from testcontainers.mysql import MySqlContainer
 
@@ -38,7 +36,7 @@ from tests.utils.filehandling import parse_key_value_file
 
 
 
-overrides_template = {
+assertion_modifiers_template = {
     "tower_env"                 : {},
     "tower_yml"                 : {},
     "data_studios_env"          : {},
@@ -50,22 +48,22 @@ overrides_template = {
     "wave_lite_rds"             : {},
 }
 
-file_targets_all = {
-    "tower_env"                 : "kv",
-    "tower_yml"                 : "yml",
-    "data_studios_env"          : "kv",
-    "tower_sql"                 : "sql",
-    "docker_compose"            : "yml",
-    "wave_lite_yml"             : "yml",
-    "wave_lite_container_1"     : "sql",
-    "wave_lite_container_2"     : "sql",
-    "wave_lite_rds"             : "sql",
-}
 
-# REFERENCE: How to target a subset of files in each testcase versus full set."""
-# target_keys = ["docker_compose"]
-# needed_template_files = {k: v for k,v in all_template_files.items() if k in target_keys}
-# test_template_files = set_up_testcase(plan, needed_template_files)
+# tc_targets = {
+#     "tower_env"                 : "kv",
+#     "tower_yml"                 : "yml",
+#     "data_studios_env"          : "kv",
+#     "tower_sql"                 : "sql",
+#     "docker_compose"            : "yml",
+#     "wave_lite_yml"             : "yml",
+#     "wave_lite_container_1"     : "sql",
+#     "wave_lite_container_2"     : "sql",
+#     "wave_lite_rds"             : "sql",
+# }
+
+
+def assertion_modifiers_template():
+    return {k: {} for k in config_file_list}
 
 
 ## ------------------------------------------------------------------------------------
@@ -79,35 +77,24 @@ file_targets_all = {
 @pytest.mark.local
 def test_baseline_alb_all_enabled(session_setup):
 
-    override_data = """
-        # No override values needed. Using base template and base-overrides only.
-    """
+    tf_modifiers = """#NONE"""
+    plan = prepare_plan(tf_modifiers)
 
-    # Create all config files since this scenario is used often. Good bang-for-buck.
-    plan = prepare_plan(override_data)
-    
-    needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+    # Create all config files since this scenario is used often. Good bang-for-buck. No assertion_modifiers
+    desired_files       = []
+    assertion_modifiers = assertion_modifiers_template()
 
-    overrides = deepcopy(overrides_template)
-    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
+    tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_assertions       = generate_assertions_all_active(tc_files, assertion_modifiers)
 
-    # Test files
-    # ------------------------------------------------------------------------------------
-    keys = file_targets_all
-    
-    for key, type in keys.items():
-        print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-        file = test_template_files[key]["content"]
-        entries = baseline_all_entries[key]
-        assert_present_and_omitted(entries, file, type)
+    verify_all_assertions(tc_files, tc_assertions)
 
 
 @pytest.mark.local
 def test_baseline_alb_all_disabled(session_setup):
 
     # TODO: Get rid of email disabling. This should be a discrete check.
-    override_data = """
+    tf_modifiers = """
         flag_use_aws_ses_iam_integration    = false
         flag_use_existing_smtp              = true
         flag_enable_groundswell             = false
@@ -116,26 +103,16 @@ def test_baseline_alb_all_disabled(session_setup):
         flag_use_wave                       = false
         flag_use_wave_lite                  = false
     """
+    plan = prepare_plan(tf_modifiers)
 
-    # Create all config files since this scenario is used often. Good bang-for-buck.
-    plan = prepare_plan(override_data)
+    # Create all config files since this scenario is used often. Good bang-for-buck. No assertion_modifiers
+    desired_files       = []
+    assertion_modifiers = assertion_modifiers_template()
 
-    needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+    tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_assertions       = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
-    overrides = deepcopy(overrides_template)
-    baseline_all_entries = generate_baseline_entries_all_disabled(test_template_files, overrides)
-
-    # ------------------------------------------------------------------------------------
-    # Test files
-    # ------------------------------------------------------------------------------------
-    keys = file_targets_all
-    
-    for key, type in keys.items():
-        print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-        file = test_template_files[key]["content"]
-        entries = baseline_all_entries[key]
-        assert_present_and_omitted(entries, file, type)
+    verify_all_assertions(tc_files, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -150,35 +127,35 @@ def test_private_ca_reverse_proxy_active(session_setup):
         - Reverseproxy with self-signed private CA active.
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_create_load_balancer        = false
         flag_use_private_cacert          = true
         flag_do_not_use_https            = false
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
 
     needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
 
-    overrides = deepcopy(overrides_template)
-    overrides["docker_compose"]= {
+    assertion_modifiers = deepcopy(assertion_modifiers_template)
+    assertion_modifiers["docker_compose"]= {
         "present": {
             "services.reverseproxy.container_name" : 'reverseproxy'
         },
         "omitted": {}
     }
-    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
+    assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     # ------------------------------------------------------------------------------------
     # Test docker-compose.yml
     # ------------------------------------------------------------------------------------
-    keys = file_targets_all
+    keys = tc_targets
 
     for key, type in keys.items():
         print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-        file = test_template_files[key]["content"]
-        entries = baseline_all_entries[key]
+        file = tc_files[key]["content"]
+        entries = assertions[key]
         assert_present_and_omitted(entries, file, type)
 
 
@@ -194,19 +171,19 @@ def test_studio_path_routing_enabled(session_setup):
         - Studios path-routing enabled.
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_enable_data_studio         = true
         flag_studio_enable_path_routing = true
         data_studio_path_routing_url    = "connect-example.com"
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
 
     needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
 
-    overrides = deepcopy(overrides_template)
-    overrides["tower_env"]= {
+    assertion_modifiers = deepcopy(assertion_modifiers_template)
+    assertion_modifiers["tower_env"]= {
         "present": {
             "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"     : "true",
             "TOWER_DATA_STUDIO_CONNECT_URL"             : "https://connect-example.com"
@@ -214,24 +191,24 @@ def test_studio_path_routing_enabled(session_setup):
         "omitted": {}
     }
 
-    overrides["data_studios_env"]= {
+    assertion_modifiers["data_studios_env"]= {
         "present": {
             "CONNECT_PROXY_URL"                         : "https://connect-example.com"
         },
         "omitted": {}
     }
 
-    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
+    assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     # ------------------------------------------------------------------------------------
     # Test files
     # ------------------------------------------------------------------------------------
-    keys = file_targets_all
+    keys = tc_targets
     
     for key, type in keys.items():
         print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-        file = test_template_files[key]["content"]
-        entries = baseline_all_entries[key]
+        file = tc_files[key]["content"]
+        entries = assertions[key]
         assert_present_and_omitted(entries, file, type)
 
 
@@ -250,50 +227,50 @@ def test_new_db_all_enabled(session_setup):
         - New RDS active.
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_create_external_db         = true
         flag_use_existing_external_db   = false
         flag_use_container_db           = false
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
 
     needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
 
-    overrides = deepcopy(overrides_template)
-    overrides["tower_env"]= {
+    assertion_modifiers = deepcopy(assertion_modifiers_template)
+    assertion_modifiers["tower_env"]= {
         "present": {
             "TOWER_DB_URL"                : "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
         },
         "omitted": {}
     }
 
-    overrides["groundswell_env"]= {
+    assertion_modifiers["groundswell_env"]= {
         "present": {
             "TOWER_DB_URL"                : "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
         },
         "omitted": {}
     }
 
-    overrides["wave_lite_yml"]= {
+    assertion_modifiers["wave_lite_yml"]= {
         "present": {
             'wave.db.uri'                 : "jdbc:postgresql://mock.wave-db.com:5432/wave",
         },
         "omitted": {}
     }
 
-    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
+    assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     # ------------------------------------------------------------------------------------
     # Test files
     # ------------------------------------------------------------------------------------
-    keys = file_targets_all
+    keys = tc_targets
     
     for key, type in keys.items():
         print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-        file = test_template_files[key]["content"]
-        entries = baseline_all_entries[key]
+        file = tc_files[key]["content"]
+        entries = assertions[key]
         assert_present_and_omitted(entries, file, type)
 
 
@@ -309,7 +286,7 @@ def test_new_db_all_disabled(session_setup):
         - New RDS active.
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_use_aws_ses_iam_integration    = false
         flag_use_existing_smtp              = true
         flag_enable_groundswell             = false
@@ -323,41 +300,41 @@ def test_new_db_all_disabled(session_setup):
         flag_use_container_db               = false
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
 
     needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
 
-    overrides = deepcopy(overrides_template)
-    overrides["tower_env"]= {
+    assertion_modifiers = deepcopy(assertion_modifiers_template)
+    assertion_modifiers["tower_env"]= {
         "present": {
             "TOWER_DB_URL"                : "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
         },
         "omitted": {}
     }
 
-    # No need for custom overrides -- core testcase handles this one.
-    overrides["groundswell_env"]= {
+    # No need for custom assertion_modifiers -- core testcase handles this one.
+    assertion_modifiers["groundswell_env"]= {
         "present": {},
         "omitted": {}
     }
 
-    # No need for custom overrides -- core testcase handles this one.
-    overrides["wave_lite_yml"]= {
+    # No need for custom assertion_modifiers -- core testcase handles this one.
+    assertion_modifiers["wave_lite_yml"]= {
         "present": {},
         "omitted": {}
     }
-    baseline_all_entries = generate_baseline_entries_all_disabled(test_template_files, overrides)
+    assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     # ------------------------------------------------------------------------------------
     # Test files
     # ------------------------------------------------------------------------------------
-    keys = file_targets_all
+    keys = tc_targets
     
     for key, type in keys.items():
         print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-        file = test_template_files[key]["content"]
-        entries = baseline_all_entries[key]
+        file = tc_files[key]["content"]
+        entries = assertions[key]
         assert_present_and_omitted(entries, file, type)
 
 
@@ -373,27 +350,27 @@ def test_existing_db_all_enabled(session_setup):
         - Existing RDS active.
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_create_external_db         = false
         flag_use_existing_external_db   = true
         flag_use_container_db           = false
         tower_db_url                        = "existing.tower-db.com"
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
 
     needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
 
-    overrides = deepcopy(overrides_template)
-    overrides["tower_env"]= {
+    assertion_modifiers = deepcopy(assertion_modifiers_template)
+    assertion_modifiers["tower_env"]= {
         "present": {
             "TOWER_DB_URL"                : "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
         },
         "omitted": {}
     }
 
-    overrides["groundswell_env"]= {
+    assertion_modifiers["groundswell_env"]= {
         "present": {
             "TOWER_DB_URL"                : "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
         },
@@ -402,24 +379,24 @@ def test_existing_db_all_enabled(session_setup):
 
     # NOTE: Current as of Aug 13/2025, Wave-Lite does not support existing db flow.
     # TODO: Extend functionality.
-    overrides["wave_lite_yml"]= {
+    assertion_modifiers["wave_lite_yml"]= {
         "present": {
             'wave.db.uri'                 : "jdbc:postgresql://wave-db:5432/wave",
         },
         "omitted": {}
     }
 
-    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
+    assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     # ------------------------------------------------------------------------------------
     # Test files
     # ------------------------------------------------------------------------------------
-    keys = file_targets_all
+    keys = tc_targets
     
     for key, type in keys.items():
         print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-        file = test_template_files[key]["content"]
-        entries = baseline_all_entries[key]
+        file = tc_files[key]["content"]
+        entries = assertions[key]
         assert_present_and_omitted(entries, file, type)
 
 
@@ -435,7 +412,7 @@ def test_existing_db_all_disabled(session_setup):
         - Existing RDS active.
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_use_aws_ses_iam_integration    = false
         flag_use_existing_smtp              = true
         flag_enable_groundswell             = false
@@ -450,41 +427,41 @@ def test_existing_db_all_disabled(session_setup):
         tower_db_url                        = "existing.tower-db.com"
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
 
     needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
 
-    overrides = deepcopy(overrides_template)
-    overrides["tower_env"]= {
+    assertion_modifiers = deepcopy(assertion_modifiers_template)
+    assertion_modifiers["tower_env"]= {
         "present": {
             "TOWER_DB_URL"                : "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
         },
         "omitted": {}
     }
 
-    # No need for custom overrides -- core testcase handles this one.
-    overrides["groundswell_env"]= {
+    # No need for custom assertion_modifiers -- core testcase handles this one.
+    assertion_modifiers["groundswell_env"]= {
         "present": {},
         "omitted": {}
     }
 
-    # No need for custom overrides -- core testcase handles this one.
-    overrides["wave_lite_yml"]= {
+    # No need for custom assertion_modifiers -- core testcase handles this one.
+    assertion_modifiers["wave_lite_yml"]= {
         "present": {},
         "omitted": {}
     }
-    baseline_all_entries = generate_baseline_entries_all_disabled(test_template_files, overrides)
+    assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     # ------------------------------------------------------------------------------------
     # Test files
     # ------------------------------------------------------------------------------------
-    keys = file_targets_all
+    keys = tc_targets
     
     for key, type in keys.items():
         print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-        file = test_template_files[key]["content"]
-        entries = baseline_all_entries[key]
+        file = tc_files[key]["content"]
+        entries = assertions[key]
         assert_present_and_omitted(entries, file, type)
 
 
@@ -500,49 +477,49 @@ def test_new_redis_all_enabled(session_setup):
         - Elasticache Redis active.
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_create_external_redis                      = true
         flag_use_container_redis                        = false
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
 
     needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
 
-    overrides = deepcopy(overrides_template)
-    overrides["tower_env"]= {
+    assertion_modifiers = deepcopy(assertion_modifiers_template)
+    assertion_modifiers["tower_env"]= {
         "present": {
             "TOWER_REDIS_URL"                : "redis://mock.tower-redis.com:6379",
         },
         "omitted": {}
     }
 
-    overrides["data_studios_env"]= {
+    assertion_modifiers["data_studios_env"]= {
         "present": {
             "CONNECT_REDIS_ADDRESS"          : "mock.tower-redis.com:6379",
         },
         "omitted": {}
     }
 
-    overrides["wave_lite_yml"]= {
+    assertion_modifiers["wave_lite_yml"]= {
         "present": {
             'redis.uri'                      : "rediss://mock.wave-redis.com:6379",
         },
         "omitted": {}
     }
 
-    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
+    assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     # ------------------------------------------------------------------------------------
     # Test files
     # ------------------------------------------------------------------------------------
-    keys = file_targets_all
+    keys = tc_targets
     
     for key, type in keys.items():
         print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-        file = test_template_files[key]["content"]
-        entries = baseline_all_entries[key]
+        file = tc_files[key]["content"]
+        entries = assertions[key]
         assert_present_and_omitted(entries, file, type)
 
 
@@ -558,7 +535,7 @@ def test_new_redis_all_disabled(session_setup):
         - Elasticache Redis active.
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_use_aws_ses_iam_integration    = false
         flag_use_existing_smtp              = true
         flag_enable_groundswell             = false
@@ -571,13 +548,13 @@ def test_new_redis_all_disabled(session_setup):
         flag_use_container_redis            = false
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
 
     needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
 
-    overrides = deepcopy(overrides_template)
-    overrides["tower_env"]= {
+    assertion_modifiers = deepcopy(assertion_modifiers_template)
+    assertion_modifiers["tower_env"]= {
         "present": {
             "TOWER_REDIS_URL"                : "redis://mock.tower-redis.com:6379",
         },
@@ -586,30 +563,30 @@ def test_new_redis_all_disabled(session_setup):
 
     # When disabled, none of the settings are present other than comment explaining why.
     # TODO: Harmonize behaviour with other files like Groundswell / Wave-Lite.
-    overrides["data_studios_env"]= {
+    assertion_modifiers["data_studios_env"]= {
         "present": {},
         "omitted": {
             "CONNECT_REDIS_ADDRESS"          : "N/A",
         }
     }
 
-    overrides["wave_lite_yml"]= {
+    assertion_modifiers["wave_lite_yml"]= {
         "present": {
             'redis.uri'                      : "N/A",
         },
         "omitted": {}
     }
-    baseline_all_entries = generate_baseline_entries_all_disabled(test_template_files, overrides)
+    assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     # ------------------------------------------------------------------------------------
     # Test files
     # ------------------------------------------------------------------------------------
-    keys = file_targets_all
+    keys = tc_targets
     
     for key, type in keys.items():
         print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-        file = test_template_files[key]["content"]
-        entries = baseline_all_entries[key]
+        file = tc_files[key]["content"]
+        entries = assertions[key]
         assert_present_and_omitted(entries, file, type)
 
 
@@ -625,7 +602,7 @@ def test_seqera_hosted_wave_active(session_setup):
         - Seqera-hosted Wave active.
     """
 
-    override_data = """
+    tf_modifiers = """
         flag_use_aws_ses_iam_integration    = false
         flag_use_existing_smtp              = true
         flag_enable_groundswell             = false
@@ -638,36 +615,36 @@ def test_seqera_hosted_wave_active(session_setup):
         wave_server_url                     = "wave.seqera.io"
     """
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
 
     needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
 
-    overrides = deepcopy(overrides_template)
-    overrides["tower_env"]= {
+    assertion_modifiers = deepcopy(assertion_modifiers_template)
+    assertion_modifiers["tower_env"]= {
         "present": {
             "WAVE_SERVER_URL"                : "https://wave.seqera.io",
         },
         "omitted": {}
     }
 
-    overrides["wave_lite_yml"]= {
+    assertion_modifiers["wave_lite_yml"]= {
         "present": {
             'wave.server.url'                : "https://wave.seqera.io",
         },
         "omitted": {}
     }
-    baseline_all_entries = generate_baseline_entries_all_disabled(test_template_files, overrides)
+    assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     # ------------------------------------------------------------------------------------
     # Test files
     # ------------------------------------------------------------------------------------
-    keys = file_targets_all
+    keys = tc_targets
     
     for key, type in keys.items():
         print(f"Testing {sys._getframe().f_code.co_name}.{key} generated from default settings.")
-        file = test_template_files[key]["content"]
-        entries = baseline_all_entries[key]
+        file = tc_files[key]["content"]
+        entries = assertions[key]
         assert_present_and_omitted(entries, file, type)
 
 
@@ -684,25 +661,25 @@ def test_wave_sql_file_content(session_setup):
         - Compare against pre-generated result files in `tests/datafiles/expected_results/expected_sql`.
     """
 
-    override_data = """
+    tf_modifiers = """
         # No override values needed. Using base template and base-overrides only.
     """
     ## SETUP
     ## ========================================================================================
     # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    plan = prepare_plan(override_data)
+    plan = prepare_plan(tf_modifiers)
     needed_template_files = all_template_files
-    test_template_files = set_up_testcase(plan, needed_template_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
 
-    overrides = deepcopy(overrides_template)
-    baseline_all_entries = generate_baseline_entries_all_active(test_template_files, overrides)
+    assertion_modifiers = deepcopy(assertion_modifiers_template)
+    assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
 
     ## COMPARISON
     ## ========================================================================================
-    wave_lite_container_1 = read_file(f"{test_template_files['wave_lite_container_1']['filepath']}")
-    wave_lite_container_2 = read_file(f"{test_template_files['wave_lite_container_2']['filepath']}")
-    wave_lite_rds         = read_file(f"{test_template_files['wave_lite_rds']['filepath']}")
+    wave_lite_container_1 = read_file(f"{tc_files['wave_lite_container_1']['filepath']}")
+    wave_lite_container_2 = read_file(f"{tc_files['wave_lite_container_2']['filepath']}")
+    wave_lite_rds         = read_file(f"{tc_files['wave_lite_rds']['filepath']}")
 
     ref_wave_lite_container_1 = read_file(f"{expected_sql}/wave-lite-container-1.sql")
     ref_wave_lite_container_2 = read_file(f"{expected_sql}/wave-lite-container-2.sql")
