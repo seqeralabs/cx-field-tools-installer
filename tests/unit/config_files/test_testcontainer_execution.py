@@ -23,7 +23,7 @@ from tests.utils.local import get_reconciled_tfvars
 
 
 from tests.utils.local import generate_namespaced_dictionaries, generate_interpolated_templatefiles
-from tests.utils.local import generate_tc_files, assert_present_and_omitted
+from tests.utils.local import generate_tc_files, assert_present_and_omitted, verify_all_assertions
 
 from tests.datafiles.expected_results.expected_results import generate_assertions_all_active, generate_assertions_all_disabled
 
@@ -35,47 +35,25 @@ from tests.utils.filehandling import read_json, read_yaml, read_file
 from tests.utils.filehandling import write_file, move_file, copy_file
 from tests.utils.filehandling import parse_key_value_file
 
+from tests.utils.config import config_file_list
+
 
 # NOTE: To avoid creating VPC assets, use an existing VPC in the account the AWS provider is configured to use.
 
 
 
-assertion_modifiers_template = {
-    "tower_env"                 : {},
-    "tower_yml"                 : {},
-    "data_studios_env"          : {},
-    "tower_sql"                 : {},
-    "docker_compose"            : {},
-    "wave_lite_yml"             : {},
-    "wave_lite_container_1"     : {},
-    "wave_lite_container_2"     : {},
-    "wave_lite_rds"             : {},
-}
-
-tc_targets = {
-    "tower_env"                 : "kv",
-    "tower_yml"                 : "yml",
-    "data_studios_env"          : "kv",
-    "tower_sql"                 : "sql",
-    "docker_compose"            : "yml",
-    "wave_lite_yml"             : "yml",
-    "wave_lite_container_1"     : "sql",
-    "wave_lite_container_2"     : "sql",
-    "wave_lite_rds"             : "sql",
-}
-
-# REFERENCE: How to target a subset of files in each testcase versus full set."""
-# target_keys = ["docker_compose"]
-# needed_template_files = {k: v for k,v in all_template_files.items() if k in target_keys}
-# tc_files = generate_tc_files(plan, needed_template_files)
+def assertion_modifiers_template():
+    """
+    Generate a blank dict for each testcase file to attach test-specific assertion modifiers to.
+    These are then reconciled with the core set of assertions in `expected_results.py` (via `generate_assertions_xxx`).
+    """
+    return {k: {} for k in config_file_list}
 
 
 ## ------------------------------------------------------------------------------------
 ## MARK: MySQL (Platform)
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
-@pytest.mark.sql
-@pytest.mark.mysql_container
 @pytest.mark.long
 @pytest.mark.testcontainer
 def test_tower_sql_population(session_setup):
@@ -94,14 +72,15 @@ def test_tower_sql_population(session_setup):
     ## SETUP
     ## =======================================================================================
     tf_modifiers = """#NONE"""
-
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
     plan = prepare_plan(tf_modifiers)
-    needed_template_files = all_template_files
-    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
 
-    assertion_modifiers = deepcopy(assertion_modifiers_template)
-    assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    desired_files       = ["tower_sql"]
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+
+    # Not required right now
+    # assertion_modifiers = assertion_modifiers_template()
+    # tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    # verify_all_assertions(tc_files, tc_assertions)
 
     # WARNING: DONT CHANGE THESE OR TEST FAILS.
     # https://hub.docker.com/_/mysql
@@ -203,13 +182,15 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
     ## SETUP
     ## =======================================================================================
     tf_modifiers = """#NONE"""
-
     plan = prepare_plan(tf_modifiers)
-    needed_template_files = all_template_files
-    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
 
-    assertion_modifiers = deepcopy(assertion_modifiers_template)
-    assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    desired_files       = ["docker_compose", "wave_lite_yml", "wave_lite_container_1", "wave_lite_container_2", "wave_lite_rds"]
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+
+    # Not required right now
+    # assertion_modifiers = assertion_modifiers_template()
+    # tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    # verify_all_assertions(tc_files, tc_assertions)
 
     # https://hub.docker.com/_/postgres
     master_user             = "wave_lite_test_master"
@@ -406,13 +387,15 @@ def test_wave_containers(session_setup):
     ## SETUP
     ## =======================================================================================
     tf_modifiers = """#NONE"""
-
     plan = prepare_plan(tf_modifiers)
-    needed_template_files = all_template_files
-    tc_files = generate_tc_files(plan, needed_template_files, sys._getframe().f_code.co_name)
 
-    assertion_modifiers = deepcopy(assertion_modifiers_template)
-    assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    desired_files       = ["docker_compose", "wave_lite_yml", "wave_lite_container_1", "wave_lite_container_2", "wave_lite_rds"]
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+
+    # Not required right now
+    # assertion_modifiers = assertion_modifiers_template()
+    # tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    # verify_all_assertions(tc_files, tc_assertions)
 
 
     def prepare_wave_only_docker_compose():

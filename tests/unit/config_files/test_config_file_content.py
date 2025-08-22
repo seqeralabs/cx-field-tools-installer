@@ -25,8 +25,6 @@ from tests.utils.local import generate_tc_files, assert_present_and_omitted, ver
 
 from tests.datafiles.expected_results.expected_results import generate_assertions_all_active, generate_assertions_all_disabled
 
-from testcontainers.mysql import MySqlContainer
-
 from tests.utils.filehandling import read_json, read_yaml, read_file
 from tests.utils.filehandling import write_file, move_file, copy_file
 from tests.utils.filehandling import parse_key_value_file
