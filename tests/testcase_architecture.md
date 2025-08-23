@@ -5,19 +5,11 @@
 These tests exist to validate that the resources (_configuration & AWS resources_) produced by Terraform align to expected behaviours, in two ways:
 
 
-
-2. Remote Tests
-
-    Verification of successful deployment on actual infrastructure. 
-    Leverages `terraform` and `GitHub Actions`.
-    Implementation TBD.
-
-
 ## Architecture Components -- Unit Testing
 
 ### 1. Test Cases (`tests/unit/`)
 
-Assets are produced via Terraform commands (`terraform plan` and `terraform console`). Resulting files & outputs are  evaluated through several methods:
+Assets are produced via Terraform commands: `terraform plan` and `terraform console -target=...`. Resulting files & outputs are evaluated through several methods:
 
 - **Terraform outputs** are extracted from the JSONified plan and compared against hardcoded values.
 - **Seqera Platform configuration files** are produced and compared against baseline and test-specific assertions.
@@ -25,28 +17,68 @@ Assets are produced via Terraform commands (`terraform plan` and `terraform cons
 
 
 ### 2. Test Case Inputs
-TBD
+#### Tfvars
+Testcase inputs are merged from a variety of sources:
+
+1. **Base terraform.tfvars**: This is copied directly from `templates/TEMPLATE_terraform.tfvars` to ensure testcase start from the same file that we tell implementations to use.
+2. **Base terraform.tfvars overrides**: This file is generated fresh for each testrun via `tests/datafiles/generate_core_data.sh`. It produces the file `tests/datafiles/base-overrides.auto.tfvars`, which contains a subset of terraform values which must be populated with real values in order for subsequent terraform commands to succeed.
+3. **Testcase-level tfvars overrides**: These are set in each testcase, superceding base values in other to implement an edgecase.
+
+The three sources work together as follows:
+
+1. At the start of the testing session, the pytest fixture `session_setup` executes:
+
+    1. The root-level `terraform.tfvars` (_used by Seqera resources for real deployments_) is backed up and moved out of the project root.
+
+    2. The `tests/datafiles/generate_core_data.sh` executes, creating a fresh copy of `tests/datafiles/terraform.tfvars` and `tests/datafiles/base-overrides.auto.tfvars`. Both files contain testing-appropriate data.
+
+    3. The newly-generated files are copied into the project root.
+
+2. At the beginning of each testcase, the provided `tf_modifiers` values is feed to the `prepare_plan` helper function:
+
+    1. The `tf_modifiers` content is written to file `override.auto.tfvars` in the project root.
+
+    2. `terraform plan` is executed.
+
+    3. `terraform plan` results are converted to JSON and cached.
+
+The tfvars file naming is designed to leverage Terraform's [Variable Definition Precedence](https://developer.hashicorp.com/terraform/language/values/variables#variable-definition-precedence):
+
+- The testcase-specific overrides are lexically-named to supercede base overrides.
+- The base overrides are lexically-named to supercede the cloned-from-template tfvars.
+- The result is a single fused layer of terraform inputs which minimizes the amount of entries requiring explicit definition in the individual testcases.
+
+To speed up `n+1` testing, a caching mechanism is used (_fulsome details in the Performance section_).
+
+
+#### Secrets
+The `tests/datafiles/generate_core_data.sh` also generates secrets via `tests/datafiles/generate_testing_secrets.sh`. Results are written to `tests/datafiles/secrets/*.json`files.
+
+The scripts have the ability to push secrets to the appropriate SSM location, but this has been disabled to speed up unit testing (_more on this below in the performance section_). If / when secrets are needed for local tests, the SSM sourcing can be emulated by simply reading the appropriate key from the appropriate secrets file. 
 
 
 ### 2. Expected Results (`tests/datafiles/expected_results/`)
-Establishes a baseline for expected end state, against which the tests can be compared. This is done in two ways:
+Establishes a baseline for expected end state against which the tests can be compared. This is done in two ways:
 
 1. **Pre-generated end state files** (e.g `tests/datafiles/expected_results/expected_sql/*.sql`)
 
-    These are fully rendered reference files against which the dynamically generated content is compared. Given the dynamic permutations possible within this solution, I favour targeted line-by-line assertions and try to minimize full-page comparisons. Nevertheless, some configuration files -- particularly `.sql` files -- are much easier to validate via the full page comparions (_despite the update burden_).
+    These are fully rendered reference files used for page-to-page comparison. 
+    
+    Given the dynamic permutations possible within this solution and required upkeep of file accuracy, I prefer targeted line-by-line assertions and over full-page comparisons. However, some configuration files (_`.sql` files in particular_) are much easier to validate via full page comparions.
 
     Testcases that use this methodology share the same starting logic but differ within the assertion phase (_loading reference document content rather than granular key-value assertions_). 
 
 2. **Per configuration file key-value expectations** (`tests/datafiles/expected_results/expected_results.py`)
 
-    This is more complicated than the traditional key-value assertion, but meant to be modular and extensible. Here's how it works:
+    This implementation is more complicated than the standard key-value assertion, but meant to be modular and extensible. Here's how it works:
 
     - Each configuration file has two associated functions: 
         - One covers expected content when all Seqera Platform services are active; 
         - The other covers expected content when the services are inactive (_i.e. only the core SP is active_).
 
     - Each function contains a dictionary with 2 sub-keys, containing baseline expectations:
-        ```
+        ```python
+        # EXAMPLE: tower.env for an implementation with active features.
         def generate_tower_env_entries_all_active(overrides={}):
             baseline: {
                 "present": {
@@ -60,19 +92,16 @@ Establishes a baseline for expected end state, against which the tests can be co
             }
         ```
 
-    - When this function is called, you can also pass in a set of **overrides**. This comes from the invoking testcase and defines expected key-value pair deltas that will result from the **terraform variables** used for that testcase. In the event an override object is passed, the same baseline key is removed and replaced with the override value.
-
-        Essentially the two layers are fused and the result is used to execute testcase-appropriate assertions.
+    - A set of **overrides** can be passed during the function call. These come from the invoking testcase and define expected baseline deltas (_resulting from the different **terraform variables** used for that testcase_). Any assertion passed in the override object is removed from the baseline and replaced with the override value. Essentially, the two layers are fused into a single testcase-appropriate assertion set.
 
     - The nature of the keys can differ depending on the file being assessed:
         - Keys tied to `.env` files are treated as plain key-value split by a `=`.
         - Keys tied to `.yml` files are treated as YAMLpaths.
 
-    - To simplify content management, a **master assertion dictionary** is returned (_either active or disabled flavour_). Its top-level keys are the same name as the generated files and are tied to the relevant assertions for that file. This simplifies testcase-filename-to-testcase-assertion tracking.
+    - To simplify content management, a **master assertion dictionary** is returned (_either active or disabled flavour_). Its top-level keys are named the same as the generated files, and its values are the fused assertion layer for that file.
 
-    Example:
-
-        ```
+        ```python
+        # Example: Function that generates the master assertion dictionary (_active features_)
         def generate_assertions_all_active(template_files, overrides):
             entries = {
                 "tower_env"             : generate_tower_env_entries_all_active(overrides["tower_env"]),
@@ -81,15 +110,81 @@ Establishes a baseline for expected end state, against which the tests can be co
         ```
 
 
+### Implementation
+In order for tests to provide continual ongoing value, the following criteria must be met:
+
+- Have a minimal code line footprint.
+- Be easy to update
+- Be easy to extend
+- Be fast to run
+
+To achieve these goals and maintain a simple-ish outward interface, a moderately complex implementation was required. This section covers those details.
+
+#### 1. Common Testcase Boilerplate
+Each testcase function is responsible for:
+
+1. Defining tfvars overrides (_if necessary_).
+2. Generating a JSONified `terraform plan`.
+3. Defining a minimal set of impacted Seqera Plaform configuration files.
+4. Defining necessary assertions for the generated set of files.
+5. Executing the assertion set (_the phase varies depending if it's granular kv comparison, full-page comparison, or testcontainer verification_).
+
+
+#### 2. Configuration (`tests/utils/config.py`)
+This is a centralized source for making filepaths and core structures as DRY as possible. 
+
+- Defines file paths for test data, cache directories, secrets, etc.
+- Defines core data structures used to store testcase file content and assertions.
+- Sets flags that control test behavior (_which are themselves controleld via environment variables (e.g., KITCHEN_SINK mode)_).
+
+Two settings in particular require call out:
+
+1. **`all_template_files`**: is a top-level dictionary from which other structures are derived:
+
+    - Its keys identify a discrete Seqera Platform configuration file.
+    - Its values identify:
+        - The expected file extension.
+        - The utility helper function to use to read the content of the generated file (e.g. plain text, YAML, JSON).
+        - The content of the source file (_this key likely to be phased out now that there is a `filepath` key_).
+        - The location of the cached file on the filesystem.
+        - The validation technique that should be used to execution assertions (e.g. granular kv, full-page comparison, YAMLPath). 
+
+    ```python
+    all_template_files = {
+        "tower_env": {
+            "extension"         : ".env", 
+            "read_type"         : parse_key_value_file,
+            "content"           : "",
+            "filepath"          : "",
+            "validation_type"   : "kv",
+        },
+        ...
+    ```
+
+2. **`KITCHEN_SINK`**: is an environment variables modifier that will generate every configuration file for every testcase.
+
+    Although the current solution (`terraform plan / terraform console`) is much faster than its original implementation (`terraform apply / terraform destroy`), and caching makes `n+1` execution extremely fast, there IS a cost for first-time generation (_up to several minutes_). As a result, most testcases are scoped to produce only those files required for test-specific validations (_e.g. why produce a full set of files if the test targets a password in a single `.sql` file?_).
+
+    The downside of targeting testing is that it won't catch bugs in files that are not included in the minimal set. As a result, at least one testing run should force all testcases to produce a full set of configurations and run the entire test suite. This is what `KITCHEN_SINK` does.
+
+    ```bash
+    # Tests a limited set of assertions tied to Wave-specific configurations.
+    pytest tests/unit/config_files/test_config_file_content.py::test_seqera_hosted_wave_active
+
+    # Generates a full set of configuration files using the testcase-specific tfvars overrides, and runs a full set of assertions
+    # including the specific Wave assertion modifiers identified in this testcase.
+    KITCHEN_SINK=true pytest tests/unit/config_files/test_config_file_content.py::test_seqera_hosted_wave_active
+    ``` 
+
+
+
 
 ### 3. Utility Functions (`tests/utils/local.py`)
 - `prepare_plan()`: Executes Terraform plan with caching to speed up repeated tests
 - `generate_tc_files()`: Creates interpolated configuration files from Terraform templates
 - `verify_all_assertions()`: Validates generated files against expected assertions
 
-### 4. Configuration (`tests/utils/config.py`)
-- Defines file paths for test data, cache directories, and secrets
-- Controls test behavior through environment variables (e.g., KITCHEN_SINK mode)
+
 
 ## Function Call Flow
 
@@ -129,6 +224,12 @@ test_baseline_alb_all_enabled()
                 ├─> assert_yaml_key_present()    # For YAML files
                 └─> assert_sql_key_present()      # For SQL files
 ```
+
+## Architecture Components -- Remote Testing
+Current as of August 2025, verification on actual infrastructure is done via manual deployment & verification. This is not efficient or scaleable.
+
+Intended future state solution plans to leverage `terraform` and `GitHub Actions`. Implementation TBD.
+
 
 ## Key Concepts
 
