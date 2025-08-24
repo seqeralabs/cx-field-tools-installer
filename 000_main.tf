@@ -48,7 +48,7 @@ resource "random_pet" "stackname" {
 
 
 data "aws_caller_identity" "current" {
-  count = var.local_testing_active ? 0 : 1
+  count = var.use_mocks ? 0 : 1
 }
 
 
@@ -249,7 +249,7 @@ module "subnet_collector" {
   subnets_alb   = var.flag_create_new_vpc ? var.vpc_new_alb_subnets : var.vpc_existing_alb_subnets
 
   # Testing flag
-  local_testing_active = var.local_testing_active
+  use_mocks = var.use_mocks
 }
 
 # Add connection_strings module
@@ -287,11 +287,11 @@ module "connection_strings" {
   data_studio_path_routing_url    = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : ""
 
   # External Resource References
-  rds_tower             = var.local_testing_active ? null : try(module.rds[0], null)
-  rds_wave_lite         = var.local_testing_active ? null : try(module.rds-wave-lite[0], null)
-  elasticache_tower     = var.local_testing_active ? null : try(aws_elasticache_cluster.redis[0], null)
-  elasticache_wave_lite = var.local_testing_active ? null : try(module.elasticache_wave_lite[0], null)
+  rds_tower             = var.use_mocks ? null : try(module.rds[0], null)
+  rds_wave_lite         = var.use_mocks ? null : try(module.rds-wave-lite[0], null)
+  elasticache_tower     = var.use_mocks ? null : try(aws_elasticache_cluster.redis[0], null)
+  elasticache_wave_lite = var.use_mocks ? null : try(module.elasticache_wave_lite[0], null)
 
   # Testing flag
-  local_testing_active = var.local_testing_active
+  use_mocks = var.use_mocks
 }

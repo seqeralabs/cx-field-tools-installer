@@ -17,7 +17,7 @@ locals {
 
   # Testing Mocks
   # ---------------------------------------------------------------------------------------
-  # If local_testing_active is true, we will mock the resources that would otherwise be created.
+  # If use_mocks is true, we will mock the resources that would otherwise be created.
   # This is useful for testing the connection strings without having to create the resources.
 
 
@@ -35,8 +35,8 @@ locals {
   # Dont try to be smart. Just calculate all strings and use the flags / module feed to control what comes in.
   # Two DB options should always be "" so we can smash together in a unified catch-all.
   sp_db_container         = var.flag_use_container_db ? "db" : ""
-  sp_db_external_mock     = var.flag_create_external_db && var.local_testing_active ? "mock.tower-db.com" : ""
-  sp_db_external_new      = var.flag_create_external_db && !var.local_testing_active ? var.rds_tower.db_instance_address : ""
+  sp_db_external_mock     = var.flag_create_external_db && var.use_mocks ? "mock.tower-db.com" : ""
+  sp_db_external_new      = var.flag_create_external_db && !var.use_mocks ? var.rds_tower.db_instance_address : ""
   sp_db_external_existing = var.flag_use_existing_external_db ? var.tower_db_url : ""
   tower_db_dns            = join("", [local.sp_db_container, local.sp_db_external_mock, local.sp_db_external_new, local.sp_db_external_existing])
   sp_db_dns_with_port     = "${local.tower_db_dns}:3306"
@@ -51,11 +51,11 @@ locals {
   # TODO: May 16/2025 -- This Redis is unsecured (unlike Wave). To be fixed in post-Wave-Lite Feature Release.
   # NOTE: Connect has same logic. I've duplicated to better handle divergence risk.
   sp_redis_container     = var.flag_use_container_redis ? "redis" : ""
-  sp_redis_external_mock = var.flag_create_external_redis && var.local_testing_active ? "mock.tower-redis.com" : ""
-  sp_redis_external_new  = var.flag_create_external_redis && !var.local_testing_active ? "${var.elasticache_tower.cache_nodes[0].address}" : ""
+  sp_redis_external_mock = var.flag_create_external_redis && var.use_mocks ? "mock.tower-redis.com" : ""
+  sp_redis_external_new  = var.flag_create_external_redis && !var.use_mocks ? "${var.elasticache_tower.cache_nodes[0].address}" : ""
   tower_redis_dns        = join("", [local.sp_redis_container, local.sp_redis_external_mock, local.sp_redis_external_new])
 
-  sp_redis_dns_with_port = var.flag_create_external_redis && !var.local_testing_active ? "${local.tower_redis_dns}:${var.elasticache_tower.cache_nodes[0].port}" : "${local.tower_redis_dns}:6379"
+  sp_redis_dns_with_port = var.flag_create_external_redis && !var.use_mocks ? "${local.tower_redis_dns}:${var.elasticache_tower.cache_nodes[0].port}" : "${local.tower_redis_dns}:6379"
   tower_redis_url        = "redis://${local.sp_redis_dns_with_port}"
 
 
@@ -87,12 +87,12 @@ locals {
   # DNS and URL will be the same but harmonizing them for consistency with other outputs and to be positioned for eventual Studios change.
   # Using same mock as tower redis to make tests more realistic.
   ct_redis_container      = var.flag_use_container_redis ? "redis" : ""
-  ct_redis_external_mock  = var.flag_create_external_redis && var.local_testing_active ? "mock.tower-redis.com" : ""
-  ct_redis_external_new   = var.flag_create_external_redis && !var.local_testing_active ? "${var.elasticache_tower.cache_nodes[0].address}" : ""
+  ct_redis_external_mock  = var.flag_create_external_redis && var.use_mocks ? "mock.tower-redis.com" : ""
+  ct_redis_external_new   = var.flag_create_external_redis && !var.use_mocks ? "${var.elasticache_tower.cache_nodes[0].address}" : ""
   ct_redis_dns            = var.flag_enable_data_studio ? join("", [local.ct_redis_container, local.ct_redis_external_mock, local.ct_redis_external_new]) : "N/A"
   tower_connect_redis_dns = local.connect_enabled ? local.ct_redis_dns : "N/A"
 
-  ct_redis_dns_with_port  = var.flag_create_external_redis && !var.local_testing_active ? "${local.tower_connect_redis_dns}:${var.elasticache_tower.cache_nodes[0].port}" : "${local.tower_connect_redis_dns}:6379"
+  ct_redis_dns_with_port  = var.flag_create_external_redis && !var.use_mocks ? "${local.tower_connect_redis_dns}:${var.elasticache_tower.cache_nodes[0].port}" : "${local.tower_connect_redis_dns}:6379"
   tower_connect_redis_url = var.flag_enable_data_studio && !var.flag_do_not_use_https ? "${local.ct_redis_dns_with_port}" : "N/A"
 
   # WAVE-LITE

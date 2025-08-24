@@ -238,10 +238,10 @@ In addition to the general design decisions noted above, there are a few decisio
 
 16. **Introduction of `use_mock` flag into resources related to Database & Redis**
 
-    A `var.local_testing_active` check has been introduced to database and Redis related resources in `003_database.tf`. 
+    A `var.use_mocks` check has been introduced to database and Redis related resources in `003_database.tf`. 
 
     (TODO: Release version) release shipped with the first phase of a testing framework. This feature conducts a series of quick local checks to ensure the veracity of core connection details and configuration files. While we favour `terraform plan` as much as possible, the generation of configuration files requires a `terraform apply` motion. 
 
     Using `terraform apply -target=...` reduces scope and improves speed but, unfortunately, `module.connection_strings` is central to all the tests and it in turn relies upon the provision of RDS and Elasticache resources for deployments that follow best practices guidelines. As a result, a testing loop that must actually deploy these resources takes up to 20 minutes to complete.
 
-    By adding a `... && !var.local_testing_active` to the `count` of the affected resources, I can descope these resources from the minimal footprint deployment, thereby vastly speeding up (_and thereby encouraging the on-going use of_) testing. The downside of this approach, however, is that there is an ongoing intermingling of concerns between logic meant to deploy resources for real, versus logic focused on testing. I cannot think of a better way to balance speed with rigour at the moment so this will be the go-forward approach until a better technique presents itself.
+    By adding a `... && !var.use_mocks` to the `count` of the affected resources, I can descope these resources from the minimal footprint deployment, thereby vastly speeding up (_and thereby encouraging the on-going use of_) testing. The downside of this approach, however, is that there is an ongoing intermingling of concerns between logic meant to deploy resources for real, versus logic focused on testing. I cannot think of a better way to balance speed with rigour at the moment so this will be the go-forward approach until a better technique presents itself.

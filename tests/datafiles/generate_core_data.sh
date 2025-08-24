@@ -27,7 +27,7 @@ cat << 'EOF' > base-overrides.auto.tfvars
 ## Testing
 ## ------------------------------------------------------------------------------------
 # Use mock values to emulate to-be-created resources.
-local_testing_active = true
+use_mocks = true
 
 
 ## ------------------------------------------------------------------------------------

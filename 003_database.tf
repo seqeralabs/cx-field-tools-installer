@@ -2,7 +2,7 @@
 ## Database Subnet Group
 ## ------------------------------------------------------------------------------------
 resource "aws_db_subnet_group" "tower_db" {
-  count = var.flag_create_external_db == true && !var.local_testing_active ? 1 : 0
+  count = var.flag_create_external_db == true && !var.use_mocks ? 1 : 0
 
   name       = "${local.global_prefix}-tower-db"
   subnet_ids = module.subnet_collector.subnet_ids_db
@@ -14,7 +14,7 @@ resource "aws_db_subnet_group" "tower_db" {
 
 
 resource "aws_db_subnet_group" "wave_lite_db" {
-  count = (var.flag_create_external_db == true && var.flag_use_wave_lite == true && !var.local_testing_active) ? 1 : 0
+  count = (var.flag_create_external_db == true && var.flag_use_wave_lite == true && !var.use_mocks) ? 1 : 0
 
   name       = "${local.global_prefix}-wave-lite-db"
   subnet_ids = module.subnet_collector.subnet_ids_db
@@ -32,7 +32,7 @@ module "rds" {
   source  = "terraform-aws-modules/rds/aws"
   version = "6.1.1"
 
-  count = var.flag_create_external_db && !var.local_testing_active == true ? 1 : 0
+  count = var.flag_create_external_db && !var.use_mocks == true ? 1 : 0
 
   identifier = "${local.global_prefix}-db"
 
@@ -81,7 +81,7 @@ module "rds-wave-lite" {
   source  = "terraform-aws-modules/rds/aws"
   version = "6.1.1"
 
-  count = (var.flag_create_external_db == true && var.flag_use_wave_lite == true && !var.local_testing_active) ? 1 : 0
+  count = (var.flag_create_external_db == true && var.flag_use_wave_lite == true && !var.use_mocks) ? 1 : 0
 
   identifier = "${local.global_prefix}-db-wave-lite"
 
@@ -123,7 +123,7 @@ module "rds-wave-lite" {
 ## Elasticache
 ## ------------------------------------------------------------------------------------
 resource "aws_elasticache_subnet_group" "redis" {
-  count = var.flag_create_external_redis && !var.local_testing_active == true ? 1 : 0
+  count = var.flag_create_external_redis && !var.use_mocks == true ? 1 : 0
 
   name       = "${local.global_prefix}-redis"
   subnet_ids = module.subnet_collector.subnet_ids_db
@@ -132,7 +132,7 @@ resource "aws_elasticache_subnet_group" "redis" {
 
 #tfsec:ignore:aws-elasticache-enable-backup-retention
 resource "aws_elasticache_cluster" "redis" {
-  count = var.flag_create_external_redis && !var.local_testing_active == true ? 1 : 0
+  count = var.flag_create_external_redis && !var.use_mocks == true ? 1 : 0
 
   cluster_id      = "${local.global_prefix}-redis"
   engine          = "redis"
@@ -153,7 +153,7 @@ resource "aws_elasticache_cluster" "redis" {
 module "elasticache_wave_lite" {
   source = "./modules/elasticache"
 
-  count = (var.flag_create_external_redis == true && var.flag_use_wave_lite == true && !var.local_testing_active) ? 1 : 0
+  count = (var.flag_create_external_redis == true && var.flag_use_wave_lite == true && !var.use_mocks) ? 1 : 0
 
   resource_prefix = "${local.global_prefix}-elasticache-wave-lite"
 

@@ -44,7 +44,7 @@ variable "subnets_alb" {
 ## ------------------------------------------------------------------------------------
 ## Testing
 ## ------------------------------------------------------------------------------------
-variable "local_testing_active" {
+variable "use_mocks" {
   type        = bool
   default     = false
   description = "Use to drive mocking behaviour for to-be-created resources."
