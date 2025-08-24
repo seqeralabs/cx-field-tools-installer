@@ -12,17 +12,13 @@ import pytest
 
 from scripts.installer.utils.purge_folders import delete_pycache_folders
 
-from tests.utils.local import root, tfvars_path, tfvars_backup_path
-from tests.utils.local import test_tfvars_source, test_tfvars_target
-from tests.utils.local import test_tfvars_override_source, test_tfvars_override_target
-from tests.utils.local import test_case_override_target
-
-from tests.utils.local import root
-from tests.utils.local import copy_file, move_file
-from tests.utils.local import prepare_plan
-from tests.utils.local import run_terraform_apply, run_terraform_destroy
-from tests.utils.local import execute_subprocess
-
+from tests.utils.config import root, tfvars_original_path, tfvars_backup_path
+from tests.utils.config import tfvars_source, tfvars_target
+from tests.utils.config import tfvars_override_source, tfvars_override_target
+from tests.utils.config import tc_override_target
+from tests.utils.config import outputs_source, outputs_target
+from tests.utils.filehandling import copy_file, move_file
+from tests.utils.local import prepare_plan, run_terraform_destroy, execute_subprocess
 from tests.utils.pytest_logger import get_logger
 
 
@@ -50,411 +46,64 @@ testing loop to:
 ## Helper Fixtures
 ## ------------------------------------------------------------------------------------
 @pytest.fixture(scope="session")
-def backup_tfvars():
+def session_setup():
     # Create a fresh copy of the base testing terraform.tfvars file.
     subprocess.run("make generate_test_data", shell=True, check=True)
 
-    print(f"\nBacking up {tfvars_path} to {tfvars_backup_path}.")
-    move_file(tfvars_path, tfvars_backup_path)
+    print(f"\nBacking up terraform.tfvars & Loading test tfvars (base) artefacts.")
+    move_file(tfvars_original_path, tfvars_backup_path)
 
-    print(f"\nLoading test tfvars (base) artefacts.")
-    copy_file(test_tfvars_source, test_tfvars_target)
-    copy_file(test_tfvars_override_source, test_tfvars_override_target)
+    # Swap in test tfvars, base-overrides tfvars, and testing-specific outputs (e.g. locals).
+    copy_file(tfvars_source, tfvars_target)
+    copy_file(tfvars_override_source, tfvars_override_target)
+    copy_file(outputs_source, outputs_target)
+
+    # Prepare JSONified 009 (via hcl2json container)
+    # CLI_command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
+    command = f"docker run --rm -v {root}:/tmp ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:vendored /tmp/009_define_file_templates.tf > {root}/009_define_file_templates.json"
+    result = execute_subprocess(command)
 
     yield
 
     print("\nRestoring original environment.")
 
+    # Single-source destroy at end of testing cycle to save time
+    # Not actually running Terraform apply anymore, do I don't need to do a destroy
+    # run_terraform_destroy()
+
     # Remove testing files, delete __pycache__ folders, restore origin tfvars.
     for file in [
-        test_case_override_target,
-        test_tfvars_target,
-        test_tfvars_override_target,
+        tc_override_target,
+        tfvars_target,
+        tfvars_override_target,
+        outputs_target,
+        "009_define_file_templates.json"
     ]:
         Path(file).unlink(missing_ok=True)
 
     delete_pycache_folders(root)
-    move_file(tfvars_backup_path, tfvars_path)
+
+    # Restore original tfvars
+    move_file(tfvars_backup_path, tfvars_original_path)
 
 
-# TODO: Make sure module is for the file calling it, NOT where this fixture lives.
-@pytest.fixture(scope="module")  # function
+@pytest.fixture(scope="session")  # function
 def config_baseline_settings_default():
     """
     Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars.
-
-    This test is slower than test_module_connections_strings since we need to plan every time and apply.
-    However, it generates almost every configuration (Tower / Wave Lite / Ansible / etc) so it's worth the time to check.
-    I use an existing VPC in the account the AWS provider is configured to use to speed things up, but it's not perfect.
-    TODO: Figure out if there's some way to speed up the plan (i.e. split out `data` resource calls? As of July 9/25, resources created:
-      - data.aws_ssm_parameter.groundswell_secrets
-      - data.aws_ssm_parameter.tower_secrets
-      - data.aws_ssm_parameter.wave_lite_secrets
-      - null_resource.generate_independent_config_files
-      - random_pet.stackname
-      - tls_private_key.connect_pem
-      - tls_private_key.ec2_ssh_key
-      - module.connection_strings.data.external.generate_db_connection_string
-      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-00fad764627895f33"]
-      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-0d0e8ba3b03b97a65"]
-      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-0e07c9b2edbd84ea4"]
-      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-0f18039d5ffcf6cd3"]
-      - module.subnet_collector.data.aws_subnets.all[0]
-      - module.subnet_collector.data.aws_vpc.sp_vpc)
+    Plan with ALL resources rather than targeted, to get all outputs in plan document.
     """
 
-    override_data = """
-        # No override values needed. Testing baseline only.
-    """
-    print("ipsem lorem")
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    qualifier = "-target=null_resource.generate_independent_config_files"
-    # plan = prepare_plan(override_data, qualifier)
-    plan = prepare_plan(override_data)
-    run_terraform_apply(qualifier)
-    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
+    tf_modifiers = """#NONE"""
+    plan = prepare_plan(tf_modifiers)
 
-    # Apply will generate actual assets we can interrogate in project or via remote calls.
-    # Return plan only
+    # DONT USE THESE - no longer needed since the new `terraform template` approach is used.
+    # qualifier = "-target=null_resource.generate_independent_config_files"
+    # run_terraform_apply(qualifier)
+
     yield plan
 
-    run_terraform_destroy()
-
-
-@pytest.fixture(scope="module")  # function
-def config_baseline_settings_custom_01():
-    """
-    Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars, 
-    PLUS deviations.
-
-    - Data Studios active & Path routing active
-    """
-
-    override_data = """
-        flag_enable_data_studio         = true
-        flag_studio_enable_path_routing = true
-        data_studio_path_routing_url    = "connect-example.com"
-    """
-
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    qualifier = "-target=null_resource.generate_independent_config_files"
-    # plan = prepare_plan(override_data, qualifier)
-    plan = prepare_plan(override_data)
-    run_terraform_apply(qualifier)
-    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
-
-    # Apply will generate actual assets we can interrogate in project or via remote calls.
-    # Return plan only
-    yield plan
-
-    run_terraform_destroy()
-
-
-@pytest.fixture(scope="module")  # function
-def config_baseline_settings_custom_02():
-    """
-    Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars, 
-    PLUS deviations.
-
-    - Data Studios active & Path routing inactive
-    """
-
-    override_data = """
-        flag_enable_data_studio         = true
-        flag_studio_enable_path_routing = false
-        data_studio_path_routing_url    = "connect-example.com"
-    """
-
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    qualifier = "-target=null_resource.generate_independent_config_files"
-    # plan = prepare_plan(override_data, qualifier)
-    plan = prepare_plan(override_data)
-    run_terraform_apply(qualifier)
-    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
-
-    # Apply will generate actual assets we can interrogate in project or via remote calls.
-    # Return plan only
-    yield plan
-
-    run_terraform_destroy()
-
-
-@pytest.fixture(scope="module")  # function
-def config_baseline_settings_custom_03():
-    """
-    Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars, 
-    PLUS deviations.
-
-    - Data Studios inactive & Path routing inactive
-    """
-
-    override_data = """
-        flag_enable_data_studio         = false
-        flag_studio_enable_path_routing = false
-        data_studio_path_routing_url    = "connect-example.com"
-    """
-
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    qualifier = "-target=null_resource.generate_independent_config_files"
-    # plan = prepare_plan(override_data, qualifier)
-    plan = prepare_plan(override_data)
-    run_terraform_apply(qualifier)
-    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
-
-    # Apply will generate actual assets we can interrogate in project or via remote calls.
-    # Return plan only
-    yield plan
-
-    run_terraform_destroy()
-
-
-@pytest.fixture(scope="module")  # function
-def config_baseline_settings_custom_docker_compose_reverse_proxy():
-    """
-    Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars, 
-    PLUS deviations.
-
-    This test is slower than test_module_connections_strings since we need to plan every time and apply.
-    However, it generates almost every configuration (Tower / Wave Lite / Ansible / etc) so it's worth the time to check.
-    I use an existing VPC in the account the AWS provider is configured to use to speed things up, but it's not perfect.
-    TODO: Figure out if there's some way to speed up the plan (i.e. split out `data` resource calls? As of July 9/25, resources created:
-      - data.aws_ssm_parameter.groundswell_secrets
-      - data.aws_ssm_parameter.tower_secrets
-      - data.aws_ssm_parameter.wave_lite_secrets
-      - null_resource.generate_independent_config_files
-      - random_pet.stackname
-      - tls_private_key.connect_pem
-      - tls_private_key.ec2_ssh_key
-      - module.connection_strings.data.external.generate_db_connection_string
-      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-00fad764627895f33"]
-      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-0d0e8ba3b03b97a65"]
-      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-0e07c9b2edbd84ea4"]
-      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-0f18039d5ffcf6cd3"]
-      - module.subnet_collector.data.aws_subnets.all[0]
-      - module.subnet_collector.data.aws_vpc.sp_vpc)
-    """
-
-    override_data = """
-        flag_create_load_balancer        = false
-        flag_use_private_cacert          = true
-        flag_do_not_use_https            = false
-    """
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    qualifier = "-target=null_resource.generate_independent_config_files"
-    # plan = prepare_plan(override_data, qualifier)
-    plan = prepare_plan(override_data)
-    run_terraform_apply(qualifier)
-    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
-
-    # Apply will generate actual assets we can interrogate in project or via remote calls.
-    # Return plan only
-    yield plan
-
-    run_terraform_destroy()
-
-
-@pytest.fixture(scope="module")  # function
-def config_baseline_settings_custom_docker_compose_no_https():
-    """
-    Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars, 
-    PLUS deviations.
-
-    This test is slower than test_module_connections_strings since we need to plan every time and apply.
-    However, it generates almost every configuration (Tower / Wave Lite / Ansible / etc) so it's worth the time to check.
-    I use an existing VPC in the account the AWS provider is configured to use to speed things up, but it's not perfect.
-    TODO: Figure out if there's some way to speed up the plan (i.e. split out `data` resource calls? As of July 9/25, resources created:
-      - data.aws_ssm_parameter.groundswell_secrets
-      - data.aws_ssm_parameter.tower_secrets
-      - data.aws_ssm_parameter.wave_lite_secrets
-      - null_resource.generate_independent_config_files
-      - random_pet.stackname
-      - tls_private_key.connect_pem
-      - tls_private_key.ec2_ssh_key
-      - module.connection_strings.data.external.generate_db_connection_string
-      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-00fad764627895f33"]
-      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-0d0e8ba3b03b97a65"]
-      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-0e07c9b2edbd84ea4"]
-      - module.subnet_collector.data.aws_subnet.sp_subnets["subnet-0f18039d5ffcf6cd3"]
-      - module.subnet_collector.data.aws_subnets.all[0]
-      - module.subnet_collector.data.aws_vpc.sp_vpc)
-    """
-
-    override_data = """
-        flag_create_load_balancer        = false
-        flag_use_private_cacert          = false
-        flag_do_not_use_https            = true
-    """
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    qualifier = "-target=null_resource.generate_independent_config_files"
-    # plan = prepare_plan(override_data, qualifier)
-    plan = prepare_plan(override_data)
-    run_terraform_apply(qualifier)
-    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
-
-    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
-    yield plan
-
-    run_terraform_destroy()
-
-
-@pytest.fixture(scope="module")  # function
-def config_ansible_02_should_be_present():
-    """
-    Test conditional blocks in Ansible 02_update_file_configurations.yml.tpl
-    """
-
-    override_data = """
-        flag_create_external_db       = true
-        flag_use_container_db         = false
-
-        flag_create_external_redis    = true
-        flag_use_container_redis      = false
-
-        flag_create_load_balancer     = false
-        flag_use_private_cacert       = true
-
-        flag_enable_data_studio       = true
-        flag_enable_groundswell       = true
-        flag_use_wave_lite            = true
-    """
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    qualifier = "-target=null_resource.generate_independent_config_files"
-    plan = prepare_plan(override_data)
-    run_terraform_apply(qualifier)
-    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
-
-    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
-    yield plan
-
-    run_terraform_destroy()
-
-
-@pytest.fixture(scope="module")  # function
-def config_ansible_02_should_not_be_present():
-    """
-    Test conditional blocks in Ansible 02_update_file_configurations.yml.tpl
-    """
-
-    override_data = """
-        flag_create_external_db       = false
-        flag_use_container_db         = true
-
-        flag_create_external_redis    = false
-        flag_use_container_redis      = true
-
-        flag_create_load_balancer     = true
-        flag_use_private_cacert       = false
-
-        flag_enable_data_studio       = false
-        flag_enable_groundswell       = false
-        flag_use_wave_lite            = false
-    """
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    qualifier = "-target=null_resource.generate_independent_config_files"
-    plan = prepare_plan(override_data)
-    run_terraform_apply(qualifier)
-    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
-
-    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
-    yield plan
-
-    run_terraform_destroy()
-
-
-@pytest.fixture(scope="module")  # function
-def config_ansible_05_should_be_present():
-    """
-    Test conditional blocks in Ansible 05_patch_groundswell.yml
-    """
-
-    override_data = """
-        flag_create_external_db       = false
-        flag_use_container_db         = true
-
-        flag_enable_groundswell       = true
-
-    """
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    qualifier = "-target=null_resource.generate_independent_config_files"
-    plan = prepare_plan(override_data)
-    run_terraform_apply(qualifier)
-    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
-
-    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
-    yield plan
-
-    run_terraform_destroy()
-
-
-@pytest.fixture(scope="module")  # function
-def config_ansible_05_should_not_be_present():
-    """
-    Test conditional blocks in Ansible 05_patch_groundswell.yml
-    """
-
-    override_data = """
-        flag_create_external_db       = false
-        flag_use_container_db         = true
-
-        flag_enable_groundswell       = false
-
-    """
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    qualifier = "-target=null_resource.generate_independent_config_files"
-    plan = prepare_plan(override_data)
-    run_terraform_apply(qualifier)
-    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
-
-    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
-    yield plan
-
-    run_terraform_destroy()
-
-
-@pytest.fixture(scope="module")  # function
-def config_ansible_06_should_be_present():
-    """
-    Test conditional blocks in Ansible 06_run_seqerakit.yml
-    """
-
-    override_data = """
-        flag_create_hosts_file_entry  = true
-        flag_do_not_use_https         = true
-
-    """
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    qualifier = "-target=null_resource.generate_independent_config_files"
-    plan = prepare_plan(override_data)
-    run_terraform_apply(qualifier)
-    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
-
-    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
-    yield plan
-
-    run_terraform_destroy()
-
-
-@pytest.fixture(scope="module")  # function
-def config_ansible_06_should_not_be_present():
-    """
-    Test conditional blocks in Ansible 06_run_seqerakit.yml
-    """
-
-    override_data = """
-        flag_create_hosts_file_entry  = false
-        flag_do_not_use_https         = false
-
-    """
-    # Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    qualifier = "-target=null_resource.generate_independent_config_files"
-    plan = prepare_plan(override_data)
-    run_terraform_apply(qualifier)
-    #execute_subprocess(f"terraform state list > terraform_state_list.txt")
-
-    # Apply will generate actual assets we can interrogate in project or via remote calls. Return plan only
-    yield plan
-
-    run_terraform_destroy()
+    # run_terraform_destroy()
 
 
 @pytest.fixture(scope="function")

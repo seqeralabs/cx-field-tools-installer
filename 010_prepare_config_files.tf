@@ -21,71 +21,47 @@ resource "null_resource" "generate_independent_config_files" {
       ${path.module}/assets/src/bash/local/purge_local_target.sh
 
       # Generate Tower config files
-      echo '${local.tower_env}' > ${path.module}/assets/target/tower_config/tower.env
-      echo '${local.tower_yml}' > ${path.module}/assets/target/tower_config/tower.yml
-      echo '${local.tower_sql}' > ${path.module}/assets/target/tower_config/tower.sql
+      echo '${local.tower_env}' > ${path.module}/assets/target/tower_config/tower.env &
+      echo '${local.tower_yml}' > ${path.module}/assets/target/tower_config/tower.yml &
+      echo '${local.tower_sql}' > ${path.module}/assets/target/tower_config/tower.sql &
 
       # Generate Wave config files
-      echo '${local.wave_lite_yml}' > ${path.module}/assets/target/wave_lite_config/wave-lite.yml
-
-      # THIS IS A TOTAL HACK (Wave-Lite)
-      # Using this technique so postgres can get config files with single quotes only.
-      # Terraform templatefile (.tpl) abandoned and we use real SQL with placeholders-to-be-replaced-by-sed
-      # NOTE: sed works differently on GNU vs Mac. This was messy to managed so it was replaced with platform-agnostic Python solution.
-
-      cp ${path.module}/assets/src/wave_lite_config/wave-lite-container-1.sql ${path.module}/assets/target/wave_lite_config/wave-lite-container-1.sql
-      cp ${path.module}/assets/src/wave_lite_config/wave-lite-container-2.sql ${path.module}/assets/target/wave_lite_config/wave-lite-container-2.sql
-      cp ${path.module}/assets/src/wave_lite_config/wave-lite-rds.sql ${path.module}/assets/target/wave_lite_config/wave-lite-rds.sql
-      cp ${path.module}/assets/src/wave_lite_config/nginx.conf ${path.module}/assets/target/wave_lite_config/nginx.conf
-
-      export SALT=${path.module}/scripts/installer/utils/sedalternative.py
-      python3 $SALT replace_me_wave_lite_db_limited_user     ${local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_USER"]["value"]}     ${path.module}/assets/target/wave_lite_config/wave-lite-container-1.sql
-      python3 $SALT replace_me_wave_lite_db_limited_user     ${local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_USER"]["value"]}     ${path.module}/assets/target/wave_lite_config/wave-lite-container-2.sql
-      python3 $SALT replace_me_wave_lite_db_limited_user     ${local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_USER"]["value"]}     ${path.module}/assets/target/wave_lite_config/wave-lite-rds.sql
-
-      python3 $SALT replace_me_wave_lite_db_limited_password ${local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]} ${path.module}/assets/target/wave_lite_config/wave-lite-container-1.sql
-      python3 $SALT replace_me_wave_lite_db_limited_password ${local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]} ${path.module}/assets/target/wave_lite_config/wave-lite-container-2.sql
-      python3 $SALT replace_me_wave_lite_db_limited_password ${local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]} ${path.module}/assets/target/wave_lite_config/wave-lite-rds.sql
+      echo '${local.wave_lite_yml}' > ${path.module}/assets/target/wave_lite_config/wave-lite.yml &
 
       # Generate Groundswell config files
-      echo '${local.groundswell_env}' > ${path.module}/assets/target/groundswell_config/groundswell.env
-      echo '${local.groundswell_sql}' > ${path.module}/assets/target/groundswell_config/groundswell.sql
+      echo '${local.groundswell_env}' > ${path.module}/assets/target/groundswell_config/groundswell.env &
+      echo '${local.groundswell_sql}' > ${path.module}/assets/target/groundswell_config/groundswell.sql &
 
       # Generate docker-compose files
-      echo '${local.docker_compose}' > ${path.module}/assets/target/docker_compose/docker-compose.yml
+      echo '${local.docker_compose}' > ${path.module}/assets/target/docker_compose/docker-compose.yml &
 
       # Generate Seqerakit
-      echo '${local.seqerakit_yml}' > ${path.module}/assets/target/seqerakit/setup.yml
+      echo '${local.seqerakit_yml}' > ${path.module}/assets/target/seqerakit/setup.yml &
 
       # Generate Tower Connect files
-      echo '${local.data_studios_env}' > ${path.module}/assets/target/tower_config/data-studios.env
-      echo '${tls_private_key.connect_pem.private_key_pem}' > ${path.module}/assets/target/tower_config/data-studios-rsa.pem
+      echo '${local.data_studios_env}' > ${path.module}/assets/target/tower_config/data-studios.env &
 
       # Generate Docker Logging Configuration
-      echo '${local.docker_logging}' > ${path.module}/assets/target/docker_logging/daemon.json
+      echo '${local.docker_logging}' > ${path.module}/assets/target/docker_logging/daemon.json &
 
       # Generate Ansible files
-      echo '${local.ansible_02_update_file_configurations}' > ${path.module}/assets/target/ansible/02_update_file_configurations.yml
-      echo '${local.ansible_03_pull_containers_and_run_tower}' > ${path.module}/assets/target/ansible/03_pull_containers_and_run_tower.yml
-      echo '${local.ansible_05_patch_groundswell}' > ${path.module}/assets/target/ansible/05_patch_groundswell.yml
-      echo '${local.ansible_06_run_seqerakit}' > ${path.module}/assets/target/ansible/06_run_seqerakit.yml
-      echo '${local.codecommit_seqerakit}' > ${path.module}/assets/target/bash/remote/codecommit_set_workspace_id.sh
-
-      # Generate EC2 PEM
-      echo "${tls_private_key.ec2_ssh_key.private_key_pem}" > ${path.module}/${local.ssh_key_name}
-      chmod 400 ${path.module}/${local.ssh_key_name}
+      echo '${local.ansible_02_update_file_configurations}' > ${path.module}/assets/target/ansible/02_update_file_configurations.yml &
+      echo '${local.ansible_03_pull_containers_and_run_tower}' > ${path.module}/assets/target/ansible/03_pull_containers_and_run_tower.yml &
+      echo '${local.ansible_05_patch_groundswell}' > ${path.module}/assets/target/ansible/05_patch_groundswell.yml &
+      echo '${local.ansible_06_run_seqerakit}' > ${path.module}/assets/target/ansible/06_run_seqerakit.yml &
+      echo '${local.codecommit_seqerakit}' > ${path.module}/assets/target/bash/remote/codecommit_set_workspace_id.sh &
 
       # Generate Bash files for remote execution
-      echo '${local.cleanse_and_configure_host}' > ${path.module}/assets/target/bash/remote/cleanse_and_configure_host.sh
+      echo '${local.cleanse_and_configure_host}' > ${path.module}/assets/target/bash/remote/cleanse_and_configure_host.sh &
 
       # Emit customized custom cert config
-      echo '${local.private_ca_conf}' > ${path.module}/assets/target/customcerts/custom_default.conf
+      echo '${local.private_ca_conf}' > ${path.module}/assets/target/customcerts/custom_default.conf &
 
       # Update seqerakit prerun script to pull private cert
       # https://help.tower.nf/23.2/enterprise/configuration/ssl_tls/
       # Note: This approach works for most clients but there can be occasional problems due to chains.
 
-      # Update assets depenent
+      # Update assets dependent
       if [[ "${var.flag_use_private_cacert}" == "true" ]]; then
 
         {
@@ -99,6 +75,17 @@ resource "null_resource" "generate_independent_config_files" {
         } >> ${path.module}/assets/target/seqerakit/pipelines/pre_run.txt
 
       fi
+
+      # THIS IS A TOTAL HACK (Wave-Lite)
+      # Using this technique so postgres can get config files with single quotes only.
+      # Terraform templatefile (.tpl) abandoned and we use real SQL with placeholders-to-be-replaced-by-sed
+      # NOTE: sed works differently on GNU vs Mac. Used platform-agnostic Python solution.
+      # Copy all file to target, then remove .tpl
+      cp -r ${path.module}/assets/src/wave_lite_config/* ${path.module}/assets/target/wave_lite_config/
+      rm ${path.module}/assets/target/wave_lite_config/wave-lite.yml.tpl
+      export SALT=${path.module}/scripts/installer/utils/sedalternative.py
+      python3 $SALT ${local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_USER"]["value"]} ${local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"]} ${path.module}/assets/target/wave_lite_config
+
 
     EOT
     interpreter = ["/bin/bash", "-c"]
@@ -123,6 +110,14 @@ resource "null_resource" "generate_config_files_with_dependencies" {
       # Generate SSH_Config
       echo '${local.ssh_config}' > ${path.module}/ssh_config
       chmod 644 ${path.module}/ssh_config
+
+      # Generate EC2 PEM
+      echo "${tls_private_key.ec2_ssh_key.private_key_pem}" > ${path.module}/${local.ssh_key_name}
+      chmod 400 ${path.module}/${local.ssh_key_name}
+
+      # Generate Tower Connect files
+      echo '${local.data_studios_env}' > ${path.module}/assets/target/tower_config/data-studios.env &
+      echo '${tls_private_key.connect_pem.private_key_pem}' > ${path.module}/assets/target/tower_config/data-studios-rsa.pem
 
     EOT
     interpreter = ["/bin/bash", "-c"]

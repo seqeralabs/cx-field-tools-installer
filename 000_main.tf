@@ -247,6 +247,9 @@ module "subnet_collector" {
   subnets_db    = var.flag_create_new_vpc ? var.vpc_new_db_subnets : var.vpc_existing_db_subnets
   subnets_redis = var.flag_create_new_vpc ? var.vpc_new_redis_subnets : var.vpc_existing_redis_subnets
   subnets_alb   = var.flag_create_new_vpc ? var.vpc_new_alb_subnets : var.vpc_existing_alb_subnets
+
+  # Testing flag
+  use_mocks = var.use_mocks
 }
 
 # Add connection_strings module
@@ -284,10 +287,6 @@ module "connection_strings" {
   data_studio_path_routing_url    = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : ""
 
   # External Resource References
-  # rds_tower             = var.flag_create_external_db ? try(module.rds[0], null) : null
-  # rds_wave_lite         = var.flag_create_external_db ? try(module.rds-wave-lite[0], null) : null
-  # elasticache_tower     = var.flag_create_external_redis ? try(aws_elasticache_cluster.redis[0], null) : null
-  # elasticache_wave_lite = var.flag_create_external_redis ? try(module.elasticache_wave_lite[0], null) : null
   rds_tower             = var.use_mocks ? null : try(module.rds[0], null)
   rds_wave_lite         = var.use_mocks ? null : try(module.rds-wave-lite[0], null)
   elasticache_tower     = var.use_mocks ? null : try(aws_elasticache_cluster.redis[0], null)

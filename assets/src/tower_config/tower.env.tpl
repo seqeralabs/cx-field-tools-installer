@@ -121,6 +121,8 @@ TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING=false
 
 %{ if flag_limit_data_studio_to_some_workspaces == true ~}
 TOWER_DATA_STUDIO_ALLOWED_WORKSPACES="${data_studio_eligible_workspaces}"
+%{ else ~}
+# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES=DO_NOT_UNCOMMENT
 %{ endif }
 
 TOWER_DATA_STUDIO_CONNECT_URL=${tower_connect_server_url}
@@ -134,6 +136,8 @@ TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_TOOL="${ds.tool != null ? ds.tool : 
 TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_STATUS="${ds.status != null ? ds.status : ""}"
 %{ endfor ~}
 
+%{ else ~}
+# STUDIOS_NOT_ENABLED=DO_NOT_UNCOMMENT
 %{ endif }
 
 
