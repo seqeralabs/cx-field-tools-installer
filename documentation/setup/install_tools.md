@@ -17,4 +17,8 @@ The CX Installer solution requires access to the following local tools to fulfil
 
 6. Install `python 3.8.10` or later.
 
-7. **(New as of May 21, 2025)** Install a container runtime capable of running Docker containers (_e.g. [Docker Engine](https://docs.docker.com/engine/install/ubuntu/)). NOTE: If you install a non-docker option like Podman, please ensure it is aliased the `docker` keyword.
+7. **(New as of May 21, 2025)** Install a container runtime capable of running Docker containers (_e.g. [Docker Engine](https://docs.docker.com/engine/install/ubuntu/_)). 
+
+   NOTE: 
+      1. If using [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/), please ensure you follow all instructions necessary to integrate with the Terraform execution environment (_e.g. WSL_)
+      2. If using a Docker alternative like Podman, please ensure it is aliased the `docker` keyword.
