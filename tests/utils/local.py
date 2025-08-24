@@ -1,7 +1,3 @@
-# from pickle import FALSE
-# from numpy.core.fromnumeric import nonzero
-
-
 from datetime import datetime
 import hashlib
 import json
@@ -20,20 +16,15 @@ import pytest
 from yamlpath import Processor
 from yamlpath import YAMLPath
 from yamlpath.common import Parsers
-from yamlpath.exceptions import YAMLPathException, UnmatchedYAMLPathException
+from yamlpath.exceptions import UnmatchedYAMLPathException
 from yamlpath.wrappers import ConsolePrinter
 from yamlpath.wrappers import NodeCoords
 
-from tests.utils.config import kitchen_sink
-from tests.utils.config import root
-from tests.utils.config import tfvars_path
-from tests.utils.config import test_tfvars_source, test_tfvars_target
-from tests.utils.config import test_tfvars_override_source, test_tfvars_override_target
-from tests.utils.config import test_case_override_target
-from tests.utils.config import plan_cache_dir, templatefile_cache_dir
-from tests.utils.config import test_case_tfplan_file, test_case_tfplan_json_file
-from tests.utils.config import secrets_dir
-from tests.utils.config import all_template_files, config_file_list, all_config_files
+from tests.utils.config import root, kitchen_sink
+from tests.utils.config import tfvars_target, tfvars_override_target, tc_override_target
+from tests.utils.config import plan_cache_dir, templatefile_cache_dir, secrets_dir
+from tests.utils.config import tfplan_file, tfplan_json_file
+from tests.utils.config import all_template_files
 
 from tests.utils.filehandling import read_json, read_yaml, read_file
 from tests.utils.filehandling import write_file, move_file, copy_file
@@ -70,21 +61,19 @@ Originally tried using [tftest](https://pypi.org/project/tftest/). Too complicat
 """
 
 
-
-
-
 ## ------------------------------------------------------------------------------------
 ## Cache Utility Functions
 ## ------------------------------------------------------------------------------------
-def get_cache_key(tf_modifiers: str, qualifier: str = "") -> str:
+def get_plan_cache_key(tf_modifiers: str, qualifier: str = "") -> str:
     """Generate SHA-256 hash of override data and tfvars content for cache key."""
+    
+    tfvars_content = read_file(tfvars_target).strip()
+    tfvars_override_content = read_file(tfvars_override_target).strip()
     tf_modifiers = tf_modifiers.strip()
     qualifier = qualifier.strip()
 
-    tfvars_content = read_file(tfvars_path).strip()
-
-    # Create combined cache key
-    combined_content = f"{tf_modifiers}\n---TFVARS---\n{qualifier}\n---QUALIFIER---\n{tfvars_content}"
+    # Create combined cache key: All 3 tfvars layers + qualifier
+    combined_content = f"{tfvars_content}\n{tfvars_override_content}\n{tf_modifiers}\n{qualifier}\n"
     return hashlib.sha256(combined_content.encode("utf-8")).hexdigest()[:16]
 
 
@@ -126,7 +115,7 @@ def run_terraform_plan(qualifier: str = "") -> None:
     Plan based on core tfvars, core override, and testcase override.
     Uses shell-type Bash commands to simplify code.
     """
-    for file in [test_case_tfplan_file, test_case_tfplan_json_file]:
+    for file in [tfplan_file, tfplan_json_file]:
         Path(file).unlink(missing_ok=True)
 
     command = f"terraform plan {qualifier} -out=tfplan -refresh=false && terraform show -json tfplan > tfplan.json"
@@ -211,9 +200,10 @@ def prepare_plan(
         Terraform plan JSON data
     """
 
+    # This payload can easily vary based on user-provided whitespace. Standardize before sending to caching formula.
     tf_modifiers = strip_overide_whitespace(tf_modifiers)
 
-    cache_key = get_cache_key(tf_modifiers, qualifier)
+    cache_key = get_plan_cache_key(tf_modifiers, qualifier)
     cached_plan_file = f"{plan_cache_dir}/plan_{cache_key}"
     cached_plan_json_file = f"{plan_cache_dir}/plan_{cache_key}.json"
 
@@ -222,13 +212,13 @@ def prepare_plan(
     if use_cache and os.path.exists(cached_plan_json_file):
         print(f"Reusing cached plans for: {cache_key}")
 
-        execute_subprocess(f"cp {cached_plan_file} {test_case_tfplan_file}")
-        execute_subprocess(f"cp {cached_plan_json_file} {test_case_tfplan_json_file}")
-        write_file(test_case_override_target, tf_modifiers)
+        execute_subprocess(f"cp {cached_plan_file} {tfplan_file}")
+        execute_subprocess(f"cp {cached_plan_json_file} {tfplan_json_file}")
+        write_file(tc_override_target, tf_modifiers)
     else:
         # Write override file in root and create plan files.
         print(f"Cache miss. Generating new plan for: {cache_key}")
-        write_file(test_case_override_target, tf_modifiers)
+        write_file(tc_override_target, tf_modifiers)
 
         # Check that AWS SSO token isnt expired (or else test fails obtusely)
         try:
@@ -243,24 +233,24 @@ def prepare_plan(
         run_terraform_plan(qualifier)
 
         # Stash generated plan files in cachedir for future use.
-        execute_subprocess(f"cp {test_case_tfplan_file} {cached_plan_file}")
-        execute_subprocess(f"cp {test_case_tfplan_json_file} {cached_plan_json_file}")
+        execute_subprocess(f"cp {tfplan_file} {cached_plan_file}")
+        execute_subprocess(f"cp {tfplan_json_file} {cached_plan_json_file}")
 
-    return read_json(test_case_tfplan_json_file)
+    return read_json(tfplan_json_file)
 
 
 def get_reconciled_tfvars() -> Dict[str, Any]:
     """
     Return single consolidated file comprising:
-      - test_tfvars_target
-      - (updated by) test_tfvars_override_target
-      - (updated by) test_case_override_target
+      - tfvars_target
+      - (updated by) tfvars_override_target
+      - (updated by) tc_override_target
     """
-    tfvars = parse_key_value_file(test_tfvars_target)
-    base_overrides = parse_key_value_file(test_tfvars_override_target)
+    tfvars = parse_key_value_file(tfvars_target)
+    base_overrides = parse_key_value_file(tfvars_override_target)
     try:
         # Test case override file may not exist.
-        test_overrides = parse_key_value_file(test_case_override_target)
+        test_overrides = parse_key_value_file(tc_override_target)
     except FileNotFoundError:
         test_overrides = {}
 
@@ -348,7 +338,7 @@ def replace_vars_in_templatefile(input_str, vars_obj, type) -> str:
     (created by tests/datafiles/generate_core_data.sh)
     """
 
-    # This part a big magical, from Claude: Here's how it works:
+    # This part a bit magical, from Claude: Here's how it works:
     # 1. re.sub(pattern, replace_var, input_str) finds every occurrence of var.something
     # 2. For each match, it calls replace_var(match)
     # 3. replace_var extracts the variable name and returns the replacement value
@@ -496,7 +486,6 @@ def generate_interpolated_templatefile(key, extension, read_type, namespaces, te
         write_populated_templatefile(outfile, result)
 
     content = read_type(outfile.as_posix())
-    # print(content)
     return content
 
 
@@ -577,7 +566,7 @@ def generate_tc_files(plan, desired_files, testcase_name):
     tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets = secrets
     namespaces = [vars, outputs, tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets]
 
-    # Create hash of tfvars files (used by function 'generate_interpolated_templatefile' to speed up operations).
+    # Create hash of plan artefacts & secrets.
     content_to_hash = f"{vars}\n{outputs}\n{tower_secrets}\n{groundswell_secrets}\n{seqerakit_secrets}\n{wave_lite_secrets}"
     hash = hashlib.sha256(content_to_hash.encode("utf-8")).hexdigest()[:16]
 
@@ -587,10 +576,8 @@ def generate_tc_files(plan, desired_files, testcase_name):
         
     if desired_files:
         needed_template_files = {k: v for k, v in all_template_files.items() if k in desired_files}
-        # needed_template_files = {k: v for k, v in all_config_files.items() if k in desired_files}
     else:
         needed_template_files = all_template_files
-        # needed_template_files = all_config_files
 
     tc_files = generate_interpolated_templatefiles(hash, namespaces, needed_template_files, testcase_name)
 

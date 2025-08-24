@@ -13,7 +13,7 @@ from testcontainers.mysql import MySqlContainer
 from testcontainers.postgres import PostgresContainer
 
 from tests.datafiles.expected_results.expected_results import assertion_modifiers_template
-from tests.utils.config import root, config_file_list
+from tests.utils.config import root
 from tests.utils.filehandling import read_yaml
 from tests.utils.local import prepare_plan, generate_tc_files
 

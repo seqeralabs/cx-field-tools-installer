@@ -12,11 +12,11 @@ import pytest
 
 from scripts.installer.utils.purge_folders import delete_pycache_folders
 
-from tests.utils.config import root, tfvars_path, tfvars_backup_path
-from tests.utils.config import test_tfvars_source, test_tfvars_target
-from tests.utils.config import test_tfvars_override_source, test_tfvars_override_target
-from tests.utils.config import test_case_override_target
-from tests.utils.config import test_case_override_outputs_source, test_case_override_outputs_target
+from tests.utils.config import root, tfvars_original_path, tfvars_backup_path
+from tests.utils.config import tfvars_source, tfvars_target
+from tests.utils.config import tfvars_override_source, tfvars_override_target
+from tests.utils.config import tc_override_target
+from tests.utils.config import outputs_source, outputs_target
 from tests.utils.filehandling import copy_file, move_file
 from tests.utils.local import prepare_plan, run_terraform_destroy, execute_subprocess
 from tests.utils.pytest_logger import get_logger
@@ -51,12 +51,12 @@ def session_setup():
     subprocess.run("make generate_test_data", shell=True, check=True)
 
     print(f"\nBacking up terraform.tfvars & Loading test tfvars (base) artefacts.")
-    move_file(tfvars_path, tfvars_backup_path)
+    move_file(tfvars_original_path, tfvars_backup_path)
 
     # Swap in test tfvars, base-overrides tfvars, and testing-specific outputs (e.g. locals).
-    copy_file(test_tfvars_source, test_tfvars_target)
-    copy_file(test_tfvars_override_source, test_tfvars_override_target)
-    copy_file(test_case_override_outputs_source, test_case_override_outputs_target)
+    copy_file(tfvars_source, tfvars_target)
+    copy_file(tfvars_override_source, tfvars_override_target)
+    copy_file(outputs_source, outputs_target)
 
     # Prepare JSONified 009 (via hcl2json container)
     # CLI_command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
@@ -73,10 +73,10 @@ def session_setup():
 
     # Remove testing files, delete __pycache__ folders, restore origin tfvars.
     for file in [
-        test_case_override_target,
-        test_tfvars_target,
-        test_tfvars_override_target,
-        test_case_override_outputs_target,
+        tc_override_target,
+        tfvars_target,
+        tfvars_override_target,
+        outputs_target,
         "009_define_file_templates.json"
     ]:
         Path(file).unlink(missing_ok=True)
@@ -84,7 +84,7 @@ def session_setup():
     delete_pycache_folders(root)
 
     # Restore original tfvars
-    move_file(tfvars_backup_path, tfvars_path)
+    move_file(tfvars_backup_path, tfvars_original_path)
 
 
 @pytest.fixture(scope="session")  # function

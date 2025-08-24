@@ -21,37 +21,40 @@ kitchen_sink                        = get_kitchen_sink_bool('KITCHEN_SINK')
 # NOTE: Assumes this file lives at 3rd layer of project (i.e. PROJECT_ROOT/tests/utils/local.py)
 root = str(Path(__file__).parent.parent.parent.resolve())
 
-# Tfvars and override files filepaths
-tfvars_path                         = f"{root}/terraform.tfvars"
-tfvars_backup_path                  = f"{root}/terraform.tfvars.backup"
+# Tfvars base, tfvars overrides, testcase-specific tfvars overrides, test session-specific outputs
+tfvars_original_path           = f"{root}/terraform.tfvars"
+tfvars_backup_path             = f"{root}/terraform.tfvars.backup"
 
-test_tfvars_source                  = f"{root}/tests/datafiles/terraform.tfvars"
-test_tfvars_target                  = f"{root}/terraform.tfvars"
-test_tfvars_override_source         = f"{root}/tests/datafiles/base-overrides.auto.tfvars"
-test_tfvars_override_target         = f"{root}/base-overrides.auto.tfvars"
+tfvars_source                  = f"{root}/tests/datafiles/terraform.tfvars"
+tfvars_target                  = f"{root}/terraform.tfvars"
+tfvars_override_source         = f"{root}/tests/datafiles/base-overrides.auto.tfvars"
+tfvars_override_target         = f"{root}/base-overrides.auto.tfvars"
 
-test_case_override_target           = f"{root}/override.auto.tfvars"
-test_case_override_outputs_source   = f"{root}/tests/datafiles/012_testing_outputs.tf"
-test_case_override_outputs_target   = f"{root}/012_testing_outputs.tf"
+tc_override_target             = f"{root}/override.auto.tfvars"
 
-# test_docker_compose_file  = f"/tmp/cx-testing-docker-compose.yml"
+outputs_source                 = f"{root}/tests/datafiles/012_testing_outputs.tf"
+outputs_target                 = f"{root}/012_testing_outputs.tf"
+
 
 # SSM (testing) secrets
-secrets_dir                         = f"{root}/tests/datafiles/secrets"
-ssm_tower                           = f"{secrets_dir}/ssm_sensitive_values_tower_testing.json"
-ssm_groundswell                     = f"{secrets_dir}/ssm_sensitive_values_groundswell_testing.json"
-ssm_seqerakit                       = f"{secrets_dir}/ssm_sensitive_values_seqerakit_testing.json"
-ssm_wave_lite                       = f"{secrets_dir}/ssm_sensitive_values_wave_lite_testing.json"
+secrets_dir                    = f"{root}/tests/datafiles/secrets"
+ssm_tower                      = f"{secrets_dir}/ssm_sensitive_values_tower_testing.json"
+ssm_groundswell                = f"{secrets_dir}/ssm_sensitive_values_groundswell_testing.json"
+ssm_seqerakit                  = f"{secrets_dir}/ssm_sensitive_values_seqerakit_testing.json"
+ssm_wave_lite                  = f"{secrets_dir}/ssm_sensitive_values_wave_lite_testing.json"
 
-# Tfplan files and caching folder
-plan_cache_dir                      = f"{root}/tests/.plan_cache"
-templatefile_cache_dir              = f"{root}/tests/.templatefile_cache"
 
-test_case_tfplan_file               = f"{root}/tfplan"
-test_case_tfplan_json_file          = f"{root}/tfplan.json"
+# Cache folders & tfplan paths
+plan_cache_dir                 = f"{root}/tests/.plan_cache"
+templatefile_cache_dir         = f"{root}/tests/.templatefile_cache"
+
+tfplan_file                    = f"{root}/tfplan"
+tfplan_json_file               = f"{root}/tfplan.json"
+
 
 # Pre-generated reference files for tests
-expected_sql_dir                    = f"{root}/tests/datafiles/expected_results/expected_sql"
+expected_results_dir           = f"{root}/tests/datafiles/expected_results"
+expected_sql_dir               = f"{expected_results_dir}/expected_sql"
 
 
 # Master test object
