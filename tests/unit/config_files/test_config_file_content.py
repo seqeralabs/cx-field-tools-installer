@@ -1,42 +1,15 @@
-import pytest
-import subprocess
-import json
-import os
-import tempfile
-import time
-import hashlib
-from pathlib import Path
 import sys
-from copy import deepcopy
+import pytest
 
-from types import SimpleNamespace
-
-from tests.utils.config import root, test_tfvars_target, test_tfvars_override_target, test_case_override_target
-from tests.utils.config import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
-from tests.utils.config import templatefile_cache_dir, all_template_files
-
-from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
-from tests.utils.local import get_reconciled_tfvars
-from tests.utils.config import root, sql_test_scratch_dir, expected_sql, kitchen_sink
-from tests.utils.config import config_file_list, all_template_files
-
-from tests.utils.local import generate_tc_files, verify_all_assertions
-
+from tests.datafiles.expected_results.expected_results import assertion_modifiers_template
 from tests.datafiles.expected_results.expected_results import generate_assertions_all_active, generate_assertions_all_disabled
 
-from tests.utils.filehandling import read_json, read_yaml, read_file
+from tests.utils.config import expected_sql_dir
+from tests.utils.filehandling import read_file
+from tests.utils.local import prepare_plan, generate_tc_files, verify_all_assertions
 
 
 # NOTE: To avoid creating VPC assets, use an existing VPC in the account the AWS provider is configured to use.
-
-
-def assertion_modifiers_template():
-    """
-    Generate a blank dict for each testcase file to attach test-specific assertion modifiers to.
-    These are then reconciled with the core set of assertions in `expected_results.py` (via `generate_assertions_xxx`).
-    """
-    # return {k: {} for k in config_file_list}
-    return {k: {} for k in all_template_files}
 
 
 ## ------------------------------------------------------------------------------------
@@ -555,9 +528,9 @@ def test_wave_sql_file_content(session_setup):
     wave_lite_container_2 = read_file(f"{tc_files['wave_lite_container_2']['filepath']}")
     wave_lite_rds         = read_file(f"{tc_files['wave_lite_rds']['filepath']}")
 
-    ref_wave_lite_container_1 = read_file(f"{expected_sql}/wave-lite-container-1.sql")
-    ref_wave_lite_container_2 = read_file(f"{expected_sql}/wave-lite-container-2.sql")
-    ref_wave_lite_rds         = read_file(f"{expected_sql}/wave-lite-rds.sql")
+    ref_wave_lite_container_1 = read_file(f"{expected_sql_dir}/wave-lite-container-1.sql")
+    ref_wave_lite_container_2 = read_file(f"{expected_sql_dir}/wave-lite-container-2.sql")
+    ref_wave_lite_rds         = read_file(f"{expected_sql_dir}/wave-lite-rds.sql")
 
     assert ref_wave_lite_container_1 == wave_lite_container_1
     assert ref_wave_lite_container_2 == wave_lite_container_2

@@ -1,23 +1,10 @@
 import sys
-
 import pytest
 
+from tests.datafiles.expected_results.expected_results import assertion_modifiers_template
 from tests.datafiles.expected_results.expected_results import generate_assertions_all_active, generate_assertions_all_disabled
-from tests.utils.config import ansible_file_list, all_ansible_files, all_template_files
-from tests.utils.filehandling import read_json, read_yaml, read_file
+from tests.utils.filehandling import read_file
 from tests.utils.local import prepare_plan, generate_tc_files, verify_all_assertions
-
-
-# TODO: Move assertions to expected_results.py
-
-
-def assertion_modifiers_template():
-    """
-    Generate a blank dict for each testcase file to attach test-specific assertion modifiers to.
-    These are then reconciled with the core set of assertions in `expected_results.py` (via `generate_assertions_xxx`).
-    """
-    # return {k: {} for k in ansible_file_list}
-    return {k: {} for k in all_template_files}
 
 
 ## ------------------------------------------------------------------------------------

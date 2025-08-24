@@ -1,3 +1,7 @@
+from tests.utils.config import expected_sql_dir, all_template_files
+from tests.utils.filehandling import read_file
+
+
 """
 Generate two sets of baseline value sets.
   1. Settings when all features / assets activated.
@@ -5,13 +9,6 @@ Generate two sets of baseline value sets.
 
   Does not include edgecases like private CA reverseproxy.
 """
-
-import ast
-import json
-
-from tests.utils.filehandling import read_file
-
-from tests.utils.config import expected_sql
 
 
 # TODO: Aug 22/25 - consider simplifying this structure with discrete YAML file
@@ -159,7 +156,7 @@ def generate_tower_sql_entries_all_active(overrides={}):
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
     baseline = {
         "present": {
-            'payload'                               : read_file(f"{expected_sql}/tower.sql"),
+            'payload'                               : read_file(f"{expected_sql_dir}/tower.sql"),
         },
         "omitted": {}
     }
@@ -203,7 +200,7 @@ def generate_wave_lite_container_1_entries_all_active(overrides={}):
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
         "present": {
-            'payload'                               : read_file(f"{expected_sql}/wave-lite-container-1.sql"),
+            'payload'                               : read_file(f"{expected_sql_dir}/wave-lite-container-1.sql"),
         },
         "omitted": {}
     }
@@ -215,7 +212,7 @@ def generate_wave_lite_container_2_entries_all_active(overrides={}):
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
         "present": {
-            'payload'                               : read_file(f"{expected_sql}/wave-lite-container-2.sql"),
+            'payload'                               : read_file(f"{expected_sql_dir}/wave-lite-container-2.sql"),
         },
         "omitted": {}
     }
@@ -227,7 +224,7 @@ def generate_wave_lite_rds_entries_all_active(overrides={}):
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
         "present": {
-            'payload'                               : read_file(f"{expected_sql}/wave-lite-rds.sql"),
+            'payload'                               : read_file(f"{expected_sql_dir}/wave-lite-rds.sql"),
         },
         "omitted": {}
     }
@@ -428,7 +425,7 @@ def generate_tower_sql_entries_all_disabled(overrides={}):
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
     baseline = {
         "present": {
-            'payload'                               : read_file(f"{expected_sql}/tower.sql"),
+            'payload'                               : read_file(f"{expected_sql_dir}/tower.sql"),
         },
         "omitted": {}
     }
@@ -473,7 +470,7 @@ def generate_wave_lite_container_1_entries_all_disabled(overrides={}):
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
         "present": {
-            'payload'                               : read_file(f"{expected_sql}/wave-lite-container-1.sql"),
+            'payload'                               : read_file(f"{expected_sql_dir}/wave-lite-container-1.sql"),
         },
         "omitted": {}
     }
@@ -485,7 +482,7 @@ def generate_wave_lite_container_2_entries_all_disabled(overrides={}):
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
         "present": {
-            'payload'                               : read_file(f"{expected_sql}/wave-lite-container-2.sql"),
+            'payload'                               : read_file(f"{expected_sql_dir}/wave-lite-container-2.sql"),
         },
         "omitted": {}
     }
@@ -497,7 +494,7 @@ def generate_wave_lite_rds_entries_all_disabled(overrides={}):
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
         "present": {
-            'payload'                               : read_file(f"{expected_sql}/wave-lite-rds.sql"),
+            'payload'                               : read_file(f"{expected_sql_dir}/wave-lite-rds.sql"),
         },
         "omitted": {}
     }
@@ -562,3 +559,11 @@ def purge_baseline_of_specified_overrides(baseline, overrides):
                 pass
 
     return baseline
+
+
+def assertion_modifiers_template():
+    """
+    Generate a blank dict for each testcase file to attach test-specific assertion modifiers to.
+    These are then reconciled with the core set of assertions in `expected_results.py` (via `generate_assertions_xxx`).
+    """
+    return {k: {} for k in all_template_files}
