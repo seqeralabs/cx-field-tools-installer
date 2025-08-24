@@ -10,6 +10,7 @@ import sys
 import hashlib
 from typing import Dict, Any
 import re
+from datetime import datetime
 
 import subprocess
 import json
@@ -510,15 +511,24 @@ def generate_interpolated_templatefiles(hash, namespaces, template_files, testca
     I don't seem able to put the file cache dir as a top-level key, so adding in to the dictionary for each individual file.
     """
     # Make cache folder if missing
-    folder_path = Path(f"{templatefile_cache_dir}/{hash}")
+    templatefile_cache_dir_hash = f"{templatefile_cache_dir}/{testcase_name}__{hash}"
+    folder_path = Path(templatefile_cache_dir_hash)
     folder_path.mkdir(parents=True, exist_ok=True)
 
-    templatefile_cache_dir_hash = f"{templatefile_cache_dir}/{hash}"
+    # Can't include a timestamp in the name since this will mess up the caching check in `generate_interpolated_templatefile`.
+    # Write timestamp in the folder instead -- add to filename for easy reference & inside file to make Path write mechanics happy.
+    existing_timestamps = list(folder_path.glob(".timestamp*"))
+    if not existing_timestamps:
+        timestamp = datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
+        timestamp_file = folder_path / f".timestamp--{timestamp}"
+        timestamp_file.write_text(timestamp)
+    
     sql_exception_files = ["wave_lite_container_1", "wave_lite_container_2", "wave_lite_rds"]
 
+    # This no longer seems necessary now that I'm writing cache folders more intelligently.
     # Create a mapping document
-    with open(f"{templatefile_cache_dir}/mappings", "a") as f:
-        f.write(f"{testcase_name}: {hash}\n")
+    # with open(f"{templatefile_cache_dir}/mappings", "a") as f:
+    #     f.write(f"{testcase_name}: {hash}\n")
 
     for k,v in template_files.items():
         if k in sql_exception_files:

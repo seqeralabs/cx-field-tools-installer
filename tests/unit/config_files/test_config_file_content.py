@@ -540,9 +540,7 @@ def test_wave_sql_file_content(session_setup):
         - Compare against pre-generated result files in `tests/datafiles/expected_results/expected_sql`.
     """
 
-    tf_modifiers = """
-        # No override values needed. Using base template and base-overrides only.
-    """
+    tf_modifiers = """#NONE"""
     ## SETUP
     ## ========================================================================================
     plan                = prepare_plan(tf_modifiers)
