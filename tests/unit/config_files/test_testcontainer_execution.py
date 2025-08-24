@@ -1,60 +1,27 @@
-import pytest
-import subprocess
 import json
 import os
+import subprocess
+import sys
 import tempfile
 import time
-import hashlib
-from pathlib import Path
-import sys
-from copy import deepcopy
-import urllib.request
-import urllib.error
-import yaml
+import urllib.request           #TODO: Assess if this is right or should use urllib3?
+import urllib.error             #TODO: Assess if this is right or should use urllib3?
 
-from types import SimpleNamespace
-
-from tests.utils.config import root, test_tfvars_target, test_tfvars_override_target, test_case_override_target
-from tests.utils.config import ssm_tower, ssm_groundswell, ssm_seqerakit, ssm_wave_lite
-from tests.utils.config import templatefile_cache_dir, all_template_files
-
-from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
-from tests.utils.local import get_reconciled_tfvars
-
-
-from tests.utils.local import generate_namespaced_dictionaries, generate_interpolated_templatefiles
-from tests.utils.local import generate_tc_files, assert_present_and_omitted, verify_all_assertions
-
-from tests.datafiles.expected_results.expected_results import generate_assertions_all_active, generate_assertions_all_disabled
-
+import pytest
 from testcontainers.compose import DockerCompose
 from testcontainers.mysql import MySqlContainer
 from testcontainers.postgres import PostgresContainer
 
-from tests.utils.filehandling import read_json, read_yaml, read_file
-from tests.utils.filehandling import write_file, move_file, copy_file
-from tests.utils.filehandling import parse_key_value_file
-
-from tests.utils.config import config_file_list
-
-
-# NOTE: To avoid creating VPC assets, use an existing VPC in the account the AWS provider is configured to use.
-
-
-
-def assertion_modifiers_template():
-    """
-    Generate a blank dict for each testcase file to attach test-specific assertion modifiers to.
-    These are then reconciled with the core set of assertions in `expected_results.py` (via `generate_assertions_xxx`).
-    """
-    return {k: {} for k in config_file_list}
+from tests.datafiles.expected_results.expected_results import assertion_modifiers_template
+from tests.utils.config import root, config_file_list
+from tests.utils.filehandling import read_yaml
+from tests.utils.local import prepare_plan, generate_tc_files
 
 
 ## ------------------------------------------------------------------------------------
 ## MARK: MySQL (Platform)
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
-@pytest.mark.long
 @pytest.mark.testcontainer
 def test_tower_sql_population(session_setup):
     """
@@ -162,7 +129,6 @@ def test_tower_sql_population(session_setup):
 ## MARK: Postgres (Wave)
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
-@pytest.mark.long
 @pytest.mark.testcontainer
 def test_wave_sql_rds_population(session_setup, config_baseline_settings_default):
     """
@@ -363,11 +329,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
 ## ------------------------------------------------------------------------------------
 ## MARK: Compose (Wave)
 ## ------------------------------------------------------------------------------------
-## ------------------------------------------------------------------------------------
-## MARK: MySQL (Platform)
-## ------------------------------------------------------------------------------------
 @pytest.mark.local
-@pytest.mark.long
 @pytest.mark.testcontainer
 def test_wave_containers(session_setup):
     """

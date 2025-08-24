@@ -9,9 +9,6 @@ from tests.utils.filehandling import read_file
 from tests.utils.local import prepare_plan, generate_tc_files, verify_all_assertions
 
 
-# NOTE: To avoid creating VPC assets, use an existing VPC in the account the AWS provider is configured to use.
-
-
 ## ------------------------------------------------------------------------------------
 ## MARK: Baseline ON/OFF
 ## ------------------------------------------------------------------------------------
