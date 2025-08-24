@@ -214,3 +214,11 @@ config_file_list = [
 
 all_config_files = {k:v for k,v in all_template_files.items() if k in config_file_list}
 
+ansible_file_list = [
+    "ansible_02_update_file_configurations",
+    "ansible_03_pull_containers_and_run_tower",
+    "ansible_05_patch_groundswell",
+    "ansible_06_run_seqerakit",
+]
+
+all_ansible_files = {k:v for k,v in all_template_files.items() if k in ansible_file_list}

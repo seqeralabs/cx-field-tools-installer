@@ -20,14 +20,11 @@ from tests.utils.local import get_reconciled_tfvars
 from tests.utils.config import root, sql_test_scratch_dir, expected_sql, kitchen_sink
 from tests.utils.config import config_file_list
 
-from tests.utils.local import generate_namespaced_dictionaries, generate_interpolated_templatefiles
-from tests.utils.local import generate_tc_files, assert_present_and_omitted, verify_all_assertions
+from tests.utils.local import generate_tc_files, verify_all_assertions
 
 from tests.datafiles.expected_results.expected_results import generate_assertions_all_active, generate_assertions_all_disabled
 
 from tests.utils.filehandling import read_json, read_yaml, read_file
-from tests.utils.filehandling import write_file, move_file, copy_file
-from tests.utils.filehandling import parse_key_value_file
 
 
 # NOTE: To avoid creating VPC assets, use an existing VPC in the account the AWS provider is configured to use.
