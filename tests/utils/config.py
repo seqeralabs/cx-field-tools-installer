@@ -1,9 +1,7 @@
 import os
 from pathlib import Path
 
-from tests.utils.filehandling import read_json, read_yaml, read_file
-from tests.utils.filehandling import write_file, move_file, copy_file
-from tests.utils.filehandling import parse_key_value_file
+from tests.utils.filehandling import read_json, read_yaml, read_file, parse_key_value_file
 
 
 ## ------------------------------------------------------------------------------------
@@ -17,10 +15,10 @@ def get_kitchen_sink_bool(key, default=False):
         return default
     return value.lower() in ('true', '1', 'yes', 'on')
 
-kitchen_sink = get_kitchen_sink_bool('KITCHEN_SINK')
+kitchen_sink                        = get_kitchen_sink_bool('KITCHEN_SINK')
 
 
-# Assumes this file lives at 3rd layer of project (i.e. PROJECT_ROOT/tests/utils/local.py)
+# NOTE: Assumes this file lives at 3rd layer of project (i.e. PROJECT_ROOT/tests/utils/local.py)
 root = str(Path(__file__).parent.parent.parent.resolve())
 
 # Tfvars and override files filepaths
@@ -36,7 +34,7 @@ test_case_override_target           = f"{root}/override.auto.tfvars"
 test_case_override_outputs_source   = f"{root}/tests/datafiles/012_testing_outputs.tf"
 test_case_override_outputs_target   = f"{root}/012_testing_outputs.tf"
 
-test_docker_compose_file            = f"/tmp/cx-testing-docker-compose.yml"
+# test_docker_compose_file  = f"/tmp/cx-testing-docker-compose.yml"
 
 # SSM (testing) secrets
 secrets_dir                         = f"{root}/tests/datafiles/secrets"
@@ -47,15 +45,16 @@ ssm_wave_lite                       = f"{secrets_dir}/ssm_sensitive_values_wave_
 
 # Tfplan files and caching folder
 plan_cache_dir                      = f"{root}/tests/.plan_cache"
+templatefile_cache_dir              = f"{root}/tests/.templatefile_cache"
 
 test_case_tfplan_file               = f"{root}/tfplan"
 test_case_tfplan_json_file          = f"{root}/tfplan.json"
 
-templatefile_cache_dir              = f"{root}/tests/.templatefile_cache"
+# Pre-generated reference files for tests
+expected_sql_dir                    = f"{root}/tests/datafiles/expected_results/expected_sql"
 
-sql_test_scratch_dir                     = "/tmp/cx-testing/sql"
-expected_sql_dir                        = f"{root}/tests/datafiles/expected_results/expected_sql"
 
+# Master test object
 all_template_files = {
     "tower_env": {
         "extension"         : ".env", 
@@ -198,7 +197,7 @@ all_template_files = {
     },
 }
 
-# Generate subset of config files to make sure we don't pull in more files than the validation can handle.
+# Subset of SP config files
 config_file_list = [
     "tower_env",
     "tower_yml",
@@ -212,8 +211,7 @@ config_file_list = [
     "groundswell_env",
 ]
 
-all_config_files = {k:v for k,v in all_template_files.items() if k in config_file_list}
-
+# Subset of Ansible files
 ansible_file_list = [
     "ansible_02_update_file_configurations",
     "ansible_03_pull_containers_and_run_tower",
@@ -221,4 +219,5 @@ ansible_file_list = [
     "ansible_06_run_seqerakit",
 ]
 
+all_config_files = {k:v for k,v in all_template_files.items() if k in config_file_list}
 all_ansible_files = {k:v for k,v in all_template_files.items() if k in ansible_file_list}

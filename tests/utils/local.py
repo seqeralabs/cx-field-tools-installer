@@ -1,25 +1,21 @@
-from pickle import FALSE
-from numpy.core.fromnumeric import nonzero
-import pytest
+# from pickle import FALSE
+# from numpy.core.fromnumeric import nonzero
 
-import ast
+
+from datetime import datetime
+import hashlib
+import json
 import os
 from pathlib import Path
-import shutil
-import sys
-import hashlib
-from typing import Dict, Any
 import re
-from datetime import datetime
-
+import shutil
 import subprocess
-import json
+import sys
+from types import SimpleNamespace
+from typing import Dict, Any
 import yaml
 
-from types import SimpleNamespace
-
-from scripts.installer.utils.purge_folders import delete_pycache_folders
-
+import pytest
 # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
 from yamlpath import Processor
 from yamlpath import YAMLPath
@@ -33,7 +29,7 @@ from tests.utils.config import root
 from tests.utils.config import tfvars_path
 from tests.utils.config import test_tfvars_source, test_tfvars_target
 from tests.utils.config import test_tfvars_override_source, test_tfvars_override_target
-from tests.utils.config import test_case_override_target, test_case_override_outputs_source, test_case_override_outputs_target
+from tests.utils.config import test_case_override_target
 from tests.utils.config import plan_cache_dir, templatefile_cache_dir
 from tests.utils.config import test_case_tfplan_file, test_case_tfplan_json_file
 from tests.utils.config import secrets_dir

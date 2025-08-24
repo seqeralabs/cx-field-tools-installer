@@ -17,14 +17,8 @@ from tests.utils.config import test_tfvars_source, test_tfvars_target
 from tests.utils.config import test_tfvars_override_source, test_tfvars_override_target
 from tests.utils.config import test_case_override_target
 from tests.utils.config import test_case_override_outputs_source, test_case_override_outputs_target
-from tests.utils.config import root
-
 from tests.utils.filehandling import copy_file, move_file
-
-from tests.utils.local import prepare_plan
-from tests.utils.local import run_terraform_apply, run_terraform_destroy
-from tests.utils.local import execute_subprocess
-
+from tests.utils.local import prepare_plan, run_terraform_destroy, execute_subprocess
 from tests.utils.pytest_logger import get_logger
 
 
@@ -57,16 +51,15 @@ def session_setup():
     subprocess.run("make generate_test_data", shell=True, check=True)
 
     print(f"\nBacking up terraform.tfvars & Loading test tfvars (base) artefacts.")
-    # Backup existing tfvars
     move_file(tfvars_path, tfvars_backup_path)
+
     # Swap in test tfvars, base-overrides tfvars, and testing-specific outputs (e.g. locals).
     copy_file(test_tfvars_source, test_tfvars_target)
     copy_file(test_tfvars_override_source, test_tfvars_override_target)
     copy_file(test_case_override_outputs_source, test_case_override_outputs_target)
 
-    # Prepare JSONified 009
-    # ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json
-    # command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
+    # Prepare JSONified 009 (via hcl2json container)
+    # CLI_command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
     command = f"docker run --rm -v {root}:/tmp ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:vendored /tmp/009_define_file_templates.tf > {root}/009_define_file_templates.json"
     result = execute_subprocess(command)
 
