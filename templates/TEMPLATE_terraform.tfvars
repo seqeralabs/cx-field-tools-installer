@@ -662,7 +662,7 @@ ec2_host_instance_type = "c5.2xlarge"
 flag_encrypt_ebs     = true
 flag_use_kms_key     = true
 ec2_ebs_kms_key      = "REPLACE_ME_IF_NEEDED"
-ec2_root_volume_size = 8
+ec2_root_volume_size = 16
 
 ec2_require_imds_token = true
 

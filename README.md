@@ -140,11 +140,14 @@ The following configuration actions are encouraged but not mandatory.
 #### 05: Using a Private Certificate Authority (ADVANCED)
 1. Follow the instructions in [Private Certificates](./documentation/setup/optional_private_certificates.md)
 
+#### 06: Enable EC2 Instance Role Authentication
+1. Follow the instructions in [Using AWS EC2 Instance Role](./documentation/setup/optional_allow_instance_credentials.md)
+
 <br />
 
 ## Execution Steps
 
-#### Deployment
+### Deployment
 
 1. Via terminal, navigate to the project root and initialize the project:
     ```bash
@@ -181,6 +184,10 @@ The following configuration actions are encouraged but not mandatory.
     ```bash
     $ terraform destroy
     ```
+
+
+## Upgrade Steps
+Please see [Upgrade Steps](documentation/upgrade_steps.md) for instructions on how to upgrade an existing installation to a new Release.
 
 
 ## WARNINGS

@@ -7,6 +7,8 @@ We originally used [tfsec](https://github.com/aquasecurity/tfsec) to scan this p
 
 
 ### Terraform Scanning History
+- **Aug 07, 2025**, traced in [Trivy Security Scan -- Aug 7, 2025](https://github.com/seqeralabs/cx-field-tools-installer/issues/232).
+
 - **May 21, 2025**, traced in [Trivy Security Scan -- May 21, 2025](https://github.com/seqeralabs/cx-field-tools-installer/issues/205).
 
 - **Mid April 2024**, traced in [Issue #36 - Fix tfsec-identified Critical/High vulnerabilities](https://github.com/seqeralabs/cx-field-tools-installer/issues/36).
@@ -139,6 +141,6 @@ We use [Amazon Inspector](https://aws.amazon.com/inspector/) to scan the resulti
 
 ## Egress Rules
 
-Depending on the pipelines your run, many calls may need to egress from your Seqera Platform / Compute Environment to a variety of endpoints exposed on the public internet. 
+Depending on the pipelines you run, many calls may need to egress from your Seqera Platform / Compute Environment to a variety of endpoints exposed on the public internet. 
 
 For ease of deployment, the installer starts from a very loose posture re: security egress controls (`0.0.0.0/0`). While this helps minimize stand-up efforts, it may be inappropriate for your eventual Production deployment stance. Please me mindful of this behaviour and lockdown as necessary once 'happy path' pipeline runs prove successful.
