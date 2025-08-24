@@ -356,11 +356,20 @@ pytest -m "custom_scenario" -v
 
 
 ## Performance Considerations
+First-time generation of test files is heavy no matter what. Caching those results can signficantly speed up subsequent runs (_assuming cache files remain valid_). Consider these benchmarking results from Aug 24/25:
 
-### Caching Benefits
-- First test run: ~30 seconds (full Terraform plan)
-- Subsequent runs: ~4 seconds (cached plan reuse)
-- Cache invalidation: Based on tfvars content hash
+- **Targeted Files** (_command: `time pytest tests/unit/config_files`_):
+    - First run (_including file creation_): `6m37s`
+    - Second run (_with cache_): `47s`
+    - Third run (_with cache, excluding slow testcontainer tests_): `3.5s`
+
+- **Kitchen Sink Files** (_command: `KITCHEN_SINK=true time pytest tests/unit/config_files`_):
+    - First run (_including file creation_): `18m40s`
+    - Second run (_with cache_): `52s`
+    - Third run (_with cache, excluding slow testcontainer tests_): `6.5s`
+
+This amounts to a ~95%+ reduction in test execution time after the first-time execution tax is paid.
+
 
 ### Optimization Strategies
 - Use `desired_files` to generate only necessary configuration files

@@ -162,8 +162,6 @@ def test_tower_sql_population(session_setup):
 ## MARK: Postgres (Wave)
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
-@pytest.mark.sql
-@pytest.mark.vpc_existing
 @pytest.mark.long
 @pytest.mark.testcontainer
 def test_wave_sql_rds_population(session_setup, config_baseline_settings_default):
