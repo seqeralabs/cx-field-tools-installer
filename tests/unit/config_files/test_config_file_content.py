@@ -18,7 +18,7 @@ from tests.utils.config import templatefile_cache_dir, all_template_files
 from tests.utils.local import prepare_plan, run_terraform_apply, execute_subprocess
 from tests.utils.local import get_reconciled_tfvars
 from tests.utils.config import root, sql_test_scratch_dir, expected_sql, kitchen_sink
-from tests.utils.config import config_file_list
+from tests.utils.config import config_file_list, all_template_files
 
 from tests.utils.local import generate_tc_files, verify_all_assertions
 
@@ -35,7 +35,8 @@ def assertion_modifiers_template():
     Generate a blank dict for each testcase file to attach test-specific assertion modifiers to.
     These are then reconciled with the core set of assertions in `expected_results.py` (via `generate_assertions_xxx`).
     """
-    return {k: {} for k in config_file_list}
+    # return {k: {} for k in config_file_list}
+    return {k: {} for k in all_template_files}
 
 
 ## ------------------------------------------------------------------------------------

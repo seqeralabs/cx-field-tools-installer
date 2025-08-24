@@ -265,6 +265,16 @@ def generate_assertions_all_active(template_files, overrides):
         "wave_lite_container_2" : generate_wave_lite_container_2_entries_all_active(overrides["wave_lite_container_2"]),
         "wave_lite_rds"         : generate_wave_lite_rds_entries_all_active(overrides["wave_lite_rds"]),
         "groundswell_env"       : generate_groundswell_env_entries_all_active(overrides["groundswell_env"]),
+        # TODO: Build out stubs OR identify as not-in-scope due to other testing method (e.g. .sql)
+        "groundswell_sql"       : {"present": {}, "omitted": {}},
+        "seqerakit_yml"       : {"present": {}, "omitted": {}},
+        "cleanse_and_configure_host"       : {"present": {}, "omitted": {}},
+        "ansible_02_update_file_configurations"       : {"present": {}, "omitted": {}},
+        "ansible_03_pull_containers_and_run_tower"       : {"present": {}, "omitted": {}},
+        "ansible_05_patch_groundswell"       : {"present": {}, "omitted": {}},
+        "ansible_06_run_seqerakit"       : {"present": {}, "omitted": {}},
+        "docker_logging"       : {"present": {}, "omitted": {}},
+        "private_ca_conf"       : {"present": {}, "omitted": {}},
     }
     return entries
 
@@ -519,7 +529,16 @@ def generate_assertions_all_disabled(template_files, overrides):
         "wave_lite_container_2" : generate_wave_lite_container_2_entries_all_disabled(overrides["wave_lite_container_2"]),
         "wave_lite_rds"         : generate_wave_lite_rds_entries_all_disabled(overrides["wave_lite_rds"]),
         "groundswell_env"       : generate_groundswell_env_entries_all_disabled(overrides["groundswell_env"]),
-
+        # TODO: Build out stubs OR identify as not-in-scope due to other testing method (e.g. .sql)
+        "groundswell_sql"       : {"present": {}, "omitted": {}},
+        "seqerakit_yml"       : {"present": {}, "omitted": {}},
+        "cleanse_and_configure_host"       : {"present": {}, "omitted": {}},
+        "ansible_02_update_file_configurations"       : {"present": {}, "omitted": {}},
+        "ansible_03_pull_containers_and_run_tower"       : {"present": {}, "omitted": {}},
+        "ansible_05_patch_groundswell"       : {"present": {}, "omitted": {}},
+        "ansible_06_run_seqerakit"       : {"present": {}, "omitted": {}},
+        "docker_logging"       : {"present": {}, "omitted": {}},
+        "private_ca_conf"       : {"present": {}, "omitted": {}},
     }
     return entries
 
