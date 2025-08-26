@@ -8,14 +8,14 @@ from tests.utils.filehandling import read_json, read_yaml, read_file, parse_key_
 ## Universal Configuration
 ## ------------------------------------------------------------------------------------
 # Control how many files are generated for each testcase: every config file or just minimally necessary ones.
-# Use limited set by default, but make configurable from pytest invocation (e.g: `KITCHEN_SINK=true pytest tests/unit`)
+# Use limited set by default, but make configurable from pytest invocation (e.g: `TEST_FULL=true pytest tests/unit`)
 def get_kitchen_sink_bool(key, default=False):
     value = os.environ.get(key)
     if value is None:
         return default
     return value.lower() in ('true', '1', 'yes', 'on')
 
-kitchen_sink                        = get_kitchen_sink_bool('KITCHEN_SINK')
+kitchen_sink                        = get_kitchen_sink_bool('TEST_FULL')
 
 
 # NOTE: Assumes this file lives at 3rd layer of project (i.e. PROJECT_ROOT/tests/utils/local.py)

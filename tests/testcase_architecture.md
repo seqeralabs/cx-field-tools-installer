@@ -5,6 +5,12 @@
 These tests exist to validate that the resources (_configuration & AWS resources_) produced by Terraform align to expected behaviours, in two ways:
 
 
+## How to Run Tests
+- Tests are run using Python `pytest`.
+- See `requirements.txt` to install necessary Python packages.
+- Dont forget to set `AWS_DEFAULT_PROFILE` so that the `aws sts get-caller-identity` call knows which AWS profile to use.
+
+
 ## Architecture Components -- Unit Testing
 
 ### 1. Test Cases (`tests/unit/`)
@@ -135,7 +141,7 @@ This is a centralized source for making filepaths and core structures as DRY as 
 
 - Defines file paths for test data, cache directories, secrets, etc.
 - Defines core data structures used to store testcase file content and assertions.
-- Sets flags that control test behavior (_which are themselves controleld via environment variables (e.g., KITCHEN_SINK mode)_).
+- Sets flags that control test behavior (_which are themselves controleld via environment variables (e.g., TEST_FULL mode)_).
 
 Two settings in particular require call out:
 
@@ -161,11 +167,11 @@ Two settings in particular require call out:
         ...
     ```
 
-2. **`KITCHEN_SINK`**: is an environment variables modifier that will generate every configuration file for every testcase.
+2. **`TEST_FULL`**: is an environment variables modifier that will generate every configuration file for every testcase.
 
     Although the current solution (`terraform plan / terraform console`) is much faster than its original implementation (`terraform apply / terraform destroy`), and caching makes `n+1` execution extremely fast, there IS a cost for first-time generation (_up to several minutes_). As a result, most testcases are scoped to produce only those files required for test-specific validations (_e.g. why produce a full set of files if the test targets a password in a single `.sql` file?_).
 
-    The downside of targeting testing is that it won't catch bugs in files that are not included in the minimal set. As a result, at least one testing run should force all testcases to produce a full set of configurations and run the entire test suite. This is what `KITCHEN_SINK` does.
+    The downside of targeting testing is that it won't catch bugs in files that are not included in the minimal set. As a result, at least one testing run should force all testcases to produce a full set of configurations and run the entire test suite. This is what `TEST_FULL` does.
 
     ```bash
     # Tests a limited set of assertions tied to Wave-specific configurations.
@@ -173,7 +179,7 @@ Two settings in particular require call out:
 
     # Generates a full set of configuration files using the testcase-specific tfvars overrides, and runs a full set of assertions
     # including the specific Wave assertion modifiers identified in this testcase.
-    KITCHEN_SINK=true pytest tests/unit/config_files/test_config_file_content.py::test_seqera_hosted_wave_active
+    TEST_FULL=true pytest tests/unit/config_files/test_config_file_content.py::test_seqera_hosted_wave_active
     ``` 
 
 
@@ -363,7 +369,7 @@ First-time generation of test files is heavy no matter what. Caching those resul
     - Second run (_with cache_): `47s`
     - Third run (_with cache, excluding slow testcontainer tests_): `3.5s`
 
-- **Kitchen Sink Files** (_command: `KITCHEN_SINK=true time pytest tests/unit/config_files`_):
+- **Kitchen Sink Files** (_command: `TEST_FULL=true time pytest tests/unit/config_files`_):
     - First run (_including file creation_): `18m40s`
     - Second run (_with cache_): `52s`
     - Third run (_with cache, excluding slow testcontainer tests_): `6.5s`
@@ -374,7 +380,7 @@ This amounts to a ~95%+ reduction in test execution time after the first-time ex
 ### Optimization Strategies
 - Use `desired_files` to generate only necessary configuration files
 - Leverage pytest markers to run specific test subsets
-- `KITCHEN_SINK=false` by default. Set `KITCHEN_SINK=true` to run fully-comprehensive test file generation / validation.
+- `TEST_FULL=false` by default. Set `TEST_FULL=true` to run fully-comprehensive test file generation / validation.
 
 ### Terraform Apply Targeting
 - Use `terraform apply -target=<RESOURCE>` to speed up Terraform lifecycle. (**WARNING:** Being too restrictive can impact outputs.)
