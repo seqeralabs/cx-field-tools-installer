@@ -36,10 +36,10 @@ def get_tfvars_as_json():
     """
 
     # Check for tfvars
-    tfvars_path = os.path.abspath("terraform.tfvars")
-    if not os.path.exists(tfvars_path):
+    tfvars_original_path = os.path.abspath("terraform.tfvars")
+    if not os.path.exists(tfvars_original_path):
         raise FileNotFoundError(
-            f"terraform.tfvars file not found in path: {tfvars_path}."
+            f"terraform.tfvars file not found in path: {tfvars_original_path}."
         )
 
     # Because this is a 3rd party container, we are locking down as much as possible for security reasons:

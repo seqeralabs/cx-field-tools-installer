@@ -10,7 +10,7 @@ echo "generate_core_data.sh: Current directory is $PWD"
 # Removing existing files
 echo "Removing existing files."
 rm -f *.tfvars
-rm -f ssm_sensitive_values_*_testing.json
+rm -f secrets/ssm_sensitive_values_*_testing.json
 
 # Generate core terraform.tfvars file from template
 echo "Generating base terraform.tfvars file from templates/TEMPLATE_terraform.tfvars"
@@ -68,7 +68,7 @@ flag_use_wave          = false
 flag_use_wave_lite     = true
 
 num_wave_lite_replicas = 2
-wave_server_url        = "wave.stage-seqera.io"
+wave_server_url        = "wave.autodc.dev-seqera.net"
 
 
 ## ------------------------------------------------------------------------------------
@@ -173,7 +173,7 @@ tower_server_url  = "autodc.dev-seqera.net"
 
 # This must be a verified identity / domain.
 tower_contact_email    = "graham.wright@seqera.io" #"daniel.wood@seqera.io"
-tower_enable_platforms = "awsbatch-platform,azbatch-platform,googlebatch-platform,k8s-platform,slurm-platform,eks-platform"
+tower_enable_platforms = "awsbatch-platform,slurm-platform"
 
 
 tower_smtp_host = "email-smtp.us-east-1.amazonaws.com"
@@ -247,7 +247,7 @@ EOF
 
 
 ## ------------------------------------------------------------------------------------
-## WRITE TESTING SECRETS TO SSM
+## CREATE TESTING SECRETS / WRITE TO SSM
 ## ------------------------------------------------------------------------------------
 echo "Creating omnibus testing secrets."
 python3 generate_testing_secrets.py
@@ -294,15 +294,32 @@ update_ssm_parameter() {
 }
 
 # Update all SSM parameters
-if [ "$CX_SKIP_SSM" != "true" ]; then
-    update_ssm_parameter "/seqera/sensitive-values/tower-testing/tower" "ssm_sensitive_values_tower_testing.json"
-    update_ssm_parameter "/seqera/sensitive-values/tower-testing/groundswell" "ssm_sensitive_values_groundswell_testing.json"
-    update_ssm_parameter "/seqera/sensitive-values/tower-testing/seqerakit" "ssm_sensitive_values_seqerakit_testing.json"
-    update_ssm_parameter "/seqera/sensitive-values/tower-testing/wave-lite" "ssm_sensitive_values_wave_lite_testing.json"
-else
-    echo "Skipping SSM parameter updates (CX_SKIP_SSM=true)"
-fi
+# if [ "$CX_SKIP_SSM" != "true" ]; then
+#     update_ssm_parameter "/seqera/sensitive-values/tower-testing/tower" "ssm_sensitive_values_tower_testing.json"
+#     update_ssm_parameter "/seqera/sensitive-values/tower-testing/groundswell" "ssm_sensitive_values_groundswell_testing.json"
+#     update_ssm_parameter "/seqera/sensitive-values/tower-testing/seqerakit" "ssm_sensitive_values_seqerakit_testing.json"
+#     update_ssm_parameter "/seqera/sensitive-values/tower-testing/wave-lite" "ssm_sensitive_values_wave_lite_testing.json"
+# else
+#     echo "Skipping SSM parameter updates (CX_SKIP_SSM=true)"
+# fi
+
+# Skipping SSM check since this handles local testing.
+echo "Skipping SSM parameter updates (CX_SKIP_SSM=true)"
 
 
 # Delete test log file
 echo '{"message": "Cleansing content for new test loop."}' > ../logs/pytest_structured.log || true
+
+
+## ------------------------------------------------------------------------------------
+## Create test-specific outputs (e.g. tf locals needed for assertions)
+## ------------------------------------------------------------------------------------
+cat << 'EOF' > 012_testing_outputs.tf
+## ------------------------------------------------------------------------------------
+## Write local values to output for testing purposes
+## Keep name of local the same; prefix with 'local_' for easy conversion
+## ------------------------------------------------------------------------------------
+output local_wave_enabled {
+    value = local.wave_enabled
+} 
+EOF

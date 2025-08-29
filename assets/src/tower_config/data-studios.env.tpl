@@ -1,4 +1,6 @@
 # Data studios settings
+%{ if flag_enable_data_studio == true ~}
+
 # IDENTICAL AS `TOWER_SERVER_URL` in `tower.env`
 PLATFORM_URL=${tower_server_url}
 
@@ -17,6 +19,10 @@ CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN="ipsemlorem"
 CONNECT_LOG_LEVEL=debug
 %{ else}
 CONNECT_SERVER_LOG_LEVEL=debug
+%{ endif ~}
+
+%{ else ~}
+# STUDIOS_NOT_ENABLED=DO_NOT_UNCOMMENT
 %{ endif ~}
 
 

@@ -34,3 +34,5 @@ CLAUDE.local.md
 
 tests/logs/*
 tests/datafiles/*.tfvars
+tests/datafiles/secrets/*.json
+tests/.templatefile_cache
