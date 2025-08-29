@@ -33,8 +33,10 @@ credentials:
   - type: 'aws'
     name: 'aws_credentials'
     workspace: "${seqerakit_org_name}/${seqerakit_workspace_name}"
+%{~ if flag_allow_aws_instance_credentials == false }
     access-key: $SEQERAKIT_AWS_ACCESS_KEY_ID
     secret-key: $SEQERAKIT_AWS_SECRET_ACCESS_KEY
+%{ endif }
     %{~ if seqerakit_flag_credential_use_aws_role == true ~}
     assume-role-arn: $SEQERAKIT_AWS_ASSUME_ROLE_ARN
     %{~ endif ~}

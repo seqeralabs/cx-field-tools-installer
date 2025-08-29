@@ -9,6 +9,12 @@ TOWER_SERVER_URL=${tower_server_url}
 TOWER_CONTACT_EMAIL=${tower_contact_email}
 TOWER_ENABLE_PLATFORMS=${tower_enable_platforms}
 
+%{ if flag_allow_aws_instance_credentials == true ~}
+TOWER_ALLOW_INSTANCE_CREDENTIALS=true
+%{ else ~}
+TOWER_ALLOW_INSTANCE_CREDENTIALS=false
+%{ endif ~}
+
 
 # ------------------------------------------------
 # Add Tower root users

@@ -760,6 +760,20 @@ flag_disable_email_login = false
 
 
 /*
+# ------------------------------------------------------------------------------------
+# TOWER CONFIGURATION - Credentials
+# ------------------------------------------------------------------------------------
+Setting this value to true will allow AWS-type credentials within Seqera Platform to be
+created without needing to specifyc long-lived AWS User credentials.
+
+Please see `documentation/setup/optional_allow_instance_credentials.md` for project details,
+and `https://docs.seqera.io/platform-enterprise/enterprise/advanced-topics/use-iam-role#configure-seqera` 
+for official Seqera documentation.
+*/
+flag_allow_aws_instance_credentials = false
+
+
+/*
 ## ------------------------------------------------------------------------------------
 ## EC2 - Docker Configuration
 ## ------------------------------------------------------------------------------------
