@@ -25,8 +25,48 @@ Risk Scenario:
 
 ## Implementation Steps
 
+### Installer-Based Configuration
+As of v1.6.2, activation of this feature is available via Terraform configuration (_disabled by default_). Opt in by:
+
+1. Setting `flag_allow_aws_instance_credentials=true` in `terraform.tfvars`.
+2. Ensuring you populate `TOWER_AWS_ROLE` in Seqerakit SSM entry with an IAM Role that can be configured by the EC2 Instance Profile created by this solution.
+
+    The example below contains a snippet for how to make the target IAM Role assumable by multiple iterations of a single deployment and/or multiple deployment instances. Modify as required and please ensure to have any changed vetted by your security stakeholders for alignment to your organization's security protocols.
+
+```json
+// Trust Policy addition (example) on IAM-Role-to-be-assumed
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "SID": "SomeSID",
+            ...
+        },
+        {
+            "Sid": "AllowCXInstallerInstanceRole",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::<YOUR_ACCOUNT>:root"
+            },
+            "Action": "sts:AssumeRole",
+            "Condition": {
+                "StringLike": {
+                    "aws:PrincipalArn": [
+                        "arn:aws:iam::<YOUR_ACCOUNT>:role/tf-<YOUR_APP_NAME>-*",
+                        "arn:aws:iam::<ANOTHER_ACCOUNT>:role/<CUSTOM_PREFIX>-*"
+                    ]
+                }
+            }
+        }
+    ]
+}
+```
+
+### Manual Configuration
+If you are on an Release >= 1.6.2, want this feature but dont want to enable it via terraform automation, or need to implement a more complicatd region than what is available via the automation solution, you can manually configure your assets (_either within the repository prior to deployment, which will affect all future deployments; or direct modification of the asset on the EC2, which will persist only until the next deployment_).
+
 #### Update Platform Configuration
-Due to security consideration above, this solution does not provide the abillity to activate this capability via `terraform.tfvars` settings. You can still enable your deployment to use this feature, with a small change to configuraiton assets (_either within the repository prior to deployment, which will affect all future deployments; or direct modification of the asset on the EC2, which will persist only until the next deployment_).
+
 
 1. Update the `tower.env` file to contain the following configuration and re-start deployment for changes to propagate:
 
