@@ -13,13 +13,11 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 - **Notable Changes**:
     - **CX Installer**
         - General
-            - Add [EC2 instance role option](https://docs.seqera.io/platform-enterprise/enterprise/advanced-topics/use-iam-role#configure-seqera)
-        <br /><br />
-        - Architecture
-            - TBD
+            - Added [EC2 instance role option](https://docs.seqera.io/platform-enterprise/enterprise/advanced-topics/use-iam-role#configure-seqera)
         <br /><br />
         - Documentation
-            - TBD
+            - Updated instance role docs to reflect terraform deployment option.
+            - Updated templated `terraform.tfvars` with instance role flag and related considerations.
         <br /><br />
         - Testing
             - Added refactored local testing framework
