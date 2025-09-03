@@ -428,3 +428,4 @@ def test_wave_containers(session_setup):
                 time.sleep(delay)
 
         # TODO: Add other tests
+        # 1. Test allow_instance_credentials=true
