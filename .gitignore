@@ -36,3 +36,6 @@ tests/logs/*
 tests/datafiles/*.tfvars
 tests/datafiles/secrets/*.json
 tests/.templatefile_cache
+
+# Generated files from modules
+**/generated/
