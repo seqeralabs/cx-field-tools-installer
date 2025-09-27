@@ -85,7 +85,7 @@ def test_private_ca_reverse_proxy_active(session_setup):
 
     assertion_modifiers["docker_compose"] = {
         "present": {
-            "services.reverseproxy.container_name" : 'reverseproxy'
+            "services.reverseproxy.labels.seqera" : 'reverseproxy'
         },
         "omitted": {}
     }

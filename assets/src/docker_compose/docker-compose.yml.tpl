@@ -238,6 +238,8 @@ services:
   #   - docker-compose.yml in `/home/ec2-user/``
   #   - All custom cert files present / generated in `/home/ec2-user/customcerts``
   reverseproxy:
+    labels:
+      seqera: reverseproxy
     image: nginx:latest
     container_name: reverseproxy
     networks:
@@ -302,7 +304,7 @@ services:
   wave-db:
     labels:
       seqera: wave-db
-    image: postgres:latest
+    image: postgres:17.6
     platform: linux/amd64
     expose:
       - 5432:5432

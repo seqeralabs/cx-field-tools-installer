@@ -176,7 +176,7 @@ def generate_docker_compose_yml_entries_all_active(overrides={}):
             "services.wave-redis.labels.seqera"                 : 'wave-redis',
         },
         "omitted": {
-            "services.reverseproxy"  : 'reverseproxy'
+            "services.reverseproxy"  : ''
         }
     }
     baseline = purge_baseline_of_specified_overrides(baseline, overrides)
