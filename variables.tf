@@ -401,7 +401,7 @@ variable "flag_disable_email_login" { type = bool }
 
 
 # ------------------------------------------------------------------------------------
-# TOWER CONFIGURATION - OIDC
+# TOWER CONFIGURATION - Credentials
 # ------------------------------------------------------------------------------------
 
 variable "flag_allow_aws_instance_credentials" { type = bool }
