@@ -9,7 +9,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 ```
 
 
-## 1.6.2
+## Next Release (Presumed 1.6.2)
 - **Notable Changes**:
     - **CX Installer**
         - General
@@ -20,7 +20,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Updated templated `terraform.tfvars` with instance role flag and related considerations.
         <br /><br />
         - Testing
-            - Added refactored local testing framework
+            - Added refactored local testing framework. Validates `tower.env` to ensure correct representation of the EC2 instance role option, `TOWER_ALLOW_INSTANCE_CREDENTIALS`, based on selection set in terraform.tfvars file.
 
 ### Configuration File Changes
 #### `terraform.tfvars`
