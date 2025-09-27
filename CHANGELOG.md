@@ -14,6 +14,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
     - **CX Installer**
         - General
             - Added [EC2 instance role option](https://docs.seqera.io/platform-enterprise/enterprise/advanced-topics/use-iam-role#configure-seqera)
+            - Changed `wave-db` container pin from `postgres:latest` to `postgres:17.6`. This is necessary to due to a change in how the [data directory is managed in postgres containers >= 18](https://hub.docker.com/_/postgres#pgdata).
         <br /><br />
         - Documentation
             - Updated instance role docs to reflect terraform deployment option.
@@ -21,6 +22,8 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
         <br /><br />
         - Testing
             - Added refactored local testing framework. Validates `tower.env` to ensure correct representation of the EC2 instance role option, `TOWER_ALLOW_INSTANCE_CREDENTIALS`, based on selection set in terraform.tfvars file.
+            - Added `labels.seqera` entry to each Wave-Lite container to facilatate positive testing (in support of [issue 249](https://github.com/seqeralabs/cx-field-tools-installer/issues/249)).
+            - Added `labels.seqera` entry to generic `reverseproxy` container to align with Wave-Lite changes.
 
 ### Configuration File Changes
 #### `terraform.tfvars`

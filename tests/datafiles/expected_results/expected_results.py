@@ -169,9 +169,14 @@ def generate_tower_sql_entries_all_active(overrides={}):
 def generate_docker_compose_yml_entries_all_active(overrides={}):
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
     baseline = {
-        "present": {},
+        "present": {
+            "services.wave-lite.labels.seqera"                  : 'wave-lite',
+            "services.wave-lite-reverse-proxy.labels.seqera"    : 'wave-lite-reverse-proxy',
+            "services.wave-db.labels.seqera"                    : 'wave-db',
+            "services.wave-redis.labels.seqera"                 : 'wave-redis',
+        },
         "omitted": {
-            "services.reverseproxy"  : 'reverseproxy'
+            "services.reverseproxy"  : ''
         }
     }
     baseline = purge_baseline_of_specified_overrides(baseline, overrides)
@@ -443,7 +448,11 @@ def generate_docker_compose_yml_entries_all_disabled(overrides={}):
     baseline = {
         "present": {},
         "omitted": {
-            "services.reverseproxy"  : '',
+            "services.reverseproxy"             : '',
+            "services.wave-lite"                : '',
+            "services.wave-lite-reverse-proxy"  : '',
+            "services.wave-db"                  : '',
+            "services.wave-redis"               : '',
         }
     }
     baseline = purge_baseline_of_specified_overrides(baseline, overrides)

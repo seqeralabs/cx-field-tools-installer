@@ -238,6 +238,8 @@ services:
   #   - docker-compose.yml in `/home/ec2-user/``
   #   - All custom cert files present / generated in `/home/ec2-user/customcerts``
   reverseproxy:
+    labels:
+      seqera: reverseproxy
     image: nginx:latest
     container_name: reverseproxy
     networks:
@@ -262,6 +264,8 @@ services:
 
 %{ if flag_use_wave_lite == true ~}
   wave-lite:
+    labels:
+      seqera: wave-lite
     image: hrma017/app:1.20.0-B1   # TODO: swap with real image later.
     # ports:
     #   - 9099:9090
@@ -284,6 +288,8 @@ services:
       replicas: ${num_wave_lite_replicas}
 
   wave-lite-reverse-proxy:
+    labels:
+      seqera: wave-lite-reverse-proxy
     image: nginx:latest
     ports:
       - "9099:80"
@@ -293,11 +299,12 @@ services:
       - wave-lite
     networks:
       - backend
-%{ endif ~}
 
 %{ if wave_lite_db_container == true ~}
   wave-db:
-    image: postgres:latest
+    labels:
+      seqera: wave-db
+    image: postgres:17.6
     platform: linux/amd64
     expose:
       - 5432:5432
@@ -316,6 +323,8 @@ services:
 
 %{ if wave_lite_redis_container == true ~}
   wave-redis:
+    labels:
+      seqera: wave-redis
     image: cr.seqera.io/public/redis:7.0.10
     platform: linux/amd64
     expose:
@@ -326,6 +335,7 @@ services:
       - $HOME/.wave/db/wave-lite-redis:/data
     networks:
       - backend
+%{ endif ~}
 %{ endif ~}
 
 

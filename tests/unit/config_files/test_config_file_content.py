@@ -85,12 +85,12 @@ def test_private_ca_reverse_proxy_active(session_setup):
 
     assertion_modifiers["docker_compose"] = {
         "present": {
-            "services.reverseproxy.container_name" : 'reverseproxy'
+            "services.reverseproxy.labels.seqera" : 'reverseproxy'
         },
         "omitted": {}
     }
+    
     tc_assertions       = generate_assertions_all_active(tc_files, assertion_modifiers)
-
     verify_all_assertions(tc_files, tc_assertions)
 
 
@@ -155,7 +155,7 @@ def test_new_db_all_enabled(session_setup):
     """
     plan                = prepare_plan(tf_modifiers)
 
-    desired_files       = ["tower_env", "groundswell_env", "wave_lite_yml"]
+    desired_files       = ["tower_env", "groundswell_env", "wave_lite_yml", "docker_compose"]
     assertion_modifiers = assertion_modifiers_template()
     tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
@@ -179,8 +179,19 @@ def test_new_db_all_enabled(session_setup):
         },
         "omitted": {}
     }
-    tc_assertions       = generate_assertions_all_active(tc_files, assertion_modifiers)
 
+    assertion_modifiers["docker_compose"] = {
+        "present": {
+            "services.wave-lite.labels.seqera"                  : 'wave-lite',
+            "services.wave-lite-reverse-proxy.labels.seqera"    : 'wave-lite-reverse-proxy',
+            "services.wave-redis.labels.seqera"                 : 'wave-redis',
+        },
+        "omitted": {
+            "services.wave-db"                  : '',
+        }
+    }
+
+    tc_assertions       = generate_assertions_all_active(tc_files, assertion_modifiers)
     verify_all_assertions(tc_files, tc_assertions)
 
 
@@ -364,7 +375,7 @@ def test_new_redis_all_enabled(session_setup):
     """
     plan                = prepare_plan(tf_modifiers)
 
-    desired_files       = ["tower_env", "data_studios_env", "wave_lite_yml"]
+    desired_files       = ["tower_env", "data_studios_env", "wave_lite_yml", "docker_compose"]
     assertion_modifiers = assertion_modifiers_template()
     tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
@@ -388,8 +399,19 @@ def test_new_redis_all_enabled(session_setup):
         },
         "omitted": {}
     }
-    tc_assertions       = generate_assertions_all_active(tc_files, assertion_modifiers)
 
+    assertion_modifiers["docker_compose"] = {
+        "present": {
+            "services.wave-lite.labels.seqera"                  : 'wave-lite',
+            "services.wave-lite-reverse-proxy.labels.seqera"    : 'wave-lite-reverse-proxy',
+            "services.wave-db.labels.seqera"                    : 'wave-db',
+        },
+        "omitted": {
+            "services.wave-redis"               : '',
+        }
+    }
+
+    tc_assertions       = generate_assertions_all_active(tc_files, assertion_modifiers)
     verify_all_assertions(tc_files, tc_assertions)
 
 
