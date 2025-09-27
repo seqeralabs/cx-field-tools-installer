@@ -9,6 +9,28 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 ```
 
 
+## Next Release (Presumed 1.6.2)
+- **Notable Changes**:
+    - **CX Installer**
+        - General
+            - Added [EC2 instance role option](https://docs.seqera.io/platform-enterprise/enterprise/advanced-topics/use-iam-role#configure-seqera)
+        <br /><br />
+        - Documentation
+            - Updated instance role docs to reflect terraform deployment option.
+            - Updated templated `terraform.tfvars` with instance role flag and related considerations.
+        <br /><br />
+        - Testing
+            - Added refactored local testing framework. Validates `tower.env` to ensure correct representation of the EC2 instance role option, `TOWER_ALLOW_INSTANCE_CREDENTIALS`, based on selection set in terraform.tfvars file.
+
+### Configuration File Changes
+#### `terraform.tfvars`
+| Status | Component | Parameter Name | Description |
+| ------ | --------- | -------------- | ----------- |
+| New | Platform & Seqerakit | `flag_allow_aws_instance_credentials` | Allows activation of EC2 Instance Role for Seqera Platform to use when authenticating to AWS. |
+
+
+
+
 ## 1.6.1
 - **Notable Changes**:
     - **CX Installer**

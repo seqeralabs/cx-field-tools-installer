@@ -47,6 +47,7 @@ def test_baseline_alb_all_disabled(session_setup):
         flag_enable_data_studio             = false
         flag_use_wave                       = false
         flag_use_wave_lite                  = false
+        flag_allow_aws_instance_credentials = false
     """
     plan                           = prepare_plan(tf_modifiers)
 
@@ -207,6 +208,7 @@ def test_new_db_all_disabled(session_setup):
         flag_create_external_db             = true
         flag_use_existing_external_db       = false
         flag_use_container_db               = false
+        flag_allow_aws_instance_credentials = false
     """
     plan                = prepare_plan(tf_modifiers)
 
@@ -313,6 +315,7 @@ def test_existing_db_all_disabled(session_setup):
         flag_use_existing_external_db       = true
         flag_use_container_db               = false
         tower_db_url                        = "existing.tower-db.com"
+        flag_allow_aws_instance_credentials = false
     """
     plan                = prepare_plan(tf_modifiers)
 
@@ -413,6 +416,7 @@ def test_new_redis_all_disabled(session_setup):
 
         flag_create_external_redis          = true
         flag_use_container_redis            = false
+        flag_allow_aws_instance_credentials = false
     """
     plan                = prepare_plan(tf_modifiers)
 

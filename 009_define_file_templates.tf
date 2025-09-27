@@ -47,6 +47,8 @@ locals {
 
       data_studio_options             = var.data_studio_options,
       flag_studio_enable_path_routing = var.flag_studio_enable_path_routing,
+
+      flag_allow_aws_instance_credentials = var.flag_allow_aws_instance_credentials,
     }
   )
 
@@ -219,6 +221,8 @@ locals {
 
       seqerakit_flag_credential_use_aws_role           = var.seqerakit_flag_credential_use_aws_role,
       seqerakit_flag_credential_use_codecommit_baseurl = var.seqerakit_flag_credential_use_codecommit_baseurl,
+
+      flag_allow_aws_instance_credentials = var.flag_allow_aws_instance_credentials,
     }
   )
 

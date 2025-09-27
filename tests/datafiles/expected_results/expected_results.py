@@ -42,6 +42,8 @@ def generate_tower_env_entries_all_active(overrides={}):
             "FLYWAY_LOCATIONS"            : "classpath:db-schema/mysql",
             "TOWER_REDIS_URL"             : "redis://redis:6379",
             "TOWER_ENABLE_UNSAFE_MODE"    : "false",
+            # CREDENTIALS
+            "TOWER_ALLOW_INSTANCE_CREDENTIALS"  : "true",
             # OIDC
             # MAIL
             "TOWER_ENABLE_AWS_SES"        : "true",
@@ -308,6 +310,8 @@ def generate_tower_env_entries_all_disabled(overrides={}):
             "FLYWAY_LOCATIONS"            : "classpath:db-schema/mysql",
             "TOWER_REDIS_URL"             : "redis://redis:6379",
             "TOWER_ENABLE_UNSAFE_MODE"    : "false",
+            # CREDENTIALS
+            "TOWER_ALLOW_INSTANCE_CREDENTIALS"  : "false",
             # OIDC
             # MAIL
             "TOWER_ENABLE_AWS_SES"        : "false",
@@ -324,6 +328,7 @@ def generate_tower_env_entries_all_disabled(overrides={}):
             "# STUDIOS_NOT_ENABLED"       : "DO_NOT_UNCOMMENT",
         },
         "omitted": {
+            # CREDENTIALS
             # DB                      Never generated in file
             "TOWER_DB_USER"               : "",
             "TOWER_DB_PASSWORD"           : "",

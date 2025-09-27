@@ -760,6 +760,26 @@ flag_disable_email_login = false
 
 
 /*
+# ------------------------------------------------------------------------------------
+# TOWER CONFIGURATION - Credentials
+# ------------------------------------------------------------------------------------
+Setting this value to true will allow AWS-type credentials within Seqera Platform to be
+created without needing to specifyc long-lived AWS User credentials.
+
+Please see `documentation/setup/optional_allow_instance_credentials.md` for project details,
+and `https://docs.seqera.io/platform-enterprise/enterprise/advanced-topics/use-iam-role#configure-seqera` 
+for official Seqera documentation.
+
+WARNING!
+1. If this is activated, you must ensure that the target Role is configured to allow assumption by the 
+EC2 Instance Role created by this deployment. See `documentation/setup/optional_allow_instance_credentials.md`.
+2. As of August 29/25 (v1.6.2) the solution will only add permission to EC2 instance role to `sts:AssumeRole` the 
+TOWER_AWS_ROLE specified in the `seqerakit_secrets` object. Other Roles not supported.
+*/
+flag_allow_aws_instance_credentials = false
+
+
+/*
 ## ------------------------------------------------------------------------------------
 ## EC2 - Docker Configuration
 ## ------------------------------------------------------------------------------------
