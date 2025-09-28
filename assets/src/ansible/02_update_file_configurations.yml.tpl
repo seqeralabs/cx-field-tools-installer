@@ -46,9 +46,24 @@
 
         export TOWER_DB_USER=$(aws ssm get-parameters --name "/config/${app_name}/datasources/default/username" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
         export TOWER_DB_PASSWORD=$(aws ssm get-parameters --name "/config/${app_name}/datasources/default/password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
+        export TOWER_ENV=target/tower_config/tower.env
 
-        echo "TOWER_DB_USER=$TOWER_DB_USER" >> tower.env
-        echo "TOWER_DB_PASSWORD=$TOWER_DB_PASSWORD" >> tower.env
+        # Update tower.env. 
+        # Look for uncommented keys. Add key if not present; update key if it is present.
+        # It's unlikely there will ever be an overwrite since the files are copied fresh from source every time, but 
+        # I feel it's good to build-in the defensiveness just in case.
+        
+        if ! grep -q "^TOWER_DB_USER=" $TOWER_ENV; then
+          echo "TOWER_DB_USER=$TOWER_DB_USER" >> $TOWER_ENV
+        else
+          sed -i "s/^TOWER_DB_USER=.*/TOWER_DB_USER=$TOWER_DB_USER/" $TOWER_ENV
+        fi
+
+        if ! grep -q "^TOWER_DB_PASSWORD=" $TOWER_ENV; then
+          echo "TOWER_DB_PASSWORD=$TOWER_DB_PASSWORD" >> $TOWER_ENV
+        else
+          sed -i "s/^TOWER_DB_PASSWORD=.*/TOWER_DB_PASSWORD=$TOWER_DB_PASSWORD/" $TOWER_ENV
+        fi
 
 %{ if populate_external_db ~}
     - name: Populate RDS
