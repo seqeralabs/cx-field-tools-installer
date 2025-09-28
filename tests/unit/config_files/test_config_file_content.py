@@ -539,7 +539,7 @@ def test_wave_sql_file_content(session_setup):
     ## ========================================================================================
     plan                = prepare_plan(tf_modifiers)
 
-    desired_files       = ["wave_lite_container_1", "wave_lite_container_2", "wave_lite_rds"]
+    desired_files       = ["wave_lite_rds"]
     assertion_modifiers = assertion_modifiers_template()
     tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
@@ -547,14 +547,7 @@ def test_wave_sql_file_content(session_setup):
 
     ## COMPARISON
     ## ========================================================================================
-    wave_lite_container_1 = read_file(f"{tc_files['wave_lite_container_1']['filepath']}")
-    wave_lite_container_2 = read_file(f"{tc_files['wave_lite_container_2']['filepath']}")
     wave_lite_rds         = read_file(f"{tc_files['wave_lite_rds']['filepath']}")
+    ref_wave_lite_rds     = read_file(f"{expected_sql_dir}/wave-lite-rds.sql")
 
-    ref_wave_lite_container_1 = read_file(f"{expected_sql_dir}/wave-lite-container-1.sql")
-    ref_wave_lite_container_2 = read_file(f"{expected_sql_dir}/wave-lite-container-2.sql")
-    ref_wave_lite_rds         = read_file(f"{expected_sql_dir}/wave-lite-rds.sql")
-
-    assert ref_wave_lite_container_1 == wave_lite_container_1
-    assert ref_wave_lite_container_2 == wave_lite_container_2
     assert ref_wave_lite_rds == wave_lite_rds

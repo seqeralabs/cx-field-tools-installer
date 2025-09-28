@@ -13,12 +13,7 @@ limited_password    = sys.argv[2]
 file_root         = sys.argv[3]
 
 entries = [
-    ("replace_me_wave_lite_db_limited_user", limited_user, f"{file_root}/wave-lite-container-1.sql"),
-    ("replace_me_wave_lite_db_limited_user", limited_user, f"{file_root}/wave-lite-container-2.sql"),
     ("replace_me_wave_lite_db_limited_user", limited_user, f"{file_root}/wave-lite-rds.sql"),
-
-    ("replace_me_wave_lite_db_limited_password", limited_password, f"{file_root}/wave-lite-container-1.sql"),
-    ("replace_me_wave_lite_db_limited_password", limited_password, f"{file_root}/wave-lite-container-2.sql"),
     ("replace_me_wave_lite_db_limited_password", limited_password, f"{file_root}/wave-lite-rds.sql"),
 
 ]

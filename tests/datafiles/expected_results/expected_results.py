@@ -203,30 +203,6 @@ def generate_wave_lite_yml_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_wave_lite_container_1_entries_all_active(overrides={}):
-    # Reminder: yaml file true/false must be declared as True/False in python dictionary.
-    baseline = {
-        "present": {
-            'payload'                               : read_file(f"{expected_sql_dir}/wave-lite-container-1.sql"),
-        },
-        "omitted": {}
-    }
-    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
-    return {**baseline, **overrides}
-
-
-def generate_wave_lite_container_2_entries_all_active(overrides={}):
-    # Reminder: yaml file true/false must be declared as True/False in python dictionary.
-    baseline = {
-        "present": {
-            'payload'                               : read_file(f"{expected_sql_dir}/wave-lite-container-2.sql"),
-        },
-        "omitted": {}
-    }
-    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
-    return {**baseline, **overrides}
-
-
 def generate_wave_lite_rds_entries_all_active(overrides={}):
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
@@ -265,8 +241,6 @@ def generate_assertions_all_active(template_files, overrides):
         "tower_sql"             : generate_tower_sql_entries_all_active(overrides["tower_sql"]),
         "docker_compose"        : generate_docker_compose_yml_entries_all_active( overrides["docker_compose"]),
         "wave_lite_yml"         : generate_wave_lite_yml_entries_all_active(overrides["wave_lite_yml"]),
-        "wave_lite_container_1" : generate_wave_lite_container_1_entries_all_active(overrides["wave_lite_container_1"]),
-        "wave_lite_container_2" : generate_wave_lite_container_2_entries_all_active(overrides["wave_lite_container_2"]),
         "wave_lite_rds"         : generate_wave_lite_rds_entries_all_active(overrides["wave_lite_rds"]),
         "groundswell_env"       : generate_groundswell_env_entries_all_active(overrides["groundswell_env"]),
         # TODO: Build out stubs OR identify as not-in-scope due to other testing method (e.g. .sql)
@@ -480,30 +454,6 @@ def generate_wave_lite_yml_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_wave_lite_container_1_entries_all_disabled(overrides={}):
-    # Reminder: yaml file true/false must be declared as True/False in python dictionary.
-    baseline = {
-        "present": {
-            'payload'                               : read_file(f"{expected_sql_dir}/wave-lite-container-1.sql"),
-        },
-        "omitted": {}
-    }
-    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
-    return {**baseline, **overrides}
-
-
-def generate_wave_lite_container_2_entries_all_disabled(overrides={}):
-    # Reminder: yaml file true/false must be declared as True/False in python dictionary.
-    baseline = {
-        "present": {
-            'payload'                               : read_file(f"{expected_sql_dir}/wave-lite-container-2.sql"),
-        },
-        "omitted": {}
-    }
-    baseline = purge_baseline_of_specified_overrides(baseline, overrides)
-    return {**baseline, **overrides}
-
-
 def generate_wave_lite_rds_entries_all_disabled(overrides={}):
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
@@ -536,8 +486,6 @@ def generate_assertions_all_disabled(template_files, overrides):
         "tower_sql"             : generate_tower_sql_entries_all_disabled(overrides["tower_sql"]),
         "docker_compose"        : generate_docker_compose_yml_entries_all_disabled( overrides["docker_compose"]),
         "wave_lite_yml"         : generate_wave_lite_yml_entries_all_disabled(overrides["wave_lite_yml"]),
-        "wave_lite_container_1" : generate_wave_lite_container_1_entries_all_disabled(overrides["wave_lite_container_1"]),
-        "wave_lite_container_2" : generate_wave_lite_container_2_entries_all_disabled(overrides["wave_lite_container_2"]),
         "wave_lite_rds"         : generate_wave_lite_rds_entries_all_disabled(overrides["wave_lite_rds"]),
         "groundswell_env"       : generate_groundswell_env_entries_all_disabled(overrides["groundswell_env"]),
         # TODO: Build out stubs OR identify as not-in-scope due to other testing method (e.g. .sql)
