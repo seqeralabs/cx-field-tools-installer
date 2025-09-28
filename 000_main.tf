@@ -68,6 +68,7 @@ locals {
   vpc_id                      = var.flag_create_new_vpc == true ? module.vpc[0].vpc_id : var.vpc_existing_id
   vpc_private_route_table_ids = var.flag_create_new_vpc == true ? module.vpc[0].private_route_table_ids : data.aws_route_tables.preexisting[0].ids
 
+  flag_map_public_ip_on_launch = var.flag_map_public_ip_on_launch == true || var.flag_make_instance_public == true ? true : false
 
   # SSM
   # ---------------------------------------------------------------------------------------

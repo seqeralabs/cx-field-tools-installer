@@ -15,7 +15,7 @@ module "vpc" {
   public_subnets  = var.vpc_new_public_subnets
   # database_subnets        = var.vpc_new_db_subnets
 
-  map_public_ip_on_launch                           = var.flag_make_instance_public == true ? true : false
+  map_public_ip_on_launch                           = local.flag_map_public_ip_on_launch
   public_subnet_private_dns_hostname_type_on_launch = "ip-name"
 
   # Opinionated for simplicity.

@@ -156,6 +156,10 @@ variable "vpc_new_redis_subnets" { type = list(string) }
 variable "vpc_new_alb_subnets" { type = list(string) }
 
 variable "enable_vpc_flow_logs" { type = bool }
+variable "flag_map_public_ip_on_launch" { 
+  type = bool
+  default = false
+}
 
 
 # ------------------------------------------------------------------------------------
