@@ -643,6 +643,16 @@ def verify_insecure_platform(data: SimpleNamespace):
             log_error_and_exit(
                     "Wave-Lite requires a secure Seqera Platform endpoint."
                 )
+            
+
+
+def warn_about_user_workspaces(data: SimpleNamespace):
+    """Warn that disabling user workspaces in Platform < v24.2.0 will disable User Credetials & Secrets."""
+
+    if data.tower_container_version < "v24.2.0":
+        logger.warning(
+            "Your Platform version will cause User Credentials & User Secrets to stop working if you disable personal workspaces."
+        )
 
 # -------------------------------------------------------------------------------
 # MAIN
@@ -740,6 +750,9 @@ if __name__ == "__main__":
     logger.info("-" * 50)
     verify_production_deployment(data)
     verify_insecure_platform(data=data)
+
+    # Issue Warnings (if applicable)
+    warn_about_user_workspaces(data)
 
 
     print("\n")
