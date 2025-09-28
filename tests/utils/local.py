@@ -508,7 +508,7 @@ def generate_interpolated_templatefiles(hash, namespaces, template_files, testca
         timestamp_file = folder_path / f".timestamp--{timestamp}"
         timestamp_file.write_text(timestamp)
     
-    sql_exception_files = ["wave_lite_container_1", "wave_lite_container_2", "wave_lite_rds"]
+    sql_exception_files = ["wave_lite_rds"]
 
     # This no longer seems necessary now that I'm writing cache folders more intelligently.
     # Create a mapping document
@@ -540,11 +540,7 @@ def generate_interpolated_templatefiles(hash, namespaces, template_files, testca
             capture_output=False,
         )
 
-        template_files["wave_lite_container_1"]["content"] = read_file(f"{templatefile_cache_dir_hash}/wave-lite-container-1.sql")
-        template_files["wave_lite_container_1"]["filepath"] = f"{templatefile_cache_dir_hash}/wave-lite-container-1.sql"
-        template_files["wave_lite_container_2"]["content"] = read_file(f"{templatefile_cache_dir_hash}/wave-lite-container-2.sql")
-        template_files["wave_lite_container_2"]["filepath"] = f"{templatefile_cache_dir_hash}/wave-lite-container-2.sql"
-        template_files["wave_lite_rds"]["content"]         = read_file(f"{templatefile_cache_dir_hash}/wave-lite-rds.sql")
+        template_files["wave_lite_rds"]["content"]  = read_file(f"{templatefile_cache_dir_hash}/wave-lite-rds.sql")
         template_files["wave_lite_rds"]["filepath"] = f"{templatefile_cache_dir_hash}/wave-lite-rds.sql"
 
     # Add hash to returned dict to make it easier to mount files directly rather than use tempfile

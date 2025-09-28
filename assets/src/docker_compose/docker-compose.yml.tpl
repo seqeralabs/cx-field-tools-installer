@@ -310,8 +310,7 @@ services:
       - 5432:5432
     volumes:
       - $HOME/.wave/db/postgresql:/var/lib/postgresql/data
-      - $HOME/target/wave_lite_config/wave-lite-container-1.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - $HOME/target/wave_lite_config/wave-lite-container-2.sql:/docker-entrypoint-initdb.d/02-permissions.sql
+      - $HOME/target/wave_lite_config/wave-lite-rds.sql:/docker-entrypoint-initdb.d/01-init.sql
     environment:
       - POSTGRES_USER=${wave_lite_db_master_user}
       - POSTGRES_PASSWORD=${wave_lite_db_master_password}

@@ -101,20 +101,6 @@ all_template_files = {
         "filepath"          : "",
         "validation_type"   : "yml",
     },
-    "wave_lite_container_1": {
-        "extension"         : ".sql", 
-        "read_type"         : read_file,
-        "content"           : "",
-        "filepath"          : "",
-        "validation_type"   : "sql",
-    },
-    "wave_lite_container_2": {
-        "extension"         : ".sql", 
-        "read_type"         : read_file,
-        "content"           : "",
-        "filepath"          : "",
-        "validation_type"   : "sql",
-    },
     "wave_lite_rds": {
         "extension"         : ".sql", 
         "read_type"         : read_file,
@@ -208,8 +194,6 @@ config_file_list = [
     "tower_sql" ,
     "docker_compose",
     "wave_lite_yml",
-    "wave_lite_container_1",
-    "wave_lite_container_2",
     "wave_lite_rds",
     "groundswell_env",
 ]

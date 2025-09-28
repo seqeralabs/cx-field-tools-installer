@@ -81,7 +81,7 @@
         export wave_lite_master_password=$(aws ssm get-parameters --name "/seqera/${app_name}/wave-lite/db-master-password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
 
         docker run --rm -t -v $(pwd)/target/wave_lite_config/wave-lite-rds.sql:/tmp/wave.sql -e \
-        POSTGRES_PASSWORD=$wave_lite_master_password --entrypoint /bin/bash postgres:latest \
+        POSTGRES_PASSWORD=$wave_lite_master_password --entrypoint /bin/bash postgres:17.6 \
         -c "PGPASSWORD=$wave_lite_master_password psql -h ${wave_lite_db_dns}  -p 5432 -U $wave_lite_master_user -d postgres < /tmp/wave.sql"
 %{ endif ~}
 

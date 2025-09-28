@@ -148,7 +148,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
     tf_modifiers = """#NONE"""
     plan = prepare_plan(tf_modifiers)
 
-    desired_files       = ["docker_compose", "wave_lite_yml", "wave_lite_container_1", "wave_lite_container_2", "wave_lite_rds"]
+    desired_files       = ["docker_compose", "wave_lite_yml", "wave_lite_rds"]
     tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
     # Not required right now
@@ -182,7 +182,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
                 -e PGPASSWORD={password} \
                 --entrypoint /bin/bash \
                 --add-host host.docker.internal:host-gateway \
-                postgres:latest \
+                postgres:17.6 \
                 -c 'PGPASSWORD={password} psql --host host.docker.internal --port=5432 --user={user} -d {database} -t -A < query.sql'
         """
         result = subprocess.run(postgres_cmd, shell=True, capture_output=True, text=True, timeout=30)
@@ -197,7 +197,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
     ## SCENARIO 1: Execute RDS SQL against posttgres via other postgres container
     ## ==================================================================================
     with (
-        PostgresContainer("postgres:latest", username=master_user, password=master_password, dbname=master_db_name)
+        PostgresContainer("postgres:17.6", username=master_user, password=master_password, dbname=master_db_name)
         .with_env("GRAHAM", "graham")
         .with_bind_ports(5432, 5432)
     ) as postgres_container:
@@ -229,72 +229,14 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
         assert "DROP TABLE" in create_table_test
 
 
-
-    ## ==================================================================================
-    ## SCENARIO 2: Volume Mount x2 SQL files to run on container init
-    ## TODO: Delete this as part of Issue 239 resolution: https://github.com/seqeralabs/cx-field-tools-installer/issues/239
-    ## ==================================================================================
-    """
-    I can get this to work if I hack.
-    The wave-lite-container-1.sql will fail with "CREATE DATABASE cannot be executed from a function" if I try to run it and the starting DB is NOT called "wave" (
-        I suspect this is because it already exists as the starting DB and thus the create-if-not-exists wins out). 
-    Since I change the core-db I need to change anything else involving the master user too. 
-    This is bad since I'm granted the limited user all permissions on the 'wave' DB -- not a big deal if it's not the master table, but big deal if it's not.
-    Good news is that this only affects the containerized Wave flow. To remediate I think:
-        1. Abandon generation and use of the non-RDS files.
-        1. Use RDS file for both the population of the container and RDS instance.
-
-    THis should simplify file generation / testing / and harmonize behaviours between the two.
-    """
-
-    init_sql_01_path = tc_files["wave_lite_container_1"]["filepath"]
-    init_sql_02_path = tc_files["wave_lite_container_2"]["filepath"]
-
-    # Changing dbname to "wave" avoiding the transaction exeuction error in sql-1 due to `CREATE DATABASE cannot be executed from a function`
-    with (
-        # PostgresContainer("postgres:latest", username="postgres", password="postgres", dbname="wave")
-        PostgresContainer("postgres:latest", username=master_user, password=master_password, dbname="wave")
-        .with_env("GRAHAM", "graham")
-        .with_bind_ports(5432, 5432)
-        .with_volume_mapping(init_sql_01_path, "/docker-entrypoint-initdb.d/01-init.sql")
-        .with_volume_mapping(init_sql_02_path, "/docker-entrypoint-initdb.d/02-init.sql")
-    ) as postgres_container2:
-
-        # POPULATE
-        # No need to populate since volume mounting should hanlde for us on initial boot.
-
-        # VERIFY
-        # Test master user connection to wave database
-        query = "SELECT current_database();"
-        # master_conn_test = run_postgres_query(query, master_user, master_password, master_db_name)
-        master_conn_test = run_postgres_query(query, master_user, master_password, "wave")
-        # assert master_conn_test == "test"
-        assert master_conn_test == "wave"
-
-        # Test Wave user connection to wave database
-        query = "SELECT current_database();"
-        limited_conn_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
-        assert limited_conn_test == "wave"
-
-        # Verify Wave user has expected permissions
-        query = "SELECT has_database_privilege(current_user, 'wave', 'CREATE');"
-        permissions_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
-        assert "t" in permissions_test  # 't' means true in PostgreSQL
-
-        # Test Wave user can create tables (verifying ALL privileges)
-        query = "CREATE TABLE test_table (id INT); DROP TABLE test_table;"
-        create_table_test = run_postgres_query(query, wave_db_user, wave_db_password, wave_db_name)
-        assert "DROP TABLE" in create_table_test
-
-
     ## ==================================================================================
     ## SCENARIO3: Volume Mount RDS file to run on container init
     ## ==================================================================================
     init_sql_rds_path = tc_files["wave_lite_rds"]["filepath"]
 
     with (
-        # PostgresContainer("postgres:latest", username="postgres", password="postgres", dbname="wave")
-        PostgresContainer("postgres:latest", username=master_user, password=master_password, dbname=master_db_name)
+        # PostgresContainer("postgres:17.6", username="postgres", password="postgres", dbname="wave")
+        PostgresContainer("postgres:17.6", username=master_user, password=master_password, dbname=master_db_name)
         .with_env("GRAHAM", "graham")
         .with_bind_ports(5432, 5432)
         .with_volume_mapping(init_sql_rds_path, "/docker-entrypoint-initdb.d/01-init.sql")
@@ -349,7 +291,7 @@ def test_wave_containers(session_setup):
     tf_modifiers = """#NONE"""
     plan = prepare_plan(tf_modifiers)
 
-    desired_files       = ["docker_compose", "wave_lite_yml", "wave_lite_container_1", "wave_lite_container_2", "wave_lite_rds"]
+    desired_files       = ["docker_compose", "wave_lite_yml", "wave_lite_rds"]
     tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
     # Not required right now
