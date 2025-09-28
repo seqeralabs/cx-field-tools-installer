@@ -90,6 +90,7 @@ tower:
 
   admin:
     # Control user access to personal (i.e. non-Org-based) Workspace.
+    # Warning! For Platform versions < v24.2.0, this will disable User Credentials & User Secrets.
     user-workspace-enabled: true
 
   cron:
