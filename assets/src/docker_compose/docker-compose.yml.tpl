@@ -31,7 +31,7 @@ services:
   redis:
     image: 
 %{ if updated_redis_version ~}
-      cr.seqera.io/public/redis:7
+      redis:7.2.6
 %{ else ~}
       cr.seqera.io/public/redis:6.0
 %{ endif ~}
@@ -325,7 +325,7 @@ services:
   wave-redis:
     labels:
       seqera: wave-redis
-    image: cr.seqera.io/public/redis:7.0.10
+    image: redis:7.2.6
     platform: linux/amd64
     expose:
       - 6380:6379
