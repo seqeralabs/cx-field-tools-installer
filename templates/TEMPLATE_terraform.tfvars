@@ -302,12 +302,18 @@ vpc_new_batch_subnets = ["10.0.3.0/24"]
 vpc_new_db_subnets    = ["10.0.3.0/24", "10.0.4.0/24"]
 vpc_new_redis_subnets = ["10.0.5.0/24"]
 
-
 # Must be >= 2, in different AZs. Ensure only public subnets (nothing needs to be in these).
 vpc_new_alb_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
 
 # Specify is VPC flow logs should be enabled or not. Have cost implication.
 enable_vpc_flow_logs = false
+
+# Control whether a public IPv4 address should be assigned to instances spun up in the VPC subnets.
+# There is an hourly cost for each IP, so this is default to false. However, if you place AWS Batch 
+# instances in a public subnet and dont assign a public IP, those machines will fail due join the ECS
+# cluster due to a failure to downloaded assets from the public internet during boot. 
+# WARNING: If you enable this, consider making your ingress CIDR ranges more restrictive.
+flag_map_public_ip_on_launch = false
 
 
 /*
