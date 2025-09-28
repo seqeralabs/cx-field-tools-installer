@@ -717,8 +717,11 @@ tower_enable_platforms = "awsbatch-platform,k8s-platform,slurm-platform"
 ## tower_license                         = "DO_NOT_UNCOMMENT_ME"
 
 # Do not include 'jdbc:mysql://`. 
-# If using container db: use `db:3306`
-# If using pre-existing external RDS instance, include the RDS Endpoint string only (no port or /xxx... URI modifier)
+# NOTE!
+#  - If using container db: use `db:3306`
+#  - If using pre-existing external RDS instance, include the RDS Endpoint string only (no port or /xxx... URI modifier)
+#  - If a new RDS is created as part of this deployment, any populated string is acceptable 
+#    (this variable isn't used by cant be omitted).
 tower_db_url           = "db:3306"
 tower_db_driver        = "org.mariadb.jdbc.Driver"
 tower_db_dialect       = "io.seqera.util.MySQL55DialectCollateBin"
