@@ -138,6 +138,13 @@ tower:
       - label: "Docs"
         url: "https://docs.seqera.io"
 
+  # Controls whether an individual must have a registered account with Seqera Platform before they can be 
+  # added directly to a Workspace as a collaborator.
+  #   - If `true`: The user does not need a pre-existing Platform account before they can be added. 
+  #   - If `false`: The user must have a pre-existing Platform account before they can be added. 
+  participant:
+    auto-create-user: false
+
   # Key rotation feature available as of 25.2.0. For more details please see:
   #    1. Official Seqera documentation (TODO: Add official link)
   #    2. How to (manually) engage this feature within the `cx-field-tools-installer` project: 
