@@ -41,29 +41,30 @@
       become_user: ec2-user
       # TO DO: Remove this step when migration script can pull directly from SSM.
       # Consider abstracting the SSM prefixes to an environment variable for cleaner maintenance.
+      #
+      # Update tower.env. 
+      # Look for uncommented keys. Add key if not present; update key if it is present.
+      # It is unlikely there will ever be an overwrite since the files are copied fresh from source every time, but 
+      # I feel it is good to build-in the defensiveness just in case.
       ansible.builtin.shell: |
         cd /home/ec2-user && source ~/.bashrc
 
         export TOWER_DB_USER=$(aws ssm get-parameters --name "/config/${app_name}/datasources/default/username" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
         export TOWER_DB_PASSWORD=$(aws ssm get-parameters --name "/config/${app_name}/datasources/default/password" --with-decryption --query "Parameters[*].{Value:Value}" --output text)
-        export TOWER_ENV=target/tower_config/tower.env
+        export TOWER_ENV=$(pwd)/target/tower_config/tower.env
 
-        # Update tower.env. 
-        # Look for uncommented keys. Add key if not present; update key if it is present.
-        # It's unlikely there will ever be an overwrite since the files are copied fresh from source every time, but 
-        # I feel it's good to build-in the defensiveness just in case.
-        
-        if ! grep -q "^TOWER_DB_USER=" $TOWER_ENV; then
-          echo "TOWER_DB_USER=$TOWER_DB_USER" >> $TOWER_ENV
+        if ! grep -q "^TOWER_DB_USER=" "$TOWER_ENV"; then
+          echo "TOWER_DB_USER=$TOWER_DB_USER" >> "$TOWER_ENV"
         else
-          sed -i "s/^TOWER_DB_USER=.*/TOWER_DB_USER=$TOWER_DB_USER/" $TOWER_ENV
+          sed -i "s/^TOWER_DB_USER=.*/TOWER_DB_USER=$TOWER_DB_USER/" "$TOWER_ENV"
         fi
 
-        if ! grep -q "^TOWER_DB_PASSWORD=" $TOWER_ENV; then
-          echo "TOWER_DB_PASSWORD=$TOWER_DB_PASSWORD" >> $TOWER_ENV
+        if ! grep -q "^TOWER_DB_PASSWORD=" "$TOWER_ENV"; then
+          echo "TOWER_DB_PASSWORD=$TOWER_DB_PASSWORD" >> "$TOWER_ENV"
         else
-          sed -i "s/^TOWER_DB_PASSWORD=.*/TOWER_DB_PASSWORD=$TOWER_DB_PASSWORD/" $TOWER_ENV
+          sed -i "s/^TOWER_DB_PASSWORD=.*/TOWER_DB_PASSWORD=$TOWER_DB_PASSWORD/" "$TOWER_ENV"
         fi
+
 
 %{ if populate_external_db ~}
     - name: Populate RDS
