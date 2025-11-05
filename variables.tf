@@ -392,6 +392,7 @@ variable "tower_email_trusted_users" { type = string }
 
 variable "tower_audit_retention_days" { type = number }
 
+variable "tower_enable_openapi" { type = bool }
 
 # ------------------------------------------------------------------------------------
 # TOWER CONFIGURATION - OIDC

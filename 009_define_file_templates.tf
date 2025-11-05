@@ -49,6 +49,7 @@ locals {
       flag_studio_enable_path_routing = var.flag_studio_enable_path_routing,
 
       flag_allow_aws_instance_credentials = var.flag_allow_aws_instance_credentials,
+      tower_enable_openapi = var.tower_enable_openapi
     }
   )
 

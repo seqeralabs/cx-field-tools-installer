@@ -750,6 +750,8 @@ tower_email_trusted_users = "REPLACE_ME"
 
 tower_audit_retention_days = 1095 # 3 years (value in days)
 
+tower_enable_openapi = true
+
 
 /*
 ## ------------------------------------------------------------------------------------
