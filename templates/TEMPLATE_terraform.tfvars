@@ -226,6 +226,7 @@ to work. e.g:
 */
 flag_use_wave      = false
 flag_use_wave_lite = false
+wave_lite_container_version = "v1.29.1"
 
 num_wave_lite_replicas = 2
 wave_server_url        = "wave.seqera.io"

@@ -184,6 +184,7 @@ locals {
       num_wave_lite_replicas    = var.num_wave_lite_replicas,
       wave_lite_redis_container = local.wave_lite_redis_container,
       wave_lite_db_container    = local.wave_lite_db_container,
+      wave_lite_container_version = var.wave_lite_container_version
 
       wave_lite_db_master_user     = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_USER"]["value"],
       wave_lite_db_master_password = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_PASSWORD"]["value"],

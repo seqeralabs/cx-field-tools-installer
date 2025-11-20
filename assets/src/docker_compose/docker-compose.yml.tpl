@@ -266,7 +266,7 @@ services:
   wave-lite:
     labels:
       seqera: wave-lite
-    image: hrma017/app:1.20.0-B1   # TODO: swap with real image later.
+    image: cr.seqera.io/private/nf-tower-enterprise/wave:${wave_lite_container_version}
     # ports:
     #   - 9099:9090
     expose:
