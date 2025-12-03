@@ -72,6 +72,15 @@ TOWER_ENABLE_UNSAFE_MODE=true
 TOWER_ENABLE_UNSAFE_MODE=false
 %{ endif ~}
 
+# ------------------------------------------------
+# ENABLE OpenAPI  
+# Set this variable to enable the OpenAPI documentation endpoint
+# ------------------------------------------------
+%{ if tower_enable_openapi == true }
+TOWER_ENABLE_OPENAPI=true
+%{ else ~}
+TOWER_ENABLE_OPENAPI=false
+%{ endif ~}
 
 # ------------------------------------------------
 # Wave & Fusion v2
