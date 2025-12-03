@@ -20,6 +20,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Added setting to auto-assign IPv4 addresses to instances in public subnets.
             - Modified docker compose file to use official Seqera Wave image & made image tag configurable. [`#252`](https://github.com/seqeralabs/cx-field-tools-installer/issues/252)
             - Made OpenAPI support configurable.
+            - Added Entra ID (aka Azure AD) OAUTH2 configuration snippet in `tower.yml.tpl` for Platform versions < 25.3. [`#267`](https://github.com/seqeralabs/cx-field-tools-installer/issues/267)
         <br /><br />
 
         - Documentation

@@ -42,6 +42,16 @@ micronaut:
       read-timeout: 30s
 
   security:
+    # oauth2:
+    #   clients:
+    #     oidc:
+    #       openid:
+    #         token:
+    #           # See: https://github.com/seqeralabs/cx-field-tools-installer/issues/267
+    #           # Commented out by default since snippet added in CX Installer release which uses Platform 25.3 by default.
+    #           # This fix MUST be present for any Seqera Platform version < 25.3
+    #           auth-method: "client_secret_post"
+
     redirect:
       login-success : "/auth?success=true"
       login-failure : "/auth?success=false"
