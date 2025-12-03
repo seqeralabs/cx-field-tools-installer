@@ -18,6 +18,8 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Updated redis to `7.2.6` for Platform and Wave. [`#251`](https://github.com/seqeralabs/cx-field-tools-installer/issues/251)
             - Added warning and check for personal workspace disablement. [`#246`](https://github.com/seqeralabs/cx-field-tools-installer/issues/246)
             - Added setting to auto-assign IPv4 addresses to instances in public subnets.
+            - Modified docker compose file to use official Seqera Wave image & made image tag configurable. [`#252`](https://github.com/seqeralabs/cx-field-tools-installer/issues/252)
+            - Made OpenAPI support configurable.
         <br /><br />
 
         - Documentation
@@ -37,6 +39,8 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 | ------ | --------- | -------------- | ----------- |
 | New | Platform & Seqerakit | `flag_allow_aws_instance_credentials` | Allows activation of EC2 Instance Role for Seqera Platform to use when authenticating to AWS. |
 | New | Platform | `flag_map_public_ip_on_launch` | Configure VPC module to enable auto-assignment of IPv4 addresses to instances spun up in public subnets. |
+| New | Platform | `tower_enable_openapi` | Control whether your Platform instance enables the OpenAPI console or not. |
+| New | Wave | `wave_lite_container_version` | Specify the exact Wave image to be deployed for the Wave-Lite service. |
 
 
 
@@ -148,12 +152,13 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 | Modified | Studios | `data_studio_options` | Removed deprecated entries. Added `0.8.4` options. |
 | Modified | Private Certificate | `bucket_prefix_for_new_private_ca_cert` | Renamed to `private_cacert_bucket_prefix`. |
 | | | | |
+| Deleted | Wave-Lite | `wave_lite_server_url` | The URL to use to check the Wave-Lite endpoint. |
 | Deleted | Private Certificate | `flag_generate_private_cacert` | Deleted in favour of unified `flag_use_private_cacert` |
 | Deleted | Private Certificate | `flag_use_existing_private_cacert` | Deleted in favour of unified `flag_use_private_cacert` |
 | Deleted | Private Certificate | `existing_ca_cert_file` | Deleted since not required after S3 Bucket pre-load flow change. |
 | Deleted | Private Certificate | `existing_ca_key_file` | Deleted since not required after S3 Bucket pre-load flow change. |
 | Deleted | Private Certificate | `flag_use_custom_docker_compose_file` | Deleted since not required after S3 Bucket pre-load flow change. |
-| Deleted | Wave-Lite | `wave_lite_server_url` | The URL to use to check the Wave-Lite endpoint. |
+
 
 
 
