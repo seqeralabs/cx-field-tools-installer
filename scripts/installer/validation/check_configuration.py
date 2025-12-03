@@ -193,7 +193,6 @@ def verify_docker_daemon_loggin(data: SimpleNamespace):
 def verify_email_login_disablement(data: SimpleNamespace):
     """Check email login disablement scenarios."""
     if data.flag_disable_email_login:
-
         if data.tower_container_version < "v23.4.5":
             log_error_and_exit(
                 " You cannot disable email login in versions earlier than 23.4.5"
@@ -275,7 +274,6 @@ def verify_ses_integration(data: SimpleNamespace):
     """Check SES integration settings."""
 
     if data.flag_use_aws_ses_iam_integration:
-
         if data.tower_container_version < "v23.2.0":
             log_error_and_exit("SES IAM integration requires Tower 23.2.0+.")
 
@@ -373,7 +371,6 @@ def verify_database_configuration(data: SimpleNamespace):
         )
 
     if data.flag_use_container_db:
-
         if data.tower_db_url != "db:3306":
             logger.warning(
                 "You are using a non-standard db container name or port. Ensure Docker-Compose config is updated accordingly."
@@ -409,7 +406,7 @@ def verify_database_configuration(data: SimpleNamespace):
 
     if data.flag_use_existing_external_db and data.tower_db_url == "db:3306":
         log_error_and_exit(
-            f"You are using the container db DNS for your external RDS instance. Please change `tower_db_url`."
+            "You are using the container db DNS for your external RDS instance. Please change `tower_db_url`."
         )
 
 
@@ -439,7 +436,6 @@ def verify_data_studio(data: SimpleNamespace):
     """Verify fields related to Data Studio."""
 
     if data.flag_enable_data_studio:
-
         if data.tower_container_version < "v24.1.0":
             log_error_and_exit(
                 "`tower_container_version` must bv24.1.0 or higher to set `flag_enable_data_studio` to true."
@@ -454,7 +450,6 @@ def verify_data_studio(data: SimpleNamespace):
             )
 
         if data.flag_limit_data_studio_to_some_workspaces:
-
             # https://www.geeksforgeeks.org/python-check-whether-string-contains-only-numbers-or-not/
             # if re.match('[0-9]*$', data.data_studio_eligible_workspaces):
             if not re.findall(r"[0-9]+,[0-9]+", data.data_studio_eligible_workspaces):
@@ -472,22 +467,21 @@ def verify_data_studio(data: SimpleNamespace):
         # - Add check that CONNECT_PROXY_URL and TOWER_DATA_STUDIO_CONNECT_URL are only one subdomain deeper than Tower server URL
 
         if data.flag_studio_enable_path_routing:
-
             if data.tower_container_version < "v25.2.0":
                 log_error_and_exit(
-                "To use Studios path-based routing, `tower_container_version` must be at least '25.2.0'."
+                    "To use Studios path-based routing, `tower_container_version` must be at least '25.2.0'."
                 )
 
             if data.data_studio_container_version < "0.8.2":
                 log_error_and_exit(
-                "To use Studios path-based routing, `data_studio_container_version` must be at least '0.8.2'."
+                    "To use Studios path-based routing, `data_studio_container_version` must be at least '0.8.2'."
                 )
 
-            if len(data.data_studio_path_routing_url) ==  0:
+            if len(data.data_studio_path_routing_url) == 0:
                 # Note: This isn't super but better than nothing.
                 # TODO: Find package to validate it's a legit domain.
                 log_error_and_exit(
-                "When `flag_studio_enable_path_routing` is true, `data_studio_path_routing_url` must be set."
+                    "When `flag_studio_enable_path_routing` is true, `data_studio_path_routing_url` must be set."
                 )
 
             logger.warning(
@@ -555,7 +549,10 @@ def verify_connect_version_tls(data: SimpleNamespace):
 
 def verify_alb_settings(data: SimpleNamespace):
     """Verify that user does not have contradictory settings in case of ALB vs. no ALB."""
-    if data.flag_use_private_cacert and data.flag_make_instance_private_behind_public_alb:
+    if (
+        data.flag_use_private_cacert
+        and data.flag_make_instance_private_behind_public_alb
+    ):
         log_error_and_exit(
             "Use of private cert on EC2 cannot work with `flag_make_instance_private_behind_alb = true`. Please set only one of the options to true."
         )
@@ -565,9 +562,7 @@ def verify_redis_version(data: SimpleNamespace):
     """Warn that versions of Seqera Platform >= 24.2 will default to Redis v7.0 container image."""
 
     if data.tower_container_version >= "v24.2.0":
-
         if data.flag_use_container_redis:
-
             logger.warning(
                 "Seqera Platform version >= 24.2.0 uses a Redis v7.0 container (previously Redis v6.0)."
             )
@@ -594,8 +589,7 @@ def verify_wave(data: SimpleNamespace):
             "`flag_use_wave` and `flag_use_wave_lite` cannot both be set to true."
         )
 
-    if (data.flag_use_wave_lite == True):
-
+    if data.flag_use_wave_lite == True:
         if data.flag_use_private_cacert:
             logger.warning(
                 "Please see documentation to understand how to make private certs work with Wave-Lite."
@@ -603,47 +597,45 @@ def verify_wave(data: SimpleNamespace):
 
 
 def verify_ssh_access(data: SimpleNamespace):
-    # VM needs to be sitting in public subnet in order to connect to it by SSH directly (instead of EICE). 
+    # VM needs to be sitting in public subnet in order to connect to it by SSH directly (instead of EICE).
     # I often try this with VM in private subnet and it takes awhile to figure out why. Adding check.
-    if (data.flag_make_instance_public == True):
-        if (data.flag_create_new_vpc == True):
+    if data.flag_make_instance_public == True:
+        if data.flag_create_new_vpc == True:
             if data.vpc_new_ec2_subnets[0] not in data.vpc_new_public_subnets:
                 log_error_and_exit(
                     "You have set `flag_make_instance_public = true` but your EC2 is in a private subnet. SSH will fail. Please fix."
                 )
 
-        if (data.flag_use_existing_vpc == True):
+        if data.flag_use_existing_vpc == True:
             logger.warning(
                 "You have set `flag_make_instance_public = true`. Please ensure `vpc_existing_ec2_subnets` is populated by a public subnet CIDR."
             )
 
 
-def verify_production_deployment(data: SimpleNamespace): 
-    if (data.flag_create_external_db == False) or (data.flag_create_external_redis == False):
+def verify_production_deployment(data: SimpleNamespace):
+    if (data.flag_create_external_db == False) or (
+        data.flag_create_external_redis == False
+    ):
         logger.warning(
             "WARNING: You are running Seqera Platform without a managed DB/Redis. This does not align to Seqera-recommended Production deployment best practices and can result in system instability."
         )
 
     if (data.flag_use_wave_lite == True) and (
-        (data.flag_create_external_db == False) or (data.flag_create_external_redis == False)):
+        (data.flag_create_external_db == False)
+        or (data.flag_create_external_redis == False)
+    ):
         logger.warning(
             "WARNING: You are running Wave Lite without a managed DB/Redis. This does not align to Seqera-recommended Production deployment best practices and can result in system instability."
         )
 
 
-def verify_insecure_platform(data: SimpleNamespace): 
+def verify_insecure_platform(data: SimpleNamespace):
     if data.flag_do_not_use_https:
-
         if data.flag_enable_data_studio:
-            log_error_and_exit(
-                    "Studios requires a secure Seqera Platform endpoint."
-                )
+            log_error_and_exit("Studios requires a secure Seqera Platform endpoint.")
 
         if data.flag_use_wave_lite:
-            log_error_and_exit(
-                    "Wave-Lite requires a secure Seqera Platform endpoint."
-                )
-            
+            log_error_and_exit("Wave-Lite requires a secure Seqera Platform endpoint.")
 
 
 def warn_about_user_workspaces(data: SimpleNamespace):
@@ -654,11 +646,20 @@ def warn_about_user_workspaces(data: SimpleNamespace):
             "Your Platform version will cause User Credentials & User Secrets to stop working if you disable personal workspaces."
         )
 
+
+def warn_if_entra_id_error_possible(data: SimpleNamespace):
+    """Warn using a Platform version < 25.3, with Entra ID (Azure AD), will fail if extra config snippet not uncommented."""
+
+    if (data.tower_container_version < "v25.3") and data.flag_oidc_use_generic:
+        logger.warning(
+            "If you are using Entra ID (Azure AD) as your IDP, please consult text related to Issue 267 in `tower.yml` for a mandatory configuration change."
+        )
+
+
 # -------------------------------------------------------------------------------
 # MAIN
 # -------------------------------------------------------------------------------
 if __name__ == "__main__":
-
     print("\n")
     logger.info("Beginning tfvars configuration check.".upper())
 
@@ -753,7 +754,7 @@ if __name__ == "__main__":
 
     # Issue Warnings (if applicable)
     warn_about_user_workspaces(data)
-
+    warn_if_entra_id_error_possible(data)
 
     print("\n")
     logger.info("Finished tfvars configuration check.")
