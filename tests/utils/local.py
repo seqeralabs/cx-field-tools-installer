@@ -66,7 +66,7 @@ Originally tried using [tftest](https://pypi.org/project/tftest/). Too complicat
 ## ------------------------------------------------------------------------------------
 
 
-def replace_vars_in_templatefile(input_str, vars_dict, type) -> str:
+def replace_vars_in_templatefile(input_str, vars_dict, pattern) -> str:
     """
     Replace terraform references with actual values in templatefile string.
 
@@ -76,53 +76,47 @@ def replace_vars_in_templatefile(input_str, vars_dict, type) -> str:
     Args:
         input_str: Templatefile string from JSONified 009
         vars_dict: Dictionary of values to substitute
-        type: Prefix pattern to match (e.g. "module.connection_strings")
-    """
+        type: Which terraform reference type to replace (e.g. "module.connection_strings")
 
-    def replace_var(match):
-        var_name = match.group(1)
+    Example:
+        Input:  "module.connection_strings.tower_db_url"
+        Output: "jdbc:mysql://db:3306/tower"
+
+    Note on regex capture groups:
+        - Parentheses () in patterns create "capture groups" that extract specific parts
+        - match.group(0) = entire match (e.g., "module.connection_strings.tower_db_url")
+        - match.group(1) = first capture group (e.g., "tower_db_url")
+    """
+    patterns = {
+        "module.connection_strings": r"module.connection_strings\.(\w+)",
+        "tower_secrets": r'local\.tower_secrets\["([^"]+)"\]\["[^"]+"\]',
+        "groundswell_secrets": r'local\.groundswell_secrets\["([^"]+)"\]\["[^"]+"\]',
+        "seqerakit_secrets": r'local\.seqerakit_secrets\["([^"]+)"\]\["[^"]+"\]',
+        "wave_lite_secrets": r'local\.wave_lite_secrets\["([^"]+)"\]\["[^"]+"\]',
+        # Keeping these for future use if needed
+        "tfvar": r"var\.(\w+)",
+        "local": r"local\.(\w+)",
+    }
+
+    pattern = patterns.get(pattern)
+    if not pattern:
+        return "Error"
+
+    def replace_match(match):
+        """Convert Terraform primitives to Python equivalent (string / bool / number)."""
+        var_name = match.group(1)  # Extract the variable name from the match
         if var_name in vars_dict:
             value = vars_dict[var_name]
+            # Format the value correctly for terraform
             if isinstance(value, str):
-                return f'"{value}"'
+                return f'"{value}"'  # Strings need quotes
             elif isinstance(value, bool):
-                return str(value).lower()
+                return str(value).lower()  # Booleans need lowercase
             else:
-                return str(value)
-        return match.group(0)  # Return original if not found
+                return str(value)  # Numbers stay as-is
+        return match.group(0)  # Keep original if not found
 
-    # The regex re.sub() function handles the "looping" automatically.
-    # Finds all matches of pattern and calls the replace_var function for each.
-    if type == "module.connection_strings":
-        pattern = r"module.connection_strings\.(\w+)"
-        return re.sub(pattern, replace_var, input_str)
-
-    elif type == "tower_secrets":
-        pattern = r'local\.tower_secrets\["([^"]+)"\]\["[^"]+"\]'
-        return re.sub(pattern, replace_var, input_str)
-
-    elif type == "groundswell_secrets":
-        pattern = r'local\.groundswell_secrets\["([^"]+)"\]\["[^"]+"\]'
-        return re.sub(pattern, replace_var, input_str)
-
-    elif type == "seqerakit_secrets":
-        pattern = r'local\.seqerakit_secrets\["([^"]+)"\]\["[^"]+"\]'
-        return re.sub(pattern, replace_var, input_str)
-
-    elif type == "wave_lite_secrets":
-        pattern = r'local\.wave_lite_secrets\["([^"]+)"\]\["[^"]+"\]'
-        return re.sub(pattern, replace_var, input_str)
-
-    # Keeping these in just-in-case they are ever needed in future
-    elif type == "tfvar":
-        pattern = r"var\.(\w+)"
-        return re.sub(pattern, replace_var, input_str)
-
-    elif type == "local":
-        pattern = r"local\.(\w+)"
-        return re.sub(pattern, replace_var, input_str)
-    else:
-        return "Error"
+    return re.sub(pattern, replace_match, input_str)
 
 
 def prepare_templatefile_payload(key, tc: TCValues):
@@ -210,49 +204,92 @@ def generate_templatefile(key, tc: TCValues, templatefile_cache_dir):
     return read_type(outfile.as_posix())
 
 
-def generate_templatefiles(tc, template_files, testcase_name):
+def _is_sql_file(key: str) -> bool:
+    """
+    Check if file needs special SQL handling (can't use terraform console).
+
+    SQL files with postgres single-quotes break terraform console input parsing.
+    """
+    # TODO: Move this to all_template_files as a discrete flag
+    sql_exception_files = ["wave_lite_rds"]
+    return key in sql_exception_files
+
+
+def _generate_regular_templatefile(
+    key: str, config: dict, tc: TCValues, cache_dir: str, template_files: dict
+) -> None:
+    """
+    Generate template using terraform console.
+
+    Args:
+        key: Template identifier (e.g., "tower_env")
+        config: Template configuration from all_template_files
+        tc: Test case values (vars, outputs, secrets)
+        cache_dir: Directory for cached template files
+        template_files: Dictionary to update with generated content (modified in-place)
+    """
+    content = generate_templatefile(key, tc, cache_dir)
+    template_files[key]["content"] = content
+    template_files[key]["filepath"] = f"{cache_dir}/{key}{config['extension']}"
+
+
+def _generate_sql_templatefile(key: str, cache_dir: str, template_files: dict) -> None:
+    """
+    Generate SQL template using Python script substitution.
+
+    SQL files can't use terraform console because postgres uses single-quotes
+    which break the console input parsing.
+
+    Args:
+        key: Template identifier (e.g., "wave_lite_rds")
+        cache_dir: Directory for cached template files
+        template_files: Dictionary to update with generated content (modified in-place)
+    """
+    source_dir = Path(f"{FP.ROOT}/assets/src/wave_lite_config/")
+    script_path = f"{FP.ROOT}/scripts/installer/utils/sedalternative.py"
+
+    # Copy SQL source files to cache
+    for sql_file in source_dir.glob("*.sql"):
+        shutil.copy(sql_file, cache_dir)
+
+    # Run substitution script
+    # TODO: Make credentials configurable instead of hardcoded
+    command = (
+        f"python3 {script_path} "
+        f"wave_lite_test_limited "
+        f"wave_lite_test_limited_password "
+        f"{cache_dir}"
+    )
+    subprocess.run(command, shell=True, text=True, capture_output=False, check=True)
+
+    # Read generated file
+    template_files[key]["content"] = FileHelper.read_file(f"{cache_dir}/wave-lite-rds.sql")
+    template_files[key]["filepath"] = f"{cache_dir}/wave-lite-rds.sql"
+
+
+def generate_templatefiles(tc: TCValues, template_files: dict, testcase_name: str) -> dict:
     """
     Create templatefiles relevant to the testcase.
-    NOTE:
-        - Some files like 'wave_lite_rds' file cant be processed as a '.tpl' due to single-quotes in the content.
-        - Must use alternative approach to handle.
+
+    Delegates to specialized handlers based on file type:
+        - Regular templates: terraform console rendering
+        - SQL templates: Python script substitution
+
+    Args:
+        tc: Test case values (vars, outputs, secrets)
+        template_files: Templates to generate (from filter_templates)
+        testcase_name: Name of test case for cache directory
+
+    Returns:
+        Updated template_files dict with content and filepath added
     """
-    templatefile_cache_dir = create_templatefile_cache_folder(tc, testcase_name)
+    cache_dir = create_templatefile_cache_folder(tc, testcase_name)
 
-    # TODO: Put this over onto all_template_files as discrete flag.
-    sql_exception_files = ["wave_lite_rds"]
-
-    # Step 1 -- Generate any file that can be done so normally (i.e. not SQL files)
-    for k, v in template_files.items():
-        if k in sql_exception_files:
-            continue
-
-        # Retrieve cached file / generate new file (and cache). Add payload and filepath to 'template_files'.
-        content = generate_templatefile(k, tc, templatefile_cache_dir)
-        template_files[k]["content"] = content
-        template_files[k]["filepath"] = f"{templatefile_cache_dir}/{k}{v['extension']}"
-
-    # Step 2 -- Generate edgecases that could be generated normally.
-    if any(k in template_files.keys() for k in sql_exception_files):
-        source_dir = Path(f"{FP.ROOT}/assets/src/wave_lite_config/")
-        script_path = f"{FP.ROOT}/scripts/installer/utils/sedalternative.py"
-
-        for sql_file in source_dir.glob("*.sql"):
-            shutil.copy(sql_file, templatefile_cache_dir)
-
-        # Hardcoded -- not sure I love this.
-        command = (
-            f"python3 {script_path} wave_lite_test_limited wave_lite_test_limited_password {templatefile_cache_dir}"
-        )
-        subprocess.run(
-            command,
-            shell=True,
-            text=True,
-            capture_output=False,
-        )
-
-        template_files["wave_lite_rds"]["content"] = FileHelper.read_file(f"{templatefile_cache_dir}/wave-lite-rds.sql")
-        template_files["wave_lite_rds"]["filepath"] = f"{templatefile_cache_dir}/wave-lite-rds.sql"
+    for key, config in template_files.items():
+        if _is_sql_file(key):
+            _generate_sql_templatefile(key, cache_dir, template_files)
+        else:
+            _generate_regular_templatefile(key, config, tc, cache_dir, template_files)
 
     return template_files
 

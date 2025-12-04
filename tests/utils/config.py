@@ -81,12 +81,6 @@ class TCValues:
 FP = FilePaths()
 
 
-# SSM (testing) secrets
-
-
-# Cache folders & tfplan paths
-
-
 # Pre-generated reference files for tests
 expected_results_dir = f"{FP.ROOT}/tests/datafiles/expected_results"
 expected_sql_dir = f"{expected_results_dir}/expected_sql"
