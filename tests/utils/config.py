@@ -40,6 +40,11 @@ class FilePaths:
     TFPLAN_FILE_LOCATION: str = ""
     TFPLAN_JSON_LOCATION: str = ""
 
+    TOWER_SECRETS: str = ""
+    GROUNDSWELL_SECRETS: str = ""
+    SEQERAKIT_SECRETS: str = ""
+    WAVE_LITE_SECRETS: str = ""
+
     def __post_init__(self):
         self.TFVARS_BASE = f"{self.ROOT}/terraform.tfvars"
         self.TFVARS_BACKUP = f"{self.ROOT}/terraform.tfvars.backup"
@@ -56,16 +61,16 @@ class FilePaths:
         self.TFPLAN_FILE_LOCATION = f"{self.ROOT}/tfplan"
         self.TFPLAN_JSON_LOCATION = f"{self.ROOT}/tfplan.json"
 
+        self.TOWER_SECRETS = f"{self.ROOT}/tests/datafiles/secrets/ssm_sensitive_values_tower_testing.json"
+        self.GROUNDSWELL_SECRETS = f"{self.ROOT}/tests/datafiles/secrets/ssm_sensitive_values_groundswell_testing.json"
+        self.SEQERAKIT_SECRETS = f"{self.ROOT}/tests/datafiles/secrets/ssm_sensitive_values_seqerakit_testing.json"
+        self.WAVE_LITE_SECRETS = f"{self.ROOT}/tests/datafiles/secrets/ssm_sensitive_values_wave_lite_testing.json"
+
 
 FP = FilePaths()
 
 
 # SSM (testing) secrets
-secrets_dir = f"{FP.ROOT}/tests/datafiles/secrets"
-ssm_tower = f"{secrets_dir}/ssm_sensitive_values_tower_testing.json"
-ssm_groundswell = f"{secrets_dir}/ssm_sensitive_values_groundswell_testing.json"
-ssm_seqerakit = f"{secrets_dir}/ssm_sensitive_values_seqerakit_testing.json"
-ssm_wave_lite = f"{secrets_dir}/ssm_sensitive_values_wave_lite_testing.json"
 
 
 # Cache folders & tfplan paths

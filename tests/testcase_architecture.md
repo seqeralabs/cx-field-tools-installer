@@ -216,7 +216,7 @@ test_baseline_alb_all_enabled()
     ├─> assertion_modifiers_template()           # Initialize empty modifiers
     │
     ├─> generate_tc_files(plan, desired_files)
-    │     ├─> generate_namespaced_dictionaries() # Convert plan to namespaces
+    │     ├─> extract_config_values() # Convert plan to namespaces
     │     │     ├─> read secrets from JSON files
     │     │     └─> create SimpleNamespace objects
     │     │

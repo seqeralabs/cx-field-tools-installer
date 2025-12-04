@@ -24,7 +24,6 @@ from tests.utils.config import (
     FP,
     all_template_files,
     kitchen_sink,
-    secrets_dir,
 )
 from tests.utils.filehandling import FileHelper
 
@@ -61,7 +60,7 @@ Originally tried using [tftest](https://pypi.org/project/tftest/). Too complicat
 ## ------------------------------------------------------------------------------------
 ## Helpers - Templatefile
 ## ------------------------------------------------------------------------------------
-def generate_namespaced_dictionaries(plan: dict) -> tuple:
+def extract_config_values(plan: dict) -> tuple:
     """
     Extract and flatten JSON entities from:
 
@@ -73,23 +72,14 @@ def generate_namespaced_dictionaries(plan: dict) -> tuple:
 
     vars_dict = plan["variables"]
     outputs_dict = plan["planned_values"]["outputs"]
-
-    with open(f"{secrets_dir}/ssm_sensitive_values_tower_testing.json", "r") as f:
-        tower_secrets = json.load(f)
-
-    with open(f"{secrets_dir}/ssm_sensitive_values_groundswell_testing.json", "r") as f:
-        groundswell_secrets = json.load(f)
-
-    with open(f"{secrets_dir}/ssm_sensitive_values_seqerakit_testing.json", "r") as f:
-        seqerakit_secrets = json.load(f)
-
-    with open(f"{secrets_dir}/ssm_sensitive_values_wave_lite_testing.json", "r") as f:
-        wave_lite_secrets = json.load(f)
+    tower_secrets = FileHelper.read_json(FP.TOWER_SECRETS)
+    groundswell_secrets = FileHelper.read_json(FP.GROUNDSWELL_SECRETS)
+    seqerakit_secrets = FileHelper.read_json(FP.SEQERAKIT_SECRETS)
+    wave_lite_secrets = FileHelper.read_json(FP.WAVE_LITE_SECRETS)
 
     # Flatten nested "value" keys: {"key": {"value": "val"}} -> {"key": "val"}
     vars = {k: v.get("value", v) for k, v in vars_dict.items()}
     outputs = {k: v.get("value", v) for k, v in outputs_dict.items()}
-
     tower_secrets = {k: v.get("value", v) for k, v in tower_secrets.items()}
     groundswell_secrets = {k: v.get("value", v) for k, v in groundswell_secrets.items()}
     seqerakit_secrets = {k: v.get("value", v) for k, v in seqerakit_secrets.items()}
@@ -331,7 +321,7 @@ def generate_tc_files(plan, desired_files, testcase_name):
     - Generates and returns necessary template files
     """
     # Handle various entities extracted from `terraform plan` JSON file.
-    plan, secrets = generate_namespaced_dictionaries(plan)
+    plan, secrets = extract_config_values(plan)
     vars, outputs, vars_dict, _ = plan
     tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets = secrets
     namespaces = [

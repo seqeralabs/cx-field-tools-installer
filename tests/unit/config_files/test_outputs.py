@@ -1,6 +1,6 @@
 import pytest
 
-from tests.utils.local import generate_namespaced_dictionaries
+from tests.utils.local import extract_config_values
 from tests.utils.terraform.executor import prepare_plan
 
 """
@@ -27,7 +27,7 @@ def test_outputs_baseline_all_enabled(session_setup):
 
     tf_modifiers = """#NONE"""
     plan = prepare_plan(tf_modifiers)
-    plan_artefacts, secrets = generate_namespaced_dictionaries(plan)
+    plan_artefacts, secrets = extract_config_values(plan)
     vars, outputs, _, _ = plan_artefacts
 
     # Run assertions
@@ -87,7 +87,7 @@ def test_outputs_baseline_all_disabled(session_setup):
         flag_use_wave_lite                  = false
     """
     plan = prepare_plan(tf_modifiers)
-    plan_artefacts, secrets = generate_namespaced_dictionaries(plan)
+    plan_artefacts, secrets = extract_config_values(plan)
     vars, outputs, _, _ = plan_artefacts
 
     # Run assertions
@@ -144,7 +144,7 @@ def test_outputs_no_https_all_enabled(session_setup):
         flag_do_not_use_https                           = true
     """
     plan = prepare_plan(tf_modifiers)
-    plan_artefacts, secrets = generate_namespaced_dictionaries(plan)
+    plan_artefacts, secrets = extract_config_values(plan)
     vars, outputs, _, _ = plan_artefacts
 
     # Run assertions
@@ -203,7 +203,7 @@ def test_outputs_no_https_all_disabled(session_setup):
     """
     plan = prepare_plan(tf_modifiers)
 
-    plan, secrets = generate_namespaced_dictionaries(plan)
+    plan, secrets = extract_config_values(plan)
     vars, outputs, vars_dict, _ = plan
 
     # Run assertions
@@ -265,7 +265,7 @@ def test_outputs_connect_alb_pathrouting(session_setup):
 
     # When
     plan = prepare_plan(tf_modifiers)
-    plan_artefacts, secrets = generate_namespaced_dictionaries(plan)
+    plan_artefacts, secrets = extract_config_values(plan)
     vars, outputs, _, _ = plan_artefacts
 
     # Then
@@ -289,7 +289,7 @@ def test_outputs_connect_ec2_pathrouting(session_setup):
 
     # When
     plan = prepare_plan(tf_modifiers)
-    plan_artefacts, secrets = generate_namespaced_dictionaries(plan)
+    plan_artefacts, secrets = extract_config_values(plan)
     vars, outputs, _, _ = plan_artefacts
 
     # Then
