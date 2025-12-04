@@ -8,7 +8,7 @@ from tests.datafiles.expected_results.expected_results import (
     generate_assertions_all_disabled,
 )
 from tests.utils.config import expected_sql_dir
-from tests.utils.filehandling import read_file
+from tests.utils.filehandling import FileHelper
 from tests.utils.local import generate_tc_files, prepare_plan, verify_all_assertions
 
 ## ------------------------------------------------------------------------------------
@@ -533,7 +533,7 @@ def test_wave_sql_file_content(session_setup):
 
     ## COMPARISON
     ## ========================================================================================
-    wave_lite_rds = read_file(f"{tc_files['wave_lite_rds']['filepath']}")
-    ref_wave_lite_rds = read_file(f"{expected_sql_dir}/wave-lite-rds.sql")
+    wave_lite_rds = FileHelper.read_file(f"{tc_files['wave_lite_rds']['filepath']}")
+    ref_wave_lite_rds = FileHelper.read_file(f"{expected_sql_dir}/wave-lite-rds.sql")
 
     assert ref_wave_lite_rds == wave_lite_rds

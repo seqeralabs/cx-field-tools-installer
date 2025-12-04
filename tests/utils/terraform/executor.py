@@ -1,7 +1,7 @@
 import subprocess
 from pathlib import Path
 
-from tests.utils.config import TFPLAN_FILE_LOCATION, TFPLAN_JSON_LOCATION
+from tests.utils.config import FP
 
 
 ## ------------------------------------------------------------------------------------
@@ -39,7 +39,7 @@ class TF:
     @staticmethod
     def plan(qualifier: str = "") -> None:
         """Run terraform plan with caching support."""
-        files_to_purge = [TFPLAN_FILE_LOCATION, TFPLAN_JSON_LOCATION]
+        files_to_purge = [FP.TFPLAN_FILE_LOCATION, FP.TFPLAN_JSON_LOCATION]
 
         for file in files_to_purge:
             Path(file).unlink(missing_ok=True)

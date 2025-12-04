@@ -19,25 +19,14 @@ from yamlpath.common import Parsers
 from yamlpath.exceptions import UnmatchedYAMLPathException
 from yamlpath.wrappers import ConsolePrinter, NodeCoords
 
+from tests.utils.cache.cache import hash_cache_key, normalize_whitespace
 from tests.utils.config import (
-    CACHE_PLAN,
-    CACHE_TEMPLATEFILE,
-    OVERRIDE_AUTO_TFVARS,
-    ROOT,
-    TFPLAN_FILE_LOCATION,
-    TFPLAN_JSON_LOCATION,
+    FP,
     all_template_files,
     kitchen_sink,
     secrets_dir,
-    tfvars_override_target,
-    tfvars_target,
 )
-from tests.utils.filehandling import (
-    parse_key_value_file,
-    read_file,
-    read_json,
-    write_file,
-)
+from tests.utils.filehandling import FileHelper, parse_key_value_file
 from tests.utils.terraform.executor import TF
 
 loggingArgs = SimpleNamespace(quiet=True, verbose=False, debug=False)
@@ -71,67 +60,8 @@ Originally tried using [tftest](https://pypi.org/project/tftest/). Too complicat
 
 
 ## ------------------------------------------------------------------------------------
-## Cache Utility Functions
-## ------------------------------------------------------------------------------------
-def get_plan_cache_key(tf_modifiers: str, qualifier: str = "") -> str:
-    """Generate SHA-256 hash of override data and tfvars content for cache key."""
-
-    tfvars_content = read_file(tfvars_target).strip()
-    tfvars_override_content = read_file(tfvars_override_target).strip()
-    tf_modifiers = tf_modifiers.strip()
-    qualifier = qualifier.strip()
-
-    # Create combined cache key: All 3 tfvars layers + qualifier
-    combined_content = (
-        f"{tfvars_content}\n{tfvars_override_content}\n{tf_modifiers}\n{qualifier}\n"
-    )
-    return hashlib.sha256(combined_content.encode("utf-8")).hexdigest()[:16]
-
-
-def strip_overide_whitespace(tf_modifiers: str) -> str:
-    """
-    Purges intermediate whitespace (extra space makes same keys hash to different values).
-    Convert multiple spaces to single space (ASSUMPTION: Python tabs insert spaces!)
-    NOTE: Need to keep `\n` to not break HCL formatting expectations.
-    """
-    return "\n".join(re.sub(r"\s+", " ", line) for line in tf_modifiers.splitlines())
-
-
-## ------------------------------------------------------------------------------------
 ## Helpers
 ## ------------------------------------------------------------------------------------
-def check_aws_sso_token():
-    """
-    Check AWS SSO token validity by invoking AWS CLI via subprocess.
-    Raises RuntimeError if token is expired or invalid
-    """
-    try:
-        # Run AWS CLI command to get caller identity
-        result = subprocess.run(
-            ["aws", "sts", "get-caller-identity"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-
-        # Parse the JSON output
-        identity = json.loads(result.stdout)
-
-        # Optional: Print account details
-        print(f"AWS Account: {identity['Account']}")
-        print(f"IAM User/Role: {identity['Arn']}")
-
-        return True
-
-    except subprocess.CalledProcessError as e:
-        # AWS CLI returned a non-zero exit code
-        raise RuntimeError(f"AWS SSO Authentication Failed: {e.stderr.strip()}")
-
-    except json.JSONDecodeError:
-        raise RuntimeError("Failed to parse AWS CLI output")
-
-    except Exception as e:
-        raise RuntimeError(f"Unexpected error checking AWS SSO token: {str(e)}")
 
 
 def prepare_plan(tf_modifiers: str, qualifier: str = "") -> dict:
@@ -145,58 +75,46 @@ def prepare_plan(tf_modifiers: str, qualifier: str = "") -> dict:
         Terraform plan JSON data
     """
 
-    # This payload can easily vary based on user-provided whitespace. Standardize before sending to caching formula.
-    tf_modifiers = strip_overide_whitespace(tf_modifiers)
-    cache_key = get_plan_cache_key(tf_modifiers, qualifier)
+    # Cache key affected by whitespace. Standardize before hashing.
+    tf_modifiers = normalize_whitespace(tf_modifiers)
+    cache_key = hash_cache_key(tf_modifiers, qualifier)
 
     # Always try to use cached results (for speed and performance)
-    os.makedirs(CACHE_PLAN, exist_ok=True)
-    cached_plan = f"{CACHE_PLAN}/plan_{cache_key}"
-    cached_json = f"{CACHE_PLAN}/plan_{cache_key}.json"
+    cached_plan = f"{FP.CACHE_PLAN_DIR}/plan_{cache_key}"
+    cached_json = f"{FP.CACHE_PLAN_DIR}/plan_{cache_key}.json"
+
+    # Write normalize tf_modifiers to the 'override.auto.tfvars' file.
+    FileHelper.write_file(FP.TFVARS_AUTO_OVERRIDE_DST, tf_modifiers)
 
     if os.path.exists(cached_json):
-        print(f"Reusing cached plans for: {cache_key}")
-        shutil.copy(cached_plan, TFPLAN_FILE_LOCATION)
-        shutil.copy(cached_json, TFPLAN_JSON_LOCATION)
-        write_file(OVERRIDE_AUTO_TFVARS, tf_modifiers)
-        return read_json(TFPLAN_JSON_LOCATION)
+        print(f"Cache hit! {cache_key}")
+        shutil.copy(cached_plan, FP.TFPLAN_FILE_LOCATION)
+        shutil.copy(cached_json, FP.TFPLAN_JSON_LOCATION)
+        return FileHelper.read_json(FP.TFPLAN_JSON_LOCATION)
 
     # Cache miss.Write override file in root and create plan files.
-    print(f"Cache miss. Generating new plan for: {cache_key}")
-    write_file(OVERRIDE_AUTO_TFVARS, tf_modifiers)
-
-    # Check that AWS SSO token isnt expired (or else test fails obtusely)
-    # TODO: Move this to a pre-flight check instead.
-    try:
-        check_aws_sso_token()
-        print("AWS SSO Token is valid!")
-    except RuntimeError as e:
-        print(str(e), file=sys.stderr)
-        # Trigger SSO login
-        subprocess.run(["aws", "sso", "login"])
-        sys.exit(1)
-
+    print(f"Cache miss. {cache_key}")
     TF.plan(qualifier)
 
     # Stash generated plan files in cachedir for future use.
-    shutil.copy(TFPLAN_FILE_LOCATION, cached_plan)
-    shutil.copy(TFPLAN_JSON_LOCATION, cached_json)
+    shutil.copy(FP.TFPLAN_FILE_LOCATION, cached_plan)
+    shutil.copy(FP.TFPLAN_JSON_LOCATION, cached_json)
 
-    return read_json(TFPLAN_JSON_LOCATION)
+    return FileHelper.read_json(FP.TFPLAN_JSON_LOCATION)
 
 
 def get_reconciled_tfvars() -> Dict[str, Any]:
     """
     Return single consolidated file comprising:
-      - tfvars_target
-      - (updated by) tfvars_override_target
-      - (updated by) OVERRIDE_AUTO_TFVARS
+      - FP.TFVARS_BASE
+      - (updated by) FP.TFVARS_BASE_OVERRIDE_DST
+      - (updated by) FP.TFVARS_AUTO_OVERRIDE_DST
     """
-    tfvars = parse_key_value_file(tfvars_target)
-    base_overrides = parse_key_value_file(tfvars_override_target)
+    tfvars = parse_key_value_file(FP.TFVARS_BASE)
+    base_overrides = parse_key_value_file(FP.TFVARS_BASE_OVERRIDE_DST)
     try:
         # Test case override file may not exist.
-        test_overrides = parse_key_value_file(OVERRIDE_AUTO_TFVARS)
+        test_overrides = parse_key_value_file(FP.TFVARS_AUTO_OVERRIDE_DST)
     except FileNotFoundError:
         test_overrides = {}
 
@@ -241,15 +159,9 @@ def generate_namespaced_dictionaries(plan: dict) -> tuple:
     outputs_flattened = {k: v.get("value", v) for k, v in outputs_dict.items()}
 
     tower_secrets_flattened = {k: v.get("value", v) for k, v in tower_secrets.items()}
-    groundswell_secrets_flattened = {
-        k: v.get("value", v) for k, v in groundswell_secrets.items()
-    }
-    seqerakit_secrets_flattened = {
-        k: v.get("value", v) for k, v in seqerakit_secrets.items()
-    }
-    wave_lite_secrets_flattened = {
-        k: v.get("value", v) for k, v in wave_lite_secrets.items()
-    }
+    groundswell_secrets_flattened = {k: v.get("value", v) for k, v in groundswell_secrets.items()}
+    seqerakit_secrets_flattened = {k: v.get("value", v) for k, v in seqerakit_secrets.items()}
+    wave_lite_secrets_flattened = {k: v.get("value", v) for k, v in wave_lite_secrets.items()}
 
     """
     Only namespace the top level, preserve nested dictionaries as regular dicts
@@ -380,19 +292,11 @@ def sub_templatefile_inputs(input_str, namespaces):
     # Had to re-enable this for tower.sql but it breaks tower.env (the data_studio_options). Why?
     # result = replace_vars_in_templatefile(input_str, vars, "tfvar")
     # result = replace_vars_in_templatefile(result, outputs, "local")
-    result = replace_vars_in_templatefile(
-        input_str, outputs, "module.connection_strings"
-    )
+    result = replace_vars_in_templatefile(input_str, outputs, "module.connection_strings")
     result = replace_vars_in_templatefile(result, tower_secrets, "tower_secrets")
-    result = replace_vars_in_templatefile(
-        result, groundswell_secrets, "groundswell_secrets"
-    )
-    result = replace_vars_in_templatefile(
-        result, seqerakit_secrets, "seqerakit_secrets"
-    )
-    result = replace_vars_in_templatefile(
-        result, wave_lite_secrets, "wave_lite_secrets"
-    )
+    result = replace_vars_in_templatefile(result, groundswell_secrets, "groundswell_secrets")
+    result = replace_vars_in_templatefile(result, seqerakit_secrets, "seqerakit_secrets")
+    result = replace_vars_in_templatefile(result, wave_lite_secrets, "wave_lite_secrets")
     result = result.replace("\n", "")  # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
     # TODO: Figure out secrets
 
@@ -404,7 +308,7 @@ def prepare_templatefile_payload(key, namespaces):
     Execute the templatefile command from JSONified 009, then sub in necessary values for SimpleNamespaced
     terraform plan outputs.
     """
-    templatefile_json = read_json("009_define_file_templates.json")
+    templatefile_json = FileHelper.read_json("009_define_file_templates.json")
     # The hcl2json conversion of 009 to JSON wraps the 'templatefile(...)' string we need with '${..}'.
     # The wrapper needs to be removed or else it breaks 'terraform console'.
     payload = templatefile_json["locals"][0][key]
@@ -436,15 +340,13 @@ def write_populated_templatefile(outfile, payload):
         lines = output.splitlines()
         output = "\n".join(lines[1:-1])
 
-    write_file(outfile, output)
+    FileHelper.write_file(outfile, output)
 
 
-def generate_interpolated_templatefile(
-    key, extension, read_type, namespaces, CACHE_TEMPLATEFILE_hash
-):
+def generate_interpolated_templatefile(key, extension, read_type, namespaces, cache_templatefile_hash):
     """
     namespaces                  : SimpleNamespaced outputs of 'terrform plan'.
-    CACHE_TEMPLATEFILE_hash : Relies on the hash of all the tfvars files used for the specific testcase.
+    cache_templatefile_hash     : Relies on the hash of all the tfvars files used for the specific testcase.
     key                         : key from JSONified 009
     extension                   : Proper file output
     read_type                   : Which utility helper to use to load the resulting file.
@@ -453,7 +355,7 @@ def generate_interpolated_templatefile(
     # Hash templatefiles to speed up n+1 tests
     #   1) Generate hash of tfvars variables and do cache check to speed this up.
     #   2) If cache miss, emit generated files as <CACHE_VALUE>_<FILENAME> and stick in 'tests/.templatfile_cache'.
-    outfile = Path(f"{CACHE_TEMPLATEFILE_hash}/{key}{extension}")
+    outfile = Path(f"{cache_templatefile_hash}/{key}{extension}")
     if not outfile.exists():
         result = prepare_templatefile_payload(key, namespaces)
         write_populated_templatefile(outfile, result)
@@ -462,17 +364,15 @@ def generate_interpolated_templatefile(
     return content
 
 
-def generate_interpolated_templatefiles(
-    hash, namespaces, template_files, testcase_name
-):
+def generate_interpolated_templatefiles(hash, namespaces, template_files, testcase_name):
     """
     Create all templatefiles based on terraform values relevant to the specific testcase.
 
     I don't seem able to put the file cache dir as a top-level key, so adding in to the dictionary for each individual file.
     """
     # Make cache folder if missing
-    CACHE_TEMPLATEFILE_hash = f"{CACHE_TEMPLATEFILE}/{testcase_name}__{hash}"
-    folder_path = Path(CACHE_TEMPLATEFILE_hash)
+    cache_templatefile_hash = f"{FP.CACHE_TEMPLATEFILE_DIR}/{testcase_name}__{hash}"
+    folder_path = Path(cache_templatefile_hash)
     folder_path.mkdir(parents=True, exist_ok=True)
 
     # Can't include a timestamp in the name since this will mess up the caching check in `generate_interpolated_templatefile`.
@@ -485,31 +385,28 @@ def generate_interpolated_templatefiles(
 
     sql_exception_files = ["wave_lite_rds"]
 
-    # This no longer seems necessary now that I'm writing cache folders more intelligently.
-    # Create a mapping document
-    # with open(f"{CACHE_TEMPLATEFILE}/mappings", "a") as f:
-    #     f.write(f"{testcase_name}: {hash}\n")
-
     for k, v in template_files.items():
         if k in sql_exception_files:
             continue
         content = generate_interpolated_templatefile(
-            k, v["extension"], v["read_type"], namespaces, CACHE_TEMPLATEFILE_hash
+            k, v["extension"], v["read_type"], namespaces, cache_templatefile_hash
         )
         template_files[k]["content"] = content
-        template_files[k]["filepath"] = f"{CACHE_TEMPLATEFILE_hash}/{k}{v['extension']}"
+        template_files[k]["filepath"] = f"{cache_templatefile_hash}/{k}{v['extension']}"
 
     # Edgecase: Wave-Lite SQL (not .tpl due to postgres single-quote needs).
     # Cant use `terraform template`. Use copy and conversion method instead.
     if any(k in template_files.keys() for k in sql_exception_files):
-        source_dir = Path(f"{ROOT}/assets/src/wave_lite_config/")
-        script_path = f"{ROOT}/scripts/installer/utils/sedalternative.py"
+        source_dir = Path(f"{FP.ROOT}/assets/src/wave_lite_config/")
+        script_path = f"{FP.ROOT}/scripts/installer/utils/sedalternative.py"
 
         for sql_file in source_dir.glob("*.sql"):
-            shutil.copy(sql_file, CACHE_TEMPLATEFILE_hash)
+            shutil.copy(sql_file, cache_templatefile_hash)
 
         # Hardcoded -- not sure I love this.
-        command = f"python3 {script_path} wave_lite_test_limited wave_lite_test_limited_password {CACHE_TEMPLATEFILE_hash}"
+        command = (
+            f"python3 {script_path} wave_lite_test_limited wave_lite_test_limited_password {cache_templatefile_hash}"
+        )
         subprocess.run(
             command,
             shell=True,
@@ -517,16 +414,14 @@ def generate_interpolated_templatefiles(
             capture_output=False,
         )
 
-        template_files["wave_lite_rds"]["content"] = read_file(
-            f"{CACHE_TEMPLATEFILE_hash}/wave-lite-rds.sql"
+        template_files["wave_lite_rds"]["content"] = FileHelper.read_file(
+            f"{cache_templatefile_hash}/wave-lite-rds.sql"
         )
-        template_files["wave_lite_rds"]["filepath"] = (
-            f"{CACHE_TEMPLATEFILE_hash}/wave-lite-rds.sql"
-        )
+        template_files["wave_lite_rds"]["filepath"] = f"{cache_templatefile_hash}/wave-lite-rds.sql"
 
     # Add hash to returned dict to make it easier to mount files directly rather than use tempfile
     # This messes up things re string indicies for reasons I dont understand.
-    # template_files["CACHE_TEMPLATEFILE_hash"] = f"{CACHE_TEMPLATEFILE_hash}"
+    # template_files["cache_templatefile_hash"] = f"{cache_templatefile_hash}"
 
     return template_files
 
@@ -551,7 +446,9 @@ def generate_tc_files(plan, desired_files, testcase_name):
     ]
 
     # Create hash of plan artefacts & secrets.
-    content_to_hash = f"{vars}\n{outputs}\n{tower_secrets}\n{groundswell_secrets}\n{seqerakit_secrets}\n{wave_lite_secrets}"
+    content_to_hash = (
+        f"{vars}\n{outputs}\n{tower_secrets}\n{groundswell_secrets}\n{seqerakit_secrets}\n{wave_lite_secrets}"
+    )
     hash = hashlib.sha256(content_to_hash.encode("utf-8")).hexdigest()[:16]
 
     # If `kitchen_sink = True` or `desired_files = []` create every config file. If not, filter.
@@ -559,15 +456,11 @@ def generate_tc_files(plan, desired_files, testcase_name):
         desired_files = []
 
     if desired_files:
-        needed_template_files = {
-            k: v for k, v in all_template_files.items() if k in desired_files
-        }
+        needed_template_files = {k: v for k, v in all_template_files.items() if k in desired_files}
     else:
         needed_template_files = all_template_files
 
-    tc_files = generate_interpolated_templatefiles(
-        hash, namespaces, needed_template_files, testcase_name
-    )
+    tc_files = generate_interpolated_templatefiles(hash, namespaces, needed_template_files, testcase_name)
 
     return tc_files
 
@@ -598,9 +491,7 @@ def assert_yaml_key_present(entries: dict, file):
         yaml.dump(file, f)
 
     # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
-    (yamlData, documentLoaded) = Parsers.get_yaml_data(
-        yamlParser, logger, "/tmp/cx-testing-yml"
-    )
+    (yamlData, documentLoaded) = Parsers.get_yaml_data(yamlParser, logger, "/tmp/cx-testing-yml")
     if not documentLoaded:
         # an error message has already been printed via ConsolePrinter
         exit(1)
@@ -646,9 +537,7 @@ def assert_yaml_key_omitted(entries: dict, file):
         yaml.dump(file, f)
 
     # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
-    (yamlData, documentLoaded) = Parsers.get_yaml_data(
-        yamlParser, logger, "/tmp/cx-testing-yml"
-    )
+    (yamlData, documentLoaded) = Parsers.get_yaml_data(yamlParser, logger, "/tmp/cx-testing-yml")
     if not documentLoaded:
         exit(1)
     processor = Processor(logger, yamlData)
