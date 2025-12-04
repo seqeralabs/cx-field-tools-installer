@@ -31,37 +31,37 @@ def test_outputs_baseline_all_enabled(session_setup):
     vars, outputs, _, _ = plan_artefacts
 
     # Run assertions
-    assert outputs.aws_account_id == "N/A"
-    assert outputs.aws_caller_arn == "N/A"
-    assert outputs.aws_caller_user == "N/A"
+    assert outputs["aws_account_id"] == "N/A"
+    assert outputs["aws_caller_arn"] == "N/A"
+    assert outputs["aws_caller_user"] == "N/A"
 
-    assert outputs.tower_base_url == "autodc.dev-seqera.net"
-    assert outputs.tower_server_url == "https://autodc.dev-seqera.net"
-    assert outputs.tower_api_endpoint == "https://autodc.dev-seqera.net/api"
+    assert outputs["tower_base_url"] == "autodc.dev-seqera.net"
+    assert outputs["tower_server_url"] == "https://autodc.dev-seqera.net"
+    assert outputs["tower_api_endpoint"] == "https://autodc.dev-seqera.net/api"
 
-    assert outputs.tower_db_dns == "db"
+    assert outputs["tower_db_dns"] == "db"
     assert (
-        outputs.tower_db_url
+        outputs["tower_db_url"]
         == "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true"
     )
 
-    assert outputs.tower_redis_dns == "redis"
-    assert outputs.tower_redis_url == "redis://redis:6379"
+    assert outputs["tower_redis_dns"] == "redis"
+    assert outputs["tower_redis_url"] == "redis://redis:6379"
 
-    assert outputs.swell_db_dns == "db"
-    assert outputs.swell_db_url == "mysql://db:3306/swell"
+    assert outputs["swell_db_dns"] == "db"
+    assert outputs["swell_db_url"] == "mysql://db:3306/swell"
 
-    assert outputs.tower_connect_dns == "connect.autodc.dev-seqera.net"
-    assert outputs.tower_connect_wildcard_dns == "*.autodc.dev-seqera.net"
-    assert outputs.tower_connect_server_url == "https://connect.autodc.dev-seqera.net"
-    assert outputs.tower_connect_redis_url == "redis:6379"
+    assert outputs["tower_connect_dns"] == "connect.autodc.dev-seqera.net"
+    assert outputs["tower_connect_wildcard_dns"] == "*.autodc.dev-seqera.net"
+    assert outputs["tower_connect_server_url"] == "https://connect.autodc.dev-seqera.net"
+    assert outputs["tower_connect_redis_url"] == "redis:6379"
 
-    assert outputs.tower_wave_dns == "wave.autodc.dev-seqera.net"
-    assert outputs.tower_wave_url == "https://wave.autodc.dev-seqera.net"
-    assert outputs.wave_lite_db_dns == "wave-db"
-    assert outputs.wave_lite_db_url == "jdbc:postgresql://wave-db:5432/wave"
-    assert outputs.wave_lite_redis_dns == "wave-redis"
-    assert outputs.wave_lite_redis_url == "redis://wave-redis:6379"
+    assert outputs["tower_wave_dns"] == "wave.autodc.dev-seqera.net"
+    assert outputs["tower_wave_url"] == "https://wave.autodc.dev-seqera.net"
+    assert outputs["wave_lite_db_dns"] == "wave-db"
+    assert outputs["wave_lite_db_url"] == "jdbc:postgresql://wave-db:5432/wave"
+    assert outputs["wave_lite_redis_dns"] == "wave-redis"
+    assert outputs["wave_lite_redis_url"] == "redis://wave-redis:6379"
 
     """
     Outputs we don't worry about
@@ -91,37 +91,37 @@ def test_outputs_baseline_all_disabled(session_setup):
     vars, outputs, _, _ = plan_artefacts
 
     # Run assertions
-    assert outputs.aws_account_id == "N/A"
-    assert outputs.aws_caller_arn == "N/A"
-    assert outputs.aws_caller_user == "N/A"
+    assert outputs["aws_account_id"] == "N/A"
+    assert outputs["aws_caller_arn"] == "N/A"
+    assert outputs["aws_caller_user"] == "N/A"
 
-    assert outputs.tower_base_url == "autodc.dev-seqera.net"
-    assert outputs.tower_server_url == "https://autodc.dev-seqera.net"
-    assert outputs.tower_api_endpoint == "https://autodc.dev-seqera.net/api"
+    assert outputs["tower_base_url"] == "autodc.dev-seqera.net"
+    assert outputs["tower_server_url"] == "https://autodc.dev-seqera.net"
+    assert outputs["tower_api_endpoint"] == "https://autodc.dev-seqera.net/api"
 
-    assert outputs.tower_db_dns == "db"
+    assert outputs["tower_db_dns"] == "db"
     assert (
-        outputs.tower_db_url
+        outputs["tower_db_url"]
         == "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true"
     )
 
-    assert outputs.tower_redis_dns == "redis"
-    assert outputs.tower_redis_url == "redis://redis:6379"
+    assert outputs["tower_redis_dns"] == "redis"
+    assert outputs["tower_redis_url"] == "redis://redis:6379"
 
-    assert outputs.swell_db_dns == "N/A"
-    assert outputs.swell_db_url == "N/A"
+    assert outputs["swell_db_dns"] == "N/A"
+    assert outputs["swell_db_url"] == "N/A"
 
-    assert outputs.tower_connect_dns == "N/A"
-    assert outputs.tower_connect_wildcard_dns == "N/A"
-    assert outputs.tower_connect_server_url == "N/A"
-    assert outputs.tower_connect_redis_url == "N/A"
+    assert outputs["tower_connect_dns"] == "N/A"
+    assert outputs["tower_connect_wildcard_dns"] == "N/A"
+    assert outputs["tower_connect_server_url"] == "N/A"
+    assert outputs["tower_connect_redis_url"] == "N/A"
 
-    assert outputs.tower_wave_dns == "N/A"
-    assert outputs.tower_wave_url == "N/A"
-    assert outputs.wave_lite_db_dns == "N/A"
-    assert outputs.wave_lite_db_url == "N/A"
-    assert outputs.wave_lite_redis_dns == "N/A"
-    assert outputs.wave_lite_redis_url == "N/A"
+    assert outputs["tower_wave_dns"] == "N/A"
+    assert outputs["tower_wave_url"] == "N/A"
+    assert outputs["wave_lite_db_dns"] == "N/A"
+    assert outputs["wave_lite_db_url"] == "N/A"
+    assert outputs["wave_lite_redis_dns"] == "N/A"
+    assert outputs["wave_lite_redis_url"] == "N/A"
 
     """
     Outputs we don't worry about
@@ -148,37 +148,37 @@ def test_outputs_no_https_all_enabled(session_setup):
     vars, outputs, _, _ = plan_artefacts
 
     # Run assertions
-    assert outputs.aws_account_id == "N/A"
-    assert outputs.aws_caller_arn == "N/A"
-    assert outputs.aws_caller_user == "N/A"
+    assert outputs["aws_account_id"] == "N/A"
+    assert outputs["aws_caller_arn"] == "N/A"
+    assert outputs["aws_caller_user"] == "N/A"
 
-    assert outputs.tower_base_url == "autodc.dev-seqera.net"
-    assert outputs.tower_server_url == "http://autodc.dev-seqera.net:8000"
-    assert outputs.tower_api_endpoint == "http://autodc.dev-seqera.net:8000/api"
+    assert outputs["tower_base_url"] == "autodc.dev-seqera.net"
+    assert outputs["tower_server_url"] == "http://autodc.dev-seqera.net:8000"
+    assert outputs["tower_api_endpoint"] == "http://autodc.dev-seqera.net:8000/api"
 
-    assert outputs.tower_db_dns == "db"
+    assert outputs["tower_db_dns"] == "db"
     assert (
-        outputs.tower_db_url
+        outputs["tower_db_url"]
         == "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true"
     )
 
-    assert outputs.tower_redis_dns == "redis"
-    assert outputs.tower_redis_url == "redis://redis:6379"
+    assert outputs["tower_redis_dns"] == "redis"
+    assert outputs["tower_redis_url"] == "redis://redis:6379"
 
-    assert outputs.swell_db_dns == "db"
-    assert outputs.swell_db_url == "mysql://db:3306/swell"
+    assert outputs["swell_db_dns"] == "db"
+    assert outputs["swell_db_url"] == "mysql://db:3306/swell"
 
-    assert outputs.tower_connect_dns == "N/A"
-    assert outputs.tower_connect_wildcard_dns == "N/A"
-    assert outputs.tower_connect_server_url == "N/A"
-    assert outputs.tower_connect_redis_url == "N/A"
+    assert outputs["tower_connect_dns"] == "N/A"
+    assert outputs["tower_connect_wildcard_dns"] == "N/A"
+    assert outputs["tower_connect_server_url"] == "N/A"
+    assert outputs["tower_connect_redis_url"] == "N/A"
 
-    assert outputs.tower_wave_dns == "N/A"
-    assert outputs.tower_wave_url == "N/A"
-    assert outputs.wave_lite_db_dns == "N/A"
-    assert outputs.wave_lite_db_url == "N/A"
-    assert outputs.wave_lite_redis_dns == "N/A"
-    assert outputs.wave_lite_redis_url == "N/A"
+    assert outputs["tower_wave_dns"] == "N/A"
+    assert outputs["tower_wave_url"] == "N/A"
+    assert outputs["wave_lite_db_dns"] == "N/A"
+    assert outputs["wave_lite_db_url"] == "N/A"
+    assert outputs["wave_lite_redis_dns"] == "N/A"
+    assert outputs["wave_lite_redis_url"] == "N/A"
 
     """
     Outputs we don't worry about
@@ -207,37 +207,37 @@ def test_outputs_no_https_all_disabled(session_setup):
     vars, outputs, vars_dict, _ = plan
 
     # Run assertions
-    assert outputs.aws_account_id == "N/A"
-    assert outputs.aws_caller_arn == "N/A"
-    assert outputs.aws_caller_user == "N/A"
+    assert outputs["aws_account_id"] == "N/A"
+    assert outputs["aws_caller_arn"] == "N/A"
+    assert outputs["aws_caller_user"] == "N/A"
 
-    assert outputs.tower_base_url == "autodc.dev-seqera.net"
-    assert outputs.tower_server_url == "http://autodc.dev-seqera.net:8000"
-    assert outputs.tower_api_endpoint == "http://autodc.dev-seqera.net:8000/api"
+    assert outputs["tower_base_url"] == "autodc.dev-seqera.net"
+    assert outputs["tower_server_url"] == "http://autodc.dev-seqera.net:8000"
+    assert outputs["tower_api_endpoint"] == "http://autodc.dev-seqera.net:8000/api"
 
-    assert outputs.tower_db_dns == "db"
+    assert outputs["tower_db_dns"] == "db"
     assert (
-        outputs.tower_db_url
+        outputs["tower_db_url"]
         == "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true"
     )
 
-    assert outputs.tower_redis_dns == "redis"
-    assert outputs.tower_redis_url == "redis://redis:6379"
+    assert outputs["tower_redis_dns"] == "redis"
+    assert outputs["tower_redis_url"] == "redis://redis:6379"
 
-    assert outputs.swell_db_dns == "N/A"
-    assert outputs.swell_db_url == "N/A"
+    assert outputs["swell_db_dns"] == "N/A"
+    assert outputs["swell_db_url"] == "N/A"
 
-    assert outputs.tower_connect_dns == "N/A"
-    assert outputs.tower_connect_wildcard_dns == "N/A"
-    assert outputs.tower_connect_server_url == "N/A"
-    assert outputs.tower_connect_redis_url == "N/A"
+    assert outputs["tower_connect_dns"] == "N/A"
+    assert outputs["tower_connect_wildcard_dns"] == "N/A"
+    assert outputs["tower_connect_server_url"] == "N/A"
+    assert outputs["tower_connect_redis_url"] == "N/A"
 
-    assert outputs.tower_wave_dns == "N/A"
-    assert outputs.tower_wave_url == "N/A"
-    assert outputs.wave_lite_db_dns == "N/A"
-    assert outputs.wave_lite_db_url == "N/A"
-    assert outputs.wave_lite_redis_dns == "N/A"
-    assert outputs.wave_lite_redis_url == "N/A"
+    assert outputs["tower_wave_dns"] == "N/A"
+    assert outputs["tower_wave_url"] == "N/A"
+    assert outputs["wave_lite_db_dns"] == "N/A"
+    assert outputs["wave_lite_db_url"] == "N/A"
+    assert outputs["wave_lite_redis_dns"] == "N/A"
+    assert outputs["wave_lite_redis_url"] == "N/A"
 
     """
     Outputs we don't worry about
@@ -269,9 +269,9 @@ def test_outputs_connect_alb_pathrouting(session_setup):
     vars, outputs, _, _ = plan_artefacts
 
     # Then
-    assert outputs.tower_connect_dns == "autoconnect.example.com"
-    assert outputs.tower_connect_wildcard_dns == "autoconnect.example.com"
-    assert outputs.tower_connect_server_url == "https://autoconnect.example.com"
+    assert outputs["tower_connect_dns"] == "autoconnect.example.com"
+    assert outputs["tower_connect_wildcard_dns"] == "autoconnect.example.com"
+    assert outputs["tower_connect_server_url"] == "https://autoconnect.example.com"
 
 
 @pytest.mark.local
@@ -293,6 +293,6 @@ def test_outputs_connect_ec2_pathrouting(session_setup):
     vars, outputs, _, _ = plan_artefacts
 
     # Then
-    assert outputs.tower_connect_dns == "autoconnect.example.com"
-    assert outputs.tower_connect_wildcard_dns == "autoconnect.example.com"
-    assert outputs.tower_connect_server_url == "https://autoconnect.example.com"
+    assert outputs["tower_connect_dns"] == "autoconnect.example.com"
+    assert outputs["tower_connect_wildcard_dns"] == "autoconnect.example.com"
+    assert outputs["tower_connect_server_url"] == "https://autoconnect.example.com"

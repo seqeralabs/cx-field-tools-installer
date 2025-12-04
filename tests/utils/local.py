@@ -63,11 +63,12 @@ Originally tried using [tftest](https://pypi.org/project/tftest/). Too complicat
 ## ------------------------------------------------------------------------------------
 def generate_namespaced_dictionaries(plan: dict) -> tuple:
     """
-    Converts JSONified terraform plan into easier-to-use SimpleNamespace.
+    Extract and flatten JSON entities from:
 
-    WARNING!!!!!!
-      - Plan keys are in Python dictionary form, so JSON "true" becomes True.  AFFECTS: `outputs` and `vars`
-      - Config file values are directly cracked from HCL so they are "true".
+      1. 'terraform plan' variables & outputs.
+      2. testing secrets
+
+    WARNING: Plan booleans are Python True/False, not terraform "true"/"false".
     """
 
     vars_dict = plan["variables"]
@@ -85,82 +86,45 @@ def generate_namespaced_dictionaries(plan: dict) -> tuple:
     with open(f"{secrets_dir}/ssm_sensitive_values_wave_lite_testing.json", "r") as f:
         wave_lite_secrets = json.load(f)
 
-    # https://dev.to/taqkarim/extending-simplenamespace-for-nested-dictionaries-58e8
-    # Avoids noisy dict notation ([""]) and constant repetition of `.value`.
-    # Variables have only one key (values); outputs may have 3 keys (sensitive, type, value).
-    # Example: `vars.tower_contact_email`
-    vars_flattened = {k: v.get("value", v) for k, v in vars_dict.items()}
-    outputs_flattened = {k: v.get("value", v) for k, v in outputs_dict.items()}
+    # Flatten nested "value" keys: {"key": {"value": "val"}} -> {"key": "val"}
+    vars = {k: v.get("value", v) for k, v in vars_dict.items()}
+    outputs = {k: v.get("value", v) for k, v in outputs_dict.items()}
 
-    tower_secrets_flattened = {k: v.get("value", v) for k, v in tower_secrets.items()}
-    groundswell_secrets_flattened = {k: v.get("value", v) for k, v in groundswell_secrets.items()}
-    seqerakit_secrets_flattened = {k: v.get("value", v) for k, v in seqerakit_secrets.items()}
-    wave_lite_secrets_flattened = {k: v.get("value", v) for k, v in wave_lite_secrets.items()}
+    tower_secrets = {k: v.get("value", v) for k, v in tower_secrets.items()}
+    groundswell_secrets = {k: v.get("value", v) for k, v in groundswell_secrets.items()}
+    seqerakit_secrets = {k: v.get("value", v) for k, v in seqerakit_secrets.items()}
+    wave_lite_secrets = {k: v.get("value", v) for k, v in wave_lite_secrets.items()}
 
-    """
-    Only namespace the top level, preserve nested dictionaries as regular dicts
-    Problem is that nested values like data_studios_options show up like:
-    vscode-1-101-2-0-8-5=namespace(container='public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.8.5', icon='vscode', qualifier='VSCODE-1-101-2-0-8-5', status='recommended', tool='vscode')
-    and this breaks the 'terraform console' template submission
-    """
-    # vars = json.loads(json.dumps(vars_flattened), object_hook=lambda item: SimpleNamespace(**item))
-    # outputs = json.loads(json.dumps(outputs_flattened), object_hook=lambda item: SimpleNamespace(**item))
-    vars = SimpleNamespace(**vars_flattened)
-    outputs = SimpleNamespace(**outputs_flattened)
-
-    tower_secrets_sn = SimpleNamespace(**tower_secrets_flattened)
-    groundswell_secrets_sn = SimpleNamespace(**groundswell_secrets_flattened)
-    seqerakit_secrets_sn = SimpleNamespace(**seqerakit_secrets_flattened)
-    wave_lite_secrets_sn = SimpleNamespace(**wave_lite_secrets_flattened)
-
-    # Group into two lists to make return disaggregation easier
     return (
         [vars, outputs, vars_dict, outputs_dict],
-        [
-            tower_secrets_sn,
-            groundswell_secrets_sn,
-            seqerakit_secrets_sn,
-            wave_lite_secrets_sn,
-        ],
+        [tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets],
     )
 
 
-def replace_vars_in_templatefile(input_str, vars_obj, type) -> str:
+def replace_vars_in_templatefile(input_str, vars_dict, type) -> str:
     """
-    This function uses the SimpleNamespace emitted by 'generate_namespaced_dictionaries' and used them to
-    replace necessary values in the 'templatefile' command extracted from a JSONified 009 file.
+    Replace terraform references with actual values in templatefile string.
 
-    Critical replacements are outputs of 'module.connection_string' & secrets values.
-    Do not need to replace 'var.' or 'local.' since these are known when 'terraform console' invoked.
+    Critical replacements: module.connection_strings.* and secrets
+    Do not need to replace 'var.' or 'local.' since terraform console knows these.
 
-    input_str : The value of a key extracted from JSONified 009_define_file_templates.tf
-    vars_obj  : The SimpleNamespace object returned by generate_namespaced_dictionaries()
-    type      : The prefix we are looking to replace.
-
-    NOTE: This relies upon the emission of TF Locals values during testing via an extra outputs file definition
-    (created by tests/datafiles/generate_core_data.sh)
+    Args:
+        input_str: Templatefile string from JSONified 009
+        vars_dict: Dictionary of values to substitute
+        type: Prefix pattern to match (e.g. "module.connection_strings")
     """
-
-    # This part a bit magical, from Claude: Here's how it works:
-    # 1. re.sub(pattern, replace_var, input_str) finds every occurrence of var.something
-    # 2. For each match, it calls replace_var(match)
-    # 3. replace_var extracts the variable name and returns the replacement value
-    # 4. re.sub substitutes each match with the returned value
-    # So for your input string, it will automatically find and replace var.app_name, var.flag_create_hosts_file_entry, and var.flag_do_not_use_https in a single call.
 
     def replace_var(match):
-        try:
-            var_name = match.group(1)
-            if hasattr(vars_obj, var_name):
-                value = getattr(vars_obj, var_name)
-                if isinstance(value, str):
-                    return f'"{value}"'
-                elif isinstance(value, bool):
-                    return str(value).lower()
-                else:
-                    return str(value)
-        except IndexError:
-            return match.group(0)  # Return original if var not found
+        var_name = match.group(1)
+        if var_name in vars_dict:
+            value = vars_dict[var_name]
+            if isinstance(value, str):
+                return f'"{value}"'
+            elif isinstance(value, bool):
+                return str(value).lower()
+            else:
+                return str(value)
+        return match.group(0)  # Return original if not found
 
     # The regex re.sub() function handles the "looping" automatically. Finds all matches of the defined pattern in the string
     # and calls the replace_var function for each.
