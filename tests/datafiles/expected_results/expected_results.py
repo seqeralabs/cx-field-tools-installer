@@ -42,6 +42,7 @@ def generate_tower_env_entries_all_active(overrides={}):
             "FLYWAY_LOCATIONS": "classpath:db-schema/mysql",
             "TOWER_REDIS_URL": "redis://redis:6379",
             "TOWER_ENABLE_UNSAFE_MODE": "false",
+            "TOWER_ENABLE_OPENAPI": "true",
             # CREDENTIALS
             "TOWER_ALLOW_INSTANCE_CREDENTIALS": "true",
             # OIDC
@@ -232,22 +233,12 @@ def generate_assertions_all_active(template_files, overrides):
     entries = {
         "tower_env": generate_tower_env_entries_all_active(overrides["tower_env"]),
         "tower_yml": generate_tower_yml_entries_all_active(overrides["tower_yml"]),
-        "data_studios_env": generate_data_studios_env_entries_all_active(
-            overrides["data_studios_env"]
-        ),
+        "data_studios_env": generate_data_studios_env_entries_all_active(overrides["data_studios_env"]),
         "tower_sql": generate_tower_sql_entries_all_active(overrides["tower_sql"]),
-        "docker_compose": generate_docker_compose_yml_entries_all_active(
-            overrides["docker_compose"]
-        ),
-        "wave_lite_yml": generate_wave_lite_yml_entries_all_active(
-            overrides["wave_lite_yml"]
-        ),
-        "wave_lite_rds": generate_wave_lite_rds_entries_all_active(
-            overrides["wave_lite_rds"]
-        ),
-        "groundswell_env": generate_groundswell_env_entries_all_active(
-            overrides["groundswell_env"]
-        ),
+        "docker_compose": generate_docker_compose_yml_entries_all_active(overrides["docker_compose"]),
+        "wave_lite_yml": generate_wave_lite_yml_entries_all_active(overrides["wave_lite_yml"]),
+        "wave_lite_rds": generate_wave_lite_rds_entries_all_active(overrides["wave_lite_rds"]),
+        "groundswell_env": generate_groundswell_env_entries_all_active(overrides["groundswell_env"]),
         # TODO: Build out stubs OR identify as not-in-scope due to other testing method (e.g. .sql)
         "groundswell_sql": {"present": {}, "omitted": {}},
         "seqerakit_yml": {"present": {}, "omitted": {}},
@@ -295,6 +286,7 @@ def generate_tower_env_entries_all_disabled(overrides={}):
             "FLYWAY_LOCATIONS": "classpath:db-schema/mysql",
             "TOWER_REDIS_URL": "redis://redis:6379",
             "TOWER_ENABLE_UNSAFE_MODE": "false",
+            "TOWER_ENABLE_OPENAPI": "false",
             # CREDENTIALS
             "TOWER_ALLOW_INSTANCE_CREDENTIALS": "false",
             # OIDC
@@ -486,22 +478,12 @@ def generate_assertions_all_disabled(template_files, overrides):
     entries = {
         "tower_env": generate_tower_env_entries_all_disabled(overrides["tower_env"]),
         "tower_yml": generate_tower_yml_entries_all_disabled(overrides["tower_yml"]),
-        "data_studios_env": generate_data_studios_env_entries_all_disabled(
-            overrides["data_studios_env"]
-        ),
+        "data_studios_env": generate_data_studios_env_entries_all_disabled(overrides["data_studios_env"]),
         "tower_sql": generate_tower_sql_entries_all_disabled(overrides["tower_sql"]),
-        "docker_compose": generate_docker_compose_yml_entries_all_disabled(
-            overrides["docker_compose"]
-        ),
-        "wave_lite_yml": generate_wave_lite_yml_entries_all_disabled(
-            overrides["wave_lite_yml"]
-        ),
-        "wave_lite_rds": generate_wave_lite_rds_entries_all_disabled(
-            overrides["wave_lite_rds"]
-        ),
-        "groundswell_env": generate_groundswell_env_entries_all_disabled(
-            overrides["groundswell_env"]
-        ),
+        "docker_compose": generate_docker_compose_yml_entries_all_disabled(overrides["docker_compose"]),
+        "wave_lite_yml": generate_wave_lite_yml_entries_all_disabled(overrides["wave_lite_yml"]),
+        "wave_lite_rds": generate_wave_lite_rds_entries_all_disabled(overrides["wave_lite_rds"]),
+        "groundswell_env": generate_groundswell_env_entries_all_disabled(overrides["groundswell_env"]),
         # TODO: Build out stubs OR identify as not-in-scope due to other testing method (e.g. .sql)
         "groundswell_sql": {"present": {}, "omitted": {}},
         "seqerakit_yml": {"present": {}, "omitted": {}},

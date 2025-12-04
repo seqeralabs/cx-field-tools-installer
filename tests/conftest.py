@@ -44,15 +44,17 @@ testing loop to:
 @pytest.fixture(scope="session")
 def session_setup():
     # Confirm the tester has a valid AWS SSO login token or else tests will fail.
+    # TODO - Fix -- this failed. My token was not valid but the STS call was returning successfully? Go figure.
     check_aws_sso_token()
 
     # Create a fresh copy of the base testing terraform.tfvars file.
     subprocess.run("make generate_test_data", shell=True, check=True)
 
-    print("\nBacking up terraform.tfvars & Loading test tfvars (base) artefacts.")
+    print("\nBacking up terraform.tfvars.")
     FileHelper.move_file(FP.TFVARS_BASE, FP.TFVARS_BACKUP)
 
-    # Swap in test tfvars, base-overrides tfvars, and testing-specific outputs (e.g. locals).
+    # Swap in test tfvars (base and base-override), and testing-specific outputs (e.g. locals).
+    print("\nLoading test tfvars and output artefacts.")
     FileHelper.copy_file(FP.TFVARS_TEST_SRC, FP.TFVARS_TEST_DST)
     FileHelper.copy_file(FP.TFVARS_BASE_OVERRIDE_SRC, FP.TFVARS_BASE_OVERRIDE_DST)
     FileHelper.copy_file(FP.OUTPUTS_SRC, FP.OUTPUTS_DST)
