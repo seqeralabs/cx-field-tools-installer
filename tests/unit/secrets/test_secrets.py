@@ -8,15 +8,15 @@ This module tests that:
 3. Key names are identical between template and testing files
 """
 
-import pytest
 from pathlib import Path
 
-from tests.utils.local import root
-from tests.utils.filehandling import read_json
+import pytest
 
+from tests.utils.filehandling import FileHelper
+from tests.utils.local import FP
 
-templates_dir = Path(root) / "templates"
-test_data_dir = Path(root) / "tests" / "datafiles" / "secrets"
+templates_dir = Path(FP.ROOT) / "templates"
+test_data_dir = Path(FP.ROOT) / "tests" / "datafiles" / "secrets"
 json_files = list(templates_dir.glob("ssm_sensitive_values_*.json"))
 
 
@@ -29,8 +29,10 @@ def test_secret_keys_match():
     """
 
     for json_file in json_files:
-        template_data = read_json(json_file.as_posix())
-        testing_data = read_json(f"{test_data_dir.as_posix()}/{json_file.name.replace('.json', '_testing.json')}")
+        template_data = FileHelper.read_json(json_file.as_posix())
+        testing_data = FileHelper.read_json(
+            f"{test_data_dir.as_posix()}/{json_file.name.replace('.json', '_testing.json')}"
+        )
 
         template_data_keys = template_data.keys()
         testing_data_keys = testing_data.keys()
