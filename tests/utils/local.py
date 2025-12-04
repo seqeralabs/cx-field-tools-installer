@@ -14,11 +14,16 @@ from yamlpath.common import Parsers
 from yamlpath.exceptions import UnmatchedYAMLPathException
 from yamlpath.wrappers import ConsolePrinter, NodeCoords
 
+from tests.utils.assertions.file_filters import filter_templates
 from tests.utils.assertions.file_handlers import (
     assert_kv_key_omitted,
     assert_kv_key_present,
     assert_yaml_key_omitted,
     assert_yaml_key_present,
+)
+from tests.utils.cache.cache import (
+    create_templatefile_cache_folder,
+    hash_tc_values,
 )
 from tests.utils.config import (
     FP,
@@ -204,69 +209,60 @@ def write_populated_templatefile(outfile, payload):
     FileHelper.write_file(outfile, output)
 
 
-def generate_interpolated_templatefile(key, extension, read_type, namespaces, cache_templatefile_hash):
+def generate_templatefile(key, tc: TCValues, templatefile_cache_dir):
     """
     namespaces                  : SimpleNamespaced outputs of 'terrform plan'.
-    cache_templatefile_hash     : Relies on the hash of all the tfvars files used for the specific testcase.
+    templatefile_cache_dir     : Relies on the hash of all the tfvars files used for the specific testcase.
     key                         : key from JSONified 009
-    extension                   : Proper file output
-    read_type                   : Which utility helper to use to load the resulting file.
     """
 
     # Hash templatefiles to speed up n+1 tests
-    #   1) Generate hash of tfvars variables and do cache check to speed this up.
-    #   2) If cache miss, emit generated files as <CACHE_VALUE>_<FILENAME> and stick in 'tests/.templatfile_cache'.
-    outfile = Path(f"{cache_templatefile_hash}/{key}{extension}")
+    #   - If cache miss, emit generated files as <CACHE_VALUE>_<FILENAME> and stick in 'tests/.templatfile_cache'.
+    extension = all_template_files[key]["extension"]
+    read_type = all_template_files[key]["read_type"]
+
+    # Check cache location. If check miss, generate file and place in cache. Read and return (now) cached file.
+    outfile = Path(f"{templatefile_cache_dir}/{key}{extension}")
     if not outfile.exists():
-        result = prepare_templatefile_payload(key, namespaces)
+        result = prepare_templatefile_payload(key, tc)
         write_populated_templatefile(outfile, result)
 
-    content = read_type(outfile.as_posix())
-    return content
+    return read_type(outfile.as_posix())
 
 
-def generate_interpolated_templatefiles(hash, namespaces, template_files, testcase_name):
+def generate_templatefiles(tc, template_files, testcase_name):
     """
-    Create all templatefiles based on terraform values relevant to the specific testcase.
-
-    I don't seem able to put the file cache dir as a top-level key, so adding in to the dictionary for each individual file.
+    Create templatefiles relevant to the testcase.
+    NOTE:
+        - Some files like 'wave_lite_rds' file cant be processed as a '.tpl' due to single-quotes in the content.
+        - Must use alternative approach to handle.
     """
-    # Make cache folder if missing
-    cache_templatefile_hash = f"{FP.CACHE_TEMPLATEFILE_DIR}/{testcase_name}__{hash}"
-    folder_path = Path(cache_templatefile_hash)
-    folder_path.mkdir(parents=True, exist_ok=True)
+    templatefile_cache_dir = create_templatefile_cache_folder(tc, testcase_name)
 
-    # Can't include a timestamp in the name since this will mess up the caching check in `generate_interpolated_templatefile`.
-    # Write timestamp in the folder instead -- add to filename for easy reference & inside file to make Path write mechanics happy.
-    existing_timestamps = list(folder_path.glob(".timestamp*"))
-    if not existing_timestamps:
-        timestamp = datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
-        timestamp_file = folder_path / f".timestamp--{timestamp}"
-        timestamp_file.write_text(timestamp)
-
+    # TODO: Put this over onto all_template_files as discrete flag.
     sql_exception_files = ["wave_lite_rds"]
 
+    # Step 1 -- Generate any file that can be done so normally (i.e. not SQL files)
     for k, v in template_files.items():
         if k in sql_exception_files:
             continue
-        content = generate_interpolated_templatefile(
-            k, v["extension"], v["read_type"], namespaces, cache_templatefile_hash
-        )
-        template_files[k]["content"] = content
-        template_files[k]["filepath"] = f"{cache_templatefile_hash}/{k}{v['extension']}"
 
-    # Edgecase: Wave-Lite SQL (not .tpl due to postgres single-quote needs).
-    # Cant use `terraform template`. Use copy and conversion method instead.
+        # Retrieve cached file / generate new file (and cache). Add payload and filepath to 'template_files'.
+        content = generate_templatefile(k, tc, templatefile_cache_dir)
+        template_files[k]["content"] = content
+        template_files[k]["filepath"] = f"{templatefile_cache_dir}/{k}{v['extension']}"
+
+    # Step 2 -- Generate edgecases that could be generated normally.
     if any(k in template_files.keys() for k in sql_exception_files):
         source_dir = Path(f"{FP.ROOT}/assets/src/wave_lite_config/")
         script_path = f"{FP.ROOT}/scripts/installer/utils/sedalternative.py"
 
         for sql_file in source_dir.glob("*.sql"):
-            shutil.copy(sql_file, cache_templatefile_hash)
+            shutil.copy(sql_file, templatefile_cache_dir)
 
         # Hardcoded -- not sure I love this.
         command = (
-            f"python3 {script_path} wave_lite_test_limited wave_lite_test_limited_password {cache_templatefile_hash}"
+            f"python3 {script_path} wave_lite_test_limited wave_lite_test_limited_password {templatefile_cache_dir}"
         )
         subprocess.run(
             command,
@@ -275,14 +271,8 @@ def generate_interpolated_templatefiles(hash, namespaces, template_files, testca
             capture_output=False,
         )
 
-        template_files["wave_lite_rds"]["content"] = FileHelper.read_file(
-            f"{cache_templatefile_hash}/wave-lite-rds.sql"
-        )
-        template_files["wave_lite_rds"]["filepath"] = f"{cache_templatefile_hash}/wave-lite-rds.sql"
-
-    # Add hash to returned dict to make it easier to mount files directly rather than use tempfile
-    # This messes up things re string indicies for reasons I dont understand.
-    # template_files["cache_templatefile_hash"] = f"{cache_templatefile_hash}"
+        template_files["wave_lite_rds"]["content"] = FileHelper.read_file(f"{templatefile_cache_dir}/wave-lite-rds.sql")
+        template_files["wave_lite_rds"]["filepath"] = f"{templatefile_cache_dir}/wave-lite-rds.sql"
 
     return template_files
 
@@ -293,38 +283,9 @@ def generate_tc_files(plan, desired_files, testcase_name):
     - Generates scenario hash.
     - Generates and returns necessary template files
     """
-    # Handle various entities extracted from `terraform plan` JSON file.
     TC: TCValues = extract_config_values(plan)
-    namespaces = [
-        TC.vars,
-        TC.outputs,
-        TC.tower_secrets,
-        TC.groundswell_secrets,
-        TC.seqerakit_secrets,
-        TC.wave_lite_secrets,
-    ]
-
-    # Create hash of plan artefacts & secrets.
-    content_to_hash = (
-        str(TC.vars)
-        + str(TC.outputs)
-        + str(TC.tower_secrets)
-        + str(TC.groundswell_secrets)
-        + str(TC.seqerakit_secrets)
-        + str(TC.wave_lite_secrets)
-    )
-    hash = hashlib.sha256(content_to_hash.encode("utf-8")).hexdigest()[:16]
-
-    # If `kitchen_sink = True` or `desired_files = []` create every config file. If not, filter.
-    if kitchen_sink:
-        desired_files = []
-
-    if desired_files:
-        needed_template_files = {k: v for k, v in all_template_files.items() if k in desired_files}
-    else:
-        needed_template_files = all_template_files
-
-    tc_files = generate_interpolated_templatefiles(hash, namespaces, needed_template_files, testcase_name)
+    needed_template_files: dict = filter_templates(desired_files)
+    tc_files = generate_templatefiles(TC, needed_template_files, testcase_name)
 
     return tc_files
 
