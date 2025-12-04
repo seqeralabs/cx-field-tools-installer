@@ -171,6 +171,7 @@ def generate_docker_compose_yml_entries_all_active(overrides={}):
     baseline = {
         "present": {
             "services.wave-lite.labels.seqera": "wave-lite",
+            "services.wave-lite.image": "cr.seqera.io/private/nf-tower-enterprise/wave:v1.29.1",
             "services.wave-lite-reverse-proxy.labels.seqera": "wave-lite-reverse-proxy",
             "services.wave-db.labels.seqera": "wave-db",
             "services.wave-redis.labels.seqera": "wave-redis",
