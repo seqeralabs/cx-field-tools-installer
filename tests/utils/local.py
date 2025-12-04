@@ -22,10 +22,12 @@ from tests.utils.assertions.file_handlers import (
 )
 from tests.utils.config import (
     FP,
+    TCValues,
     all_template_files,
     kitchen_sink,
 )
 from tests.utils.filehandling import FileHelper
+from tests.utils.terraform.parser import extract_config_values
 
 loggingArgs = SimpleNamespace(quiet=True, verbose=False, debug=False)
 logger = ConsolePrinter(loggingArgs)
@@ -60,35 +62,6 @@ Originally tried using [tftest](https://pypi.org/project/tftest/). Too complicat
 ## ------------------------------------------------------------------------------------
 ## Helpers - Templatefile
 ## ------------------------------------------------------------------------------------
-def extract_config_values(plan: dict) -> tuple:
-    """
-    Extract and flatten JSON entities from:
-
-      1. 'terraform plan' variables & outputs.
-      2. testing secrets
-
-    WARNING: Plan booleans are Python True/False, not terraform "true"/"false".
-    """
-
-    vars_dict = plan["variables"]
-    outputs_dict = plan["planned_values"]["outputs"]
-    tower_secrets = FileHelper.read_json(FP.TOWER_SECRETS)
-    groundswell_secrets = FileHelper.read_json(FP.GROUNDSWELL_SECRETS)
-    seqerakit_secrets = FileHelper.read_json(FP.SEQERAKIT_SECRETS)
-    wave_lite_secrets = FileHelper.read_json(FP.WAVE_LITE_SECRETS)
-
-    # Flatten nested "value" keys: {"key": {"value": "val"}} -> {"key": "val"}
-    vars = {k: v.get("value", v) for k, v in vars_dict.items()}
-    outputs = {k: v.get("value", v) for k, v in outputs_dict.items()}
-    tower_secrets = {k: v.get("value", v) for k, v in tower_secrets.items()}
-    groundswell_secrets = {k: v.get("value", v) for k, v in groundswell_secrets.items()}
-    seqerakit_secrets = {k: v.get("value", v) for k, v in seqerakit_secrets.items()}
-    wave_lite_secrets = {k: v.get("value", v) for k, v in wave_lite_secrets.items()}
-
-    return (
-        [vars, outputs, vars_dict, outputs_dict],
-        [tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets],
-    )
 
 
 def replace_vars_in_templatefile(input_str, vars_dict, type) -> str:
@@ -321,21 +294,24 @@ def generate_tc_files(plan, desired_files, testcase_name):
     - Generates and returns necessary template files
     """
     # Handle various entities extracted from `terraform plan` JSON file.
-    plan, secrets = extract_config_values(plan)
-    vars, outputs, vars_dict, _ = plan
-    tower_secrets, groundswell_secrets, seqerakit_secrets, wave_lite_secrets = secrets
+    TC: TCValues = extract_config_values(plan)
     namespaces = [
-        vars,
-        outputs,
-        tower_secrets,
-        groundswell_secrets,
-        seqerakit_secrets,
-        wave_lite_secrets,
+        TC.vars,
+        TC.outputs,
+        TC.tower_secrets,
+        TC.groundswell_secrets,
+        TC.seqerakit_secrets,
+        TC.wave_lite_secrets,
     ]
 
     # Create hash of plan artefacts & secrets.
     content_to_hash = (
-        f"{vars}\n{outputs}\n{tower_secrets}\n{groundswell_secrets}\n{seqerakit_secrets}\n{wave_lite_secrets}"
+        str(TC.vars)
+        + str(TC.outputs)
+        + str(TC.tower_secrets)
+        + str(TC.groundswell_secrets)
+        + str(TC.seqerakit_secrets)
+        + str(TC.wave_lite_secrets)
     )
     hash = hashlib.sha256(content_to_hash.encode("utf-8")).hexdigest()[:16]
 

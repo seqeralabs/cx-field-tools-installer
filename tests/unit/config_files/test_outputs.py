@@ -1,7 +1,8 @@
 import pytest
 
-from tests.utils.local import extract_config_values
+from tests.utils.config import TCValues
 from tests.utils.terraform.executor import prepare_plan
+from tests.utils.terraform.parser import extract_config_values
 
 """
 These tests used to validate the outputs emitted by Terraform plan (with particular focus on those emitted by module.connection_strings).
@@ -27,8 +28,8 @@ def test_outputs_baseline_all_enabled(session_setup):
 
     tf_modifiers = """#NONE"""
     plan = prepare_plan(tf_modifiers)
-    plan_artefacts, secrets = extract_config_values(plan)
-    vars, outputs, _, _ = plan_artefacts
+    TC: TCValues = extract_config_values(plan)
+    outputs: dict = TC.outputs
 
     # Run assertions
     assert outputs["aws_account_id"] == "N/A"
@@ -87,8 +88,8 @@ def test_outputs_baseline_all_disabled(session_setup):
         flag_use_wave_lite                  = false
     """
     plan = prepare_plan(tf_modifiers)
-    plan_artefacts, secrets = extract_config_values(plan)
-    vars, outputs, _, _ = plan_artefacts
+    TC: TCValues = extract_config_values(plan)
+    outputs: dict = TC.outputs
 
     # Run assertions
     assert outputs["aws_account_id"] == "N/A"
@@ -144,8 +145,8 @@ def test_outputs_no_https_all_enabled(session_setup):
         flag_do_not_use_https                           = true
     """
     plan = prepare_plan(tf_modifiers)
-    plan_artefacts, secrets = extract_config_values(plan)
-    vars, outputs, _, _ = plan_artefacts
+    TC: TCValues = extract_config_values(plan)
+    outputs: dict = TC.outputs
 
     # Run assertions
     assert outputs["aws_account_id"] == "N/A"
@@ -203,8 +204,8 @@ def test_outputs_no_https_all_disabled(session_setup):
     """
     plan = prepare_plan(tf_modifiers)
 
-    plan, secrets = extract_config_values(plan)
-    vars, outputs, vars_dict, _ = plan
+    TC: TCValues = extract_config_values(plan)
+    outputs: dict = TC.outputs
 
     # Run assertions
     assert outputs["aws_account_id"] == "N/A"
@@ -265,8 +266,8 @@ def test_outputs_connect_alb_pathrouting(session_setup):
 
     # When
     plan = prepare_plan(tf_modifiers)
-    plan_artefacts, secrets = extract_config_values(plan)
-    vars, outputs, _, _ = plan_artefacts
+    TC: TCValues = extract_config_values(plan)
+    outputs: dict = TC.outputs
 
     # Then
     assert outputs["tower_connect_dns"] == "autoconnect.example.com"
@@ -289,8 +290,8 @@ def test_outputs_connect_ec2_pathrouting(session_setup):
 
     # When
     plan = prepare_plan(tf_modifiers)
-    plan_artefacts, secrets = extract_config_values(plan)
-    vars, outputs, _, _ = plan_artefacts
+    TC: TCValues = extract_config_values(plan)
+    outputs: dict = TC.outputs
 
     # Then
     assert outputs["tower_connect_dns"] == "autoconnect.example.com"

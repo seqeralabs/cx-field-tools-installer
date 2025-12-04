@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from tests.utils.filehandling import FileHelper
@@ -68,18 +68,17 @@ class FilePaths:
 
 
 @dataclass
-class TestCaseValues:
+class TCValues:
     # Convenience object for passing around the dictionary sets used to configure templatefiles
-    vars: dict = {}
-    outputs: dict = {}
-    tower_secrets = {}
-    groundswell_secrets: dict = {}
-    seqerakit_secrets: dict = {}
-    wave_lite_secrets: dict = {}
+    vars: dict = field(default_factory=dict)
+    outputs: dict = field(default_factory=dict)
+    tower_secrets: dict = field(default_factory=dict)
+    groundswell_secrets: dict = field(default_factory=dict)
+    seqerakit_secrets: dict = field(default_factory=dict)
+    wave_lite_secrets: dict = field(default_factory=dict)
 
 
 FP = FilePaths()
-TC = TestCaseValues()
 
 
 # SSM (testing) secrets
