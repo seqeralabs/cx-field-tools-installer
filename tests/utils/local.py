@@ -1,10 +1,7 @@
-import hashlib
-import json
 import re
 import shutil
 import subprocess
 import sys
-from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -94,8 +91,8 @@ def replace_vars_in_templatefile(input_str, vars_dict, type) -> str:
                 return str(value)
         return match.group(0)  # Return original if not found
 
-    # The regex re.sub() function handles the "looping" automatically. Finds all matches of the defined pattern in the string
-    # and calls the replace_var function for each.
+    # The regex re.sub() function handles the "looping" automatically.
+    # Finds all matches of pattern and calls the replace_var function for each.
     if type == "module.connection_strings":
         pattern = r"module.connection_strings\.(\w+)"
         return re.sub(pattern, replace_var, input_str)
@@ -128,69 +125,53 @@ def replace_vars_in_templatefile(input_str, vars_dict, type) -> str:
         return "Error"
 
 
-def sub_templatefile_inputs(input_str, namespaces):
+def prepare_templatefile_payload(key, tc: TCValues):
     """
-    Helper function that does the actual subsituation of the values in the JSONified 009 templatefile payload.
+    Extract the templatefile command from JSONified 009, then sub values as necessary.
+
+    BACKGROUND:
+    A normal terraform plan/apply would have all the input values availabe at execution (this is SLOW).
+
+    Instead, using the much faster 'terraform console' approach.
+        - Console appears to have access to tfvars & locals, but not module outputs (emitted file is "known after apply").
+        - As a result:
+            - 1) Must run 'terraform plan' (full) once to generate all outputs (including of module outputs),
+            - 2) Substitution in the templatefile string passed to 'terraform console'.
+            - 3) Must add '\n' at end to not break the 'terraform console' subprocess call.
+        - This feels Rube Goldberg-ish, but it gets test down from minutes to only seconds after first time cahcing.
     """
+    templatefile_json = FileHelper.read_json("009_define_file_templates.json")
+    # The hcl2json JSON conversion wraps the 'templatefile(...)' string we need with '${..}'.
+    # Must remove wrapper or else it breaks 'terraform console'.
+    payload = templatefile_json["locals"][0][key]
+    payload = payload[2:-1]
 
-    # BACKGROUND:
-    # I'm sourcing the templatefile string directly from 009. A normal plan/apply would have all the input values availabe at execution.
-    # This is slow, however, so I'm trying to use the much faster 'terraform console' approach. Console appears to have access to 'tfvars'
-    # and necessary 'locals', but not to the outputs of called modules (emitted file is "known after apply").
-    #
-    # To make this work, I need to run a 'terraform plan' (full) to generate all outputs (inclusive of module outputs), which can then
-    # be used for substitution in the templatefile string passed by 'terraform console'. This feels like a Rube Goldberg, but it gets
-    # test execution down from 30+ seconds (everytime) to ~4 seconds (first time, cacheable).
-    #
-    # TBD what happens with secrets
-    #
-    # '\n' must be replace in  the extracted 009 payload so it can be passed to 'terraform console' via subprocess call.
-
-    (
-        vars,
-        outputs,
-        tower_secrets,
-        groundswell_secrets,
-        seqerakit_secrets,
-        wave_lite_secrets,
-    ) = namespaces
-
+    # Substitute values
     # Had to re-enable this for tower.sql but it breaks tower.env (the data_studio_options). Why?
     # result = replace_vars_in_templatefile(input_str, vars, "tfvar")
     # result = replace_vars_in_templatefile(result, outputs, "local")
-    result = replace_vars_in_templatefile(input_str, outputs, "module.connection_strings")
-    result = replace_vars_in_templatefile(result, tower_secrets, "tower_secrets")
-    result = replace_vars_in_templatefile(result, groundswell_secrets, "groundswell_secrets")
-    result = replace_vars_in_templatefile(result, seqerakit_secrets, "seqerakit_secrets")
-    result = replace_vars_in_templatefile(result, wave_lite_secrets, "wave_lite_secrets")
-    result = result.replace("\n", "")  # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
-    # TODO: Figure out secrets
-
-    return result
-
-
-def prepare_templatefile_payload(key, namespaces):
-    """
-    Execute the templatefile command from JSONified 009, then sub in necessary values for SimpleNamespaced
-    terraform plan outputs.
-    """
-    templatefile_json = FileHelper.read_json("009_define_file_templates.json")
-    # The hcl2json conversion of 009 to JSON wraps the 'templatefile(...)' string we need with '${..}'.
-    # The wrapper needs to be removed or else it breaks 'terraform console'.
-    payload = templatefile_json["locals"][0][key]
-    payload = payload[2:-1]
-    payload = sub_templatefile_inputs(payload, namespaces)
+    payload = replace_vars_in_templatefile(payload, tc.outputs, "module.connection_strings")
+    payload = replace_vars_in_templatefile(payload, tc.tower_secrets, "tower_secrets")
+    payload = replace_vars_in_templatefile(payload, tc.groundswell_secrets, "groundswell_secrets")
+    payload = replace_vars_in_templatefile(payload, tc.seqerakit_secrets, "seqerakit_secrets")
+    payload = replace_vars_in_templatefile(payload, tc.wave_lite_secrets, "wave_lite_secrets")
+    payload = payload.replace("\n", "")  # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
     return payload
 
 
 def write_populated_templatefile(outfile, payload):
     """
-    Example of how this calls 'terraform console':
-        > terraform console <<< 'templatefile("assets/src/ansible/06_run_seqerakit.yml.tpl", { app_name = "abc", flag_create_hosts_file_entry = false, flag_do_not_use_https = true })'
+    Executes 'terraform console', passing in the specific templatefile and substituted payload.
 
-    'terraform console' command needs single quotes on outside and double-quotes within.
+    Example :
+        > terraform console <<< 'templatefile("assets/src/ansible/06_run_seqerakit.yml.tpl",
+            { app_name = "abc", flag_create_hosts_file_entry = false, flag_do_not_use_https = true })'
+
+    NOTE:
+        - 'terraform console' command needs single quotes on outside and double-quotes within.
+        - 'terraform console' emits '<<EOT' and 'EOT' at start/finish of multi-line payload. These must be stripped.
     """
-    print(payload)
+    # print(payload)
     payload = subprocess.run(
         ["terraform", "console"],
         input=str(payload),
@@ -201,7 +182,6 @@ def write_populated_templatefile(outfile, payload):
     )
     output = payload.stdout
 
-    # Strip '<<EOT' and 'EOT' appending to start and end of multi-line payload emitted by 'terraform console'.
     if output.startswith("<<EOT"):
         lines = output.splitlines()
         output = "\n".join(lines[1:-1])

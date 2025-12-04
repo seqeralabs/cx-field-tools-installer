@@ -220,7 +220,7 @@ test_baseline_alb_all_enabled()
     │     │     ├─> read secrets from JSON files
     │     │     └─> create SimpleNamespace objects
     │     │
-    │     └─> generate_interpolated_templatefiles()         # Executed for each desired file.
+    │     └─> generate_templatefiles()         # Executed for each desired file.
     │           ├─> prepare_templatefile_payload()
     │           │     ├─> read_json(009_define_file_templates.json)
     │           │     └─> sub_templatefile_inputs()
