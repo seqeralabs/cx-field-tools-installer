@@ -67,7 +67,19 @@ class FilePaths:
         self.WAVE_LITE_SECRETS = f"{self.ROOT}/tests/datafiles/secrets/ssm_sensitive_values_wave_lite_testing.json"
 
 
+@dataclass
+class TestCaseValues:
+    # Convenience object for passing around the dictionary sets used to configure templatefiles
+    vars: dict = {}
+    outputs: dict = {}
+    tower_secrets = {}
+    groundswell_secrets: dict = {}
+    seqerakit_secrets: dict = {}
+    wave_lite_secrets: dict = {}
+
+
 FP = FilePaths()
+TC = TestCaseValues()
 
 
 # SSM (testing) secrets
