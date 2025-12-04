@@ -9,7 +9,8 @@ from tests.datafiles.expected_results.expected_results import (
 )
 from tests.utils.config import expected_sql_dir
 from tests.utils.filehandling import FileHelper
-from tests.utils.local import generate_tc_files, prepare_plan, verify_all_assertions
+from tests.utils.local import generate_tc_files, verify_all_assertions
+from tests.utils.terraform.executor import prepare_plan
 
 ## ------------------------------------------------------------------------------------
 ## MARK: Baseline ON/OFF

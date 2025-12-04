@@ -1,7 +1,11 @@
+import os
+import shutil
 import subprocess
 from pathlib import Path
 
+from tests.utils.cache.cache import hash_cache_key, normalize_whitespace
 from tests.utils.config import FP
+from tests.utils.filehandling import FileHelper
 
 
 ## ------------------------------------------------------------------------------------
@@ -25,6 +29,10 @@ def execute_subprocess(command: str) -> bytes:
     return result
 
 
+## ------------------------------------------------------------------------------------
+## Utility Class
+## ------------------------------------------------------------------------------------
+# Keep all file method helpers in a single class to simplify imports.
 class TF:
     """
     Terraform command execution helpers.
@@ -60,3 +68,45 @@ class TF:
         qualifier = qualifier if len(qualifier) > 0 else ""
         command = f"terraform destroy --auto-approve {qualifier}"
         execute_subprocess(command)
+
+
+## ------------------------------------------------------------------------------------
+## Plan Generation
+## ------------------------------------------------------------------------------------
+# Find a cached Terraform plan, or generate new one with fresh set of tfvars files.
+def prepare_plan(tf_modifiers: str, qualifier: str = "") -> dict:
+    """Generate override.auto.tfvars and run terraform plan with caching.
+
+    Args:
+        tf_modifiers: Terraform variable overrides
+        qualifier: Additional modifier to add to cache key (e.g '-target=null_resource.my_resource')
+
+    Returns:
+        Terraform plan JSON data
+    """
+
+    # Cache key affected by whitespace. Standardize before hashing.
+    tf_modifiers = normalize_whitespace(tf_modifiers)
+    cache_key = hash_cache_key(tf_modifiers, qualifier)
+
+    # Always try to use cached results (for speed and performance)
+    cached_plan = f"{FP.CACHE_PLAN_DIR}/plan_{cache_key}"
+    cached_json = f"{FP.CACHE_PLAN_DIR}/plan_{cache_key}.json"
+
+    # Write normalized tf_modifiers to the 'override.auto.tfvars' file.
+    FileHelper.write_file(FP.TFVARS_AUTO_OVERRIDE_DST, tf_modifiers)
+
+    if os.path.exists(cached_json):
+        print(f"Cache hit! {cache_key}")
+        shutil.copy(cached_plan, FP.TFPLAN_FILE_LOCATION)
+        shutil.copy(cached_json, FP.TFPLAN_JSON_LOCATION)
+        return FileHelper.read_json(FP.TFPLAN_JSON_LOCATION)
+
+    # Cache miss. Create plan files and cache for future use.
+    print(f"Cache miss. {cache_key}")
+    TF.plan(qualifier)
+
+    shutil.copy(FP.TFPLAN_FILE_LOCATION, cached_plan)
+    shutil.copy(FP.TFPLAN_JSON_LOCATION, cached_json)
+
+    return FileHelper.read_json(FP.TFPLAN_JSON_LOCATION)

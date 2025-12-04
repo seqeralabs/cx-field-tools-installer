@@ -1,6 +1,5 @@
 import hashlib
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -8,10 +7,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Dict
-
-import pytest
-import yaml
 
 # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
 from yamlpath import Processor, YAMLPath
@@ -19,15 +14,19 @@ from yamlpath.common import Parsers
 from yamlpath.exceptions import UnmatchedYAMLPathException
 from yamlpath.wrappers import ConsolePrinter, NodeCoords
 
-from tests.utils.cache.cache import hash_cache_key, normalize_whitespace
+from tests.utils.assertions.file_handlers import (
+    assert_kv_key_omitted,
+    assert_kv_key_present,
+    assert_yaml_key_omitted,
+    assert_yaml_key_present,
+)
 from tests.utils.config import (
     FP,
     all_template_files,
     kitchen_sink,
     secrets_dir,
 )
-from tests.utils.filehandling import FileHelper, parse_key_value_file
-from tests.utils.terraform.executor import TF
+from tests.utils.filehandling import FileHelper
 
 loggingArgs = SimpleNamespace(quiet=True, verbose=False, debug=False)
 logger = ConsolePrinter(loggingArgs)
@@ -57,71 +56,6 @@ Originally tried using [tftest](https://pypi.org/project/tftest/). Too complicat
     - Purge tfvars and override files.
     - Restore the original `terraform.tfvars` to project root.
 """
-
-
-## ------------------------------------------------------------------------------------
-## Helpers
-## ------------------------------------------------------------------------------------
-
-
-def prepare_plan(tf_modifiers: str, qualifier: str = "") -> dict:
-    """Generate override.auto.tfvars and run terraform plan with caching.
-
-    Args:
-        tf_modifiers: Terraform variable overrides
-        qualifier: Additional modifier to add to cache key (e.g '-target=null_resource.my_resource')
-
-    Returns:
-        Terraform plan JSON data
-    """
-
-    # Cache key affected by whitespace. Standardize before hashing.
-    tf_modifiers = normalize_whitespace(tf_modifiers)
-    cache_key = hash_cache_key(tf_modifiers, qualifier)
-
-    # Always try to use cached results (for speed and performance)
-    cached_plan = f"{FP.CACHE_PLAN_DIR}/plan_{cache_key}"
-    cached_json = f"{FP.CACHE_PLAN_DIR}/plan_{cache_key}.json"
-
-    # Write normalize tf_modifiers to the 'override.auto.tfvars' file.
-    FileHelper.write_file(FP.TFVARS_AUTO_OVERRIDE_DST, tf_modifiers)
-
-    if os.path.exists(cached_json):
-        print(f"Cache hit! {cache_key}")
-        shutil.copy(cached_plan, FP.TFPLAN_FILE_LOCATION)
-        shutil.copy(cached_json, FP.TFPLAN_JSON_LOCATION)
-        return FileHelper.read_json(FP.TFPLAN_JSON_LOCATION)
-
-    # Cache miss.Write override file in root and create plan files.
-    print(f"Cache miss. {cache_key}")
-    TF.plan(qualifier)
-
-    # Stash generated plan files in cachedir for future use.
-    shutil.copy(FP.TFPLAN_FILE_LOCATION, cached_plan)
-    shutil.copy(FP.TFPLAN_JSON_LOCATION, cached_json)
-
-    return FileHelper.read_json(FP.TFPLAN_JSON_LOCATION)
-
-
-def get_reconciled_tfvars() -> Dict[str, Any]:
-    """
-    Return single consolidated file comprising:
-      - FP.TFVARS_BASE
-      - (updated by) FP.TFVARS_BASE_OVERRIDE_DST
-      - (updated by) FP.TFVARS_AUTO_OVERRIDE_DST
-    """
-    tfvars = parse_key_value_file(FP.TFVARS_BASE)
-    base_overrides = parse_key_value_file(FP.TFVARS_BASE_OVERRIDE_DST)
-    try:
-        # Test case override file may not exist.
-        test_overrides = parse_key_value_file(FP.TFVARS_AUTO_OVERRIDE_DST)
-    except FileNotFoundError:
-        test_overrides = {}
-
-    tfvars.update({k: base_overrides[k] for k in base_overrides.keys()})
-    tfvars.update({k: test_overrides[k] for k in test_overrides.keys()})
-
-    return tfvars
 
 
 ## ------------------------------------------------------------------------------------
@@ -468,94 +402,6 @@ def generate_tc_files(plan, desired_files, testcase_name):
 ## ------------------------------------------------------------------------------------
 ## Helpers - Assertions
 ## ------------------------------------------------------------------------------------
-def assert_kv_key_present(entries: dict, file):
-    """Confirm key-values in provided dict are present in file."""
-    for k, v in entries.items():
-        try:
-            print(f"{k=}; {type(k)=}")
-            print(f"{v=}; {type(v)=}")
-            assert file[k] == str(v), f"Key {k} sought but not found."
-        except AssertionError as e:
-            pytest.fail(f"Assertion failed for {k}: {str(e)}")
-
-
-def assert_yaml_key_present(entries: dict, file):
-    """
-    Confirm key-values in provided dict are present in file. WARNING -- THIS IS UGLY.
-    Uses 3rd party library. Acceptable since testing is only essential to Seqera staff.
-    Found necessary code implementation at: https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
-    """
-
-    # file content is passes as a dictionary, I need to write out yaml
-    with open("/tmp/cx-testing-yml", "w") as f:
-        yaml.dump(file, f)
-
-    # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
-    (yamlData, documentLoaded) = Parsers.get_yaml_data(yamlParser, logger, "/tmp/cx-testing-yml")
-    if not documentLoaded:
-        # an error message has already been printed via ConsolePrinter
-        exit(1)
-    processor = Processor(logger, yamlData)
-
-    for k, v in entries.items():
-        try:
-            # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
-            dataYamlPath = YAMLPath(k)
-            for nodeCoordinate in processor.get_nodes(dataYamlPath, mustexist=True):
-                nodeData = NodeCoords.unwrap_node_coords(nodeCoordinate)
-                print(f"yaml_key{k}")
-                print(f"nodeData={str(nodeData)}")
-                assert str(nodeData) == str(v), f"Key {k} does not match Value {v}."
-        except AssertionError as e:
-            pytest.fail(f"Assertion failed for {k}: {str(e)}")
-
-
-# def assert_sql_key_present(entries: dict, file):
-#     """Confirm keys in provided dict are present in file."""
-#     # for k in entries.keys():
-#     #     assert k in file, f"Key {k} sought but not found."
-#     reference = entries["payload"]
-#     assert reference == file, f"SQL files did not match."
-
-
-def assert_kv_key_omitted(entries: dict, file):
-    """Confirm keys in provided dict are not present in file."""
-    keys = file.keys()
-
-    for k in entries.keys():
-        assert k not in keys, f"Key {k} should not be present but was found."
-
-
-def assert_yaml_key_omitted(entries: dict, file):
-    """
-    Confirm keys in provided are not present in YAML file. Assumes you'll base <PATH>.keys() as v.
-    Uses 3rd party library. Acceptable since testing is only essential to Seqera staff.
-    Found necessary code implementation at: https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7"""
-
-    # file content is passes as a dictionary, I need to write out yaml
-    with open("/tmp/cx-testing-yml", "w") as f:
-        yaml.dump(file, f)
-
-    # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
-    (yamlData, documentLoaded) = Parsers.get_yaml_data(yamlParser, logger, "/tmp/cx-testing-yml")
-    if not documentLoaded:
-        exit(1)
-    processor = Processor(logger, yamlData)
-
-    # This one is a bit odd because of how the library works. I WANT to have Exceptions raised when trying to find the YAMLPath
-    # (i.e. path doesnt exist). The most concise code block avoids try/except but doesn't identify an key that actually does exist.
-    # Using slightly more convoluted code.
-    for k, v in entries.items():
-        dataYamlPath = YAMLPath(k)
-        with pytest.raises(UnmatchedYAMLPathException):
-            list(processor.get_nodes(dataYamlPath, mustexist=True))
-
-
-# Omission test no longer required since I'm doing direct file comparison.
-# def assert_sql_key_omitted(entries: dict, file):
-#     """Confirm keys in provided dict are present in file."""
-#     for k in entries.keys():
-#         assert k in file, f"Key {k} should not be present but was found."
 
 
 def assert_present_and_omitted(entries: dict, file, type=None):
@@ -569,7 +415,6 @@ def assert_present_and_omitted(entries: dict, file, type=None):
         assert_yaml_key_omitted(entries["omitted"], file)
     elif type == "sql":
         # DO NOT USE THIS LOGIC BRANCH - SQL IS NOW VALIDATED ANOTHER WAY.
-        print(entries)
         # assert_sql_key_present(entries["present"], file)
         # assert_sql_key_omitted(entries["omitted"], file)
         pass

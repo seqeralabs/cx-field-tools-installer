@@ -13,10 +13,9 @@ import pytest
 from scripts.installer.utils.purge_folders import delete_pycache_folders
 from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
-from tests.utils.local import prepare_plan
 from tests.utils.preflight.preflight import check_aws_sso_token
 from tests.utils.pytest_logger import get_logger
-from tests.utils.terraform.executor import TF, execute_subprocess
+from tests.utils.terraform.executor import TF, execute_subprocess, prepare_plan
 
 """
 EXPLANATION

@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from tests.utils.filehandling import FileHelper, parse_key_value_file
+from tests.utils.filehandling import FileHelper
 
 
 ## ------------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ expected_sql_dir = f"{expected_results_dir}/expected_sql"
 all_template_files = {
     "tower_env": {
         "extension": ".env",
-        "read_type": parse_key_value_file,
+        "read_type": FileHelper.parse_kv,
         "content": "",
         "filepath": "",
         "validation_type": "kv",
@@ -101,7 +101,7 @@ all_template_files = {
     },
     "data_studios_env": {
         "extension": ".env",
-        "read_type": parse_key_value_file,
+        "read_type": FileHelper.parse_kv,
         "content": "",
         "filepath": "",
         "validation_type": "kv",
@@ -137,7 +137,7 @@ all_template_files = {
     },
     "groundswell_env": {
         "extension": ".env",
-        "read_type": parse_key_value_file,
+        "read_type": FileHelper.parse_kv,
         "content": "",
         "filepath": "",
         "validation_type": "kv",

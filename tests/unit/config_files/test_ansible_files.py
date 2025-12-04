@@ -8,7 +8,8 @@ from tests.datafiles.expected_results.expected_results import (
     generate_assertions_all_disabled,
 )
 from tests.utils.filehandling import FileHelper
-from tests.utils.local import generate_tc_files, prepare_plan
+from tests.utils.local import generate_tc_files
+from tests.utils.terraform.executor import prepare_plan
 
 
 ## ------------------------------------------------------------------------------------

@@ -33,3 +33,6 @@ exclude = [
 target-version = "py313"
 line-length = 120
 indent-width = 4
+
+# Avoid trying to fix flake8-bugbear (`B`) violations and unused imports (`F401`)
+unfixable = ["B", "F401"]

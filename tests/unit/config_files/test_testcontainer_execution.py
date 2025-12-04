@@ -14,7 +14,8 @@ from testcontainers.postgres import PostgresContainer
 
 from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
-from tests.utils.local import generate_tc_files, prepare_plan
+from tests.utils.local import generate_tc_files
+from tests.utils.terraform.executor import prepare_plan
 
 
 ## ------------------------------------------------------------------------------------
