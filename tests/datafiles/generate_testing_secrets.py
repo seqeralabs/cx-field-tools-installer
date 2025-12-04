@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 
 import json
-import os
-from pathlib import Path
-import glob
 import sys
+from pathlib import Path
 
 # Add the project root to Python path to avoid import conflicts
 project_root = Path(__file__).parent.parent.parent.resolve()
 sys.path.insert(0, str(project_root))
 
-from tests.utils.local import root
+from tests.utils.local import ROOT
 
 
 def modify_all_ssm_json_for_testing():
@@ -20,8 +18,8 @@ def modify_all_ssm_json_for_testing():
     """
 
     # Get the project root directory
-    templates_dir = Path(root) / "templates"
-    test_data_dir = Path(root) / "tests" / "datafiles" / "secrets"
+    templates_dir = Path(ROOT) / "templates"
+    test_data_dir = Path(ROOT) / "tests" / "datafiles" / "secrets"
     Path(test_data_dir).mkdir(parents=True, exist_ok=True)
 
     # Find all SSM JSON files
@@ -47,7 +45,9 @@ def modify_all_ssm_json_for_testing():
         for key, value in data.items():
             if "ssm_key" in value:
                 original_ssm_key = value["ssm_key"]
-                modified_ssm_key = original_ssm_key.replace("/tower-template", "/tower-testing")
+                modified_ssm_key = original_ssm_key.replace(
+                    "/tower-template", "/tower-testing"
+                )
                 value["ssm_key"] = modified_ssm_key
                 print(f"Modified {key}: {original_ssm_key} -> {modified_ssm_key}")
 
@@ -113,11 +113,15 @@ def modify_all_ssm_json_for_testing():
         # AWS credentials
         seqerakit_data["TOWER_AWS_USER"]["value"] = "test_aws_user"
         seqerakit_data["TOWER_AWS_PASSWORD"]["value"] = "test_aws_password"
-        seqerakit_data["TOWER_AWS_ROLE"]["value"] = "arn:aws:iam::123456789012:role/test-role"
+        seqerakit_data["TOWER_AWS_ROLE"]["value"] = (
+            "arn:aws:iam::123456789012:role/test-role"
+        )
 
         # GitHub credentials
         seqerakit_data["TOWER_GITHUB_USER"]["value"] = "test_github_user"
-        seqerakit_data["TOWER_GITHUB_TOKEN"]["value"] = "ghp_test_github_token_replace_me"
+        seqerakit_data["TOWER_GITHUB_TOKEN"]["value"] = (
+            "ghp_test_github_token_replace_me"
+        )
 
         # Docker credentials
         seqerakit_data["TOWER_DOCKER_USER"]["value"] = "test_docker_user"
@@ -125,8 +129,12 @@ def modify_all_ssm_json_for_testing():
 
         # CodeCommit credentials
         seqerakit_data["TOWER_CODECOMMIT_USER"]["value"] = "test_codecommit_user"
-        seqerakit_data["TOWER_CODECOMMIT_PASSWORD"]["value"] = "test_codecommit_password"
-        seqerakit_data["TOWER_CODECOMMIT_BASEURL"]["value"] = "https://git-codecommit.us-east-1.amazonaws.com"
+        seqerakit_data["TOWER_CODECOMMIT_PASSWORD"]["value"] = (
+            "test_codecommit_password"
+        )
+        seqerakit_data["TOWER_CODECOMMIT_BASEURL"]["value"] = (
+            "https://git-codecommit.us-east-1.amazonaws.com"
+        )
 
     # WAVE LITE VALUES (ssm_sensitive_values_wave_lite.json)
     if "ssm_sensitive_values_wave_lite" in all_data:
@@ -134,12 +142,18 @@ def modify_all_ssm_json_for_testing():
 
         # Wave Lite database credentials
         wave_lite_data["WAVE_LITE_DB_MASTER_USER"]["value"] = "wave_lite_test_master"
-        wave_lite_data["WAVE_LITE_DB_MASTER_PASSWORD"]["value"] = "wave_lite_test_master_password"
+        wave_lite_data["WAVE_LITE_DB_MASTER_PASSWORD"]["value"] = (
+            "wave_lite_test_master_password"
+        )
         wave_lite_data["WAVE_LITE_DB_LIMITED_USER"]["value"] = "wave_lite_test_limited"
-        wave_lite_data["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"] = "wave_lite_test_limited_password"
+        wave_lite_data["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"] = (
+            "wave_lite_test_limited_password"
+        )
 
         # Wave Lite Redis auth
-        wave_lite_data["WAVE_LITE_REDIS_AUTH"]["value"] = "wave_lite_test_redis_password"
+        wave_lite_data["WAVE_LITE_REDIS_AUTH"]["value"] = (
+            "wave_lite_test_redis_password"
+        )
 
     # # =======================================================================
     # # End of value assignment section
@@ -160,8 +174,8 @@ def modify_all_ssm_json_for_testing():
 
         print(f"Created: {output_file}")
         print(f"  - Modified {len(data)} secrets")
-        print(f"  - Changed all SSM keys from '/tower-template' to '/tower-testing'")
-        print(f"  - Updated all values for testing environment")
+        print("  - Changed all SSM keys from '/tower-template' to '/tower-testing'")
+        print("  - Updated all values for testing environment")
 
     print(f"\nAll modified template files saved to: {templates_dir}")
     print(f"Total files created: {len(all_data)}")

@@ -8,12 +8,12 @@ import os
 import sys
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List
 
-from tests.utils.local import root
+from tests.utils.config import ROOT
 
 
 class LogLevel(Enum):
@@ -27,7 +27,12 @@ class LogLevel(Enum):
 class PytestStructuredLogger:
     """Centralized logger for pytest execution data in JSON Lines format."""
 
-    def __init__(self, log_file: str = "", enabled: bool = True, log_level: LogLevel = LogLevel.INFO):
+    def __init__(
+        self,
+        log_file: str = "",
+        enabled: bool = True,
+        log_level: LogLevel = LogLevel.INFO,
+    ):
         self.enabled = enabled
         if not self.enabled:
             return
@@ -111,7 +116,9 @@ class PytestStructuredLogger:
         )
         self.logger.info(json.dumps(entry))
 
-    def log_session_end(self, passed: int, failed: int, skipped: int, errors: int, duration: float):
+    def log_session_end(
+        self, passed: int, failed: int, skipped: int, errors: int, duration: float
+    ):
         """Log test session end with summary."""
         if not self.enabled:
             return
@@ -129,7 +136,13 @@ class PytestStructuredLogger:
         )
         self.logger.info(json.dumps(entry))
 
-    def log_test_start(self, test_path: str, markers: List[str] = [], fixtures: List[str] = [], parametrize: str = ""):
+    def log_test_start(
+        self,
+        test_path: str,
+        markers: List[str] = [],
+        fixtures: List[str] = [],
+        parametrize: str = "",
+    ):
         """Log individual test start."""
         if not self.enabled:
             return
@@ -138,7 +151,11 @@ class PytestStructuredLogger:
             "test_start",
             # test_path=test_path.replace(root, "<PROJECT_ROOT>"),
             test_path=test_path,
-            metadata={"markers": markers, "fixtures": fixtures, "parametrize": parametrize},
+            metadata={
+                "markers": markers,
+                "fixtures": fixtures,
+                "parametrize": parametrize,
+            },
         )
         self.logger.info(json.dumps(entry))
 
@@ -147,7 +164,9 @@ class PytestStructuredLogger:
         if not self.enabled:
             return
 
-        entry = self._create_base_entry("test_end", test_path=test_path, duration=duration)
+        entry = self._create_base_entry(
+            "test_end", test_path=test_path, duration=duration
+        )
         self.logger.info(json.dumps(entry))
 
     def log_custom_event(self, event_type: str, **kwargs):
@@ -177,13 +196,17 @@ class PytestStructuredLogger:
         entry = self._create_base_entry(
             "test_result",
             # test_path=test_path,
-            test_path=f"{root}/tests/{test_path}",
+            test_path=f"{ROOT}/tests/{test_path}",
             status=status,
             duration=duration,
             stdout=stdout,
             stderr=stderr,
             failure_reason=failure_reason,
-            metadata={"markers": markers, "fixtures": fixtures, "parametrize": parametrize},
+            metadata={
+                "markers": markers,
+                "fixtures": fixtures,
+                "parametrize": parametrize,
+            },
         )
         self.logger.info(json.dumps(entry))
 
@@ -203,14 +226,18 @@ def get_logger(log_file: str = "") -> PytestStructuredLogger:
     else:
         enabled = True
 
-    logger_level_setting = os.environ.get("PYTEST_STRUCTURED_LOGGING_LEVEL", LogLevel.INFO.name)
+    logger_level_setting = os.environ.get(
+        "PYTEST_STRUCTURED_LOGGING_LEVEL", LogLevel.INFO.name
+    )
     if logger_level_setting != LogLevel.INFO.name:
         log_level = LogLevel[logger_level_setting]
     else:
         log_level = LogLevel.INFO
 
     if _logger_instance is None:
-        _logger_instance = PytestStructuredLogger(log_file=log_file, enabled=enabled, log_level=log_level)
+        _logger_instance = PytestStructuredLogger(
+            log_file=log_file, enabled=enabled, log_level=log_level
+        )
 
     return _logger_instance
 

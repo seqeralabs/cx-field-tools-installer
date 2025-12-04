@@ -1,35 +1,38 @@
 import sys
+
 import pytest
 
-from tests.datafiles.expected_results.expected_results import assertion_modifiers_template
-from tests.datafiles.expected_results.expected_results import generate_assertions_all_active, generate_assertions_all_disabled
-
+from tests.datafiles.expected_results.expected_results import (
+    assertion_modifiers_template,
+    generate_assertions_all_active,
+    generate_assertions_all_disabled,
+)
 from tests.utils.config import expected_sql_dir
 from tests.utils.filehandling import read_file
-from tests.utils.local import prepare_plan, generate_tc_files, verify_all_assertions
-
+from tests.utils.local import generate_tc_files, prepare_plan, verify_all_assertions
 
 ## ------------------------------------------------------------------------------------
 ## MARK: Baseline ON/OFF
 ## ------------------------------------------------------------------------------------
-## This establishes a baseline set of files using testing defaults: 
-##    - ALB is active, 
+## This establishes a baseline set of files using testing defaults:
+##    - ALB is active,
 ##    - Containerized DB / Redis
 ##    - Wave Lite & Groundswell & Data Explorer are active / inactive.
+
 
 @pytest.mark.local
 def test_baseline_alb_all_enabled(session_setup):
     """Conduct baseline assertions when all SP services turned on."""
 
-    tf_modifiers        = """#NONE"""
-    plan                           = prepare_plan(tf_modifiers)
+    tf_modifiers = """#NONE"""
+    plan = prepare_plan(tf_modifiers)
 
     # Create all config files since this scenario is used often. Good bang-for-buck. No assertion_modifiers
-    desired_files       = []
+    desired_files = []
     assertion_modifiers = assertion_modifiers_template()
 
-    tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
-    tc_assertions       = generate_assertions_all_active(tc_files, assertion_modifiers)
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     verify_all_assertions(tc_files, tc_assertions)
 
@@ -49,13 +52,13 @@ def test_baseline_alb_all_disabled(session_setup):
         flag_use_wave_lite                  = false
         flag_allow_aws_instance_credentials = false
     """
-    plan                           = prepare_plan(tf_modifiers)
+    plan = prepare_plan(tf_modifiers)
 
     # Create all config files since this scenario is used often. Good bang-for-buck. No assertion_modifiers
-    desired_files       = []
+    desired_files = []
     assertion_modifiers = assertion_modifiers_template()
-    tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
-    tc_assertions       = generate_assertions_all_disabled(tc_files, assertion_modifiers)
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     verify_all_assertions(tc_files, tc_assertions)
 
@@ -77,20 +80,18 @@ def test_private_ca_reverse_proxy_active(session_setup):
         flag_use_private_cacert          = true
         flag_do_not_use_https            = false
     """
-    plan                = prepare_plan(tf_modifiers)
+    plan = prepare_plan(tf_modifiers)
 
-    desired_files       = ["docker_compose"]
+    desired_files = ["docker_compose"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["docker_compose"] = {
-        "present": {
-            "services.reverseproxy.labels.seqera" : 'reverseproxy'
-        },
-        "omitted": {}
+        "present": {"services.reverseproxy.labels.seqera": "reverseproxy"},
+        "omitted": {},
     }
-    
-    tc_assertions       = generate_assertions_all_active(tc_files, assertion_modifiers)
+
+    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
     verify_all_assertions(tc_files, tc_assertions)
 
 
@@ -111,27 +112,25 @@ def test_studio_path_routing_enabled(session_setup):
         flag_studio_enable_path_routing = true
         data_studio_path_routing_url    = "connect-example.com"
     """
-    plan                = prepare_plan(tf_modifiers)
+    plan = prepare_plan(tf_modifiers)
 
-    desired_files       = ["tower_env", "data_studios_env"]
+    desired_files = ["tower_env", "data_studios_env"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
-            "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING"     : "true",
-            "TOWER_DATA_STUDIO_CONNECT_URL"             : "https://connect-example.com"
+            "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING": "true",
+            "TOWER_DATA_STUDIO_CONNECT_URL": "https://connect-example.com",
         },
-        "omitted": {}
+        "omitted": {},
     }
 
     assertion_modifiers["data_studios_env"] = {
-        "present": {
-            "CONNECT_PROXY_URL"                         : "https://connect-example.com"
-        },
-        "omitted": {}
+        "present": {"CONNECT_PROXY_URL": "https://connect-example.com"},
+        "omitted": {},
     }
-    tc_assertions       = generate_assertions_all_active(tc_files, assertion_modifiers)
+    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     verify_all_assertions(tc_files, tc_assertions)
 
@@ -153,45 +152,45 @@ def test_new_db_all_enabled(session_setup):
         flag_use_existing_external_db   = false
         flag_use_container_db           = false
     """
-    plan                = prepare_plan(tf_modifiers)
+    plan = prepare_plan(tf_modifiers)
 
-    desired_files       = ["tower_env", "groundswell_env", "wave_lite_yml", "docker_compose"]
+    desired_files = ["tower_env", "groundswell_env", "wave_lite_yml", "docker_compose"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
-            "TOWER_DB_URL"                : "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
         },
-        "omitted": {}
+        "omitted": {},
     }
 
     assertion_modifiers["groundswell_env"] = {
         "present": {
-            "TOWER_DB_URL"                : "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
         },
-        "omitted": {}
+        "omitted": {},
     }
 
     assertion_modifiers["wave_lite_yml"] = {
         "present": {
-            'wave.db.uri'                 : "jdbc:postgresql://mock.wave-db.com:5432/wave",
+            "wave.db.uri": "jdbc:postgresql://mock.wave-db.com:5432/wave",
         },
-        "omitted": {}
+        "omitted": {},
     }
 
     assertion_modifiers["docker_compose"] = {
         "present": {
-            "services.wave-lite.labels.seqera"                  : 'wave-lite',
-            "services.wave-lite-reverse-proxy.labels.seqera"    : 'wave-lite-reverse-proxy',
-            "services.wave-redis.labels.seqera"                 : 'wave-redis',
+            "services.wave-lite.labels.seqera": "wave-lite",
+            "services.wave-lite-reverse-proxy.labels.seqera": "wave-lite-reverse-proxy",
+            "services.wave-redis.labels.seqera": "wave-redis",
         },
         "omitted": {
-            "services.wave-db"                  : '',
-        }
+            "services.wave-db": "",
+        },
     }
 
-    tc_assertions       = generate_assertions_all_active(tc_files, assertion_modifiers)
+    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
     verify_all_assertions(tc_files, tc_assertions)
 
 
@@ -221,31 +220,25 @@ def test_new_db_all_disabled(session_setup):
         flag_use_container_db               = false
         flag_allow_aws_instance_credentials = false
     """
-    plan                = prepare_plan(tf_modifiers)
+    plan = prepare_plan(tf_modifiers)
 
-    desired_files       = ["tower_env", "groundswell_env", "wave_lite_yml"]
+    desired_files = ["tower_env", "groundswell_env", "wave_lite_yml"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
-            "TOWER_DB_URL"                : "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
         },
-        "omitted": {}
+        "omitted": {},
     }
 
     # No need for custom assertion_modifiers -- core testcase handles this one.
-    assertion_modifiers["groundswell_env"] = {
-        "present": {},
-        "omitted": {}
-    }
+    assertion_modifiers["groundswell_env"] = {"present": {}, "omitted": {}}
 
     # No need for custom assertion_modifiers -- core testcase handles this one.
-    assertion_modifiers["wave_lite_yml"] = {
-        "present": {},
-        "omitted": {}
-    }
-    tc_assertions       = generate_assertions_all_disabled(tc_files, assertion_modifiers)
+    assertion_modifiers["wave_lite_yml"] = {"present": {}, "omitted": {}}
+    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     verify_all_assertions(tc_files, tc_assertions)
 
@@ -268,35 +261,35 @@ def test_existing_db_all_enabled(session_setup):
         flag_use_container_db           = false
         tower_db_url                        = "existing.tower-db.com"
     """
-    plan                = prepare_plan(tf_modifiers)
+    plan = prepare_plan(tf_modifiers)
 
-    desired_files       = ["tower_env", "groundswell_env", "wave_lite_yml"]
+    desired_files = ["tower_env", "groundswell_env", "wave_lite_yml"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
-            "TOWER_DB_URL"                : "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
         },
-        "omitted": {}
+        "omitted": {},
     }
 
     assertion_modifiers["groundswell_env"] = {
         "present": {
-            "TOWER_DB_URL"                : "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
         },
-        "omitted": {}
+        "omitted": {},
     }
 
     # NOTE: Current as of Aug 13/2025, Wave-Lite does not support existing db flow.
     # TODO: Extend functionality.
     assertion_modifiers["wave_lite_yml"] = {
         "present": {
-            'wave.db.uri'                 : "jdbc:postgresql://wave-db:5432/wave",
+            "wave.db.uri": "jdbc:postgresql://wave-db:5432/wave",
         },
-        "omitted": {}
+        "omitted": {},
     }
-    tc_assertions       = generate_assertions_all_active(tc_files, assertion_modifiers)
+    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     verify_all_assertions(tc_files, tc_assertions)
 
@@ -328,31 +321,25 @@ def test_existing_db_all_disabled(session_setup):
         tower_db_url                        = "existing.tower-db.com"
         flag_allow_aws_instance_credentials = false
     """
-    plan                = prepare_plan(tf_modifiers)
+    plan = prepare_plan(tf_modifiers)
 
-    desired_files       = ["tower_env", "groundswell_env", "wave_lite_yml"]
+    desired_files = ["tower_env", "groundswell_env", "wave_lite_yml"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
-            "TOWER_DB_URL"                : "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
         },
-        "omitted": {}
+        "omitted": {},
     }
 
     # No need for custom assertion_modifiers -- core testcase handles this one.
-    assertion_modifiers["groundswell_env"] = {
-        "present": {},
-        "omitted": {}
-    }
+    assertion_modifiers["groundswell_env"] = {"present": {}, "omitted": {}}
 
     # No need for custom assertion_modifiers -- core testcase handles this one.
-    assertion_modifiers["wave_lite_yml"] = {
-        "present": {},
-        "omitted": {}
-    }
-    tc_assertions       = generate_assertions_all_disabled(tc_files, assertion_modifiers)
+    assertion_modifiers["wave_lite_yml"] = {"present": {}, "omitted": {}}
+    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     verify_all_assertions(tc_files, tc_assertions)
 
@@ -373,45 +360,45 @@ def test_new_redis_all_enabled(session_setup):
         flag_create_external_redis                      = true
         flag_use_container_redis                        = false
     """
-    plan                = prepare_plan(tf_modifiers)
+    plan = prepare_plan(tf_modifiers)
 
-    desired_files       = ["tower_env", "data_studios_env", "wave_lite_yml", "docker_compose"]
+    desired_files = ["tower_env", "data_studios_env", "wave_lite_yml", "docker_compose"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
-            "TOWER_REDIS_URL"                : "redis://mock.tower-redis.com:6379",
+            "TOWER_REDIS_URL": "redis://mock.tower-redis.com:6379",
         },
-        "omitted": {}
+        "omitted": {},
     }
 
     assertion_modifiers["data_studios_env"] = {
         "present": {
-            "CONNECT_REDIS_ADDRESS"          : "mock.tower-redis.com:6379",
+            "CONNECT_REDIS_ADDRESS": "mock.tower-redis.com:6379",
         },
-        "omitted": {}
+        "omitted": {},
     }
 
     assertion_modifiers["wave_lite_yml"] = {
         "present": {
-            'redis.uri'                      : "rediss://mock.wave-redis.com:6379",
+            "redis.uri": "rediss://mock.wave-redis.com:6379",
         },
-        "omitted": {}
+        "omitted": {},
     }
 
     assertion_modifiers["docker_compose"] = {
         "present": {
-            "services.wave-lite.labels.seqera"                  : 'wave-lite',
-            "services.wave-lite-reverse-proxy.labels.seqera"    : 'wave-lite-reverse-proxy',
-            "services.wave-db.labels.seqera"                    : 'wave-db',
+            "services.wave-lite.labels.seqera": "wave-lite",
+            "services.wave-lite-reverse-proxy.labels.seqera": "wave-lite-reverse-proxy",
+            "services.wave-db.labels.seqera": "wave-db",
         },
         "omitted": {
-            "services.wave-redis"               : '',
-        }
+            "services.wave-redis": "",
+        },
     }
 
-    tc_assertions       = generate_assertions_all_active(tc_files, assertion_modifiers)
+    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
     verify_all_assertions(tc_files, tc_assertions)
 
 
@@ -440,35 +427,35 @@ def test_new_redis_all_disabled(session_setup):
         flag_use_container_redis            = false
         flag_allow_aws_instance_credentials = false
     """
-    plan                = prepare_plan(tf_modifiers)
+    plan = prepare_plan(tf_modifiers)
 
-    desired_files       = ["tower_env", "data_studios_env", "wave_lite_yml"]
+    desired_files = ["tower_env", "data_studios_env", "wave_lite_yml"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
-    assertion_modifiers["tower_env"]= {
+    assertion_modifiers["tower_env"] = {
         "present": {
-            "TOWER_REDIS_URL"                : "redis://mock.tower-redis.com:6379",
+            "TOWER_REDIS_URL": "redis://mock.tower-redis.com:6379",
         },
-        "omitted": {}
+        "omitted": {},
     }
 
     # When disabled, none of the settings are present other than comment explaining why.
     # TODO: Harmonize behaviour with other files like Groundswell / Wave-Lite.
-    assertion_modifiers["data_studios_env"]= {
+    assertion_modifiers["data_studios_env"] = {
         "present": {},
         "omitted": {
-            "CONNECT_REDIS_ADDRESS"          : "N/A",
-        }
+            "CONNECT_REDIS_ADDRESS": "N/A",
+        },
     }
 
-    assertion_modifiers["wave_lite_yml"]= {
+    assertion_modifiers["wave_lite_yml"] = {
         "present": {
-            'redis.uri'                      : "N/A",
+            "redis.uri": "N/A",
         },
-        "omitted": {}
+        "omitted": {},
     }
-    tc_assertions       = generate_assertions_all_disabled(tc_files, assertion_modifiers)
+    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     verify_all_assertions(tc_files, tc_assertions)
 
@@ -497,29 +484,28 @@ def test_seqera_hosted_wave_active(session_setup):
         flag_use_wave                       = true
         wave_server_url                     = "wave.seqera.io"
     """
-    plan                = prepare_plan(tf_modifiers)
+    plan = prepare_plan(tf_modifiers)
 
-    desired_files       = ["tower_env", "data_studios_env", "wave_lite_yml"]
+    desired_files = ["tower_env", "data_studios_env", "wave_lite_yml"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
-    assertion_modifiers["tower_env"]= {
+    assertion_modifiers["tower_env"] = {
         "present": {
-            "WAVE_SERVER_URL"                : "https://wave.seqera.io",
+            "WAVE_SERVER_URL": "https://wave.seqera.io",
         },
-        "omitted": {}
+        "omitted": {},
     }
 
-    assertion_modifiers["wave_lite_yml"]= {
+    assertion_modifiers["wave_lite_yml"] = {
         "present": {
-            'wave.server.url'                : "https://wave.seqera.io",
+            "wave.server.url": "https://wave.seqera.io",
         },
-        "omitted": {}
+        "omitted": {},
     }
-    tc_assertions       = generate_assertions_all_disabled(tc_files, assertion_modifiers)
+    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     verify_all_assertions(tc_files, tc_assertions)
-
 
 
 ## ------------------------------------------------------------------------------------
@@ -537,17 +523,17 @@ def test_wave_sql_file_content(session_setup):
     tf_modifiers = """#NONE"""
     ## SETUP
     ## ========================================================================================
-    plan                = prepare_plan(tf_modifiers)
+    plan = prepare_plan(tf_modifiers)
 
-    desired_files       = ["wave_lite_rds"]
+    desired_files = ["wave_lite_rds"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files            = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
     # No assertions for this since it's file-comparison based.
 
     ## COMPARISON
     ## ========================================================================================
-    wave_lite_rds         = read_file(f"{tc_files['wave_lite_rds']['filepath']}")
-    ref_wave_lite_rds     = read_file(f"{expected_sql_dir}/wave-lite-rds.sql")
+    wave_lite_rds = read_file(f"{tc_files['wave_lite_rds']['filepath']}")
+    ref_wave_lite_rds = read_file(f"{expected_sql_dir}/wave-lite-rds.sql")
 
     assert ref_wave_lite_rds == wave_lite_rds

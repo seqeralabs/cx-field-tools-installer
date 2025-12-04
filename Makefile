@@ -38,7 +38,7 @@ test_cleanse:
 	@rm tests/datafiles/secrets/*.json 
 
 generate_test_data:
-	@echo "Generating test data and deleting cached plan files."
+	@echo "Generating test data."
 	@cp templates/TEMPLATE_terraform.tfvars tests/datafiles/terraform.tfvars
 	@cd tests/datafiles && ./generate_core_data.sh
 

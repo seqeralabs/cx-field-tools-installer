@@ -9,18 +9,23 @@ import pytest
 # print(f"{base_import_dir=}")
 # if base_import_dir not in sys.path:
 #     sys.path.append(str(base_import_dir))
-
 from scripts.installer.utils.purge_folders import delete_pycache_folders
-
-from tests.utils.config import root, tfvars_original_path, tfvars_backup_path
-from tests.utils.config import tfvars_source, tfvars_target
-from tests.utils.config import tfvars_override_source, tfvars_override_target
-from tests.utils.config import tc_override_target
-from tests.utils.config import outputs_source, outputs_target
+from tests.utils.config import (
+    OVERRIDE_AUTO_TFVARS,
+    ROOT,
+    outputs_source,
+    outputs_target,
+    tfvars_backup_path,
+    tfvars_original_path,
+    tfvars_override_source,
+    tfvars_override_target,
+    tfvars_source,
+    tfvars_target,
+)
 from tests.utils.filehandling import copy_file, move_file
-from tests.utils.local import prepare_plan, run_terraform_destroy, execute_subprocess
+from tests.utils.local import prepare_plan
 from tests.utils.pytest_logger import get_logger
-
+from tests.utils.terraform.executor import TF, execute_subprocess
 
 """
 EXPLANATION
@@ -50,7 +55,7 @@ def session_setup():
     # Create a fresh copy of the base testing terraform.tfvars file.
     subprocess.run("make generate_test_data", shell=True, check=True)
 
-    print(f"\nBacking up terraform.tfvars & Loading test tfvars (base) artefacts.")
+    print("\nBacking up terraform.tfvars & Loading test tfvars (base) artefacts.")
     move_file(tfvars_original_path, tfvars_backup_path)
 
     # Swap in test tfvars, base-overrides tfvars, and testing-specific outputs (e.g. locals).
@@ -60,7 +65,7 @@ def session_setup():
 
     # Prepare JSONified 009 (via hcl2json container)
     # CLI_command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
-    command = f"docker run --rm -v {root}:/tmp ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:vendored /tmp/009_define_file_templates.tf > {root}/009_define_file_templates.json"
+    command = f"docker run --rm -v {ROOT}:/tmp ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:vendored /tmp/009_define_file_templates.tf > {ROOT}/009_define_file_templates.json"
     result = execute_subprocess(command)
 
     yield
@@ -73,15 +78,15 @@ def session_setup():
 
     # Remove testing files, delete __pycache__ folders, restore origin tfvars.
     for file in [
-        tc_override_target,
+        OVERRIDE_AUTO_TFVARS,
         tfvars_target,
         tfvars_override_target,
         outputs_target,
-        "009_define_file_templates.json"
+        "009_define_file_templates.json",
     ]:
         Path(file).unlink(missing_ok=True)
 
-    delete_pycache_folders(root)
+    delete_pycache_folders(ROOT)
 
     # Restore original tfvars
     move_file(tfvars_backup_path, tfvars_original_path)
@@ -112,7 +117,7 @@ def teardown_tf_state_all():
 
     yield
 
-    run_terraform_destroy()
+    TF.destroy()
 
 
 ## ------------------------------------------------------------------------------------
@@ -193,7 +198,9 @@ def pytest_deselected(items):
         deselection_reasons.append(f"Presence of marker: {global_marker_expression[0]}")
 
     # Log deselection information
-    logger.log_deselected(deselected_count=deselected_count, reasons=deselection_reasons)
+    logger.log_deselected(
+        deselected_count=deselected_count, reasons=deselection_reasons
+    )
 
 
 def pytest_sessionfinish(session, exitstatus):
@@ -214,7 +221,9 @@ def pytest_sessionfinish(session, exitstatus):
     # Calculate session duration
     duration = time.time() - logger.session_start_time
 
-    logger.log_session_end(passed=passed, failed=failed, skipped=skipped, errors=errors, duration=duration)
+    logger.log_session_end(
+        passed=passed, failed=failed, skipped=skipped, errors=errors, duration=duration
+    )
 
 
 def pytest_runtest_setup(item):
@@ -235,7 +244,12 @@ def pytest_runtest_setup(item):
     if hasattr(item, "callspec") and item.callspec:
         parametrize = str(item.callspec.params)
 
-    logger.log_test_start(test_path=test_path, markers=markers, fixtures=fixtures, parametrize=parametrize or "")
+    logger.log_test_start(
+        test_path=test_path,
+        markers=markers,
+        fixtures=fixtures,
+        parametrize=parametrize or "",
+    )
 
 
 def pytest_runtest_teardown(item, nextitem):
@@ -261,10 +275,19 @@ def pytest_runtest_logreport(report):
     if report.when != "call":
         return
 
-    test_path = str(report.fspath) + "::" + report.head_line if hasattr(report, "head_line") else str(report.nodeid)
+    test_path = (
+        str(report.fspath) + "::" + report.head_line
+        if hasattr(report, "head_line")
+        else str(report.nodeid)
+    )
 
     # Map pytest outcomes to our status
-    status_map = {"passed": "PASSED", "failed": "FAILED", "skipped": "SKIPPED", "error": "ERROR"}
+    status_map = {
+        "passed": "PASSED",
+        "failed": "FAILED",
+        "skipped": "SKIPPED",
+        "error": "ERROR",
+    }
     status = status_map.get(report.outcome, "UNKNOWN")
 
     # Get captured output
@@ -287,7 +310,11 @@ def pytest_runtest_logreport(report):
 
     if hasattr(report, "item"):
         markers = [mark.name for mark in report.item.iter_markers()]
-        fixtures = list(report.item.fixturenames) if hasattr(report.item, "fixturenames") else []
+        fixtures = (
+            list(report.item.fixturenames)
+            if hasattr(report.item, "fixturenames")
+            else []
+        )
         if hasattr(report.item, "callspec") and report.item.callspec:
             parametrize = str(report.item.callspec.params)
 
