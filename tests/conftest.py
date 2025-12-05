@@ -1,3 +1,4 @@
+import os
 import subprocess
 import time
 from pathlib import Path
@@ -9,18 +10,12 @@ import pytest
 # print(f"{base_import_dir=}")
 # if base_import_dir not in sys.path:
 #     sys.path.append(str(base_import_dir))
-
 from scripts.installer.utils.purge_folders import delete_pycache_folders
-
-from tests.utils.config import root, tfvars_original_path, tfvars_backup_path
-from tests.utils.config import tfvars_source, tfvars_target
-from tests.utils.config import tfvars_override_source, tfvars_override_target
-from tests.utils.config import tc_override_target
-from tests.utils.config import outputs_source, outputs_target
-from tests.utils.filehandling import copy_file, move_file
-from tests.utils.local import prepare_plan, run_terraform_destroy, execute_subprocess
+from tests.utils.config import FP
+from tests.utils.filehandling import FileHelper
+from tests.utils.preflight.preflight import check_aws_sso_token
 from tests.utils.pytest_logger import get_logger
-
+from tests.utils.terraform.executor import TF, execute_subprocess, prepare_plan
 
 """
 EXPLANATION
@@ -47,20 +42,31 @@ testing loop to:
 ## ------------------------------------------------------------------------------------
 @pytest.fixture(scope="session")
 def session_setup():
+    # Confirm the tester has a valid AWS SSO login token or else tests will fail.
+    # TODO - Fix -- this failed. My token was not valid but the STS call was returning successfully? Go figure.
+    check_aws_sso_token()
+
     # Create a fresh copy of the base testing terraform.tfvars file.
     subprocess.run("make generate_test_data", shell=True, check=True)
 
-    print(f"\nBacking up terraform.tfvars & Loading test tfvars (base) artefacts.")
-    move_file(tfvars_original_path, tfvars_backup_path)
+    print("\nBacking up terraform.tfvars.")
+    FileHelper.move_file(FP.TFVARS_BASE, FP.TFVARS_BACKUP)
 
-    # Swap in test tfvars, base-overrides tfvars, and testing-specific outputs (e.g. locals).
-    copy_file(tfvars_source, tfvars_target)
-    copy_file(tfvars_override_source, tfvars_override_target)
-    copy_file(outputs_source, outputs_target)
+    # Swap in test tfvars (base and base-override), and testing-specific outputs (e.g. locals).
+    print("\nLoading test tfvars and output artefacts.")
+    FileHelper.copy_file(FP.TFVARS_TEST_SRC, FP.TFVARS_TEST_DST)
+    FileHelper.copy_file(FP.TFVARS_BASE_OVERRIDE_SRC, FP.TFVARS_BASE_OVERRIDE_DST)
+    FileHelper.copy_file(FP.OUTPUTS_SRC, FP.OUTPUTS_DST)
+
+    # Prepare plan cache directory
+    os.makedirs(FP.CACHE_PLAN_DIR, exist_ok=True)
 
     # Prepare JSONified 009 (via hcl2json container)
     # CLI_command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
-    command = f"docker run --rm -v {root}:/tmp ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:vendored /tmp/009_define_file_templates.tf > {root}/009_define_file_templates.json"
+    command = (
+        f"docker run --rm -v {FP.ROOT}:/tmp ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:vendored"
+        f" /tmp/009_define_file_templates.tf > {FP.ROOT}/009_define_file_templates.json"
+    )
     result = execute_subprocess(command)
 
     yield
@@ -72,19 +78,21 @@ def session_setup():
     # run_terraform_destroy()
 
     # Remove testing files, delete __pycache__ folders, restore origin tfvars.
-    for file in [
-        tc_override_target,
-        tfvars_target,
-        tfvars_override_target,
-        outputs_target,
-        "009_define_file_templates.json"
-    ]:
+    files_to_purge = [
+        FP.TFVARS_AUTO_OVERRIDE_DST,
+        FP.TFVARS_BASE,
+        FP.TFVARS_BASE_OVERRIDE_DST,
+        FP.OUTPUTS_DST,
+        "009_define_file_templates.json",
+    ]
+
+    for file in files_to_purge:
         Path(file).unlink(missing_ok=True)
 
-    delete_pycache_folders(root)
+    delete_pycache_folders(FP.ROOT)
 
     # Restore original tfvars
-    move_file(tfvars_backup_path, tfvars_original_path)
+    FileHelper.move_file(FP.TFVARS_BACKUP, FP.TFVARS_BASE)
 
 
 @pytest.fixture(scope="session")  # function
@@ -112,7 +120,7 @@ def teardown_tf_state_all():
 
     yield
 
-    run_terraform_destroy()
+    TF.destroy()
 
 
 ## ------------------------------------------------------------------------------------
@@ -235,7 +243,12 @@ def pytest_runtest_setup(item):
     if hasattr(item, "callspec") and item.callspec:
         parametrize = str(item.callspec.params)
 
-    logger.log_test_start(test_path=test_path, markers=markers, fixtures=fixtures, parametrize=parametrize or "")
+    logger.log_test_start(
+        test_path=test_path,
+        markers=markers,
+        fixtures=fixtures,
+        parametrize=parametrize or "",
+    )
 
 
 def pytest_runtest_teardown(item, nextitem):
@@ -264,7 +277,12 @@ def pytest_runtest_logreport(report):
     test_path = str(report.fspath) + "::" + report.head_line if hasattr(report, "head_line") else str(report.nodeid)
 
     # Map pytest outcomes to our status
-    status_map = {"passed": "PASSED", "failed": "FAILED", "skipped": "SKIPPED", "error": "ERROR"}
+    status_map = {
+        "passed": "PASSED",
+        "failed": "FAILED",
+        "skipped": "SKIPPED",
+        "error": "ERROR",
+    }
     status = status_map.get(report.outcome, "UNKNOWN")
 
     # Get captured output

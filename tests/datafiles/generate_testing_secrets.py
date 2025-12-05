@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 
 import json
-import os
-from pathlib import Path
-import glob
 import sys
+from pathlib import Path
 
 # Add the project root to Python path to avoid import conflicts
 project_root = Path(__file__).parent.parent.parent.resolve()
 sys.path.insert(0, str(project_root))
 
-from tests.utils.local import root
+from tests.utils.config import FP
 
 
 def modify_all_ssm_json_for_testing():
@@ -20,8 +18,8 @@ def modify_all_ssm_json_for_testing():
     """
 
     # Get the project root directory
-    templates_dir = Path(root) / "templates"
-    test_data_dir = Path(root) / "tests" / "datafiles" / "secrets"
+    templates_dir = Path(FP.ROOT) / "templates"
+    test_data_dir = Path(FP.ROOT) / "tests" / "datafiles" / "secrets"
     Path(test_data_dir).mkdir(parents=True, exist_ok=True)
 
     # Find all SSM JSON files
@@ -160,8 +158,8 @@ def modify_all_ssm_json_for_testing():
 
         print(f"Created: {output_file}")
         print(f"  - Modified {len(data)} secrets")
-        print(f"  - Changed all SSM keys from '/tower-template' to '/tower-testing'")
-        print(f"  - Updated all values for testing environment")
+        print("  - Changed all SSM keys from '/tower-template' to '/tower-testing'")
+        print("  - Updated all values for testing environment")
 
     print(f"\nAll modified template files saved to: {templates_dir}")
     print(f"Total files created: {len(all_data)}")

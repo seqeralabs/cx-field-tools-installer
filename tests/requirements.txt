@@ -2,3 +2,8 @@ pytest
 yamlpath
 testcontainers
 testcontainers[postgres]
+cryptography                    # To suppress pytest warnings
+
+# Note: Requests 2.32.1+ causes problems with `docker-py` and Testcontainer (e.g. "Not supported URL scheme http+docker").
+# Resolve by downgrading requests
+pip install requests=2.31.0

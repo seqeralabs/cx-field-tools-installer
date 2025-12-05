@@ -1,0 +1,38 @@
+# Ruff configuration file
+
+# https://docs.astral.sh/ruff/configuration/
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+target-version = "py313"
+line-length = 120
+indent-width = 4
+
+# Avoid trying to fix flake8-bugbear (`B`) violations and unused imports (`F401`)
+unfixable = ["B", "F401"]
