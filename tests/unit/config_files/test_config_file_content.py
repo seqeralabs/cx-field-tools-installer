@@ -7,9 +7,9 @@ from tests.datafiles.expected_results.expected_results import (
     generate_assertions_all_active,
     generate_assertions_all_disabled,
 )
+from tests.utils.assertions.verify_assertions import verify_all_assertions
 from tests.utils.config import expected_sql_dir
 from tests.utils.filehandling import FileHelper
-from tests.utils.local import verify_all_assertions
 from tests.utils.terraform.executor import prepare_plan
 from tests.utils.terraform.template_generator import generate_tc_files
 

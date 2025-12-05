@@ -1,3 +1,4 @@
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -89,16 +90,31 @@ def assert_yaml_key_omitted(entries: dict, file):
             list(processor.get_nodes(dataYamlPath, mustexist=True))
 
 
-# def assert_sql_key_present(entries: dict, file):
-#     """Confirm keys in provided dict are present in file."""
-#     # for k in entries.keys():
-#     #     assert k in file, f"Key {k} sought but not found."
-#     reference = entries["payload"]
-#     assert reference == file, f"SQL files did not match."
+## ------------------------------------------------------------------------------------
+## Helpers - Meta-level
+## ------------------------------------------------------------------------------------
 
 
-# Omission test no longer required since I'm doing direct file comparison.
-# def assert_sql_key_omitted(entries: dict, file):
-#     """Confirm keys in provided dict are present in file."""
-#     for k in entries.keys():
-#         assert k in file, f"Key {k} should not be present but was found."
+def verify_all_assertions(tc_files, tc_assertions):
+    """Cycle through all in-scope template files and run related assertions."""
+    for k, v in tc_files.items():
+        print(f"Testing {sys._getframe().f_code.co_name}.{k}.")
+
+        content = v["content"]
+        validation_type = v["validation_type"]
+        assertions = tc_assertions[k]
+
+        # assert_present_and_omitted(assertions, content, validation_type)
+        match validation_type:
+            case "yml":
+                assert_yaml_key_present(assertions["present"], content)
+                assert_yaml_key_omitted(assertions["omitted"], content)
+            case "kv":
+                assert_kv_key_present(assertions["present"], content)
+                assert_kv_key_omitted(assertions["omitted"], content)
+            case "sql":
+                # DO NOT USE THIS LOGIC BRANCH - SQL IS NOW VALIDATED ANOTHER WAY.
+                pass
+            case _:
+                # raise ValueError(f"Expected type to be in 'yml', 'sql', or 'kv'], got '{type}'")
+                pass

@@ -43,10 +43,10 @@ generate_test_data:
 	@cd tests/datafiles && ./generate_core_data.sh
 
 purge_cached_plans:
-	@cd tests/.plan_cache && rm -f *.json
+	@cd tests/ && rm -rf .plan_cache
 
 purge_cached_templatefiles:
-	@cd tests/.templatefile_cache && rm -f *.*
+	@cd tests/ && rm -rf .templatefile_cache
 
 
 
