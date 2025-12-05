@@ -72,13 +72,19 @@ EXPLANATION
 TODO: Weird way to generated templatefiles.
 
 ## Troubleshooting
-1. `pytest` execution failing with a message like: `FAILED tests/unit/config_files/test_config_file_content.py::test_baseline_alb_all_enabled - subprocess.CalledProcessError: Command '['terraform', 'console']' returned non-zero exit status 1.`
+1. `pytest` execution failing with a message like: 
 
-    This is generally caused by a **missing comma** separating the variables being passed into `templatefile` function calls in [`009_define_file_templates.tf`]. Missing commas won't cause `terraform plan/apply` activites to break, but they will absolutely break the `terraform console` invocation this framework uses to generate templatefiles. 
+    1. `FAILED tests/unit/config_files/test_config_file_content.py::test_baseline_alb_all_enabled - subprocess.CalledProcessError: Command '['terraform', 'console']' returned non-zero exit status 1.`
 
-1. `pytest` execution failing with message like: `FAILED tests/unit/config_files/test_config_file_content.py::test_baseline_alb_all_disabled - subprocess.CalledProcessError: Command 'terraform plan  -out=tfplan -refresh=false && terraform show -json tfplan > tfplan.json' returned non-zero exit status 1.`
+        This is generally caused by a **missing comma** separating the variables being passed into `templatefile` function calls in [`009_define_file_templates.tf`]. Missing commas won't cause `terraform plan/apply` activites to break, but they will absolutely break the `terraform console` invocation this framework uses to generate templatefiles. 
 
-    Copy [`tests/datafiles/terraform.tfvars`](../tests/datafiles/terraform.tfvars) & [`tests/datafiles/base-overrides.auto.tfvars`](../tests/datafiles/base-overrides.auto.tfvars) into the **<PROJECT_ROOT>** and run `terraform plan  -out=tfplan -refresh=false && terraform show -json tfplan > tfplan.json` again. You will get a more fulsome error message to debug from.
+    1. `pytest` execution failing with message like: `FAILED tests/unit/config_files/test_config_file_content.py::test_baseline_alb_all_disabled - subprocess.CalledProcessError: Command 'terraform plan  -out=tfplan -refresh=false && terraform show -json tfplan > tfplan.json' returned non-zero exit status 1.`
+
+        Copy [`tests/datafiles/terraform.tfvars`](../tests/datafiles/terraform.tfvars) & [`tests/datafiles/base-overrides.auto.tfvars`](../tests/datafiles/base-overrides.auto.tfvars) into the **<PROJECT_ROOT>** and run `terraform plan  -out=tfplan -refresh=false && terraform show -json tfplan > tfplan.json` again. You will get a more fulsome error message to debug from.
+
+    1. `pytest` execution failing with a message like: `FAILED tests/unit/config_files/test_testcontainer_execution.py::test_wave_containers - subprocess.CalledProcessError: Command '['docker', 'compose', '-f', 'tmpmysgczsc.sql', 'pull']' returned non-zero exit status 1.`
+
+        You likely are not logged into [https://cr.seqera.io](https://cr.seqera.io). 
 
 1. Weird Python auto-linting behaviour.
 
@@ -89,6 +95,9 @@ TODO: Weird way to generated templatefiles.
 ## Setup
 ### Necessary packages
 See [`requirements.txt`](./requirements.txt)
+
+### Necessary permissions
+Must be logged in to [https://cr.seqera.io](https://cr.seqera.io) (_or have specific images downloaded locally already_).
 
 
 
