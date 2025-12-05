@@ -1,13 +1,11 @@
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
 from tests.utils.assertions.file_filters import filter_templates
 from tests.utils.cache.cache import create_templatefile_cache_folder
-from tests.utils.config import (
-    TCValues,
-    all_template_files,
-)
+from tests.utils.config import FP, TCValues, all_template_files
 from tests.utils.filehandling import FileHelper
 from tests.utils.terraform.parser import extract_config_values
 
@@ -133,13 +131,11 @@ def write_populated_templatefile(outfile, payload):
     FileHelper.write_file(outfile, output)
 
 
-def _is_sql_file(key: str) -> bool:
+def _is_wave_lite_rds(key: str) -> bool:
     """
     Check if file needs special SQL handling (can't use terraform console).
-
     SQL files with postgres single-quotes break terraform console input parsing.
     """
-    # TODO: Move this to all_template_files as a discrete flag
     sql_exception_files = ["wave_lite_rds"]
     return key in sql_exception_files
 
@@ -147,10 +143,6 @@ def _is_sql_file(key: str) -> bool:
 def generate_tc_files(plan, desired_files, testcase_name):
     """
     Create templatefiles relevant to the testcase.
-
-    Delegates to specialized handlers based on file type:
-        - Regular templates: terraform console rendering
-        - SQL templates: Python script substitution
 
     Args:
         tc: Test case context object.
@@ -171,9 +163,31 @@ def generate_tc_files(plan, desired_files, testcase_name):
         cache_file_str = f"{cache_dir}/{key}{extension}"
         cache_file_path = Path(cache_file_str)
 
-        if _is_sql_file(key):
-            # _generate_sql_templatefile(key, tc.cache_dir, tc.template_files)
-            pass
+        if _is_wave_lite_rds(key):
+            # (Postgres) SQL files can't use 'terraform console' because single-quotes break input parsing.
+            # Generate SQL template using Python script substitution.
+
+            # Copy src file to cache_dir
+            # WARNING!! THIS whole section is brittle and stupid.
+            #   - Python 'sedalternative' script is dumb and very finicky about dirs and hyphens.
+            #   - The all_template_files key for this uses underscores but file itself needs to be hyphens.
+            #   TODO: Find some way to get this harmonized.
+            #         Simplest way would be to change hyphens to underscores in source file.
+            file_name = "wave-lite-rds.sql"
+            source_path = f"{FP.ROOT}/assets/src/wave_lite_config/{file_name}"
+            target_path = f"{cache_dir}/{file_name}"
+            script_path = f"{FP.ROOT}/scripts/installer/utils/sedalternative.py"
+            shutil.copy(source_path, target_path)
+
+            # Run substitution script
+            # TODO: Make credentials configurable instead of hardcoded
+            command = f"python3 {script_path} wave_lite_test_limited wave_lite_test_limited_password {cache_dir}"
+            subprocess.run(command, shell=True, text=True, capture_output=False, check=True)
+
+            # Store content
+            TC.all_template_files[key]["content"] = read_type(target_path)
+            TC.all_template_files[key]["filepath"] = target_path  # DONT USE THIS: cache_file_str
+
         else:
             if not cache_file_path.exists():
                 # Cache miss. Create file

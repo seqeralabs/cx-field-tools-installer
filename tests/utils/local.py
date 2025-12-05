@@ -80,32 +80,3 @@ def verify_all_assertions(tc_files, tc_assertions):
         validation_type = v["validation_type"]
         assertions = tc_assertions[k]
         assert_present_and_omitted(assertions, content, validation_type)
-
-
-# def _generate_sql_templatefile(key: str, cache_dir: str, template_files: dict) -> None:
-#     """
-#     Generate SQL template using Python script substitution.
-
-#     SQL files can't use terraform console because postgres uses single-quotes
-#     which break the console input parsing.
-
-#     Args:
-#         key: Template identifier (e.g., "wave_lite_rds")
-#         cache_dir: Directory for cached template files
-#         template_files: Dictionary to update with generated content (modified in-place)
-#     """
-#     source_dir = Path(f"{FP.ROOT}/assets/src/wave_lite_config/")
-#     script_path = f"{FP.ROOT}/scripts/installer/utils/sedalternative.py"
-
-#     # Copy SQL source files to cache
-#     for sql_file in source_dir.glob("*.sql"):
-#         shutil.copy(sql_file, cache_dir)
-
-#     # Run substitution script
-#     # TODO: Make credentials configurable instead of hardcoded
-#     command = f"python3 {script_path} wave_lite_test_limited wave_lite_test_limited_password {cache_dir}"
-#     subprocess.run(command, shell=True, text=True, capture_output=False, check=True)
-
-#     # Read generated file
-#     template_files[key]["content"] = FileHelper.read_file(f"{cache_dir}/wave-lite-rds.sql")
-#     template_files[key]["filepath"] = f"{cache_dir}/wave-lite-rds.sql"
