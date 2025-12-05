@@ -77,6 +77,10 @@ class TCValues:
     seqerakit_secrets: dict = field(default_factory=dict)
     wave_lite_secrets: dict = field(default_factory=dict)
 
+    # Templatefile Context
+    testcase_name: str = ""
+    all_template_files: dict = field(default_factory=dict)  # Full or reduced list based on TC
+
 
 FP = FilePaths()
 
@@ -86,7 +90,8 @@ expected_results_dir = f"{FP.ROOT}/tests/datafiles/expected_results"
 expected_sql_dir = f"{expected_results_dir}/expected_sql"
 
 
-# Master test object
+# Master test object (REFERNCE ONLY)
+# A copy of this is loaded into 'TCValues.all_template_files' based on required files.
 all_template_files = {
     "tower_env": {
         "extension": ".env",

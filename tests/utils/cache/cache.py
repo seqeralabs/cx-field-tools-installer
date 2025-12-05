@@ -45,14 +45,14 @@ def hash_tc_values(tc: TCValues) -> str:
     return hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
 
 
-def create_templatefile_cache_folder(tc: TCValues, testcase_name: str) -> str:
+def create_templatefile_cache_folder(tc: TCValues) -> str:
     """
     Create a folder to store generated templatefiles for reuse.
     """
     hashed_tc = hash_tc_values(tc)
 
     # Make cache folder if missing
-    cache_dir = f"{FP.CACHE_TEMPLATEFILE_DIR}/{testcase_name}__{hashed_tc}"
+    cache_dir = f"{FP.CACHE_TEMPLATEFILE_DIR}/{tc.testcase_name}__{hashed_tc}"
     folder_path = Path(cache_dir)
     folder_path.mkdir(parents=True, exist_ok=True)
 

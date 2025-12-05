@@ -183,27 +183,6 @@ def write_populated_templatefile(outfile, payload):
     FileHelper.write_file(outfile, output)
 
 
-def generate_templatefile(key, tc: TCValues, templatefile_cache_dir):
-    """
-    namespaces                  : SimpleNamespaced outputs of 'terrform plan'.
-    templatefile_cache_dir     : Relies on the hash of all the tfvars files used for the specific testcase.
-    key                         : key from JSONified 009
-    """
-
-    # Hash templatefiles to speed up n+1 tests
-    #   - If cache miss, emit generated files as <CACHE_VALUE>_<FILENAME> and stick in 'tests/.templatfile_cache'.
-    extension = all_template_files[key]["extension"]
-    read_type = all_template_files[key]["read_type"]
-
-    # Check cache location. If check miss, generate file and place in cache. Read and return (now) cached file.
-    outfile = Path(f"{templatefile_cache_dir}/{key}{extension}")
-    if not outfile.exists():
-        result = prepare_templatefile_payload(key, tc)
-        write_populated_templatefile(outfile, result)
-
-    return read_type(outfile.as_posix())
-
-
 def _is_sql_file(key: str) -> bool:
     """
     Check if file needs special SQL handling (can't use terraform console).
@@ -215,59 +194,7 @@ def _is_sql_file(key: str) -> bool:
     return key in sql_exception_files
 
 
-def _generate_regular_templatefile(
-    key: str, config: dict, tc: TCValues, cache_dir: str, template_files: dict
-) -> None:
-    """
-    Generate template using terraform console.
-
-    Args:
-        key: Template identifier (e.g., "tower_env")
-        config: Template configuration from all_template_files
-        tc: Test case values (vars, outputs, secrets)
-        cache_dir: Directory for cached template files
-        template_files: Dictionary to update with generated content (modified in-place)
-    """
-    content = generate_templatefile(key, tc, cache_dir)
-    template_files[key]["content"] = content
-    template_files[key]["filepath"] = f"{cache_dir}/{key}{config['extension']}"
-
-
-def _generate_sql_templatefile(key: str, cache_dir: str, template_files: dict) -> None:
-    """
-    Generate SQL template using Python script substitution.
-
-    SQL files can't use terraform console because postgres uses single-quotes
-    which break the console input parsing.
-
-    Args:
-        key: Template identifier (e.g., "wave_lite_rds")
-        cache_dir: Directory for cached template files
-        template_files: Dictionary to update with generated content (modified in-place)
-    """
-    source_dir = Path(f"{FP.ROOT}/assets/src/wave_lite_config/")
-    script_path = f"{FP.ROOT}/scripts/installer/utils/sedalternative.py"
-
-    # Copy SQL source files to cache
-    for sql_file in source_dir.glob("*.sql"):
-        shutil.copy(sql_file, cache_dir)
-
-    # Run substitution script
-    # TODO: Make credentials configurable instead of hardcoded
-    command = (
-        f"python3 {script_path} "
-        f"wave_lite_test_limited "
-        f"wave_lite_test_limited_password "
-        f"{cache_dir}"
-    )
-    subprocess.run(command, shell=True, text=True, capture_output=False, check=True)
-
-    # Read generated file
-    template_files[key]["content"] = FileHelper.read_file(f"{cache_dir}/wave-lite-rds.sql")
-    template_files[key]["filepath"] = f"{cache_dir}/wave-lite-rds.sql"
-
-
-def generate_templatefiles(tc: TCValues, template_files: dict, testcase_name: str) -> dict:
+def generate_tc_files(plan, desired_files, testcase_name):
     """
     Create templatefiles relevant to the testcase.
 
@@ -276,35 +203,38 @@ def generate_templatefiles(tc: TCValues, template_files: dict, testcase_name: st
         - SQL templates: Python script substitution
 
     Args:
-        tc: Test case values (vars, outputs, secrets)
-        template_files: Templates to generate (from filter_templates)
-        testcase_name: Name of test case for cache directory
+        tc: Test case context object.
 
     Returns:
         Updated template_files dict with content and filepath added
     """
-    cache_dir = create_templatefile_cache_folder(tc, testcase_name)
-
-    for key, config in template_files.items():
-        if _is_sql_file(key):
-            _generate_sql_templatefile(key, cache_dir, template_files)
-        else:
-            _generate_regular_templatefile(key, config, tc, cache_dir, template_files)
-
-    return template_files
-
-
-def generate_tc_files(plan, desired_files, testcase_name):
-    """
-    - Generates namespaced dictionaries.
-    - Generates scenario hash.
-    - Generates and returns necessary template files
-    """
     TC: TCValues = extract_config_values(plan)
-    needed_template_files: dict = filter_templates(desired_files)
-    tc_files = generate_templatefiles(TC, needed_template_files, testcase_name)
 
-    return tc_files
+    TC.all_template_files = filter_templates(desired_files)  # Master dictionary relevant to this testcase
+    TC.testcase_name = testcase_name
+
+    for key in TC.all_template_files.keys():  # (e.g., "tower_env")
+        extension = all_template_files[key]["extension"]
+        read_type = all_template_files[key]["read_type"]
+
+        cache_dir = create_templatefile_cache_folder(TC)
+        cache_file_str = f"{cache_dir}/{key}{extension}"
+        cache_file_path = Path(cache_file_str)
+
+        if _is_sql_file(key):
+            # _generate_sql_templatefile(key, tc.cache_dir, tc.template_files)
+            pass
+        else:
+            if not cache_file_path.exists():
+                # Cache miss. Create file
+                payload = prepare_templatefile_payload(key, TC)
+                write_populated_templatefile(cache_file_str, payload)
+            cache_file_content = read_type(cache_file_path.as_posix())
+
+            TC.all_template_files[key]["content"] = cache_file_content
+            TC.all_template_files[key]["filepath"] = cache_file_str
+
+    return TC.all_template_files
 
 
 ## ------------------------------------------------------------------------------------
@@ -342,3 +272,32 @@ def verify_all_assertions(tc_files, tc_assertions):
         validation_type = v["validation_type"]
         assertions = tc_assertions[k]
         assert_present_and_omitted(assertions, content, validation_type)
+
+
+# def _generate_sql_templatefile(key: str, cache_dir: str, template_files: dict) -> None:
+#     """
+#     Generate SQL template using Python script substitution.
+
+#     SQL files can't use terraform console because postgres uses single-quotes
+#     which break the console input parsing.
+
+#     Args:
+#         key: Template identifier (e.g., "wave_lite_rds")
+#         cache_dir: Directory for cached template files
+#         template_files: Dictionary to update with generated content (modified in-place)
+#     """
+#     source_dir = Path(f"{FP.ROOT}/assets/src/wave_lite_config/")
+#     script_path = f"{FP.ROOT}/scripts/installer/utils/sedalternative.py"
+
+#     # Copy SQL source files to cache
+#     for sql_file in source_dir.glob("*.sql"):
+#         shutil.copy(sql_file, cache_dir)
+
+#     # Run substitution script
+#     # TODO: Make credentials configurable instead of hardcoded
+#     command = f"python3 {script_path} wave_lite_test_limited wave_lite_test_limited_password {cache_dir}"
+#     subprocess.run(command, shell=True, text=True, capture_output=False, check=True)
+
+#     # Read generated file
+#     template_files[key]["content"] = FileHelper.read_file(f"{cache_dir}/wave-lite-rds.sql")
+#     template_files[key]["filepath"] = f"{cache_dir}/wave-lite-rds.sql"
