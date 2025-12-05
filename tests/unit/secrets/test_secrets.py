@@ -12,8 +12,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
-from tests.utils.local import FP
 
 templates_dir = Path(FP.ROOT) / "templates"
 test_data_dir = Path(FP.ROOT) / "tests" / "datafiles" / "secrets"

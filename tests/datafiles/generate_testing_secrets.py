@@ -8,7 +8,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent.resolve()
 sys.path.insert(0, str(project_root))
 
-from tests.utils.local import FP
+from tests.utils.config import FP
 
 
 def modify_all_ssm_json_for_testing():
