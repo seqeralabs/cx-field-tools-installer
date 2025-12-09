@@ -25,6 +25,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
                 - Added verification check and warning. [`#276`](https://github.com/seqeralabs/cx-field-tools-installer/issues/276)
             - Removed `FLYWAY_LOCATIONS` as configurable option.
             - Updated Groundswell container version from 0.4.3 to 0.4.6.
+            - Updated Seqera Platform container version from v25.2.2 to v25.3.0.
         <br /><br />
 
         - Documentation
@@ -47,6 +48,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 | New | Platform | `tower_enable_openapi` | Control whether your Platform instance enables the OpenAPI console or not. |
 | New | Wave | `wave_lite_container_version` | Specify the exact Wave image to be deployed for the Wave-Lite service. |
 ||||
+| Modified | Platform | `tower_container_version` | Updated from v25.2.2 to v25.3.0 |
 | Modified | Groundswell | `swell_container_version` | Updated  from 0.4.3 to 0.4.6 |
 ||||
 | Deleted | Platform | `flyway_locations` | Classpath configuration. Not necessary in modern deployments. |
