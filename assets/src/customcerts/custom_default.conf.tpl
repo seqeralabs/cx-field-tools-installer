@@ -1,15 +1,19 @@
 # https://stackoverflow.com/questions/45717835/docker-proxy-pass-to-another-container-nginx-host-not-found-in-upstream
 upstream frontend {
-    server frontend:80;
+    server frontend:8000;
 }
 
+%{ if flag_enable_data_studio == true ~}
 upstream connect-proxy {
     server connect-proxy:9090;
 }
+%{ endif ~}
 
+%{ if flag_use_wave_lite == true ~}
 upstream wave-lite-reverse-proxy {
     server wave-lite-reverse-proxy:80;
 }
+%{ endif ~}
 
 server {
     listen       80;

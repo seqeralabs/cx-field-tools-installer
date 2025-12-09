@@ -186,7 +186,7 @@ services:
       - frontend
     ports:
       - 8000:8000
-    environment:
+    # environment:
       ## DO NOT UNCOMMENT THESE (SAME AS DEFAULTS).
       ## DOCUMENTED HERE FOR CLARITY AND FUTURE CONFIGURATION ENHANCEMENT
       # - NGINX_LISTEN_PORT=8000
@@ -260,12 +260,14 @@ services:
       - $HOME/target/customcerts/${private_ca_cert}:/etc/ssl/certs/${private_ca_cert}
       - $HOME/target/customcerts/${private_ca_key}:/etc/ssl/private/${private_ca_key}
     restart: always
+%{ if flag_use_wave_lite == true || flag_enable_data_studio == true ~}
     depends_on:
 %{ if flag_use_wave_lite == true ~}
       - wave-lite-reverse-proxy
 %{ endif ~}
 %{ if flag_enable_data_studio == true ~}
       - connect-proxy
+%{ endif ~}
 %{ endif ~}
 %{ endif ~}
 
