@@ -42,11 +42,19 @@ generate_test_data:
 	@cp templates/TEMPLATE_terraform.tfvars tests/datafiles/terraform.tfvars
 	@cd tests/datafiles && ./generate_core_data.sh
 
+run_tests:
+	@pytest -c tests/pytest.ini tests/
+
 purge_cached_plans:
 	@cd tests/ && rm -rf .plan_cache
 
 purge_cached_templatefiles:
 	@cd tests/ && rm -rf .templatefile_cache
+
+purge_cache:
+	@echo "Purging testing caches"
+	@$(MAKE) purge_cached_templatefiles
+	@$(MAKE) purge_cached_plans
 
 
 

@@ -224,8 +224,8 @@ to work. e.g:
     - mywavelite.example.com
 
 */
-flag_use_wave      = false
-flag_use_wave_lite = false
+flag_use_wave               = false
+flag_use_wave_lite          = false
 wave_lite_container_version = "v1.29.1"
 
 num_wave_lite_replicas = 2
@@ -729,7 +729,6 @@ tower_db_dialect       = "io.seqera.util.MySQL55DialectCollateBin"
 tower_db_min_pool_size = 5
 tower_db_max_pool_size = 10
 tower_db_max_lifetime  = 18000000
-flyway_locations       = "classpath:db-schema/mysql"
 ## tower_db_user                         = "DO_NOT_UNCOMMENT_ME"
 ## tower_db_password                     = "DO_NOT_UNCOMMENT_ME"
 

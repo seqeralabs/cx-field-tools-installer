@@ -19,7 +19,6 @@ locals {
       tower_db_min_pool_size = var.tower_db_min_pool_size,
       tower_db_max_pool_size = var.tower_db_max_pool_size,
       tower_db_max_lifetime  = var.tower_db_max_lifetime,
-      flyway_locations       = var.flyway_locations,
 
       tower_redis_url = module.connection_strings.tower_redis_url,
 
@@ -49,7 +48,7 @@ locals {
       flag_studio_enable_path_routing = var.flag_studio_enable_path_routing,
 
       flag_allow_aws_instance_credentials = var.flag_allow_aws_instance_credentials,
-      tower_enable_openapi = var.tower_enable_openapi
+      tower_enable_openapi                = var.tower_enable_openapi
     }
   )
 
@@ -181,10 +180,10 @@ locals {
       updated_redis_version         = tonumber(length(regexall("^v24.2.[0-9]", var.tower_container_version))) >= 1 || tonumber(length(regexall("^v2[5-9].[0-9].[0-9]", var.tower_container_version))) >= 1 ? true : false,
       studio_uses_distroless        = local.studio_uses_distroless,
 
-      flag_use_wave_lite        = var.flag_use_wave_lite,
-      num_wave_lite_replicas    = var.num_wave_lite_replicas,
-      wave_lite_redis_container = local.wave_lite_redis_container,
-      wave_lite_db_container    = local.wave_lite_db_container,
+      flag_use_wave_lite          = var.flag_use_wave_lite,
+      num_wave_lite_replicas      = var.num_wave_lite_replicas,
+      wave_lite_redis_container   = local.wave_lite_redis_container,
+      wave_lite_db_container      = local.wave_lite_db_container,
       wave_lite_container_version = var.wave_lite_container_version,
 
       wave_lite_db_master_user     = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_USER"]["value"],

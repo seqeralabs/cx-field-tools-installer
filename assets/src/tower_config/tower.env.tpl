@@ -32,7 +32,6 @@ TOWER_DB_DIALECT=${tower_db_dialect}
 TOWER_DB_MIN_POOL_SIZE=${tower_db_min_pool_size}
 TOWER_DB_MAX_POOL_SIZE=${tower_db_max_pool_size}
 TOWER_DB_MAX_LIFETIME=${tower_db_max_lifetime}
-FLYWAY_LOCATIONS=${flyway_locations}
 
 # TOWER_DB_USER sourced from SSM.
 # TOWER_DB_PASSWORD sourced from SSM.
