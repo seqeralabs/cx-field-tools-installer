@@ -23,6 +23,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Entra ID (aka Azure AD) changes:
                 - Added OAUTH2 configuration snippet in `tower.yml.tpl` for Platform versions < 25.3. [`#267`](https://github.com/seqeralabs/cx-field-tools-installer/issues/267)
                 - Added verification check and warning. [`#276`](https://github.com/seqeralabs/cx-field-tools-installer/issues/276)
+            - Removed `FLYWAY_LOCATIONS` as configurable option.
         <br /><br />
 
         - Documentation
@@ -44,6 +45,9 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 | New | Platform | `flag_map_public_ip_on_launch` | Configure VPC module to enable auto-assignment of IPv4 addresses to instances spun up in public subnets. |
 | New | Platform | `tower_enable_openapi` | Control whether your Platform instance enables the OpenAPI console or not. |
 | New | Wave | `wave_lite_container_version` | Specify the exact Wave image to be deployed for the Wave-Lite service. |
+|||
+|||
+| Deleted | Platform | `flyway_locations` | Classpath configuration. Not necessary in modern deployments. |
 
 
 

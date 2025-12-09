@@ -110,7 +110,6 @@
 | <a name="input_flag_use_wave"></a> [flag\_use\_wave](#input\_flag\_use\_wave) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_use_wave_lite"></a> [flag\_use\_wave\_lite](#input\_flag\_use\_wave\_lite) | n/a | `bool` | n/a | yes |
 | <a name="input_flag_vm_copy_files_to_instance"></a> [flag\_vm\_copy\_files\_to\_instance](#input\_flag\_vm\_copy\_files\_to\_instance) | n/a | `bool` | n/a | yes |
-| <a name="input_flyway_locations"></a> [flyway\_locations](#input\_flyway\_locations) | n/a | `string` | n/a | yes |
 | <a name="input_iam_prexisting_instance_role_arn"></a> [iam\_prexisting\_instance\_role\_arn](#input\_iam\_prexisting\_instance\_role\_arn) | n/a | `string` | n/a | yes |
 | <a name="input_new_route53_private_zone_name"></a> [new\_route53\_private\_zone\_name](#input\_new\_route53\_private\_zone\_name) | n/a | `string` | n/a | yes |
 | <a name="input_num_wave_lite_replicas"></a> [num\_wave\_lite\_replicas](#input\_num\_wave\_lite\_replicas) | n/a | `number` | n/a | yes |

@@ -157,8 +157,8 @@ variable "vpc_new_redis_subnets" { type = list(string) }
 variable "vpc_new_alb_subnets" { type = list(string) }
 
 variable "enable_vpc_flow_logs" { type = bool }
-variable "flag_map_public_ip_on_launch" { 
-  type = bool
+variable "flag_map_public_ip_on_launch" {
+  type    = bool
   default = false
 }
 
@@ -378,7 +378,6 @@ variable "tower_db_dialect" { type = string }
 variable "tower_db_min_pool_size" { type = number }
 variable "tower_db_max_pool_size" { type = number }
 variable "tower_db_max_lifetime" { type = number }
-variable "flyway_locations" { type = string }
 
 variable "tower_smtp_host" { type = string }
 variable "tower_smtp_port" { type = string }

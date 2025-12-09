@@ -80,9 +80,7 @@ def verify_only_one_true_set(data: SimpleNamespace):
             data.flag_do_not_use_https,
         ]
     )
-    only_one_true_set(
-        [data.flag_use_aws_ses_iam_integration, data.flag_use_existing_smtp]
-    )
+    only_one_true_set([data.flag_use_aws_ses_iam_integration, data.flag_use_existing_smtp])
 
 
 def verify_sensitive_keys(data: SimpleNamespace, data_dictionary: dict):
@@ -105,9 +103,7 @@ def verify_sensitive_keys(data: SimpleNamespace, data_dictionary: dict):
     data_keys = data_dictionary.keys()
     for key in sensitive_keys:
         if key in data_keys:
-            log_error_and_exit(
-                f" Do not specify `{key}`. This value will be sourced from SSM."
-            )
+            log_error_and_exit(f" Do not specify `{key}`. This value will be sourced from SSM.")
 
 
 def verify_tfvars_config_dependencies(data: SimpleNamespace):
@@ -157,18 +153,14 @@ def verify_tower_server_url(data: SimpleNamespace):
 def verify_tower_root_users(data: SimpleNamespace):
     """Ensure at least one root user is specified."""
     if data.tower_root_users in ["REPLACE_ME", ""]:
-        log_error_and_exit(
-            "Please populate `tower_root_user` with at least one email address."
-        )
+        log_error_and_exit("Please populate `tower_root_user` with at least one email address.")
 
 
 def verify_tower_self_signed_certs(data: SimpleNamespace):
     """Check self-signed certificate settings (if necessary)."""
     if data.flag_use_private_cacert:
         if not data.private_cacert_bucket_prefix.startswith("s3://"):
-            log_error_and_exit(
-                " Field `private_cacert_bucket_prefix` must start with `s3://`"
-            )
+            log_error_and_exit(" Field `private_cacert_bucket_prefix` must start with `s3://`")
 
 
 def verify_tower_groundswell(data: SimpleNamespace):
@@ -194,9 +186,7 @@ def verify_email_login_disablement(data: SimpleNamespace):
     """Check email login disablement scenarios."""
     if data.flag_disable_email_login:
         if data.tower_container_version < "v23.4.5":
-            log_error_and_exit(
-                " You cannot disable email login in versions earlier than 23.4.5"
-            )
+            log_error_and_exit(" You cannot disable email login in versions earlier than 23.4.5")
 
         oidc_flags = [
             data.flag_oidc_use_generic,
@@ -204,14 +194,10 @@ def verify_email_login_disablement(data: SimpleNamespace):
             data.flag_oidc_use_github,
         ]
         if not any(oidc_flags):
-            log_error_and_exit(
-                " Email login cannot be disabled if you dont have an OIDC alternative configured."
-            )
+            log_error_and_exit(" Email login cannot be disabled if you dont have an OIDC alternative configured.")
 
         if data.flag_run_seqerakit:
-            logger.warning(
-                "Seqerakit step cannot execute if email login is not active."
-            )
+            logger.warning("Seqerakit step cannot execute if email login is not active.")
 
 
 def verify_subnet_privacy(data: SimpleNamespace):
@@ -306,14 +292,10 @@ def verify_ingress_and_egress(data: SimpleNamespace, data_dictionary: dict):
     """Issue reminders if ingress/egress rules seem overly loose."""
 
     if data.sg_ingress_cidrs == "0.0.0.0/0":
-        logger.warning(
-            "`sg_ingress_cidrs` is completely open (HTTPs) . Consider tightening."
-        )
+        logger.warning("`sg_ingress_cidrs` is completely open (HTTPs) . Consider tightening.")
 
     if data.sg_ssh_cidrs == "0.0.0.0/0":
-        logger.warning(
-            "`sg_ssh_cidrs` ingress is completly open (SSH). Consider tightening."
-        )
+        logger.warning("`sg_ssh_cidrs` ingress is completly open (SSH). Consider tightening.")
 
     # Forgoing `data...` approeach beause I'm too dumb to figure out how to get a variable name as a string.
     egress_sgs = [
@@ -331,9 +313,7 @@ def verify_ingress_and_egress(data: SimpleNamespace, data_dictionary: dict):
 def verify_flow_logs(data: SimpleNamespace):
     """Issue reminder about Flow logs cost."""
     if (data.flag_create_new_vpc) and (data.enable_vpc_flow_logs):
-        logger.warning(
-            "You have VPC Flow Logs activated. This will generate extra costs."
-        )
+        logger.warning("You have VPC Flow Logs activated. This will generate extra costs.")
 
 
 def verify_ami_update_behaviour(data: SimpleNamespace):
@@ -355,20 +335,14 @@ def verify_database_configuration(data: SimpleNamespace):
     if (data.db_engine == "mysql") and ("8" in data.db_engine_version):
         logger.warning("MySQL 8 may need TOWER_DB_URL connection string modifiers.")
 
-    if (data.tower_db_url.startswith("jdbc:")) or (
-        data.tower_db_url.startswith("mysql:")
-    ):
-        log_error_and_exit(
-            "Do not include protocol in `tower_db_url`. Start with hostname."
-        )
+    if (data.tower_db_url.startswith("jdbc:")) or (data.tower_db_url.startswith("mysql:")):
+        log_error_and_exit("Do not include protocol in `tower_db_url`. Start with hostname.")
 
     if data.tower_db_driver != "org.mariadb.jdbc.Driver":
         log_error_and_exit("Field `tower_db_driver` must be `org.mariadb.jdbc.Driver`.")
 
     if data.tower_db_dialect != "io.seqera.util.MySQL55DialectCollateBin":
-        log_error_and_exit(
-            "Field `tower_db_dialect` must be `org.mariadb.jdbc.Driver`."
-        )
+        log_error_and_exit("Field `tower_db_dialect` must be `org.mariadb.jdbc.Driver`.")
 
     if data.flag_use_container_db:
         if data.tower_db_url != "db:3306":
@@ -427,9 +401,7 @@ def verify_docker_version(data: SimpleNamespace):
                 )
 
     if "5.6" in data.db_engine_version:
-        log_error_and_exit(
-            "MySQL 5.6 is obsolete. Please chooses MySQL 5.7 in `db_engine_version`."
-        )
+        log_error_and_exit("MySQL 5.6 is obsolete. Please chooses MySQL 5.7 in `db_engine_version`.")
 
 
 def verify_data_studio(data: SimpleNamespace):
@@ -441,10 +413,7 @@ def verify_data_studio(data: SimpleNamespace):
                 "`tower_container_version` must bv24.1.0 or higher to set `flag_enable_data_studio` to true."
             )
 
-        if (
-            data.tower_container_version < "v24.3.0"
-            and data.data_studio_container_version >= "0.7.8"
-        ):
+        if data.tower_container_version < "v24.3.0" and data.data_studio_container_version >= "0.7.8":
             log_error_and_exit(
                 "`data_studio_container_version` cannot be 0.7.8+ when `tower_container_version` is less than v24.3.0."
             )
@@ -453,14 +422,10 @@ def verify_data_studio(data: SimpleNamespace):
             # https://www.geeksforgeeks.org/python-check-whether-string-contains-only-numbers-or-not/
             # if re.match('[0-9]*$', data.data_studio_eligible_workspaces):
             if not re.findall(r"[0-9]+,[0-9]+", data.data_studio_eligible_workspaces):
-                log_error_and_exit(
-                    "`data_studio_eligible_workspaces may only be populated by digits and commas."
-                )
+                log_error_and_exit("`data_studio_eligible_workspaces may only be populated by digits and commas.")
 
         if data.flag_use_private_cacert:
-            logger.warning(
-                "Please see documentation to understand how to make private certs work with Studios images."
-            )
+            logger.warning("Please see documentation to understand how to make private certs work with Studios images.")
 
         # Deferred until better solution comes along to get TF locals
         # - Add check that CONNECT_PROXY_URL and TOWER_DATA_STUDIO_CONNECT_URL are the same.
@@ -492,25 +457,19 @@ def verify_data_studio(data: SimpleNamespace):
 def verify_not_v24_1_0(data: SimpleNamespace):
     """Verify that user has not selected Tower v24.1.0 (due to serialization bug)."""
     if data.tower_container_version == "v24.1.0":
-        log_error_and_exit(
-            "Tower version 24.1.0 has a fatal serialization flaw. Please use v24.1.3 or higher."
-        )
+        log_error_and_exit("Tower version 24.1.0 has a fatal serialization flaw. Please use v24.1.3 or higher.")
 
 
 def verify_not_v24_1_1(data: SimpleNamespace):
     """Verify that user has not selected Tower v24.1.1 (memory leak)."""
     if data.tower_container_version == "v24.1.1":
-        log_error_and_exit(
-            "Tower version 24.1.1 has Micronaut framework flaw. Please use v24.1.3 or higher."
-        )
+        log_error_and_exit("Tower version 24.1.1 has Micronaut framework flaw. Please use v24.1.3 or higher.")
 
 
 def verify_not_v24_1_2(data: SimpleNamespace):
     """Verify that user has not selected Tower v24.1.2 (Redis TLS issue)."""
     if data.tower_container_version == "v24.1.2":
-        log_error_and_exit(
-            "Tower version 24.1.2 has a TLS flaw. Please use v24.1.3 or higher."
-        )
+        log_error_and_exit("Tower version 24.1.2 has a TLS flaw. Please use v24.1.3 or higher.")
 
 
 def verify_if_v24_1_3(data: SimpleNamespace):
@@ -530,13 +489,9 @@ def verify_if_v24_1_4(data: SimpleNamespace):
             data.flag_oidc_use_github,
         ]
         if any(oidc_flags):
-            logger.warning(
-                "Tower version 24.1.4 cannot send emails. You will only be able to use your OIDC option."
-            )
+            logger.warning("Tower version 24.1.4 cannot send emails. You will only be able to use your OIDC option.")
         else:
-            log_error_and_exit(
-                "Tower version 24.1.4 cannot send emails. Please use v24.1.5 or higher."
-            )
+            log_error_and_exit("Tower version 24.1.4 cannot send emails. Please use v24.1.5 or higher.")
 
 
 def verify_connect_version_tls(data: SimpleNamespace):
@@ -549,10 +504,7 @@ def verify_connect_version_tls(data: SimpleNamespace):
 
 def verify_alb_settings(data: SimpleNamespace):
     """Verify that user does not have contradictory settings in case of ALB vs. no ALB."""
-    if (
-        data.flag_use_private_cacert
-        and data.flag_make_instance_private_behind_public_alb
-    ):
+    if data.flag_use_private_cacert and data.flag_make_instance_private_behind_public_alb:
         log_error_and_exit(
             "Use of private cert on EC2 cannot work with `flag_make_instance_private_behind_alb = true`. Please set only one of the options to true."
         )
@@ -563,9 +515,7 @@ def verify_redis_version(data: SimpleNamespace):
 
     if data.tower_container_version >= "v24.2.0":
         if data.flag_use_container_redis:
-            logger.warning(
-                "Seqera Platform version >= 24.2.0 uses a Redis v7.0 container (previously Redis v6.0)."
-            )
+            logger.warning("Seqera Platform version >= 24.2.0 uses a Redis v7.0 container (previously Redis v6.0).")
 
         if data.flag_create_external_redis:
             # TO DO
@@ -573,27 +523,19 @@ def verify_redis_version(data: SimpleNamespace):
             # This uses a redis 7.0 as baseline and thus is compliant to the needs of 24.2.2.
             # In future this may need to change if Tower demands require a version > Redis 7.0 OR we
             # choose to make the external redis values configurable.
-            logger.warning(
-                "The external Elasticache instance is hardcoded to use Redis 7.0."
-            )
+            logger.warning("The external Elasticache instance is hardcoded to use Redis 7.0.")
 
     else:
-        logger.warning(
-            "When you upgrade to Seqera Platform >= v24.2, a Redis version >= 6.2 will be required."
-        )
+        logger.warning("When you upgrade to Seqera Platform >= v24.2, a Redis version >= 6.2 will be required.")
 
 
 def verify_wave(data: SimpleNamespace):
     if (data.flag_use_wave == True) and (data.flag_use_wave_lite == True):
-        log_error_and_exit(
-            "`flag_use_wave` and `flag_use_wave_lite` cannot both be set to true."
-        )
+        log_error_and_exit("`flag_use_wave` and `flag_use_wave_lite` cannot both be set to true.")
 
     if data.flag_use_wave_lite == True:
         if data.flag_use_private_cacert:
-            logger.warning(
-                "Please see documentation to understand how to make private certs work with Wave-Lite."
-            )
+            logger.warning("Please see documentation to understand how to make private certs work with Wave-Lite.")
 
 
 def verify_ssh_access(data: SimpleNamespace):
@@ -613,16 +555,13 @@ def verify_ssh_access(data: SimpleNamespace):
 
 
 def verify_production_deployment(data: SimpleNamespace):
-    if (data.flag_create_external_db == False) or (
-        data.flag_create_external_redis == False
-    ):
+    if (data.flag_create_external_db == False) or (data.flag_create_external_redis == False):
         logger.warning(
             "WARNING: You are running Seqera Platform without a managed DB/Redis. This does not align to Seqera-recommended Production deployment best practices and can result in system instability."
         )
 
     if (data.flag_use_wave_lite == True) and (
-        (data.flag_create_external_db == False)
-        or (data.flag_create_external_redis == False)
+        (data.flag_create_external_db == False) or (data.flag_create_external_redis == False)
     ):
         logger.warning(
             "WARNING: You are running Wave Lite without a managed DB/Redis. This does not align to Seqera-recommended Production deployment best practices and can result in system instability."
@@ -669,12 +608,8 @@ if __name__ == "__main__":
     data = SimpleNamespace(**data_dictionary)
 
     # Check minimum container version
-    if not ((data.tower_container_version).startswith("v")) or (
-        data.tower_container_version < "v23.1.0"
-    ):
-        log_error_and_exit(
-            "Tower version minimum is 23.1.0 (for Parameter Store integration)."
-        )
+    if not ((data.tower_container_version).startswith("v")) or (data.tower_container_version < "v23.1.0"):
+        log_error_and_exit("Tower version minimum is 23.1.0 (for Parameter Store integration).")
 
     # Check known problem Tower versions
     print("\n")
@@ -768,7 +703,7 @@ if __name__ == "__main__":
 #  - Mandatory bootstrap values
 #  - Improve logic for value cleansing for these checks.
 #  - `tower_enable_platforms`
-#  - Check `tower_db_min_pool_size`, `tower_db_max_pool_size`, `tower_db_max_lifetime`, `flyway_locations`
+#  - Check `tower_db_min_pool_size`, `tower_db_max_pool_size`, `tower_db_max_lifetime`,
 #  - Check ALB cert for legit ARN syntax.
 #  - `tower_root_user` values are valid email format and comma-delimited.
 #  - Custom OIDC
