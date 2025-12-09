@@ -181,11 +181,18 @@ services:
 
 
   frontend:
-    image: cr.seqera.io/private/nf-tower-enterprise/frontend:${docker_version}
+    image: cr.seqera.io/private/nf-tower-enterprise/frontend:${docker_version}-unprivileged
     networks:
       - frontend
     ports:
-      - 8000:80
+      - 8000:8000
+    environment:
+      ## DO NOT UNCOMMENT THESE (SAME AS DEFAULTS).
+      ## DOCUMENTED HERE FOR CLARITY AND FUTURE CONFIGURATION ENHANCEMENT
+      # - NGINX_LISTEN_PORT=8000
+      # - NGINX_LISTEN_PORT_IPV6=8000   (DO NOT UNCOMMENT -- IPV6 not yet supported in Installer)
+      # - NGINX_UPSTREAM_HOST=backend
+      # - NGINX_UPSTREAM_PORT=8080
     restart: always
     depends_on:
       - backend
