@@ -39,7 +39,7 @@ aws_account = "REPLACE_ME"
 aws_region  = "REPLACE_ME"
 aws_profile = "REPLACE_ME"
 
-tower_container_version = "v25.2.2"
+tower_container_version = "v25.3.0"
 
 
 /*
