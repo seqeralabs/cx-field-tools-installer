@@ -17,6 +17,8 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Updated redis to `7.2.6` for Platform and Wave. [`#251`](https://github.com/seqeralabs/cx-field-tools-installer/issues/251)
             - Updated Seqera Platform frontend container to use non-privileged version. [`#270`](https://github.com/seqeralabs/cx-field-tools-installer/issues/270)
             - Updated Groundswell container version from 0.4.3 to 0.4.6. [`#238`](https://github.com/seqeralabs/cx-field-tools-installer/issues/238)
+            - Updated Platform Connect containers version. [`#273`](https://github.com/seqeralabs/cx-field-tools-installer/issues/273)
+            - Updated Studios base image version. [`#273`](https://github.com/seqeralabs/cx-field-tools-installer/issues/273)
             - Changed `wave-db` container pin from `postgres:latest` to `postgres:17.6`. This is necessary to due to a change in how the [data directory is managed in postgres containers >= 18](https://hub.docker.com/_/postgres#pgdata). [`#250`](https://github.com/seqeralabs/cx-field-tools-installer/issues/250)
             - Added Seqera Platform pipeline versioning feature. [`#284`](https://github.com/seqeralabs/cx-field-tools-installer/issues/284)
             - Removed `FLYWAY_LOCATIONS` as configurable option. [`268`](https://github.com/seqeralabs/cx-field-tools-installer/issues/268)
@@ -43,6 +45,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Added refactored local testing framework. Validates `tower.env` to ensure correct representation of the EC2 instance role option, `TOWER_ALLOW_INSTANCE_CREDENTIALS`, based on selection set in terraform.tfvars file. [`#242`](https://github.com/seqeralabs/cx-field-tools-installer/issues/242)
             - Added `labels.seqera` entry to each Wave-Lite container to facilatate positive testing (in support of [`#249`](https://github.com/seqeralabs/cx-field-tools-installer/issues/249)).
             - Added `labels.seqera` entry to generic `reverseproxy` container to align with Wave-Lite changes.
+            - Updated baseline tests for new studios 0.9.0 version and Platform v25.3.0 feature flags.
 
 
 ### Configuration File Changes
@@ -58,6 +61,8 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 ||||
 | Modified | Platform | `tower_container_version` | Updated from v25.2.2 to v25.3.0 |
 | Modified | Groundswell | `swell_container_version` | Updated  from 0.4.3 to 0.4.6 |
+| Modified | Studios | `data_studio_container_version` | Updated  from 0.8.3 to 0.9.0 |
+| Modified | Studios | `data_studio_options` | Removed 0_8_0 images and added 0_9_0 images |
 ||||
 | Deleted | Platform | `flyway_locations` | Classpath configuration. Not necessary in modern deployments. |
 
