@@ -9,6 +9,7 @@ resource "null_resource" "generate_independent_config_files" {
 
   provisioner "local-exec" {
     working_dir = path.module
+    quiet       = true
     command     = <<-EOT
 
       set -e
@@ -103,6 +104,7 @@ resource "null_resource" "generate_config_files_with_dependencies" {
 
   provisioner "local-exec" {
     working_dir = path.module
+    quiet       = true
     command     = <<-EOT
 
       set -e
@@ -141,6 +143,7 @@ resource "null_resource" "aws_batch_manual" {
   ]
 
   provisioner "local-exec" {
+    quiet       = true
     command     = <<-EOT
       echo '${local.aws_batch_manual}' >> ${path.module}/assets/target/seqerakit/setup.yml
     EOT
@@ -159,6 +162,7 @@ resource "null_resource" "aws_batch_forge" {
   ]
 
   provisioner "local-exec" {
+    quiet       = true
     command     = <<-EOT
       echo '${local.aws_batch_forge}' >> ${path.module}/assets/target/seqerakit/setup.yml
     EOT
