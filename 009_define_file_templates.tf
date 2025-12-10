@@ -48,7 +48,10 @@ locals {
       flag_studio_enable_path_routing = var.flag_studio_enable_path_routing,
 
       flag_allow_aws_instance_credentials = var.flag_allow_aws_instance_credentials,
-      tower_enable_openapi                = var.tower_enable_openapi
+      tower_enable_openapi                = var.tower_enable_openapi,
+
+      tower_enable_pipeline_versioning        = var.tower_enable_pipeline_versioning,
+      pipeline_versioning_eligible_workspaces = var.pipeline_versioning_eligible_workspaces,
     }
   )
 

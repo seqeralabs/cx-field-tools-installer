@@ -90,6 +90,8 @@ def generate_tower_env_entries_all_active(overrides={}):
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_TOOL": "xpra",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_STATUS": "recommended",
             "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES": "DO_NOT_UNCOMMENT",
+            # PIPELINE_VERSIONING
+            "TOWER_PIPELINE_VERSIONING_ALLOWED_WORKSPACES": "",
         },
         "omitted": {
             # DB                      Never generated in file
@@ -302,6 +304,8 @@ def generate_tower_env_entries_all_disabled(overrides={}):
             "TOWER_DATA_EXPLORER_ENABLED": "false",
             # DATA_STUDIOS
             "# STUDIOS_NOT_ENABLED": "DO_NOT_UNCOMMENT",
+            # PIPELINE_VERSIONING
+            "# TOWER_PIPELINE_VERSIONING_NOT_ENABLED": "DO_NOT_UNCOMMENT",
         },
         "omitted": {
             # CREDENTIALS

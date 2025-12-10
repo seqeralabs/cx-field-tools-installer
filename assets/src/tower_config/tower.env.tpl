@@ -115,7 +115,6 @@ TOWER_DATA_EXPLORER_ENABLED=false
 %{ endif ~}
 
 
-
 # ------------------------------------------------
 # OIDC
 # ------------------------------------------------
@@ -152,6 +151,16 @@ TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_STATUS="${ds.status != null ? ds.sta
 
 %{ else ~}
 # STUDIOS_NOT_ENABLED=DO_NOT_UNCOMMENT
+%{ endif }
+
+
+#-------------------------------------------------
+# PIPELINE VERSIONING
+# ------------------------------------------------
+%{ if tower_enable_pipeline_versioning == true ~}
+TOWER_PIPELINE_VERSIONING_ALLOWED_WORKSPACES=${pipeline_versioning_eligible_workspaces} 
+%{ else ~}
+# TOWER_PIPELINE_VERSIONING_NOT_ENABLED=DO_NOT_UNCOMMENT
 %{ endif }
 
 

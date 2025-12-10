@@ -54,6 +54,7 @@ def test_baseline_alb_all_disabled(session_setup):
         flag_use_wave_lite                  = false
         flag_allow_aws_instance_credentials = false
         tower_enable_openapi                = false
+        tower_enable_pipeline_versioning        = false
     """
     plan = prepare_plan(tf_modifiers)
 
@@ -324,6 +325,7 @@ def test_existing_db_all_disabled(session_setup):
         tower_db_url                        = "existing.tower-db.com"
         flag_allow_aws_instance_credentials = false
         tower_enable_openapi                = false
+        tower_enable_pipeline_versioning        = false
     """
     plan = prepare_plan(tf_modifiers)
 
@@ -431,6 +433,7 @@ def test_new_redis_all_disabled(session_setup):
         flag_use_container_redis            = false
         flag_allow_aws_instance_credentials = false
         tower_enable_openapi                = false
+        tower_enable_pipeline_versioning        = false
     """
     plan = prepare_plan(tf_modifiers)
 
