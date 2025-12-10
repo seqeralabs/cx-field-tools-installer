@@ -595,6 +595,28 @@ def warn_if_entra_id_error_possible(data: SimpleNamespace):
         )
 
 
+def verify_pipeline_versioning(data: SimpleNamespace):
+    """Conduct checks if pipeline versioning is active."""
+    if data.tower_enable_pipeline_versioning:
+        if data.tower_container_version < "v25.3.0":
+            logger.warning("Your Platform version is too old to support pipeline versioning. Must be >= v25.3.0.")
+
+        # All workspaces eligible. Return.
+        if data.pipeline_versioning_eligible_workspaces == "":
+            return
+
+        # Only some eligible (via comma-delimited string); verify
+        workspaces = data.pipeline_versioning_eligible_workspaces
+        try:
+            workspaces = workspaces.split(",")
+            for wsp in workspaces:
+                isinstance(int(wsp), int)
+        except ValueError:
+            log_error_and_exit(
+                "Variable `pipeline_versioning_eligible_workspaces` has non-integer values. Fix before deploying."
+            )
+
+
 # -------------------------------------------------------------------------------
 # MAIN
 # -------------------------------------------------------------------------------
@@ -690,6 +712,12 @@ if __name__ == "__main__":
     # Issue Warnings (if applicable)
     warn_about_user_workspaces(data)
     warn_if_entra_id_error_possible(data)
+
+    # Check pipeline versioning
+    print("\n")
+    logger.info("Verifying pipeline versioning")
+    logger.info("-" * 50)
+    verify_pipeline_versioning(data)
 
     print("\n")
     logger.info("Finished tfvars configuration check.")

@@ -183,6 +183,11 @@ tower_root_users          = "graham.wright@seqera.io,gwright99@hotmail.com"
 tower_email_trusted_orgs  = "*@abc.com, *@def.com"
 tower_email_trusted_users = "123@abc.com, 456@def.com"
 
+tower_enable_openapi = true
+
+tower_enable_pipeline_versioning        = true
+pipeline_versioning_eligible_workspaces = ""
+
 
 ## ------------------------------------------------------------------------------------
 ## TOWER CONFIGURATION - OIDC

@@ -394,6 +394,9 @@ variable "tower_audit_retention_days" { type = number }
 
 variable "tower_enable_openapi" { type = bool }
 
+variable "tower_enable_pipeline_versioning" { type = bool }
+variable "pipeline_versioning_eligible_workspaces" { type = string }
+
 # ------------------------------------------------------------------------------------
 # TOWER CONFIGURATION - OIDC
 # ------------------------------------------------------------------------------------

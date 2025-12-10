@@ -752,6 +752,10 @@ tower_audit_retention_days = 1095 # 3 years (value in days)
 
 tower_enable_openapi = true
 
+# If enabled, set eligibility to "" for all workspaces, or "WSP1_ID,WSP2_ID,..."
+tower_enable_pipeline_versioning        = false
+pipeline_versioning_eligible_workspaces = null
+
 
 /*
 ## ------------------------------------------------------------------------------------

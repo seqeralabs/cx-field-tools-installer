@@ -23,9 +23,11 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Entra ID (aka Azure AD) changes:
                 - Added OAUTH2 configuration snippet in `tower.yml.tpl` for Platform versions < 25.3. [`#267`](https://github.com/seqeralabs/cx-field-tools-installer/issues/267)
                 - Added verification check and warning. [`#276`](https://github.com/seqeralabs/cx-field-tools-installer/issues/276)
-            - Removed `FLYWAY_LOCATIONS` as configurable option.
-            - Updated Groundswell container version from 0.4.3 to 0.4.6.
-            - Updated Seqera Platform container version from v25.2.2 to v25.3.0.
+            - Removed `FLYWAY_LOCATIONS` as configurable option. [`268`](https://github.com/seqeralabs/cx-field-tools-installer/issues/268)
+            - Updated Groundswell container version from 0.4.3 to 0.4.6. [`#238`](https://github.com/seqeralabs/cx-field-tools-installer/issues/238)
+            - Updated Seqera Platform container version from v25.2.2 to v25.3.0. [`264`](https://github.com/seqeralabs/cx-field-tools-installer/issues/264)
+            - Updated Seqera Platform frontend container to use non-privileged version. [`#270`](https://github.com/seqeralabs/cx-field-tools-installer/issues/270)
+            - Added Seqera Platform pipeline versioning feature. [`#284`](https://github.com/seqeralabs/cx-field-tools-installer/issues/284)
         <br /><br />
 
         - Documentation
@@ -46,6 +48,8 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 | New | Platform & Seqerakit | `flag_allow_aws_instance_credentials` | Allows activation of EC2 Instance Role for Seqera Platform to use when authenticating to AWS. |
 | New | Platform | `flag_map_public_ip_on_launch` | Configure VPC module to enable auto-assignment of IPv4 addresses to instances spun up in public subnets. |
 | New | Platform | `tower_enable_openapi` | Control whether your Platform instance enables the OpenAPI console or not. |
+| New | Platform | `tower_enable_pipeline_versioning` | Control pipeline version feature. |
+| New | Platform | `pipeline_versioning_eligible_workspaces` | Specific Platform Workspaces where pipeline versioning is active. |
 | New | Wave | `wave_lite_container_version` | Specify the exact Wave image to be deployed for the Wave-Lite service. |
 ||||
 | Modified | Platform | `tower_container_version` | Updated from v25.2.2 to v25.3.0 |
