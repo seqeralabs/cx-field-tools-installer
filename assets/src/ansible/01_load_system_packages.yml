@@ -29,7 +29,8 @@
           - lvm2
 
     # https://repost.aws/questions/QU1jeKaTRYQ7WeA7XobfP21g/how-do-i-install-docker-version-27-3-1-on-amazon-linux-2023
-    # We only want to remove docker on the very first deployment. Keep stateful marker for conditional actions (lower)
+    # We only want to remove docker on the very first deployment.
+    # Keep stateful marker for conditional actions (lower)
     - name: Check if docker removal marker exists
       ansible.builtin.stat:
         path: /home/ec2-user/.ansible_docker_removal_done
@@ -78,8 +79,8 @@
     - name: Install Docker components
       ansible.builtin.dnf:
         name:
-          - docker-ce-28.3.3
-          - docker-ce-cli-28.3.3
+          - docker-ce-28.5.2
+          - docker-ce-cli-28.5.2
           - containerd.io
           - docker-buildx-plugin
           - docker-compose-plugin
@@ -93,7 +94,7 @@
       become: true
       become_user: ec2-user
       ansible.builtin.shell: |
-        curl -Lo runc https://github.com/opencontainers/runc/releases/download/v1.3.0/runc.amd64
+        curl -Lo runc https://github.com/opencontainers/runc/releases/download/v1.3.4/runc.amd64
         chmod +x runc
         sudo mv runc /usr/bin/runc
       when: not docker_removal_marker.stat.exists
