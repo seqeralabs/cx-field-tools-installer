@@ -9,6 +9,42 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 ```
 
 
+## 1.8.0 (Upcoming Release -- Q1 2026)
+- **Forward Roadmap Guidance**
+
+    TBD
+
+- **Notable Changes**
+    - **CX Installer**
+        - General
+            - TBD
+        <br /><br />
+
+        - Security
+            - TBD
+        <br/><br/>
+
+        - Documentation
+            - TBD
+        <br /><br />
+
+        - Testing
+            - TBD
+
+
+### Configuration File Changes
+#### `terraform.tfvars`
+| Status | Component | Parameter Name | Description |
+| ------ | --------- | -------------- | ----------- |
+| New | ipsem | `ipsem` | ipsem |
+||||
+| Modified | ipsem | `ipsem` | ipsem |
+||||
+| Deleted | ipsem | `ipsem` | ipsem |
+
+
+
+
 ## 1.7.0
 - **Forward Roadmap Guidance**
 
