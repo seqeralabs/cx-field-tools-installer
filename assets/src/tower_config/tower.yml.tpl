@@ -155,6 +155,12 @@ tower:
   participant:
     auto-create-user: false
 
+  # By default, if an update is not received for 180 seconds, Seqera Platform marks the pipeline's status as UNKNOWN.
+  # Making this setting explicit in case some sites need to customize due to local conditions.
+  runner:
+    phantom-job:
+      interval: 180s
+
   # Key rotation feature available as of 25.2.0. For more details please see:
   #    1. Official Seqera documentation (TODO: Add official link)
   #    2. How to (manually) engage this feature within the `cx-field-tools-installer` project: 
