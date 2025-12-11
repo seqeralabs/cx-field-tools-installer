@@ -151,8 +151,9 @@
 
 %{ if flag_enable_data_studio ~}
     - name: Create Studio 0.8.2 data folder.
-      become: true
-      become_user: ec2-user
+      # Act as root to avoid potential nth deployment conflicts
+      # become: true
+      # become_user: ec2-user
       ansible.builtin.shell: |
         # DEPENDENCY: July 22/25 -- remove when fixed upstream in Studios in a later release.
         echo "Creating data directory on host for Studios."

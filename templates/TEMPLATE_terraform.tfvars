@@ -426,7 +426,7 @@ NOTES:
 flag_enable_data_studio         = true
 flag_studio_enable_path_routing = false
 data_studio_path_routing_url    = "REPLACE_ME_IF_NECESSARY"
-data_studio_container_version   = "0.8.3"
+data_studio_container_version   = "0.9.0"
 
 flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""
@@ -445,57 +445,64 @@ data_studio_eligible_workspaces           = ""
 
 data_studio_options = {
   # DEPENDENCY
-  # DEPRECATION NOTICE (July 22/25): Future versions will not list entries for connect-client v0.8.0. 
-  # (July 31/25) - `rstudio-4-4-1-0-8-0` removed due to license issues.
+  # DEPRECATION NOTICE (Dec 10/25): Future versions will not list entries for connect-client v0.8.5. 
+  # (July 31/25) - `rstudio-...` removed due to license issues.
 
-  vscode-1-83-0-0-8-0 = {
-    qualifier = "VSCODE-1-83-0-0-8-0"
-    icon      = "vscode"
-    tool      = "vscode"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.8.0"
-  },
-  jupyter-4-2-5-0-8-0 = {
-    qualifier = "JUPYTER-4-2-5-0-8-0"
-    icon      = "jupyter"
-    tool      = "jupyter"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.0"
-  },
-  xpra-6-0-R0-0-8-0 = {
-    qualifier = "XPRA-6-0-R0-0-8-0"
-    icon      = "xpra"
-    tool      = "xpra"
-    status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-xpra:6.0-r0-1-0.8.0"
-  },
   vscode-1-101-2-0-8-5 = {
     qualifier = "VSCODE-1-101-2-0-8-5"
     icon      = "vscode"
     tool      = "vscode"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.8.5"
   },
   jupyter-4-2-5-0-8-5 = {
     qualifier = "JUPYTER-4-2-5-0-8-5"
     icon      = "jupyter"
     tool      = "jupyter"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.5"
   },
   ride-2025-04-1-0-8-5 = {
     qualifier = "RIDE-2025-04-1-0-8-5"
     icon      = "rstudio"
     tool      = "rstudio"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.8.5"
   },
   xpra-6-0-R2-1-0-8-5 = {
     qualifier = "XPRA-6-0-R2-1-0-8-5"
     icon      = "xpra"
     tool      = "xpra"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.8.5"
+  },
+  vscode-1-101-2-0-9-0 = {
+    qualifier = "VSCODE-1-101-2-0-9-0"
+    icon      = "vscode"
+    tool      = "vscode"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.9.0"
+  },
+  jupyter-4-2-5-0-9-0 = {
+    qualifier = "JUPYTER-4-2-5-0-9-0"
+    icon      = "jupyter"
+    tool      = "jupyter"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.9.0"
+  },
+  ride-2025-04-1-0-9-0 = {
+    qualifier = "RIDE-2025-04-1-0-9-0"
+    icon      = "rstudio"
+    tool      = "rstudio"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.9.0"
+  },
+  xpra-6-2-R2-1-0-9-0 = {
+    qualifier = "XPRA-6-2-R2-1-0-9-0"
+    icon      = "xpra"
+    tool      = "xpra"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.9.0"
   },
 }
 
