@@ -16,12 +16,12 @@ compute-envs:
     max-cpus: 500
     wait: AVAILABLE
     # List needed for JSON payloads but breaks tw when using YAML (needs comma-delimited string)
-    # Don't 'jsonencode' or else it'll create `"a", "b"` instead of "a,b"
+    # Don't "jsonencode" or else it'll create "a", "b" instead of "a,b"
     # subnets: [ ${join(", ", [for id in subnets: jsonencode(id)])} ]
     subnets: ${join(",", [for id in subnets: id])}
     vpc-id: "${vpc_id}"
     # List needed for JSON payloads but breaks tw when using YAML (needs comma-delimited string)
-    # Don't `jsonencode` or else it'll create `"a", "b"` instead of "a,b"
+    # Don't "jsonencode" or else it'll create "a", "b" instead of "a,b"
     # security-groups: [ ${join(", ", [for id in securityGroups: jsonencode(id)])} ]
     security-groups: ${join(",", [for id in securityGroups: id])}
     key-pair: ${ec2KeyPair}
