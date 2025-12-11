@@ -315,7 +315,7 @@ services:
       seqera: wave-db
     image: postgres:17.6
     platform: linux/amd64
-    expose:
+    ports:
       - 5432:5432
     volumes:
       - $HOME/.wave/db/postgresql:/var/lib/postgresql/data
@@ -336,7 +336,7 @@ services:
     image: redis:7.2.6
     platform: linux/amd64
     expose:
-      - 6380:6379
+      - 6379
     command: ["redis-server", "--requirepass", "${wave_lite_redis_auth}"]
     restart: always
     volumes:
