@@ -155,7 +155,7 @@ tower:
   participant:
     auto-create-user: false
 
-  # By default, if an update is not received for 180 seconds, Seqera Platform marks the pipeline's status as UNKNOWN.
+  # By default, if an update is not received for 180 seconds, Seqera Platform marks the pipeline status as UNKNOWN.
   # Making this setting explicit in case some sites need to customize due to local conditions.
   runner:
     phantom-job:
