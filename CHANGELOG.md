@@ -1,7 +1,7 @@
 # CHANGELOG
-> Last updated: Aug 18, 2025
+> Last updated: Dec 11, 2025
 
-This file was created post 1.5.0 Release.
+This file was updated as part of the 1.7.0 Release.
 
 ```bash
 # Example:
@@ -9,17 +9,29 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 ```
 
 
-## Next Release (Presumed 1.6.2)
-- **Notable Changes**:
+## 1.7.0
+- **Forward Roadmap Guidance**
+
+    To help implementers plan effectively, please be aware of upcoming changes targeted for the next release. Implementation details are not yet finalized, so interested parties are invited to comment on the related GitHub Issues.
+
+    Note these items in particular:
+
+    1. Upgrade AWS RDS MySQL 8.0 to 8.4. [`#271`](https://github.com/seqeralabs/cx-field-tools-installer/issues/271)
+    2. Upgrade Terraform AWS provider to version 6. [`#158`](https://github.com/seqeralabs/cx-field-tools-installer/issues/158)
+
+    All in-scope ticket will be tagged with label `v1.8 Release`.
+
+- **Notable Changes**
     - **CX Installer**
         - General
             - Updated Seqera Platform container version from v25.2.2 to v25.3.0. [`264`](https://github.com/seqeralabs/cx-field-tools-installer/issues/264)
             - Updated redis to `7.2.6` for Platform and Wave. [`#251`](https://github.com/seqeralabs/cx-field-tools-installer/issues/251)
             - Updated Seqera Platform frontend container to use non-privileged version. [`#270`](https://github.com/seqeralabs/cx-field-tools-installer/issues/270)
             - Updated Groundswell container version from 0.4.3 to 0.4.6. [`#238`](https://github.com/seqeralabs/cx-field-tools-installer/issues/238)
-            - Updated Platform Connect containers version. [`#273`](https://github.com/seqeralabs/cx-field-tools-installer/issues/273)
-            - Updated Studios base image version. [`#273`](https://github.com/seqeralabs/cx-field-tools-installer/issues/273)
+            - Updated Platform Connect containers version to 0.9.0. [`#273`](https://github.com/seqeralabs/cx-field-tools-installer/issues/273)
+            - Updated Studios recommended base images. [`#273`](https://github.com/seqeralabs/cx-field-tools-installer/issues/273)
             - Changed `wave-db` container pin from `postgres:latest` to `postgres:17.6`. This is necessary to due to a change in how the [data directory is managed in postgres containers >= 18](https://hub.docker.com/_/postgres#pgdata). [`#250`](https://github.com/seqeralabs/cx-field-tools-installer/issues/250)
+            - Modified `wave-db` and `wave-redis` port configuration to resolve string conversion error. [`298`](https://github.com/seqeralabs/cx-field-tools-installer/issues/298)
             - Added Seqera Platform pipeline versioning feature. [`#284`](https://github.com/seqeralabs/cx-field-tools-installer/issues/284)
             - Removed `FLYWAY_LOCATIONS` as configurable option. [`268`](https://github.com/seqeralabs/cx-field-tools-installer/issues/268)
             - Added [EC2 instance role option](https://docs.seqera.io/platform-enterprise/enterprise/advanced-topics/use-iam-role#configure-seqera). [`#242`](https://github.com/seqeralabs/cx-field-tools-installer/issues/242)
@@ -41,6 +53,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
         - Documentation
             - Updated instance role docs to reflect terraform deployment option. [`#242`](https://github.com/seqeralabs/cx-field-tools-installer/issues/242)
             - Updated templated `terraform.tfvars` with instance role flag and related considerations. [`#242`](https://github.com/seqeralabs/cx-field-tools-installer/issues/242)
+            - Fixed hanging hypen in `permissions.md` document.
         <br /><br />
 
         - Testing
