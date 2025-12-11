@@ -60,9 +60,9 @@ Permissions were identified via:
 				"iam:TagRole"
 			],
 			"Resource": [
-				"arn:aws:iam::AWS_ACCOUNT_REPLACE_ME:role/tf-APP_NAME_REPLACE_ME-*",
-				"arn:aws:iam::AWS_ACCOUNT_REPLACE_ME:policy/tf-APP_NAME_REPLACE_ME-*",
-				"arn:aws:iam::AWS_ACCOUNT_REPLACE_ME:instance-profile/tf-APP_NAME_REPLACE_ME-*"
+				"arn:aws:iam::AWS_ACCOUNT_REPLACE_ME:role/tf-APP_NAME_REPLACE_ME*",
+				"arn:aws:iam::AWS_ACCOUNT_REPLACE_ME:policy/tf-APP_NAME_REPLACE_ME*",
+				"arn:aws:iam::AWS_ACCOUNT_REPLACE_ME:instance-profile/tf-APP_NAME_REPLACE_ME*"
 			]
 		},
 		{
