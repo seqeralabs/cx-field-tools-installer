@@ -1,26 +1,14 @@
-# Source: Inspired by Platform repo's '.github/workflows/claude.yml'
-name: Claude Bot
+# Source: Inspired by https://github.com/anthropics/claude-code-security-review
+name: Claude Security Review Bot
 
 # Fire fairly indiscrimately, but exit if the body doesn't contain the @claude keyword.
 on:
-    issue_comment:
-        types: [created]
-    pull_request_review_comment:
-        types: [created]
-    issues:
-        types: [opened, assigned]
-    pull_request_review:
-        types: [submitted]
+    pull_request:
 
 jobs:
     check-membership:
         if: |
-            (github.actor != 'claude[bot]') &&
-              ((github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-              (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-              (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-              (github.event_name == 'issues' && contains(github.event.issue.body, '@claude'))
-            )
+            github.actor != 'claude[bot]'
         runs-on: ubuntu-latest
         outputs:
             is-member: ${{ steps.check.outputs.allowed }}
@@ -45,27 +33,27 @@ jobs:
                         console.log(`✗ User ${user} is not a member of ${org}`);
                       }
 
-    claude-code-action:
+    claude-code-security-action:
         needs: check-membership
         if: needs.check-membership.outputs.is-member == 'true'
         runs-on: ubuntu-latest
         # TODO: Add more details on where this came from
         permissions:
+            pull-requests: write # Needed for leaving PR comments
             contents: read
-            pull-requests: read
-            issues: read
-            id-token: write
 
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4 # TODO: why not v6?
               with:
-                  fetch-depth: 1
+                  ref: ${{ github.event.pull_request.head.sha || github.sha }}
+                  fetch-depth: 2
 
-            - name: Run Claude Code Action
-              uses: anthropics/claude-code-action@v1
+            - name: Run Claude Code Security Action
+              uses: anthropics/claude-code-security-review@main
               timeout-minutes: 60
               with:
+                  comment-pr: true
                   anthropic_api_key: ${{ secrets.ENG_ANTHROPIC_API_KEY }}
                   timeout_minutes: "60" # TODO: Why is timeout here again?
                   # TODO: Build this out later
