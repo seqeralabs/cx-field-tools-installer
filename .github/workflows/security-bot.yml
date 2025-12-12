@@ -54,20 +54,6 @@ jobs:
               timeout-minutes: 60
               with:
                   comment-pr: true
-                  anthropic_api_key: ${{ secrets.ENG_ANTHROPIC_API_KEY }}
-                  timeout_minutes: "60" # TODO: Why is timeout here again?
-                  # TODO: Build this out later
-                  settings: |
-                      {
-                      "hooks": {}
-                      }
-                  # mode: tag  # Default: responds to @claude mentions
-                  # Optional: Restrict network access to specific domains only
-                  # experimental_allowed_domains: |
-                  #   .anthropic.com
-                  #   .github.com
-                  #   api.github.com
-                  #   .githubusercontent.com
-                  #   bun.sh
-                  #   registry.npmjs.org
-                  #   .blob.core.windows.net
+                  claude-api-key: ${{ secrets.ENG_ANTHROPIC_API_KEY }}
+                  claude-model: claude-sonnet-4-5-20250929
+                  claudecode-timeout: 20
