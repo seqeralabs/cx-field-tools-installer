@@ -90,14 +90,34 @@
     # After installing docker directly from source, got errors like:
     # docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: unable to retrieve OCI runtime error (open /run/containerd/io.containerd.runtime.v2.task/moby/54d38675c8125612fc18580fc686460c184453050d4849099298714ddc26da43/log.json: no such file or directory): runc did not terminate successfully: exit status 1: unknown
     # Fixed by installing new runc release.
-    - name: Add Runc Repo
-      become: true
-      become_user: ec2-user
-      ansible.builtin.shell: |
-        curl -Lo runc https://github.com/opencontainers/runc/releases/download/v1.3.4/runc.amd64
-        chmod +x runc
-        sudo mv runc /usr/bin/runc
+    - name: Download runc binary
+      # become: true
+      get_url:
+        url: https://github.com/opencontainers/runc/releases/download/v1.3.4/runc.amd64
+        dest: /usr/bin/runc
+        mode: "0755"
       when: not docker_removal_marker.stat.exists
+      register: runc_download
+      retries: 10
+      delay: 2
+      until: runc_download is succeeded
+      failed_when: runc_download is failed
+
+    - name: Verify runc installation
+      become: true
+      command: runc --version
+      register: runc_version
+      when:
+        - not docker_removal_marker.stat.exists
+        - runc_download is succeeded
+      changed_when: false
+
+    - name: Display runc version
+      debug:
+        msg: "{{ runc_version.stdout }}"
+      when:
+        - not docker_removal_marker.stat.exists
+        - runc_download is succeeded
 
     - name: Ensure docker is running
       # https://stackoverflow.com/questions/42040688/docker-daemon-start-using-ansible
