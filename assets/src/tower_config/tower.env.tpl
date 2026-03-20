@@ -149,6 +149,24 @@ TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_TOOL="${ds.tool != null ? ds.tool : 
 TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_STATUS="${ds.status != null ? ds.status : ""}"
 %{ endfor ~}
 
+%{ if flag_enable_data_studio_ssh == true ~}
+
+#-------------------------------------------------
+# DATA STUDIO - SSH ACCESS
+# ------------------------------------------------
+TOWER_SSH_KEYS_MANAGEMENT_ENABLED=true
+CONNECT_SSH_ENABLED=true
+TOWER_DATA_STUDIO_CONNECT_SSH_PORT=2222
+%{ if flag_limit_data_studio_ssh_to_some_workspaces == true ~}
+TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES="${data_studio_ssh_eligible_workspaces}"
+%{ else ~}
+TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES=
+%{ endif ~}
+TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS=${data_studio_ssh_address}
+TOWER_DATA_STUDIO_CONNECT_SSH_KEY_FINGERPRINT=${connect_ssh_fingerprint}
+
+%{ endif ~}
+
 %{ else ~}
 # STUDIOS_NOT_ENABLED=DO_NOT_UNCOMMENT
 %{ endif }

@@ -15,6 +15,12 @@ CONNECT_REDIS_DB=1
 
 CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN="ipsemlorem"
 
+%{ if flag_enable_data_studio_ssh == true ~}
+CONNECT_SSH_ENABLED=true
+CONNECT_SSH_ADDR=:2222
+CONNECT_SSH_KEY_PATH=${connect_ssh_key_path}
+%{ endif ~}
+
 %{ if studio_uses_distroless == true ~}
 CONNECT_LOG_LEVEL=debug
 %{ else}

@@ -410,8 +410,6 @@ data_explorer_disabled_workspaces = ""
 Enable to allow Data Studio functionality. Note, this requires several modifications to your instance.
 Please check Release Notes and documentation to ensure this its your regulatory compliance needs.
 
-Must use numeric id of target workspaces when populating `data_studio_eligible_workspaces`.
-
 NOTES: 
 
 1. If upgrading from a pre-24.1 installation, it is likely the existing certificate arn 
@@ -421,15 +419,37 @@ NOTES:
   specified in `data_studio_path_routing_url`.
 
 3. The `data_studio_path_routing_url` should be a **bare domain** — do not include 
-   protocol prefixes like `https://` or path components. Example: `autoconnect.autodc.dev-seqera.net`  
-*/
-flag_enable_data_studio         = true
-flag_studio_enable_path_routing = false
-data_studio_path_routing_url    = "REPLACE_ME_IF_NECESSARY"
-data_studio_container_version   = "0.9.0"
+   protocol prefixes like `https://` or path components. Example: `autoconnect.autodc.dev-seqera.net`
 
-flag_limit_data_studio_to_some_workspaces = false
-data_studio_eligible_workspaces           = ""
+4. Studios:
+    All workspaces:       flag_limit_data_studio_to_some_workspaces = false
+    Specific workspaces:  flag_limit_data_studio_to_some_workspaces = true
+                                                +
+                          data_studio_eligible_workspaces = "12,34,56"
+
+  SSH:
+    All workspaces:       flag_limit_data_studio_ssh_to_some_workspaces = false
+    Specific workspaces:  flag_limit_data_studio_ssh_to_some_workspaces = true
+                                                +
+                          data_studio_ssh_eligible_workspaces = "12,34,56"
+  Note: Must use numeric id of target workspaces when populating `data_studio_eligible_workspaces`.
+*/
+
+# Studios
+flag_enable_data_studio                       = true
+data_studio_container_version                 = "0.11.0"
+flag_limit_data_studio_to_some_workspaces     = false
+data_studio_eligible_workspaces               = ""
+
+# Studios SSH
+flag_enable_data_studio_ssh                   = false
+flag_limit_data_studio_ssh_to_some_workspaces = false
+data_studio_ssh_eligible_workspaces           = ""
+
+flag_studio_enable_path_routing               = false
+data_studio_path_routing_url                  = "REPLACE_ME_IF_NECESSARY"
+
+
 
 # For full list of images Seqera makes available, please see: https://public.cr.seqera.io/
 # NOTE!! 
@@ -437,72 +457,72 @@ data_studio_eligible_workspaces           = ""
 #     Private repositories will be supported in a future iteration.
 #  2. `qualifier` values MUST use hyphens (`-`), NOT underscores (`_`).
 #  3. Versioning Strategy (See Design Decisions for more details.)
-#     - Major and minor versions are pinned explicitly (e.g., `1.83.0-0.7.1` and `1.83.0-0.8.0`).  
-#     - Auto-use latest update by by omitting the patch (e.g. "1.83.0-0.7" instead of "1.83.0-0.7.1").
+#     - Major and minor versions are pinned explicitly (e.g., `1.101.2-0.9.0` and `1.101.2-0.11.0`).  
+#     - Auto-use latest update by by omitting the patch (e.g. "1.101.2-0.9" instead of "1.101.2-0.9.0").
 #   4. For the use of custom data studio images, ensure flag_use_wave = true. 
 #   5. Acceptable status values are: "recommended", "deprecated", and "experimental". Anything else will be displayed as "unsupported".
 #   6. Current as of Platform v25.2.0, only VSCode, Jupyter, and R will work with path-based Studio routing (not Xpra). This must also be the 0.8.5 client version.
 
 data_studio_options = {
   # DEPENDENCY
-  # DEPRECATION NOTICE (Dec 10/25): Future versions will not list entries for connect-client v0.8.5. 
+  # DEPRECATION NOTICE (March 13/26): Future versions will not list entries for connect-client v0.9.0. 
   # (July 31/25) - `rstudio-...` removed due to license issues.
 
-  vscode-1-101-2-0-8-5 = {
-    qualifier = "VSCODE-1-101-2-0-8-5"
-    icon      = "vscode"
-    tool      = "vscode"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.8.5"
-  },
-  jupyter-4-2-5-0-8-5 = {
-    qualifier = "JUPYTER-4-2-5-0-8-5"
-    icon      = "jupyter"
-    tool      = "jupyter"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.5"
-  },
-  ride-2025-04-1-0-8-5 = {
-    qualifier = "RIDE-2025-04-1-0-8-5"
-    icon      = "rstudio"
-    tool      = "rstudio"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.8.5"
-  },
-  xpra-6-0-R2-1-0-8-5 = {
-    qualifier = "XPRA-6-0-R2-1-0-8-5"
-    icon      = "xpra"
-    tool      = "xpra"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.8.5"
-  },
   vscode-1-101-2-0-9-0 = {
     qualifier = "VSCODE-1-101-2-0-9-0"
     icon      = "vscode"
     tool      = "vscode"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.9.0"
   },
   jupyter-4-2-5-0-9-0 = {
     qualifier = "JUPYTER-4-2-5-0-9-0"
     icon      = "jupyter"
     tool      = "jupyter"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.9.0"
   },
   ride-2025-04-1-0-9-0 = {
     qualifier = "RIDE-2025-04-1-0-9-0"
     icon      = "rstudio"
     tool      = "rstudio"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.9.0"
   },
   xpra-6-2-R2-1-0-9-0 = {
     qualifier = "XPRA-6-2-R2-1-0-9-0"
     icon      = "xpra"
     tool      = "xpra"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.9.0"
+  },
+    vscode-1-101-2-0-11-0 = {
+    qualifier = "VSCODE-1-101-2-0-11-0"
+    icon      = "vscode"
+    tool      = "vscode"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.11.0"
+  },
+  jupyter-4-2-5-0-11-0 = {
+    qualifier = "JUPYTER-4-2-5-0-11-0"
+    icon      = "jupyter"
+    tool      = "jupyter"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.11.0"
+  },
+  ride-2025-04-1-0-11-0 = {
+    qualifier = "RIDE-2025-04-1-0-11-0"
+    icon      = "rstudio"
+    tool      = "rstudio"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.11.0"
+  },
+  xpra-6-2-R2-1-0-11-0 = {
+    qualifier = "XPRA-6-2-R2-1-0-11-0"
+    icon      = "xpra"
+    tool      = "xpra"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.11.0"
   },
 }
 

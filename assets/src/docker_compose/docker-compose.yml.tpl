@@ -211,6 +211,9 @@ services:
       - backend
     ports:
       - 9090:9090
+%{ if flag_enable_data_studio_ssh == true ~}
+      - 2222:2222
+%{ endif ~}
     restart: always
 %{ if flag_use_container_redis == true ~}
     depends_on:
@@ -219,6 +222,9 @@ services:
     volumes:
       # DEPENDENCY: July 22/25 -- remove in subsequent release when fixed upstream in Studios.
       - $HOME/.tower/connect:/data
+%{ if flag_enable_data_studio_ssh == true ~}
+      - $HOME/target/tower_config/connect_proxy_ssh_host_key:/data/ssh-host-key
+%{ endif ~}
 
 
   connect-server:
