@@ -36,11 +36,13 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 #### `terraform.tfvars`
 | Status | Component | Parameter Name | Description |
 | ------ | --------- | -------------- | ----------- |
-| New | ipsem | `ipsem` | ipsem |
+| New | Studios SSH | `flag_enable_data_studio_ssh` | Master toggle to enable SSH access into running Studio sessions. Requires `flag_enable_data_studio = true` and Platform >= v25.1.0. When enabled, a dedicated NLB is provisioned (if `flag_create_load_balancer = true`) and a `connect-ssh.<tower_server_url>` DNS record is created. |
+| New | Studios SSH | `flag_limit_data_studio_ssh_to_some_workspaces` | When `true`, restricts SSH access to the workspace IDs listed in `data_studio_ssh_eligible_workspaces`. When `false`, SSH is available to all workspaces. |
+| New | Studios SSH | `data_studio_ssh_eligible_workspaces` | Comma-separated list of numeric workspace IDs that are permitted to use Studios SSH. Only evaluated when `flag_limit_data_studio_ssh_to_some_workspaces = true`. |
 ||||
-| Modified | ipsem | `ipsem` | ipsem |
+| Modified | Studios | `data_studio_container_version` | Updated from 0.9.0 to 0.11.0. Note: Studios SSH requires connect-proxy >= 0.10.0. |
+| Modified | Studios | `data_studio_options` | Removed 0.9.0 images and added 0.11.0 images. |
 ||||
-| Deleted | ipsem | `ipsem` | ipsem |
 
 
 
