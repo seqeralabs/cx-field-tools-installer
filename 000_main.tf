@@ -67,6 +67,11 @@ locals {
   # ---------------------------------------------------------------------------------------
   vpc_id                      = var.flag_create_new_vpc == true ? module.vpc[0].vpc_id : var.vpc_existing_id
   vpc_private_route_table_ids = var.flag_create_new_vpc == true ? module.vpc[0].private_route_table_ids : data.aws_route_tables.preexisting[0].ids
+  # Required for sg_from_nlb_ssh in 002_security_groups.tf.
+  # NLB health checks originate from NLB nodes within the VPC — not from external IPs in sg_ingress_cidrs.
+  # Without the VPC CIDR in the EC2 security group, health checks are blocked, the target shows unhealthy,
+  # and the NLB stops forwarding real SSH traffic even though connect-proxy is running correctly.
+  vpc_cidr_block              = var.flag_create_new_vpc == true ? var.vpc_new_cidr_range : data.aws_vpc.preexisting[0].cidr_block
 
   flag_map_public_ip_on_launch = var.flag_map_public_ip_on_launch == true || var.flag_make_instance_public == true ? true : false
 

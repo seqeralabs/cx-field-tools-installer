@@ -165,9 +165,6 @@ module "alb" {
 ##   Load Balancer (NLB) to pass TCP connections through to connect-proxy on the EC2
 ##   instance.
 ##
-##   The following solution mirrors the EKS approach where a Kubernetes Service of type LoadBalancer with
-##   NLB annotations creates a dedicated NLB for SSH traffic.
-##
 ##   The NLB is only created when flag_enable_data_studio_ssh = true AND
 ##   flag_create_load_balancer = true. If flag_create_load_balancer = false, no NLB
 ##   is created — instead, a Route53 A record points connect-ssh.<tower_server_url>
@@ -190,10 +187,6 @@ resource "aws_lb" "nlb_ssh" {
   load_balancer_type = "network"
   internal           = var.flag_make_instance_private == true || var.flag_private_tower_without_eice == true ? true : false
   subnets            = module.subnet_collector.subnet_ids_alb
-
-  tags = {
-    Environment = "Test"
-  }
 }
 
 resource "aws_lb_target_group" "nlb_ssh" {

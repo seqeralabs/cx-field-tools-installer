@@ -186,6 +186,41 @@ def test_studio_ssh_enabled(session_setup):
 
 
 ## ------------------------------------------------------------------------------------
+## MARK: Studios SSH: Enabled — workspace restriction active
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.studios
+def test_studio_ssh_enabled_workspace_restriction(session_setup):
+    """
+    Scenario:
+        - Baseline all enabled.
+        - Studios SSH enabled.
+        - SSH restricted to specific workspaces.
+    """
+
+    tf_modifiers = """
+        flag_enable_data_studio_ssh = true
+        flag_limit_data_studio_ssh_to_some_workspaces = true
+        data_studio_ssh_eligible_workspaces = "12,34"
+    """
+    plan = prepare_plan(tf_modifiers)
+
+    desired_files = ["tower_env"]
+    assertion_modifiers = assertion_modifiers_template()
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+
+    assertion_modifiers["tower_env"] = {
+        "present": {
+            "TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES": "12,34",
+        },
+        "omitted": {},
+    }
+
+    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    verify_all_assertions(tc_files, tc_assertions)
+
+
+## ------------------------------------------------------------------------------------
 ## MARK: Studios SSH: Disabled
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local

@@ -252,10 +252,16 @@ In addition to the general design decisions noted above, there are a few decisio
 
     An existing ALB solution cannot serve this need as ALBs operate at Layer 7 (HTTP/HTTPS) but Layer 4 TCP connections like SSH are not supported. To fill the gap, a **Network Load Balancer (NLB)** is the chosen infrastructure solution: it operates at Layer 4 and passes TCP connections through to the connect-proxy container.
 
-    As a result, enabling SSH (`flag_enable_data_studio_ssh = true`) when a load balancer is in use (`flag_create_load_balancer = true`) provisions a second load balancer — an NLB — dedicated solely to SSH traffic on port 2222. When `flag_create_load_balancer = false`, no NLB is created. Instead, the Route53 record for the SSH address points directly to the EC2 instance IP, and the host's security group allows port 2222 inbound from the configured ingress CIDRs.
+    The implementation handles both deployment topologies:
 
-    This implementation makes the following assumptions:
+    - **With a load balancer (`flag_create_load_balancer = true`):** A dedicated NLB is provisioned solely for SSH traffic on port 2222, and a Route53 A record (`connect-ssh.<tower_server_url>`) is pointed at it as an alias.
+    - **Without a load balancer (`flag_create_load_balancer = false`):** No NLB is created. The Route53 A record points directly to the EC2 instance IP, and a security group rule allows inbound TCP 2222 from the configured ingress CIDRs directly to the host.
 
-    - **An additional AWS resource and its associated cost are acceptable.** The NLB runs continuously once provisioned. There is no existing option to share it with the ALB or to collapse it into existing infrastructure.
-    - **The `connect-ssh.<tower_server_url>` subdomain is acceptable.** The SSH address is derived automatically by the `connection_strings` module and follows the same one-level subdomain convention as the Studios connect proxy (`connect.<tower_server_url>`).
-    - **Route53 DNS is managed within the same AWS account.** If DNS is managed externally, the `connect-ssh.*` A record must be created manually before SSH connections will resolve correctly.
+
+    The following are design choices baked into the implementation. They are not configurable without modifying files outside of `terraform.tfvars`. If any of these do not fit your environment, SSH for Studios is not supported for your deployment without custom work.
+
+    - **Port 2222 is hardcoded and not configurable.** If your network blocks port 2222 or you need a different port for any reason, this feature will not work for your deployment without custom changes outside of `terraform.tfvars`.
+    - **The SSH subdomain is always `connect-ssh.<tower_server_url>`.** This is derived automatically and follows the same one-level convention as the Studios connect proxy (`connect.<tower_server_url>`). It is not user-configurable.
+    - **An NLB is provisioned as a second load balancer when `flag_create_load_balancer = true`.** It runs continuously once provisioned and incurs additional AWS cost. There is no option to share it with the ALB.
+    - **The NLB uses the same subnets as the ALB (`subnet_ids_alb`).** The NLB needs to be reachable from wherever users connect to Platform, so it belongs in the same network.
+    - **Route53 DNS must be managed within the same AWS account.** If DNS is managed externally, the `connect-ssh.*` A record must be created manually before SSH connections will resolve correctly.

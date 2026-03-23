@@ -463,9 +463,9 @@ def verify_data_studio_ssh(data: SimpleNamespace):
                 "`flag_enable_data_studio_ssh` requires `flag_enable_data_studio` to also be true."
             )
 
-        if data.tower_container_version < "v25.1.0":
+        if data.tower_container_version < "v25.3.3":
             log_error_and_exit(
-                "Studios SSH (`flag_enable_data_studio_ssh`) requires Platform v25.1.0 or higher."
+                "Studios SSH (`flag_enable_data_studio_ssh`) requires Platform v25.3.3 or higher."
             )
 
         if data.data_studio_container_version < "0.10.0":

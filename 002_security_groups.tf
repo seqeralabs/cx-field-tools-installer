@@ -207,6 +207,14 @@ module "sg_ec2_noalb_ssh" {
 ##   NLBs do NOT have security groups — traffic arrives at the EC2 instance from
 ##   either the client IP or the NLB node IP depending on client IP preservation.
 ##   CIDR-based rules (sg_ingress_cidrs) are therefore required.
+##
+## WHY VPC CIDR IS INCLUDED ALONGSIDE sg_ingress_cidrs:
+##   NLB health checks verify the target is alive by opening a TCP connection to
+##   port 2222 on the EC2 instance. The check originates from within
+##   the VPC — not from external IPs in sg_ingress_cidrs. If the VPC CIDR is not
+##   included, health checks are blocked, the target shows unhealthy, and the NLB
+##   stops forwarding real SSH traffic even though connect-proxy is running correctly.
+##   local.vpc_cidr_block is defined in 000_main.tf and handles both new and existing VPC.
 ## ------------------------------------------------------------------------------------
 module "sg_from_nlb_ssh" {
   source  = "terraform-aws-modules/security-group/aws"
@@ -233,7 +241,7 @@ module "sg_from_nlb_ssh" {
       to_port     = 2222
       protocol    = "tcp"
       description = "Connect-Proxy SSH via NLB"
-      cidr_blocks = join(",", var.sg_ingress_cidrs)
+      cidr_blocks = join(",", distinct(concat(var.sg_ingress_cidrs, [local.vpc_cidr_block])))
     }
   ]
   number_of_computed_ingress_with_source_security_group_id = 0
