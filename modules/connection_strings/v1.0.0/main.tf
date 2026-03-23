@@ -97,7 +97,7 @@ locals {
 
   # CONNECT SSH
   # ---------------------------------------------------------------------------------------
-  connect_ssh_enabled       = var.flag_enable_data_studio_ssh && !var.flag_do_not_use_https ? true : false
+  connect_ssh_enabled       = var.flag_enable_data_studio_ssh ? true : false
   tower_connect_ssh_dns     = local.connect_ssh_enabled ? "connect-ssh.${var.tower_server_url}" : "N/A"
   tower_connect_ssh_url     = local.connect_ssh_enabled ? "https://${local.tower_connect_ssh_dns}" : "N/A"
 

@@ -245,3 +245,17 @@ In addition to the general design decisions noted above, there are a few decisio
     Using `terraform apply -target=...` reduces scope and improves speed but, unfortunately, `module.connection_strings` is central to all the tests and it in turn relies upon the provision of RDS and Elasticache resources for deployments that follow best practices guidelines. As a result, a testing loop that must actually deploy these resources takes up to 20 minutes to complete.
 
     By adding a `... && !var.use_mocks` to the `count` of the affected resources, I can descope these resources from the minimal footprint deployment, thereby vastly speeding up (_and thereby encouraging the on-going use of_) testing. The downside of this approach, however, is that there is an ongoing intermingling of concerns between logic meant to deploy resources for real, versus logic focused on testing. I cannot think of a better way to balance speed with rigour at the moment so this will be the go-forward approach until a better technique presents itself.
+
+17. **SSH access requires a dedicated NLB alongside the existing ALB**
+
+    The Studios SSH feature allows users to open an SSH connection directly into a running Studio session which requires the connect-proxy container port 2222 to be exposed.
+
+    An existing ALB solution cannot serve this need as ALBs operate at Layer 7 (HTTP/HTTPS) but Layer 4 TCP connections like SSH are not supported. To fill the gap, a **Network Load Balancer (NLB)** is the chosen infrastructure solution: it operates at Layer 4 and passes TCP connections through to the connect-proxy container.
+
+    As a result, enabling SSH (`flag_enable_data_studio_ssh = true`) when a load balancer is in use (`flag_create_load_balancer = true`) provisions a second load balancer — an NLB — dedicated solely to SSH traffic on port 2222. When `flag_create_load_balancer = false`, no NLB is created. Instead, the Route53 record for the SSH address points directly to the EC2 instance IP, and the host's security group allows port 2222 inbound from the configured ingress CIDRs.
+
+    This implementation makes the following assumptions:
+
+    - **An additional AWS resource and its associated cost are acceptable.** The NLB runs continuously once provisioned. There is no existing option to share it with the ALB or to collapse it into existing infrastructure.
+    - **The `connect-ssh.<tower_server_url>` subdomain is acceptable.** The SSH address is derived automatically by the `connection_strings` module and follows the same one-level subdomain convention as the Studios connect proxy (`connect.<tower_server_url>`).
+    - **Route53 DNS is managed within the same AWS account.** If DNS is managed externally, the `connect-ssh.*` A record must be created manually before SSH connections will resolve correctly.
