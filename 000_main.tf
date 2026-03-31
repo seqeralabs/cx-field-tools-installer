@@ -62,6 +62,17 @@ locals {
   # ---------------------------------------------------------------------------------------
   global_prefix = var.flag_use_custom_resource_naming_prefix == true ? var.custom_resource_naming_prefix : "tf-${var.app_name}-${random_pet.stackname.id}"
 
+  # AWS enforces a 32-char limit on ALB/NLB names and a 20-char limit on ElastiCache cluster IDs.
+  # substr() is safe for existing deployments: if a resource was successfully created, its name
+  # already fits the AWS limit, so substr() returns the original string unchanged (no replacement).
+  # trimsuffix() strips any trailing hyphen that substr() might leave mid-word, since AWS rejects
+  # LB and ElastiCache names that end with a hyphen.
+  # NLB uses substr(..., 0, 28) to reserve 4 chars for the "-ssh" suffix, keeping it ≤ 32 total
+  # and ensuring the ALB and NLB always have distinct names.
+  lb_name     = trimsuffix(substr(local.global_prefix, 0, 32), "-")
+  lb_name_ssh = "${trimsuffix(substr(local.global_prefix, 0, 28), "-")}-ssh"
+  cache_name  = trimsuffix(substr("${local.global_prefix}-redis", 0, 20), "-")
+
 
   # Networking
   # ---------------------------------------------------------------------------------------

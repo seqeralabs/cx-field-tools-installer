@@ -68,7 +68,10 @@ variable "default_tags" { type = map(string) }
 # ------------------------------------------------------------------------------------
 
 variable "flag_use_custom_resource_naming_prefix" { type = bool }
-variable "custom_resource_naming_prefix" { type = string }
+variable "custom_resource_naming_prefix" {
+  type        = string
+  description = "Custom prefix for all AWS resource names. Keep to 28 characters or fewer — AWS enforces a 32-char limit on load balancer names, and the NLB appends a '-ssh' suffix (4 chars). Longer values are truncated automatically, which may produce unexpected names."
+}
 
 
 # ------------------------------------------------------------------------------------

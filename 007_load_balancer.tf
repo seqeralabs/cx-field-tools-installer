@@ -5,7 +5,7 @@ module "alb" {
   source  = "terraform-aws-modules/alb/aws"
   version = "8.7.0"
 
-  name               = local.global_prefix
+  name               = local.lb_name
   load_balancer_type = "application"
 
   vpc_id          = local.vpc_id
@@ -183,7 +183,7 @@ module "alb" {
 resource "aws_lb" "nlb_ssh" {
   count = var.flag_enable_data_studio_ssh && var.flag_create_load_balancer ? 1 : 0
 
-  name               = "${local.global_prefix}-ssh"
+  name               = local.lb_name_ssh
   load_balancer_type = "network"
   internal           = var.flag_make_instance_private == true || var.flag_private_tower_without_eice == true ? true : false
   subnets            = module.subnet_collector.subnet_ids_alb

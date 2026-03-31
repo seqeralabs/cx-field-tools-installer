@@ -134,7 +134,7 @@ resource "aws_elasticache_subnet_group" "redis" {
 resource "aws_elasticache_cluster" "redis" {
   count = var.flag_create_external_redis && !var.use_mocks == true ? 1 : 0
 
-  cluster_id      = "${local.global_prefix}-redis"
+  cluster_id      = local.cache_name
   engine          = "redis"
   node_type       = "cache.m4.xlarge"
   num_cache_nodes = 1
