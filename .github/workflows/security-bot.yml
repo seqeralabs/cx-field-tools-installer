@@ -44,7 +44,7 @@ jobs:
 
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v4 # TODO: why not v6?
+              uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1 # TODO: why not v6?
               with:
                   ref: ${{ github.event.pull_request.head.sha || github.sha }}
                   fetch-depth: 2
