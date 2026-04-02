@@ -138,6 +138,116 @@ module "sg_from_alb_core" {
 
 
 
+## ------------------------------------------------------------------------------------
+## SSH (Studios) — Direct EC2 access (no ALB/NLB)
+##
+## NOTE: This rule is the SSH equivalent of sg_ec2_noalb_connect above.
+##
+## WHY THIS EXISTS:
+##   When flag_create_load_balancer = false, there is no NLB in front of the EC2
+##   instance. SSH traffic on port 2222 must be allowed directly from the permitted
+##   ingress CIDRs (sg_ingress_cidrs) to the EC2 instance.
+##
+##   Docker's 2222:2222 port mapping in docker-compose.yml then forwards the traffic
+##   from the EC2 host port into the connect-proxy container. The security group
+##   operates at the EC2 network level — before Docker sees the traffic.
+##
+## DIFFERENCE FROM sg_from_nlb_ssh (below):
+##   This rule allows direct CIDR access. sg_from_nlb_ssh is used when an NLB is
+##   present (flag_create_load_balancer = true). Both use sg_ingress_cidrs because
+##   NLBs do not have security groups (unlike ALBs), so CIDR-based rules are required
+##   in both cases. They are kept as separate resources to follow the existing
+##   noalb / from_alb naming convention and count-gating pattern.
+## ------------------------------------------------------------------------------------
+module "sg_ec2_noalb_ssh" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.1.0"
+
+  count = var.flag_create_load_balancer == false && var.flag_enable_data_studio_ssh == true ? 1 : 0
+
+  name        = "${local.global_prefix}_ec2_direct_ssh"
+  description = "Direct TCP (2222) traffic to EC2 for Studios SSH."
+
+  vpc_id = local.vpc_id
+  # computed_ingress_with_cidr_blocks = [
+  #   {
+  #     from_port   = 2222
+  #     to_port     = 2222
+  #     protocol    = "tcp"
+  #     description = "Connect-Proxy SSH"
+  #     cidr_blocks = "${join(",", var.sg_ingress_cidrs)}"
+  #   }
+  # ]
+  ingress_with_cidr_blocks = [
+    {
+      from_port   = 2222
+      to_port     = 2222
+      protocol    = "tcp"
+      description = "Connect-Proxy SSH via NLB"
+      cidr_blocks = join(",", var.sg_ingress_cidrs)
+    }
+  ]
+  number_of_computed_ingress_with_source_security_group_id = 0
+}
+
+
+## ------------------------------------------------------------------------------------
+## SSH (Studios) — via NLB (flag_create_load_balancer = true)
+##
+## NOTE: This rule is the SSH equivalent of sg_from_alb_connect below.
+##
+## WHY THIS EXISTS:
+##   When flag_create_load_balancer = true, SSH traffic arrives at the EC2 instance
+##   via the NLB created in 007_load_balancer.tf. The EC2 security group must allow
+##   inbound TCP 2222 so the NLB can forward connections through.
+##
+## WHY CIDR-BASED (NOT SOURCE SECURITY GROUP):
+##   ALBs have their own security groups, so sg_from_alb_connect can use
+##   source_security_group_id to restrict traffic to only what comes from the ALB.
+##   NLBs do NOT have security groups — traffic arrives at the EC2 instance from
+##   either the client IP or the NLB node IP depending on client IP preservation.
+##   CIDR-based rules (sg_ingress_cidrs) are therefore required.
+##
+## WHY VPC CIDR IS INCLUDED ALONGSIDE sg_ingress_cidrs:
+##   NLB health checks verify the target is alive by opening a TCP connection to
+##   port 2222 on the EC2 instance. The check originates from within
+##   the VPC — not from external IPs in sg_ingress_cidrs. If the VPC CIDR is not
+##   included, health checks are blocked, the target shows unhealthy, and the NLB
+##   stops forwarding real SSH traffic even though connect-proxy is running correctly.
+##   local.vpc_cidr_block is defined in 000_main.tf and handles both new and existing VPC.
+## ------------------------------------------------------------------------------------
+module "sg_from_nlb_ssh" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.1.0"
+
+  count = var.flag_create_load_balancer == true && var.flag_enable_data_studio_ssh == true ? 1 : 0
+
+  name        = "${local.global_prefix}_from_nlb_ssh"
+  description = "Allow Studios SSH traffic via NLB on TCP 2222."
+
+  vpc_id = local.vpc_id
+  # computed_ingress_with_cidr_blocks = [
+  #   {
+  #     from_port   = 2222
+  #     to_port     = 2222
+  #     protocol    = "tcp"
+  #     description = "Connect-Proxy SSH via NLB"
+  #     cidr_blocks = "${join(",", var.sg_ingress_cidrs)}"
+  #   }
+  # ]
+  ingress_with_cidr_blocks = [
+    {
+      from_port   = 2222
+      to_port     = 2222
+      protocol    = "tcp"
+      description = "Connect-Proxy SSH via NLB"
+      cidr_blocks = join(",", distinct(concat(var.sg_ingress_cidrs, [local.vpc_cidr_block])))
+    }
+  ]
+  number_of_computed_ingress_with_source_security_group_id = 0
+}
+
+
 module "sg_from_alb_connect" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "5.1.0"

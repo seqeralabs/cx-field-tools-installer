@@ -454,6 +454,37 @@ def verify_data_studio(data: SimpleNamespace):
             )
 
 
+def verify_data_studio_ssh(data: SimpleNamespace):
+    """Verify fields related to Data Studio SSH."""
+
+    if data.flag_enable_data_studio_ssh:
+        if not data.flag_enable_data_studio:
+            log_error_and_exit(
+                "`flag_enable_data_studio_ssh` requires `flag_enable_data_studio` to also be true."
+            )
+
+        if data.tower_container_version < "v25.3.3":
+            log_error_and_exit(
+                "Studios SSH (`flag_enable_data_studio_ssh`) requires Platform v25.3.3 or higher."
+            )
+
+        if data.data_studio_container_version < "0.10.0":
+            logger.warning(
+                "Studios SSH requires connect-proxy >= 0.10.0. Please verify your `data_studio_container_version`."
+            )
+
+        if data.flag_limit_data_studio_ssh_to_some_workspaces:
+            workspaces = data.data_studio_ssh_eligible_workspaces
+            try:
+                workspaces = workspaces.split(",")
+                for wsp in workspaces:
+                    isinstance(int(wsp), int)
+            except ValueError:
+                log_error_and_exit(
+                    "Variable `data_studio_ssh_eligible_workspaces` has non-integer values. Fix before deploying."
+                )
+
+
 def verify_not_v24_1_0(data: SimpleNamespace):
     """Verify that user has not selected Tower v24.1.0 (due to serialization bug)."""
     if data.tower_container_version == "v24.1.0":
@@ -688,6 +719,7 @@ if __name__ == "__main__":
     logger.info("Verifying Data Studio settings")
     logger.info("-" * 50)
     verify_data_studio(data)
+    verify_data_studio_ssh(data)
 
     # Verify database settings (last since this is the most critical component and most likely to be seen)
     print("\n")

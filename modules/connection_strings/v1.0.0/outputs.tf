@@ -83,6 +83,16 @@ output "tower_connect_redis_url" {
   sensitive   = false
 }
 
+output "tower_connect_ssh_dns" {
+  description = "The DNS name for Connect SSH (without protocol prefix)"
+  value       = local.tower_connect_ssh_dns
+}
+
+output "tower_connect_ssh_url" {
+  description = "The URL for Connect SSH with protocol prefix"
+  value       = local.tower_connect_ssh_url
+}
+
 ## ------------------------------------------------------------------------------------
 ## Wave-Lite Outputs
 ## ------------------------------------------------------------------------------------

@@ -67,6 +67,11 @@ locals {
   # ---------------------------------------------------------------------------------------
   vpc_id                      = var.flag_create_new_vpc == true ? module.vpc[0].vpc_id : var.vpc_existing_id
   vpc_private_route_table_ids = var.flag_create_new_vpc == true ? module.vpc[0].private_route_table_ids : data.aws_route_tables.preexisting[0].ids
+  # Required for sg_from_nlb_ssh in 002_security_groups.tf.
+  # NLB health checks originate from NLB nodes within the VPC — not from external IPs in sg_ingress_cidrs.
+  # Without the VPC CIDR in the EC2 security group, health checks are blocked, the target shows unhealthy,
+  # and the NLB stops forwarding real SSH traffic even though connect-proxy is running correctly.
+  vpc_cidr_block              = var.flag_create_new_vpc == true ? var.vpc_new_cidr_range : data.aws_vpc.preexisting[0].cidr_block
 
   flag_map_public_ip_on_launch = var.flag_map_public_ip_on_launch == true || var.flag_make_instance_public == true ? true : false
 
@@ -127,6 +132,11 @@ locals {
   sg_from_alb_core                      = try([module.sg_from_alb_core[0].security_group_id], [])
   sg_from_alb_connect                   = try([module.sg_from_alb_connect[0].security_group_id], [])
   sg_from_alb_wave                      = try([module.sg_from_alb_wave[0].security_group_id], [])
+  # Studios SSH — see 002_security_groups.tf for why two separate rules are needed
+  # (one for direct EC2 access, one for NLB path; NLBs don't have security groups
+  # so both use CIDR-based rules rather than source_security_group_id)
+  sg_ec2_noalb_ssh                      = try([module.sg_ec2_noalb_ssh[0].security_group_id], [])
+  sg_from_nlb_ssh                       = try([module.sg_from_nlb_ssh[0].security_group_id], [])
 
   sg_ec2_final = concat(
     local.sg_ec2_core,
@@ -136,6 +146,8 @@ locals {
     local.sg_from_alb_core,
     local.sg_from_alb_connect,
     local.sg_from_alb_wave,
+    local.sg_ec2_noalb_ssh,
+    local.sg_from_nlb_ssh,
 
   )
   ec2_sg_final_raw = join(",", [for sg in local.sg_ec2_final : jsonencode(sg)]) # Needed?
@@ -284,6 +296,7 @@ module "connection_strings" {
 
   # Studios Configuration
   flag_enable_data_studio         = var.flag_enable_data_studio
+  flag_enable_data_studio_ssh = var.flag_enable_data_studio_ssh
   flag_studio_enable_path_routing = var.flag_studio_enable_path_routing
   data_studio_path_routing_url    = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : ""
 

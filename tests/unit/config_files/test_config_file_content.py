@@ -140,6 +140,130 @@ def test_studio_path_routing_enabled(session_setup):
 
 
 ## ------------------------------------------------------------------------------------
+## MARK: Studios SSH: Enabled
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.studios
+def test_studio_ssh_enabled(session_setup):
+    """
+    Scenario:
+        - Baseline all enabled.
+        - Studios SSH enabled.
+    """
+
+    tf_modifiers = """
+        flag_enable_data_studio_ssh = true
+        flag_limit_data_studio_ssh_to_some_workspaces = false
+    """
+    plan = prepare_plan(tf_modifiers)
+
+    desired_files = ["tower_env", "data_studios_env"]
+    assertion_modifiers = assertion_modifiers_template()
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+
+    assertion_modifiers["tower_env"] = {
+        "present": {
+            "TOWER_SSH_KEYS_MANAGEMENT_ENABLED": "true",
+            "CONNECT_SSH_ENABLED": "true",
+            "TOWER_DATA_STUDIO_CONNECT_SSH_PORT": "2222",
+            "TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES": "",
+            "TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS": "https://connect-ssh.autodc.dev-seqera.net",
+        },
+        "omitted": {},
+    }
+
+    assertion_modifiers["data_studios_env"] = {
+        "present": {
+            "CONNECT_SSH_ENABLED": "true",
+            "CONNECT_SSH_ADDR": ":2222",
+            "CONNECT_SSH_KEY_PATH": "/data/ssh-host-key",
+        },
+        "omitted": {},
+    }
+
+    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    verify_all_assertions(tc_files, tc_assertions)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Studios SSH: Enabled — workspace restriction active
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.studios
+def test_studio_ssh_enabled_workspace_restriction(session_setup):
+    """
+    Scenario:
+        - Baseline all enabled.
+        - Studios SSH enabled.
+        - SSH restricted to specific workspaces.
+    """
+
+    tf_modifiers = """
+        flag_enable_data_studio_ssh = true
+        flag_limit_data_studio_ssh_to_some_workspaces = true
+        data_studio_ssh_eligible_workspaces = "12,34"
+    """
+    plan = prepare_plan(tf_modifiers)
+
+    desired_files = ["tower_env"]
+    assertion_modifiers = assertion_modifiers_template()
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+
+    assertion_modifiers["tower_env"] = {
+        "present": {
+            "TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES": "12,34",
+        },
+        "omitted": {},
+    }
+
+    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    verify_all_assertions(tc_files, tc_assertions)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Studios SSH: Disabled
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.studios
+def test_studio_ssh_disabled(session_setup):
+    """
+    Scenario:
+        - Baseline all enabled.
+        - Studios on, SSH explicitly disabled.
+    """
+
+    tf_modifiers = """
+        flag_enable_data_studio_ssh = false
+    """
+    plan = prepare_plan(tf_modifiers)
+
+    desired_files = ["tower_env", "data_studios_env"]
+    assertion_modifiers = assertion_modifiers_template()
+    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+
+    assertion_modifiers["tower_env"] = {
+        "present": {},
+        "omitted": {
+            "TOWER_SSH_KEYS_MANAGEMENT_ENABLED": "",
+            "TOWER_DATA_STUDIO_CONNECT_SSH_PORT": "",
+            "TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS": "",
+        },
+    }
+
+    assertion_modifiers["data_studios_env"] = {
+        "present": {},
+        "omitted": {
+            "CONNECT_SSH_ENABLED": "",
+            "CONNECT_SSH_ADDR": "",
+            "CONNECT_SSH_KEY_PATH": "",
+        },
+    }
+
+    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    verify_all_assertions(tc_files, tc_assertions)
+
+
+## ------------------------------------------------------------------------------------
 ## MARK: New DB: All Active
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local

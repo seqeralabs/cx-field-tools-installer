@@ -40,10 +40,16 @@ locals {
       tower_container_version = var.tower_container_version,
 
       flag_enable_data_studio                   = var.flag_enable_data_studio,
+      tower_connect_server_url                  = module.connection_strings.tower_connect_server_url,
       flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces,
       data_studio_eligible_workspaces           = var.data_studio_eligible_workspaces,
-      tower_connect_server_url                  = module.connection_strings.tower_connect_server_url,
 
+      flag_enable_data_studio_ssh                       = var.flag_enable_data_studio_ssh,
+      data_studio_ssh_address                           = module.connection_strings.tower_connect_ssh_url,
+      flag_limit_data_studio_ssh_to_some_workspaces     = var.flag_limit_data_studio_ssh_to_some_workspaces,
+      data_studio_ssh_eligible_workspaces                = var.data_studio_ssh_eligible_workspaces,
+      connect_ssh_fingerprint                           = tls_private_key.connect_ssh_host_key.public_key_fingerprint_sha256,
+      
       data_studio_options             = var.data_studio_options,
       flag_studio_enable_path_routing = var.flag_studio_enable_path_routing,
 
@@ -129,6 +135,8 @@ locals {
       tower_redis_url          = module.connection_strings.tower_connect_redis_url,
       tower_connect_server_url = module.connection_strings.tower_connect_server_url,
       studio_uses_distroless   = local.studio_uses_distroless,
+      flag_enable_data_studio_ssh = var.flag_enable_data_studio_ssh,
+      connect_ssh_key_path        = "/data/ssh-host-key",
     }
   )
 
@@ -179,6 +187,7 @@ locals {
       db_container_engine_version = var.db_container_engine_version,
 
       flag_enable_data_studio       = var.flag_enable_data_studio,
+      flag_enable_data_studio_ssh   = var.flag_enable_data_studio_ssh,
       data_studio_container_version = var.data_studio_container_version,
       updated_redis_version         = tonumber(length(regexall("^v24.2.[0-9]", var.tower_container_version))) >= 1 || tonumber(length(regexall("^v2[5-9].[0-9].[0-9]", var.tower_container_version))) >= 1 ? true : false,
       studio_uses_distroless        = local.studio_uses_distroless,
@@ -419,5 +428,8 @@ resource "tls_private_key" "connect_pem" {
   rsa_bits  = 4096
 }
 
+resource "tls_private_key" "connect_ssh_host_key" {
+    algorithm = "ED25519"
+}
 
 

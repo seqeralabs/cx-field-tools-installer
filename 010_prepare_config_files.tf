@@ -119,7 +119,11 @@ resource "null_resource" "generate_config_files_with_dependencies" {
 
       # Generate Tower Connect files
       echo '${local.data_studios_env}' > ${path.module}/assets/target/tower_config/data-studios.env &
-      echo '${tls_private_key.connect_pem.private_key_pem}' > ${path.module}/assets/target/tower_config/data-studios-rsa.pem
+      echo '${tls_private_key.connect_pem.private_key_pem}' > ${path.module}/assets/target/tower_config/data-studios-rsa.pem &
+
+      # Generate Tower Connect SSH host key
+      echo '${tls_private_key.connect_ssh_host_key.private_key_openssh}' > ${path.module}/assets/target/tower_config/connect_proxy_ssh_host_key
+      chmod 644 ${path.module}/assets/target/tower_config/connect_proxy_ssh_host_key
 
     EOT
     interpreter = ["/bin/bash", "-c"]

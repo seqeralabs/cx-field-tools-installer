@@ -41,6 +41,7 @@ def replace_vars_in_templatefile(input_str, vars_dict, pattern) -> str:
         "groundswell_secrets": r'local\.groundswell_secrets\["([^"]+)"\]\["[^"]+"\]',
         "seqerakit_secrets": r'local\.seqerakit_secrets\["([^"]+)"\]\["[^"]+"\]',
         "wave_lite_secrets": r'local\.wave_lite_secrets\["([^"]+)"\]\["[^"]+"\]',
+        "tls_connect_ssh_host_key": r"tls_private_key\.connect_ssh_host_key\.(\w+)",
         # Keeping these for future use if needed
         "tfvar": r"var\.(\w+)",
         "local": r"local\.(\w+)",
@@ -97,6 +98,10 @@ def prepare_templatefile_payload(key, tc: TCValues):
     payload = replace_vars_in_templatefile(payload, tc.groundswell_secrets, "groundswell_secrets")
     payload = replace_vars_in_templatefile(payload, tc.seqerakit_secrets, "seqerakit_secrets")
     payload = replace_vars_in_templatefile(payload, tc.wave_lite_secrets, "wave_lite_secrets")
+    # tls_private_key attributes are (known after apply) — substitute before console runs,
+    # same reason module.connection_strings.* values are substituted.
+    tls_ssh_host_key_values = {"public_key_fingerprint_sha256": "SHA256:mocksshfingerprintfortesting"}
+    payload = replace_vars_in_templatefile(payload, tls_ssh_host_key_values, "tls_connect_ssh_host_key")
     payload = payload.replace("\n", "")  # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
     return payload
 

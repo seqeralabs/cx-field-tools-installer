@@ -95,6 +95,13 @@ locals {
   ct_redis_dns_with_port  = var.flag_create_external_redis && !var.use_mocks ? "${local.tower_connect_redis_dns}:${var.elasticache_tower.cache_nodes[0].port}" : "${local.tower_connect_redis_dns}:6379"
   tower_connect_redis_url = var.flag_enable_data_studio && !var.flag_do_not_use_https ? "${local.ct_redis_dns_with_port}" : "N/A"
 
+  # CONNECT SSH
+  # ---------------------------------------------------------------------------------------
+  connect_ssh_enabled       = var.flag_enable_data_studio_ssh ? true : false
+  tower_connect_ssh_dns     = local.connect_ssh_enabled ? "connect-ssh.${var.tower_server_url}" : "N/A"
+  tower_connect_ssh_url     = local.connect_ssh_enabled ? "https://${local.tower_connect_ssh_dns}" : "N/A"
+
+  
   # WAVE-LITE
   # ---------------------------------------------------------------------------------------
   # TODO: June 16/25 -- Consider if `rediss://` hardcode aligns with how config is presented.
