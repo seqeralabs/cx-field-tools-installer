@@ -75,7 +75,7 @@ resource "null_resource" "generate_independent_config_files" {
 
       fi
 
-      if [[ "${var.flag_use_private_cacert}" == "true" ]] && [[ "${var.flag_use_wave}" == "true" || "${var.flag_use_wave_lite}" == "true" ]]; then
+      if [[ "${var.flag_use_private_cacert}" == "true" ]]; then
 
         cat > ${path.module}/assets/target/docker_compose/import-cert.sh << 'EOF'
 #!/bin/sh

@@ -95,7 +95,7 @@ services:
   cron:
     image: cr.seqera.io/private/nf-tower-enterprise/backend:${docker_version}
     command: -c "/tower.sh"
-%{ if flag_use_private_cacert == true && (flag_use_wave == true || flag_use_wave_lite == true) ~}
+%{ if flag_use_private_cacert == true ~}
     entrypoint: ["/bin/sh", "/tmp/import-cert.sh"]
 %{ endif ~}
     networks:
@@ -106,7 +106,7 @@ services:
 %{ if flag_enable_data_studio == true ~}
       - $HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem
 %{ endif ~}
-%{ if flag_use_private_cacert == true && (flag_use_wave == true || flag_use_wave_lite == true) ~}
+%{ if flag_use_private_cacert == true ~}
       - $HOME/target/customcerts/rootCA.crt:/tmp/rootCA.crt
       - $HOME/target/docker_compose/import-cert.sh:/tmp/import-cert.sh
 %{ endif ~}
@@ -128,7 +128,7 @@ services:
 %{ else ~}
     command: -c "/migrate-db.sh; /tower.sh"
 %{ endif }
-%{ if flag_use_private_cacert == true && (flag_use_wave == true || flag_use_wave_lite == true) ~}
+%{ if flag_use_private_cacert == true ~}
     entrypoint: ["/bin/sh", "/tmp/import-cert.sh"]
 %{ endif ~}
     networks:
@@ -139,7 +139,7 @@ services:
 %{ if flag_enable_data_studio == true ~}
       - $HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem
 %{ endif ~}
-%{ if flag_use_private_cacert == true && (flag_use_wave == true || flag_use_wave_lite == true) ~}
+%{ if flag_use_private_cacert == true ~}
       - $HOME/target/customcerts/rootCA.crt:/tmp/rootCA.crt
       - $HOME/target/docker_compose/import-cert.sh:/tmp/import-cert.sh
 %{ endif ~}
@@ -169,7 +169,7 @@ services:
 %{ else ~}
     command: -c "/tower.sh"
 %{ endif }
-%{ if flag_use_private_cacert == true && (flag_use_wave == true || flag_use_wave_lite == true) ~}
+%{ if flag_use_private_cacert == true ~}
     entrypoint: ["/bin/sh", "/tmp/import-cert.sh"]
 %{ endif ~}
     networks:
@@ -182,7 +182,7 @@ services:
 %{ if flag_enable_data_studio == true ~}
       - $HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem
 %{ endif ~}
-%{ if flag_use_private_cacert == true && (flag_use_wave == true || flag_use_wave_lite == true) ~}
+%{ if flag_use_private_cacert == true ~}
       - $HOME/target/customcerts/rootCA.crt:/tmp/rootCA.crt
       - $HOME/target/docker_compose/import-cert.sh:/tmp/import-cert.sh
 %{ endif ~}
@@ -313,7 +313,7 @@ services:
 %{ endif ~}
     volumes:
       - $HOME/target/wave_lite_config/wave-lite.yml:/work/config.yml
-%{ if flag_use_private_cacert == true && (flag_use_wave == true || flag_use_wave_lite == true) ~}
+%{ if flag_use_private_cacert == true ~}
       - $HOME/target/customcerts/rootCA.crt:/tmp/rootCA.crt
       - $HOME/target/docker_compose/import-cert.sh:/tmp/import-cert.sh
 %{ endif ~}

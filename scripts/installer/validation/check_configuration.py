@@ -169,11 +169,10 @@ def verify_tower_self_signed_certs(data: SimpleNamespace):
             log_error_and_exit(
                 " Field `private_cacert_bucket_prefix` must start with `s3://`"
             )
-        if data.flag_use_wave or data.flag_use_wave_lite:
-            logger.warning(
-                "`flag_use_private_cacert` with Wave enabled: "
-                "rootCA.crt will be automatically imported into backend and cron container JVMs at startup."
-            )
+        logger.warning(
+            "`flag_use_private_cacert` enabled: "
+            "rootCA.crt will be automatically imported into backend and cron container JVMs at startup."
+        )
 
 
 def verify_tower_groundswell(data: SimpleNamespace):
