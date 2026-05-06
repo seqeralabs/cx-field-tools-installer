@@ -1,3 +1,13 @@
+terraform {
+  required_version = ">= 1.7.0"
+  required_providers {
+    external = {
+      source  = "hashicorp/external"
+      version = "~> 2.3"
+    }
+  }
+}
+
 # https://medium.com/@leslie.alldridge/terraform-external-data-source-using-custom-python-script-with-example-cea5e618d83e
 data "external" "generate_db_connection_string" {
   program = ["python3", "${abspath(path.root)}/scripts/installer/data_external/generate_db_connection_string.py"]

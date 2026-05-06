@@ -2,12 +2,30 @@
 ## Provider & Backend
 ## ------------------------------------------------------------------------------------
 terraform {
-  required_version = ">= 1.1.0"
+  # Bumped from 1.1.0 -> 1.7.0: terraform test override_data blocks (used by tests/terraform/)
+  # are only supported on >= 1.7.
+  required_version = ">= 1.7.0"
 
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.12.0"
+    }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
+    }
+    external = {
+      source  = "hashicorp/external"
+      version = "~> 2.3"
     }
   }
 
@@ -237,8 +255,7 @@ module "connection_strings" {
   source = "./modules/connection_strings/v1.0.0"
 
   # Feature Flags
-  flag_create_load_balancer = var.flag_create_load_balancer
-  flag_do_not_use_https     = var.flag_do_not_use_https
+  flag_do_not_use_https = var.flag_do_not_use_https
 
   flag_create_external_db       = var.flag_create_external_db
   flag_use_existing_external_db = var.flag_use_existing_external_db

@@ -39,21 +39,3 @@ rule "terraform_module_version" {
   enabled = false
 }
 
-# Pre-existing tech debt that should not block this PR. Re-enable in a
-# follow-up after a dedicated cleanup pass:
-#   - terraform_required_version: top-level terraform { required_version = ... }
-#     block needs adding once we settle on a minimum (1.6+ is a candidate;
-#     terraform test needs >=1.6 and override_data needs >=1.7).
-#   - terraform_required_providers: same. Each provider block needs an explicit
-#     version constraint.
-#   - terraform_unused_declarations: a handful of variables/locals are declared
-#     but unused. Audit per item — some are intentional (TODOs noted in code).
-rule "terraform_required_version" {
-  enabled = false
-}
-rule "terraform_required_providers" {
-  enabled = false
-}
-rule "terraform_unused_declarations" {
-  enabled = false
-}

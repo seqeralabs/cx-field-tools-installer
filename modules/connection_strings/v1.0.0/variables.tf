@@ -1,11 +1,6 @@
 ## ------------------------------------------------------------------------------------
 ## Feature Flags
 ## ------------------------------------------------------------------------------------
-variable "flag_create_load_balancer" {
-  description = "Whether to create a load balancer"
-  type        = bool
-}
-
 variable "flag_do_not_use_https" {
   description = "Whether to disable HTTPS"
   type        = bool
