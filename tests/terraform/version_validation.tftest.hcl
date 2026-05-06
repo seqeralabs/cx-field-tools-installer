@@ -34,16 +34,6 @@ override_data {
   }
 }
 
-override_data {
-  target = module.connection_strings.data.external.generate_db_connection_string
-  values = {
-    result = {
-      status = "0"
-      value  = "?permitMysqlScheme=true"
-    }
-  }
-}
-
 run "rejects_v25_below_floor" {
   command = plan
 

@@ -34,16 +34,6 @@ override_data {
   }
 }
 
-override_data {
-  target = module.connection_strings.data.external.generate_db_connection_string
-  values = {
-    result = {
-      status = "0"
-      value  = "?permitMysqlScheme=true"
-    }
-  }
-}
-
 run "rejects_two_vpc_sources_true" {
   command = plan
 

@@ -62,8 +62,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      # tests/requirements.txt is the pytest-suite fixture; this job only needs
-      # stdlib Python (generate_testing_secrets.py uses no third-party imports).
+      - name: Install installer Python dependencies
+        run: pip install -r scripts/installer/requirements.txt
 
       - name: Terraform init (modules only)
         run: terraform init -backend=false
