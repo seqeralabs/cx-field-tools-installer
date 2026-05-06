@@ -1,7 +1,8 @@
-name: terraform test
+name: ci
 
-# Runs the variable-validation suite under tests/terraform/.
-# See tests/terraform/README.md for what's covered and how to run locally.
+# Static checks, native variable validation tests, the Python pre-flight check,
+# and the plan-based pytest suite. Runs on every PR with relevant path changes
+# and on pushes to master / release/v* / the in-flight v26 chore branches.
 
 on:
   pull_request:
@@ -9,13 +10,11 @@ on:
       - "**/*.tf"
       - "**/*.tftest.hcl"
       - "templates/TEMPLATE_terraform.tfvars"
-      - "scripts/installer/validation/**"
-      - "scripts/installer/data_external/**"
-      - "scripts/installer/utils/**"
-      - "tests/datafiles/**"
-      - "tests/terraform/**"
+      - "scripts/installer/**"
+      - "tests/**"
       - "Makefile"
-      - ".github/workflows/terraform-test.yml"
+      - ".github/workflows/ci.yml"
+      - ".tflint.hcl"
   push:
     branches:
       - master
@@ -24,10 +23,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  terraform-test:
-    name: terraform test
+  ci:
+    name: ci
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -62,8 +61,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install installer Python dependencies
-        run: pip install -r scripts/installer/requirements.txt
+      - name: Install Python dependencies
+        run: |
+          pip install -r scripts/installer/requirements.txt
+          pip install -r tests/requirements.txt
 
       - name: Terraform init (modules only)
         run: terraform init -backend=false
@@ -77,3 +78,18 @@ jobs:
 
       - name: Run terraform test
         run: make terraform_test
+
+      - name: extractors.py smoke
+        # Confirms the Python tfvars parser reads the fixture end-to-end without a
+        # Docker daemon. Only became possible once extractors.py stopped shelling
+        # out to hcl2json.
+        run: |
+          cp tests/datafiles/terraform.tfvars terraform.tfvars
+          trap "rm -f terraform.tfvars" EXIT
+          python3 -c "from installer.utils.extractors import tf_vars_json_payload; assert tf_vars_json_payload['tower_container_version'].startswith('v'); print(f'parsed {len(tf_vars_json_payload)} keys')"
+
+      - name: Run pytest (plan-based suite)
+        # Only @pytest.mark.local — `terraform plan` against the mocked fixture, no
+        # Docker. Testcontainer-based markers stay out until a separate job provisions
+        # a daemon.
+        run: pytest -c tests/pytest.ini -m local tests/
