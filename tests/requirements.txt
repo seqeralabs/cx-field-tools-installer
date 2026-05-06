@@ -1,4 +1,5 @@
 pytest
+pyyaml
 yamlpath
 testcontainers
 testcontainers[postgres]
