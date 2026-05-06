@@ -2,6 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Path Prefixes
+References in the table below use these prefixes:
+
+- `guid:` → `~/.claude/guidelines/`
+
+## Important Reminders - LOAD BEFORE EVERY TASK
+- Identify task type(s) and load applicable resources per the table below.
+
+| Task Type | Required |
+|-----------|----------|
+| ALWAYS DO FOR ALL TASKS               | `guid:variable_default_values.md` |
+
 ## Project Overview
 
 This is a Terraform-based installer for Seqera Platform Enterprise (Docker-Compose deployment) that simplifies infrastructure provisioning and application configuration. The project is designed for non-Terraform experts and prioritizes simplicity over standard Terraform conventions.
