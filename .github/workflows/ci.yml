@@ -82,7 +82,10 @@ jobs:
       - name: extractors.py smoke
         # Confirms the Python tfvars parser reads the fixture end-to-end without a
         # Docker daemon. Only became possible once extractors.py stopped shelling
-        # out to hcl2json.
+        # out to hcl2json. The `installer` package lives under scripts/, so we
+        # have to add it to PYTHONPATH for the inline invocation.
+        env:
+          PYTHONPATH: scripts
         run: |
           cp tests/datafiles/terraform.tfvars terraform.tfvars
           trap "rm -f terraform.tfvars" EXIT
