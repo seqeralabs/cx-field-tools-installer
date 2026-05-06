@@ -85,6 +85,16 @@ variable "flag_use_container_db" { type = bool }
 variable "flag_create_external_redis" { type = bool } # TO DO
 variable "flag_use_container_redis" { type = bool }
 
+variable "redis_elasticache" {
+  type = object({
+    node_type       = string
+    num_cache_nodes = number
+    engine_version  = string
+    port            = number
+  })
+  description = "Configuration for the standalone Seqera Platform ElastiCache (Redis) cluster created when flag_create_external_redis is true."
+}
+
 variable "flag_create_load_balancer" { type = bool }
 variable "flag_use_private_cacert" { type = bool }
 variable "flag_do_not_use_https" { type = bool }

@@ -129,10 +129,19 @@ flag_use_existing_external_db = false
 flag_use_container_db         = true
 
 # Only one of these can be true.
-# NOTE: Redis versions and ports are hard-coded in their respective files (docker-compose.yaml &
-#  003-database.tf)
+# NOTE: Redis version/port for the container deployment are hard-coded in docker-compose.yaml.
+#  External (ElastiCache) deployments are configurable via the `redis_elasticache` block below.
 flag_create_external_redis = false
 flag_use_container_redis   = true
+
+# Standalone Seqera Platform ElastiCache (Redis) cluster settings.
+# Only consumed when `flag_create_external_redis = true`.
+redis_elasticache = {
+  node_type       = "cache.m4.xlarge"
+  num_cache_nodes = 1
+  engine_version  = "7.0"
+  port            = 6379
+}
 
 # Only one of these can true.
 # NOTE: If using `flag_use_private_cacert = true` flag, read Custom Private CA section for full instructions on private cert set-up.
