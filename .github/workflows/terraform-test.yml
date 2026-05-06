@@ -1,0 +1,79 @@
+name: terraform test
+
+# Runs the variable-validation suite under tests/terraform/.
+# See tests/terraform/README.md for what's covered and how to run locally.
+
+on:
+  pull_request:
+    paths:
+      - "**/*.tf"
+      - "**/*.tftest.hcl"
+      - "templates/TEMPLATE_terraform.tfvars"
+      - "scripts/installer/validation/**"
+      - "scripts/installer/data_external/**"
+      - "scripts/installer/utils/**"
+      - "tests/datafiles/**"
+      - "tests/terraform/**"
+      - "Makefile"
+      - ".github/workflows/terraform-test.yml"
+  push:
+    branches:
+      - master
+      - "release/v*"
+      - "chore/v26-**" # Temporary: keep visibility while the stacked v26 work is in flight.
+  workflow_dispatch:
+
+jobs:
+  terraform-test:
+    name: terraform test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.8
+          terraform_wrapper: false
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -diff
+
+      - name: Setup tflint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.61.0
+
+      - name: tflint init
+        run: tflint --init
+
+      - name: tflint
+        # TFLINT_CONFIG_FILE is required so child modules walked by --recursive
+        # use the root .tflint.hcl — they don't auto-discover it.
+        env:
+          TFLINT_CONFIG_FILE: ${{ github.workspace }}/.tflint.hcl
+        run: tflint --recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # tests/requirements.txt is the pytest-suite fixture; this job only needs
+      # stdlib Python (generate_testing_secrets.py uses no third-party imports).
+
+      - name: Terraform init (modules only)
+        run: terraform init -backend=false
+
+      - name: Generate test fixtures
+        env:
+          CX_SKIP_SSM: "true"
+        run: |
+          mkdir -p tests/logs
+          make generate_test_data
+
+      - name: Run terraform test
+        run: make terraform_test

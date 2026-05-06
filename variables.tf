@@ -43,6 +43,24 @@ variable "tower_container_version" {
   type        = string
   description = "Seqera Platform container version. master supports only v26.1.0+ — earlier majors live on the release/vN branches. See documentation/branching_policy.md."
   # TODO(#332): once v26.1.x GA is selected, document the exact pinned tag here for reference.
+
+  validation {
+    condition     = can(regex("^v[0-9]+\\.[0-9]+\\.[0-9]+", var.tower_container_version))
+    error_message = "tower_container_version must be a Seqera Platform tag like \"v26.1.0\"."
+  }
+
+  validation {
+    # The leading !can(...) short-circuits when the tag-shape validation above is already
+    # failing, so a malformed input produces the shape error rather than a regex crash.
+    condition = (
+      !can(regex("^v[0-9]+\\.[0-9]+\\.[0-9]+", var.tower_container_version))
+      || (
+        tonumber(regex("^v([0-9]+)\\.", var.tower_container_version)[0]) == 26
+        && tonumber(regex("^v[0-9]+\\.([0-9]+)\\.", var.tower_container_version)[0]) >= 1
+      )
+    )
+    error_message = "This branch of the installer supports Seqera Platform v26.1.0 through v26.x. For v25.x or earlier, check out the release/v25 branch."
+  }
 }
 
 
@@ -76,21 +94,55 @@ variable "custom_resource_naming_prefix" { type = string }
 # Flags - Infrastructure
 # ------------------------------------------------------------------------------------
 
-variable "flag_create_new_vpc" { type = bool }
+# Cross-variable "exactly one of N flags must be true" rules are attached to the
+# first flag in each group, so the validation fires regardless of which flag the
+# user toggled.
+
+variable "flag_create_new_vpc" {
+  type = bool
+  validation {
+    condition     = length([for f in [var.flag_create_new_vpc, var.flag_use_existing_vpc] : f if f]) == 1
+    error_message = "Exactly one of flag_create_new_vpc / flag_use_existing_vpc must be true."
+  }
+}
 variable "flag_use_existing_vpc" { type = bool }
 
-variable "flag_create_external_db" { type = bool }
+variable "flag_create_external_db" {
+  type = bool
+  validation {
+    condition     = length([for f in [var.flag_create_external_db, var.flag_use_existing_external_db, var.flag_use_container_db] : f if f]) == 1
+    error_message = "Exactly one of flag_create_external_db / flag_use_existing_external_db / flag_use_container_db must be true."
+  }
+}
 variable "flag_use_existing_external_db" { type = bool }
 variable "flag_use_container_db" { type = bool }
 
-variable "flag_create_external_redis" { type = bool } # TO DO
+variable "flag_create_external_redis" {
+  type = bool # TO DO
+  validation {
+    condition     = length([for f in [var.flag_create_external_redis, var.flag_use_container_redis] : f if f]) == 1
+    error_message = "Exactly one of flag_create_external_redis / flag_use_container_redis must be true."
+  }
+}
 variable "flag_use_container_redis" { type = bool }
 
-variable "flag_create_load_balancer" { type = bool }
+variable "flag_create_load_balancer" {
+  type = bool
+  validation {
+    condition     = length([for f in [var.flag_create_load_balancer, var.flag_use_private_cacert, var.flag_do_not_use_https] : f if f]) == 1
+    error_message = "Exactly one of flag_create_load_balancer / flag_use_private_cacert / flag_do_not_use_https must be true."
+  }
+}
 variable "flag_use_private_cacert" { type = bool }
 variable "flag_do_not_use_https" { type = bool }
 
-variable "flag_use_aws_ses_iam_integration" { type = bool }
+variable "flag_use_aws_ses_iam_integration" {
+  type = bool
+  validation {
+    condition     = length([for f in [var.flag_use_aws_ses_iam_integration, var.flag_use_existing_smtp] : f if f]) == 1
+    error_message = "Exactly one of flag_use_aws_ses_iam_integration / flag_use_existing_smtp must be true."
+  }
+}
 variable "flag_use_existing_smtp" { type = bool }
 
 
@@ -127,17 +179,42 @@ variable "flag_use_existing_route53_public_zone" { type = bool }
 variable "flag_use_existing_route53_private_zone" { type = bool }
 variable "flag_create_hosts_file_entry" { type = bool }
 
-variable "new_route53_private_zone_name" { type = string }
+variable "new_route53_private_zone_name" {
+  type = string
+  validation {
+    condition     = !var.flag_create_route53_private_zone || (var.new_route53_private_zone_name != "REPLACE_ME" && length(trimspace(var.new_route53_private_zone_name)) > 0)
+    error_message = "When flag_create_route53_private_zone = true, new_route53_private_zone_name must be set."
+  }
+}
 
-variable "existing_route53_public_zone_name" { type = string }
-variable "existing_route53_private_zone_name" { type = string }
+variable "existing_route53_public_zone_name" {
+  type = string
+  validation {
+    condition     = !var.flag_use_existing_route53_public_zone || (var.existing_route53_public_zone_name != "REPLACE_ME" && length(trimspace(var.existing_route53_public_zone_name)) > 0)
+    error_message = "When flag_use_existing_route53_public_zone = true, existing_route53_public_zone_name must be set."
+  }
+}
+
+variable "existing_route53_private_zone_name" {
+  type = string
+  validation {
+    condition     = !var.flag_use_existing_route53_private_zone || (var.existing_route53_private_zone_name != "REPLACE_ME" && length(trimspace(var.existing_route53_private_zone_name)) > 0)
+    error_message = "When flag_use_existing_route53_private_zone = true, existing_route53_private_zone_name must be set."
+  }
+}
 
 
 # ------------------------------------------------------------------------------------
 # Custom Private CA
 # ------------------------------------------------------------------------------------
 
-variable "private_cacert_bucket_prefix" { type = string }
+variable "private_cacert_bucket_prefix" {
+  type = string
+  validation {
+    condition     = var.private_cacert_bucket_prefix == "REPLACE_ME" || startswith(var.private_cacert_bucket_prefix, "s3://")
+    error_message = "private_cacert_bucket_prefix must start with \"s3://\" (or be \"REPLACE_ME\" if private certs are not in use)."
+  }
+}
 
 
 # ------------------------------------------------------------------------------------
@@ -168,7 +245,13 @@ variable "flag_map_public_ip_on_launch" {
 # VPC (Existing)
 # ------------------------------------------------------------------------------------
 
-variable "vpc_existing_id" { type = string }
+variable "vpc_existing_id" {
+  type = string
+  validation {
+    condition     = !var.flag_use_existing_vpc || (var.vpc_existing_id != "REPLACE_ME" && length(trimspace(var.vpc_existing_id)) > 0)
+    error_message = "When flag_use_existing_vpc = true, vpc_existing_id must be set."
+  }
+}
 variable "vpc_existing_ec2_subnets" { type = list(string) }
 variable "vpc_existing_batch_subnets" { type = list(string) }
 variable "vpc_existing_db_subnets" { type = list(string) }
@@ -230,11 +313,25 @@ variable "data_explorer_disabled_workspaces" { type = string }
 variable "flag_enable_data_studio" { type = bool }
 variable "data_studio_container_version" { type = string }
 variable "flag_limit_data_studio_to_some_workspaces" { type = bool }
-variable "data_studio_eligible_workspaces" { type = string }
+variable "data_studio_eligible_workspaces" {
+  type        = string
+  description = "Comma-separated list of numeric workspace IDs eligible for Studios. Empty string allowed when not limiting."
+  validation {
+    condition     = var.data_studio_eligible_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_studio_eligible_workspaces))
+    error_message = "data_studio_eligible_workspaces must be a comma-separated list of integers (e.g. \"123,456\") or an empty string."
+  }
+}
 
 variable "flag_enable_data_studio_ssh" { type = bool }
 variable "flag_limit_data_studio_ssh_to_some_workspaces" { type = bool }
-variable "data_studio_ssh_eligible_workspaces" { type = string }
+variable "data_studio_ssh_eligible_workspaces" {
+  type        = string
+  description = "Comma-separated list of numeric workspace IDs eligible for Studios SSH. Empty string allowed when not limiting."
+  validation {
+    condition     = var.data_studio_ssh_eligible_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_studio_ssh_eligible_workspaces))
+    error_message = "data_studio_ssh_eligible_workspaces must be a comma-separated list of integers (e.g. \"123,456\") or an empty string."
+  }
+}
 
 variable "flag_studio_enable_path_routing" { type = bool }
 variable "data_studio_path_routing_url" {
@@ -265,7 +362,13 @@ variable "db_database_name" { type = string }
 # ------------------------------------------------------------------------------------
 
 variable "db_container_engine" { type = string }
-variable "db_container_engine_version" { type = string }
+variable "db_container_engine_version" {
+  type = string
+  validation {
+    condition     = startswith(var.db_container_engine_version, "8.")
+    error_message = "db_container_engine_version must be MySQL 8.x. master supports only MySQL 8 and above."
+  }
+}
 
 
 # ------------------------------------------------------------------------------------
@@ -273,7 +376,13 @@ variable "db_container_engine_version" { type = string }
 # ------------------------------------------------------------------------------------
 
 variable "db_engine" { type = string }
-variable "db_engine_version" { type = string }
+variable "db_engine_version" {
+  type = string
+  validation {
+    condition     = startswith(var.db_engine_version, "8.")
+    error_message = "db_engine_version must be MySQL 8.x. master supports only MySQL 8 and above."
+  }
+}
 variable "db_param_group" { type = string }
 variable "db_instance_class" { type = string }
 variable "db_allocated_storage" { type = number }
@@ -365,15 +474,32 @@ variable "ec2_update_ami_if_available" { type = bool }
 # ALB
 # ------------------------------------------------------------------------------------
 
-variable "alb_certificate_arn" { type = string }
+variable "alb_certificate_arn" {
+  type = string
+
+  validation {
+    condition     = var.alb_certificate_arn == "REPLACE_ME" || startswith(var.alb_certificate_arn, "arn:aws:acm:") || startswith(var.alb_certificate_arn, "arn:aws-us-gov:acm:")
+    error_message = "alb_certificate_arn must be a full ACM certificate ARN (or \"REPLACE_ME\" if no ALB is being created)."
+  }
+
+  validation {
+    condition     = !var.flag_create_load_balancer || var.alb_certificate_arn != "REPLACE_ME"
+    error_message = "When flag_create_load_balancer = true, alb_certificate_arn must be set to a real ACM ARN."
+  }
+}
 
 
 # ------------------------------------------------------------------------------------
 # TOWER CONFIGURATION
 # ------------------------------------------------------------------------------------
 
-variable "tower_server_url" { type = string }
-variable "tower_server_port" { type = string } # TODO: Update SG-generation logic to use this value
+variable "tower_server_url" {
+  type = string
+  validation {
+    condition     = !startswith(var.tower_server_url, "http://") && !startswith(var.tower_server_url, "https://")
+    error_message = "tower_server_url must not include a scheme prefix (no \"http://\" or \"https://\")."
+  }
+}
 variable "tower_contact_email" { type = string }
 variable "tower_enable_platforms" { type = string }
 
@@ -391,7 +517,14 @@ variable "tower_smtp_starttls_enable" { type = bool }
 variable "tower_smtp_starttls_required" { type = bool }
 variable "tower_smtp_ssl_protocols" { type = string }
 
-variable "tower_root_users" { type = string }
+variable "tower_root_users" {
+  type        = string
+  description = "Comma-separated list of email addresses to be granted root-user privileges in Seqera Platform."
+  validation {
+    condition     = length(trimspace(var.tower_root_users)) > 0 && var.tower_root_users != "REPLACE_ME"
+    error_message = "tower_root_users must contain at least one email address."
+  }
+}
 variable "tower_email_trusted_orgs" { type = string }
 variable "tower_email_trusted_users" { type = string }
 
@@ -400,7 +533,14 @@ variable "tower_audit_retention_days" { type = number }
 variable "tower_enable_openapi" { type = bool }
 
 variable "tower_enable_pipeline_versioning" { type = bool }
-variable "pipeline_versioning_eligible_workspaces" { type = string }
+variable "pipeline_versioning_eligible_workspaces" {
+  type        = string
+  description = "Comma-separated list of numeric workspace IDs eligible for pipeline versioning. Empty string allowed when not limiting."
+  validation {
+    condition     = var.pipeline_versioning_eligible_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.pipeline_versioning_eligible_workspaces))
+    error_message = "pipeline_versioning_eligible_workspaces must be a comma-separated list of integers (e.g. \"123,456\") or an empty string."
+  }
+}
 
 # ------------------------------------------------------------------------------------
 # TOWER CONFIGURATION - OIDC

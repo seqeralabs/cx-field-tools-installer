@@ -1,3 +1,13 @@
+terraform {
+  required_version = ">= 1.7.0"
+  required_providers {
+    external = {
+      source  = "hashicorp/external"
+      version = "~> 2.3"
+    }
+  }
+}
+
 # https://medium.com/@leslie.alldridge/terraform-external-data-source-using-custom-python-script-with-example-cea5e618d83e
 data "external" "generate_db_connection_string" {
   program = ["python3", "${abspath(path.root)}/scripts/installer/data_external/generate_db_connection_string.py"]
@@ -52,7 +62,7 @@ locals {
   # NOTE: Connect has same logic. I've duplicated to better handle divergence risk.
   sp_redis_container     = var.flag_use_container_redis ? "redis" : ""
   sp_redis_external_mock = var.flag_create_external_redis && var.use_mocks ? "mock.tower-redis.com" : ""
-  sp_redis_external_new  = var.flag_create_external_redis && !var.use_mocks ? "${var.elasticache_tower.cache_nodes[0].address}" : ""
+  sp_redis_external_new  = var.flag_create_external_redis && !var.use_mocks ? var.elasticache_tower.cache_nodes[0].address : ""
   tower_redis_dns        = join("", [local.sp_redis_container, local.sp_redis_external_mock, local.sp_redis_external_new])
 
   sp_redis_dns_with_port = var.flag_create_external_redis && !var.use_mocks ? "${local.tower_redis_dns}:${var.elasticache_tower.cache_nodes[0].port}" : "${local.tower_redis_dns}:6379"
@@ -77,8 +87,8 @@ locals {
   # NOTE: `tower_connect_wildcard_dns` is misleading now since one of the options isn't actually a wildcard, but it means no changes in downstream DNS & ALB rules.
   connect_enabled = var.flag_enable_data_studio && !var.flag_do_not_use_https ? true : false
 
-  ct_dns                     = var.flag_studio_enable_path_routing ? "${var.data_studio_path_routing_url}" : "connect.${var.tower_server_url}"
-  ct_wildcard_dns            = var.flag_studio_enable_path_routing ? "${var.data_studio_path_routing_url}" : "*.${var.tower_server_url}"
+  ct_dns                     = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : "connect.${var.tower_server_url}"
+  ct_wildcard_dns            = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : "*.${var.tower_server_url}"
   tower_connect_dns          = local.connect_enabled ? local.ct_dns : "N/A"
   tower_connect_wildcard_dns = local.connect_enabled ? local.ct_wildcard_dns : "N/A"
   tower_connect_server_url   = local.connect_enabled ? "https://${local.tower_connect_dns}" : "N/A"
@@ -88,20 +98,20 @@ locals {
   # Using same mock as tower redis to make tests more realistic.
   ct_redis_container      = var.flag_use_container_redis ? "redis" : ""
   ct_redis_external_mock  = var.flag_create_external_redis && var.use_mocks ? "mock.tower-redis.com" : ""
-  ct_redis_external_new   = var.flag_create_external_redis && !var.use_mocks ? "${var.elasticache_tower.cache_nodes[0].address}" : ""
+  ct_redis_external_new   = var.flag_create_external_redis && !var.use_mocks ? var.elasticache_tower.cache_nodes[0].address : ""
   ct_redis_dns            = var.flag_enable_data_studio ? join("", [local.ct_redis_container, local.ct_redis_external_mock, local.ct_redis_external_new]) : "N/A"
   tower_connect_redis_dns = local.connect_enabled ? local.ct_redis_dns : "N/A"
 
   ct_redis_dns_with_port  = var.flag_create_external_redis && !var.use_mocks ? "${local.tower_connect_redis_dns}:${var.elasticache_tower.cache_nodes[0].port}" : "${local.tower_connect_redis_dns}:6379"
-  tower_connect_redis_url = var.flag_enable_data_studio && !var.flag_do_not_use_https ? "${local.ct_redis_dns_with_port}" : "N/A"
+  tower_connect_redis_url = var.flag_enable_data_studio && !var.flag_do_not_use_https ? local.ct_redis_dns_with_port : "N/A"
 
   # CONNECT SSH
   # ---------------------------------------------------------------------------------------
-  connect_ssh_enabled       = var.flag_enable_data_studio_ssh ? true : false
-  tower_connect_ssh_dns     = local.connect_ssh_enabled ? "connect-ssh.${var.tower_server_url}" : "N/A"
-  tower_connect_ssh_url     = local.connect_ssh_enabled ? "https://${local.tower_connect_ssh_dns}" : "N/A"
+  connect_ssh_enabled   = var.flag_enable_data_studio_ssh ? true : false
+  tower_connect_ssh_dns = local.connect_ssh_enabled ? "connect-ssh.${var.tower_server_url}" : "N/A"
+  tower_connect_ssh_url = local.connect_ssh_enabled ? "https://${local.tower_connect_ssh_dns}" : "N/A"
 
-  
+
   # WAVE-LITE
   # ---------------------------------------------------------------------------------------
   # TODO: June 16/25 -- Consider if `rediss://` hardcode aligns with how config is presented.

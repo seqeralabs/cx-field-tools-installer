@@ -31,13 +31,6 @@ def log_error_and_exit(message: str):
     exit(1)
 
 
-def only_one_true_set(flags: List) -> None:
-    """Ensure only 1 entry per flag grouping is `true`. Aggregate values of all specified values and then count."""
-    values = [flag for flag in flags]
-    if values.count(True) != 1:
-        log_error_and_exit(f"Only one of these flags may be true: {str(flags)}.")
-
-
 def subnet_privacy(tfvars_subnets: List, vpc_subnets: List, qualifier: str) -> None:
     """Compare VPC subnets privacy vs CIDRs defined in tfvars for various components."""
     try:
@@ -46,43 +39,9 @@ def subnet_privacy(tfvars_subnets: List, vpc_subnets: List, qualifier: str) -> N
         log_error_and_exit(qualifier)
 
 
-def ensure_dependency_populated(flag: bool, child: str, qualifier: str) -> None:
-    """If a flag is set, ensure dependent keys also set."""
-
-    if flag:
-        try:
-            assert "REPLACE_ME" not in child, f"[ERROR]: {qualifier}"
-            logger.debug(f"[OK]: {qualifier}")
-        except AssertionError:
-            log_error_and_exit(qualifier)
-    else:
-        logger.debug(f"[SKIP]: {qualifier}")
-
-
 # -------------------------------------------------------------------------------
 # GROUPING FUNCTIONS
 # -------------------------------------------------------------------------------
-def verify_only_one_true_set(data: SimpleNamespace):
-    """Check that related config blocks only have 1 true and * false."""
-    only_one_true_set([data.flag_create_new_vpc, data.flag_use_existing_vpc])
-    only_one_true_set(
-        [
-            data.flag_create_external_db,
-            data.flag_use_existing_external_db,
-            data.flag_use_container_db,
-        ]
-    )
-    only_one_true_set([data.flag_create_external_redis, data.flag_use_container_redis])
-    only_one_true_set(
-        [
-            data.flag_create_load_balancer,
-            data.flag_use_private_cacert,
-            data.flag_do_not_use_https,
-        ]
-    )
-    only_one_true_set(
-        [data.flag_use_aws_ses_iam_integration, data.flag_use_existing_smtp]
-    )
 
 
 def verify_sensitive_keys(data: SimpleNamespace, data_dictionary: dict):
@@ -110,65 +69,23 @@ def verify_sensitive_keys(data: SimpleNamespace, data_dictionary: dict):
             )
 
 
-def verify_tfvars_config_dependencies(data: SimpleNamespace):
-    """Ensure dependent keys are a populated if a flag is active."""
-    # VPC Dependency checks
-    ensure_dependency_populated(
-        data.flag_use_existing_vpc,
-        data.vpc_existing_id,
-        "`vpc_existing_id` value is missing.",
-    )
-    ensure_dependency_populated(
-        data.flag_create_load_balancer,
-        data.alb_certificate_arn,
-        "`alb_certificate_arn` value is missing.",
-    )
-
-    # DNS dependency checks
-    ensure_dependency_populated(
-        data.flag_create_route53_private_zone,
-        data.new_route53_private_zone_name,
-        "`new_route53_private_zone_name` value is missing.",
-    )
-    ensure_dependency_populated(
-        data.flag_use_existing_route53_public_zone,
-        data.existing_route53_public_zone_name,
-        "`existing_route53_public_zone_name` value is missing.",
-    )
-    ensure_dependency_populated(
-        data.flag_use_existing_route53_private_zone,
-        data.existing_route53_private_zone_name,
-        "`existing_route53_private_zone_name` value is missing.",
-    )
-
-
 def verify_tower_server_url(data: SimpleNamespace):
-    """Verify the tower server url is correctly configured."""
-
-    if data.tower_server_url.startswith("http"):
-        log_error_and_exit("Field `tower_server_url` must not have a prefix.")
-
+    """Warn when tower_server_port is non-default, since the docker-compose template assumes 8000."""
     if data.tower_server_port != "8000":
         logger.warning(
             "Tower instance not using default port (8000). Ensure Docker-Compose file is updated accordingly."
         )
 
 
-def verify_tower_root_users(data: SimpleNamespace):
-    """Ensure at least one root user is specified."""
-    if data.tower_root_users in ["REPLACE_ME", ""]:
-        log_error_and_exit(
-            "Please populate `tower_root_user` with at least one email address."
-        )
-
-
 def verify_tower_self_signed_certs(data: SimpleNamespace):
-    """Check self-signed certificate settings (if necessary)."""
-    if data.flag_use_private_cacert:
-        if not data.private_cacert_bucket_prefix.startswith("s3://"):
-            log_error_and_exit(
-                " Field `private_cacert_bucket_prefix` must start with `s3://`"
-            )
+    """When private cert mode is on, the bucket prefix must be populated."""
+    if (
+        data.flag_use_private_cacert
+        and data.private_cacert_bucket_prefix == "REPLACE_ME"
+    ):
+        log_error_and_exit(
+            "When `flag_use_private_cacert = true`, `private_cacert_bucket_prefix` must be set to an s3:// URI."
+        )
 
 
 def verify_docker_daemon_loggin(data: SimpleNamespace):
@@ -396,39 +313,23 @@ def verify_database_configuration(data: SimpleNamespace):
 
 
 def verify_docker_version(data: SimpleNamespace):
-    """Make sure MySQL 5.6 is not present"""
+    """Reject docker-compose templates that pin a MySQL image below 8.x."""
     yaml.sort_base_mapping_type_on_output = False
 
+    mysql_pin = re.compile(r"mysql:(\d+)")
     with open("assets/src/docker_compose/docker-compose.yml.tpl") as file:
         # PYYAML fails with `yaml.scanner.ScannerError` due to Terraform templating. Switching to less elegant alternative.
-        # dcfile = yaml.safe_load(file)
-        # image = dcfile['services']['db']['image']
-        lines = file.readlines()
-
-        for line in lines:
-            if "mysql:5.6" in line:
+        for line in file.readlines():
+            match = mysql_pin.search(line)
+            if match and int(match.group(1)) < 8:
                 log_error_and_exit(
-                    "MySQL 5.6 is obsolete. Please chooses MySQL 5.7 or higher in your docker-compose file."
+                    f"docker-compose template pins MySQL {match.group(1)}.x. master supports only MySQL 8 and above."
                 )
-
-    if "5.6" in data.db_engine_version:
-        log_error_and_exit(
-            "MySQL 5.6 is obsolete. Please chooses MySQL 5.7 in `db_engine_version`."
-        )
 
 
 def verify_data_studio(data: SimpleNamespace):
     """Verify fields related to Data Studio."""
-
     if data.flag_enable_data_studio:
-        if data.flag_limit_data_studio_to_some_workspaces:
-            # https://www.geeksforgeeks.org/python-check-whether-string-contains-only-numbers-or-not/
-            # if re.match('[0-9]*$', data.data_studio_eligible_workspaces):
-            if not re.findall(r"[0-9]+,[0-9]+", data.data_studio_eligible_workspaces):
-                log_error_and_exit(
-                    "`data_studio_eligible_workspaces may only be populated by digits and commas."
-                )
-
         if data.flag_use_private_cacert:
             logger.warning(
                 "Please see documentation to understand how to make private certs work with Studios images."
@@ -464,17 +365,6 @@ def verify_data_studio_ssh(data: SimpleNamespace):
             logger.warning(
                 "Studios SSH requires connect-proxy >= 0.10.0. Please verify your `data_studio_container_version`."
             )
-
-        if data.flag_limit_data_studio_ssh_to_some_workspaces:
-            workspaces = data.data_studio_ssh_eligible_workspaces
-            try:
-                workspaces = workspaces.split(",")
-                for wsp in workspaces:
-                    isinstance(int(wsp), int)
-            except ValueError:
-                log_error_and_exit(
-                    "Variable `data_studio_ssh_eligible_workspaces` has non-integer values. Fix before deploying."
-                )
 
 
 def verify_alb_settings(data: SimpleNamespace):
@@ -543,25 +433,6 @@ def verify_insecure_platform(data: SimpleNamespace):
             log_error_and_exit("Wave-Lite requires a secure Seqera Platform endpoint.")
 
 
-def verify_pipeline_versioning(data: SimpleNamespace):
-    """Conduct checks if pipeline versioning is active."""
-    if data.tower_enable_pipeline_versioning:
-        # All workspaces eligible. Return.
-        if data.pipeline_versioning_eligible_workspaces == "":
-            return
-
-        # Only some eligible (via comma-delimited string); verify
-        workspaces = data.pipeline_versioning_eligible_workspaces
-        try:
-            workspaces = workspaces.split(",")
-            for wsp in workspaces:
-                isinstance(int(wsp), int)
-        except ValueError:
-            log_error_and_exit(
-                "Variable `pipeline_versioning_eligible_workspaces` has non-integer values. Fix before deploying."
-            )
-
-
 # -------------------------------------------------------------------------------
 # MAIN
 # -------------------------------------------------------------------------------
@@ -574,30 +445,17 @@ if __name__ == "__main__":
     data_dictionary = tf_vars_json_payload
     data = SimpleNamespace(**data_dictionary)
 
-    # Check minimum container version. master supports only the latest Platform major (v26.1.x).
-    # Bug-fix support for v25-and-below lives on the release/v25 branch — see documentation/branching_policy.md.
-    if not ((data.tower_container_version).startswith("v")) or (
-        data.tower_container_version < "v26.1.0"
-    ):
-        log_error_and_exit(
-            "This branch of the installer supports only Seqera Platform v26.1.0+. "
-            "For v25.x or earlier, check out the release/v25 branch."
-        )
-
     # Verify tfvars fields
     print("\n")
     logger.info("Verifying TFVARS file")
     logger.info("-" * 50)
-    verify_only_one_true_set(data)
     verify_sensitive_keys(data, data_dictionary)
-    verify_tfvars_config_dependencies(data)
     verify_docker_version(data)
 
     # Verify Tower application configurations
     print("\n")
     logger.info("Verifying Tower configurations")
     logger.info("-" * 50)
-    verify_tower_root_users(data)
     verify_tower_self_signed_certs(data)
     verify_tower_server_url(data)
     verify_docker_daemon_loggin(data)
@@ -646,12 +504,6 @@ if __name__ == "__main__":
     logger.info("-" * 50)
     verify_production_deployment(data)
     verify_insecure_platform(data=data)
-
-    # Check pipeline versioning
-    print("\n")
-    logger.info("Verifying pipeline versioning")
-    logger.info("-" * 50)
-    verify_pipeline_versioning(data)
 
     print("\n")
     logger.info("Finished tfvars configuration check.")

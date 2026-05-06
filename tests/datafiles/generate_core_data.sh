@@ -44,8 +44,10 @@ aws_account = "128997144437"
 aws_region  = "us-east-1"
 aws_profile = "development"
 
-# TODO(#332): bump to the v26.1.x GA tag; baselines in tests/datafiles/expected_results/ will need to be regenerated.
-tower_container_version                 = "v25.3.0"
+# TODO(#332): replace the v26.1.0 placeholder below with the v26.1.x GA tag once known.
+# Baselines in tests/datafiles/expected_results/ will need to be regenerated if the GA tag
+# affects rendered template output.
+tower_container_version                 = "v26.1.0"
 
 
 ## ------------------------------------------------------------------------------------
@@ -330,7 +332,15 @@ cat << 'EOF' > 012_testing_outputs.tf
 ## Write local values to output for testing purposes
 ## Keep name of local the same; prefix with 'local_' for easy conversion
 ## ------------------------------------------------------------------------------------
+terraform {
+  required_version = ">= 1.7.0"
+}
+
 output local_wave_enabled {
-    value = local.wave_enabled
-} 
+  value = local.wave_enabled
+}
 EOF
+
+# Format generated fixtures so the repo-wide fmt-check stays green. Soft-fail when
+# terraform is not on PATH (some dev shells); CI always has it.
+terraform fmt 012_testing_outputs.tf terraform.tfvars base-overrides.auto.tfvars >/dev/null 2>&1 || true

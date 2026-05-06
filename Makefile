@@ -45,6 +45,19 @@ generate_test_data:
 run_tests:
 	@pytest -c tests/pytest.ini tests/
 
+terraform_test:
+	@echo "Running terraform test (variable validations) — see tests/terraform/README.md"
+	@if [ ! -f tests/datafiles/terraform.tfvars ]; then \
+		echo "tests/datafiles/terraform.tfvars not found. Run 'make generate_test_data' first."; \
+		exit 1; \
+	fi
+	@# scripts/installer/data_external/*.py reads terraform.tfvars from the project
+	@# root by hard-coded path, so we have to materialise it there for the test run.
+	@cp tests/datafiles/terraform.tfvars terraform.tfvars
+	@cp tests/datafiles/base-overrides.auto.tfvars base-overrides.auto.tfvars 2>/dev/null || true
+	@trap "rm -f terraform.tfvars base-overrides.auto.tfvars" EXIT; \
+		terraform test -test-directory=tests/terraform
+
 purge_cached_plans:
 	@cd tests/ && rm -rf .plan_cache
 

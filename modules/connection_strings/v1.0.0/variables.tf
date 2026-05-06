@@ -1,11 +1,6 @@
 ## ------------------------------------------------------------------------------------
 ## Feature Flags
 ## ------------------------------------------------------------------------------------
-variable "flag_create_load_balancer" {
-  description = "Whether to create a load balancer"
-  type        = bool
-}
-
 variable "flag_do_not_use_https" {
   description = "Whether to disable HTTPS"
   type        = bool
@@ -40,7 +35,7 @@ variable "flag_enable_data_studio" {
   description = "Whether to use Studios."
   type        = bool
 }
-  
+
 variable "flag_enable_data_studio_ssh" {
   description = "Whether SSH access to Data Studios is enabled."
   type        = bool

@@ -1,3 +1,13 @@
+terraform {
+  required_version = ">= 1.7.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.12.0"
+    }
+  }
+}
+
 ## DATA
 ## ===============================================================================
 /*
@@ -24,11 +34,6 @@ data "aws_subnet" "sp_subnets" {
 
 
 locals {
-
-  # Combine real and testing flows
-  mock_sp_vpc          = "vpc-0fd280748c05b375b"
-  mock_aws_subnets_all = ["subnet-00fad764627895f33", "subnet-0d0e8ba3b03b97a65", "subnet-0e07c9b2edbd84ea4", "subnet-0f18039d5ffcf6cd3"]
-
   # For new VPC: Get subnet details from the VPC module
   real_new_vpc_subnets = var.create_new_vpc ? {
     public = {
