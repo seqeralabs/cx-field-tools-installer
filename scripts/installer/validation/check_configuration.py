@@ -31,13 +31,6 @@ def log_error_and_exit(message: str):
     exit(1)
 
 
-def only_one_true_set(flags: List) -> None:
-    """Ensure only 1 entry per flag grouping is `true`. Aggregate values of all specified values and then count."""
-    values = [flag for flag in flags]
-    if values.count(True) != 1:
-        log_error_and_exit(f"Only one of these flags may be true: {str(flags)}.")
-
-
 def subnet_privacy(tfvars_subnets: List, vpc_subnets: List, qualifier: str) -> None:
     """Compare VPC subnets privacy vs CIDRs defined in tfvars for various components."""
     try:
@@ -46,43 +39,9 @@ def subnet_privacy(tfvars_subnets: List, vpc_subnets: List, qualifier: str) -> N
         log_error_and_exit(qualifier)
 
 
-def ensure_dependency_populated(flag: bool, child: str, qualifier: str) -> None:
-    """If a flag is set, ensure dependent keys also set."""
-
-    if flag:
-        try:
-            assert "REPLACE_ME" not in child, f"[ERROR]: {qualifier}"
-            logger.debug(f"[OK]: {qualifier}")
-        except AssertionError:
-            log_error_and_exit(qualifier)
-    else:
-        logger.debug(f"[SKIP]: {qualifier}")
-
-
 # -------------------------------------------------------------------------------
 # GROUPING FUNCTIONS
 # -------------------------------------------------------------------------------
-def verify_only_one_true_set(data: SimpleNamespace):
-    """Check that related config blocks only have 1 true and * false."""
-    only_one_true_set([data.flag_create_new_vpc, data.flag_use_existing_vpc])
-    only_one_true_set(
-        [
-            data.flag_create_external_db,
-            data.flag_use_existing_external_db,
-            data.flag_use_container_db,
-        ]
-    )
-    only_one_true_set([data.flag_create_external_redis, data.flag_use_container_redis])
-    only_one_true_set(
-        [
-            data.flag_create_load_balancer,
-            data.flag_use_private_cacert,
-            data.flag_do_not_use_https,
-        ]
-    )
-    only_one_true_set(
-        [data.flag_use_aws_ses_iam_integration, data.flag_use_existing_smtp]
-    )
 
 
 def verify_sensitive_keys(data: SimpleNamespace, data_dictionary: dict):
@@ -108,38 +67,6 @@ def verify_sensitive_keys(data: SimpleNamespace, data_dictionary: dict):
             log_error_and_exit(
                 f" Do not specify `{key}`. This value will be sourced from SSM."
             )
-
-
-def verify_tfvars_config_dependencies(data: SimpleNamespace):
-    """Ensure dependent keys are a populated if a flag is active."""
-    # VPC Dependency checks
-    ensure_dependency_populated(
-        data.flag_use_existing_vpc,
-        data.vpc_existing_id,
-        "`vpc_existing_id` value is missing.",
-    )
-    ensure_dependency_populated(
-        data.flag_create_load_balancer,
-        data.alb_certificate_arn,
-        "`alb_certificate_arn` value is missing.",
-    )
-
-    # DNS dependency checks
-    ensure_dependency_populated(
-        data.flag_create_route53_private_zone,
-        data.new_route53_private_zone_name,
-        "`new_route53_private_zone_name` value is missing.",
-    )
-    ensure_dependency_populated(
-        data.flag_use_existing_route53_public_zone,
-        data.existing_route53_public_zone_name,
-        "`existing_route53_public_zone_name` value is missing.",
-    )
-    ensure_dependency_populated(
-        data.flag_use_existing_route53_private_zone,
-        data.existing_route53_private_zone_name,
-        "`existing_route53_private_zone_name` value is missing.",
-    )
 
 
 def verify_tower_server_url(data: SimpleNamespace):
@@ -556,12 +483,12 @@ if __name__ == "__main__":
     # ever runs, so the duplicate check has been removed here.
 
     # Verify tfvars fields
+    # Note: only-one-of-N flag groups and dependency-population rules are now enforced
+    # by cross-variable `validation {}` blocks in variables.tf.
     print("\n")
     logger.info("Verifying TFVARS file")
     logger.info("-" * 50)
-    verify_only_one_true_set(data)
     verify_sensitive_keys(data, data_dictionary)
-    verify_tfvars_config_dependencies(data)
     verify_docker_version(data)
 
     # Verify Tower application configurations

@@ -96,21 +96,55 @@ variable "custom_resource_naming_prefix" { type = string }
 # Flags - Infrastructure
 # ------------------------------------------------------------------------------------
 
-variable "flag_create_new_vpc" { type = bool }
+# Each cross-variable validation below replaces a corresponding `only_one_true_set`
+# group from check_configuration.py. The rule is attached to the first flag in each
+# group; Terraform fires it once any of the referenced variables is set.
+
+variable "flag_create_new_vpc" {
+  type = bool
+  validation {
+    condition     = length([for f in [var.flag_create_new_vpc, var.flag_use_existing_vpc] : f if f]) == 1
+    error_message = "Exactly one of flag_create_new_vpc / flag_use_existing_vpc must be true."
+  }
+}
 variable "flag_use_existing_vpc" { type = bool }
 
-variable "flag_create_external_db" { type = bool }
+variable "flag_create_external_db" {
+  type = bool
+  validation {
+    condition     = length([for f in [var.flag_create_external_db, var.flag_use_existing_external_db, var.flag_use_container_db] : f if f]) == 1
+    error_message = "Exactly one of flag_create_external_db / flag_use_existing_external_db / flag_use_container_db must be true."
+  }
+}
 variable "flag_use_existing_external_db" { type = bool }
 variable "flag_use_container_db" { type = bool }
 
-variable "flag_create_external_redis" { type = bool } # TO DO
+variable "flag_create_external_redis" {
+  type = bool # TO DO
+  validation {
+    condition     = length([for f in [var.flag_create_external_redis, var.flag_use_container_redis] : f if f]) == 1
+    error_message = "Exactly one of flag_create_external_redis / flag_use_container_redis must be true."
+  }
+}
 variable "flag_use_container_redis" { type = bool }
 
-variable "flag_create_load_balancer" { type = bool }
+variable "flag_create_load_balancer" {
+  type = bool
+  validation {
+    condition     = length([for f in [var.flag_create_load_balancer, var.flag_use_private_cacert, var.flag_do_not_use_https] : f if f]) == 1
+    error_message = "Exactly one of flag_create_load_balancer / flag_use_private_cacert / flag_do_not_use_https must be true."
+  }
+}
 variable "flag_use_private_cacert" { type = bool }
 variable "flag_do_not_use_https" { type = bool }
 
-variable "flag_use_aws_ses_iam_integration" { type = bool }
+variable "flag_use_aws_ses_iam_integration" {
+  type = bool
+  validation {
+    condition     = length([for f in [var.flag_use_aws_ses_iam_integration, var.flag_use_existing_smtp] : f if f]) == 1
+    error_message = "Exactly one of flag_use_aws_ses_iam_integration / flag_use_existing_smtp must be true."
+  }
+}
 variable "flag_use_existing_smtp" { type = bool }
 
 
@@ -147,10 +181,29 @@ variable "flag_use_existing_route53_public_zone" { type = bool }
 variable "flag_use_existing_route53_private_zone" { type = bool }
 variable "flag_create_hosts_file_entry" { type = bool }
 
-variable "new_route53_private_zone_name" { type = string }
+variable "new_route53_private_zone_name" {
+  type = string
+  validation {
+    condition     = !var.flag_create_route53_private_zone || (var.new_route53_private_zone_name != "REPLACE_ME" && length(trimspace(var.new_route53_private_zone_name)) > 0)
+    error_message = "When flag_create_route53_private_zone = true, new_route53_private_zone_name must be set."
+  }
+}
 
-variable "existing_route53_public_zone_name" { type = string }
-variable "existing_route53_private_zone_name" { type = string }
+variable "existing_route53_public_zone_name" {
+  type = string
+  validation {
+    condition     = !var.flag_use_existing_route53_public_zone || (var.existing_route53_public_zone_name != "REPLACE_ME" && length(trimspace(var.existing_route53_public_zone_name)) > 0)
+    error_message = "When flag_use_existing_route53_public_zone = true, existing_route53_public_zone_name must be set."
+  }
+}
+
+variable "existing_route53_private_zone_name" {
+  type = string
+  validation {
+    condition     = !var.flag_use_existing_route53_private_zone || (var.existing_route53_private_zone_name != "REPLACE_ME" && length(trimspace(var.existing_route53_private_zone_name)) > 0)
+    error_message = "When flag_use_existing_route53_private_zone = true, existing_route53_private_zone_name must be set."
+  }
+}
 
 
 # ------------------------------------------------------------------------------------
@@ -196,7 +249,13 @@ variable "flag_map_public_ip_on_launch" {
 # VPC (Existing)
 # ------------------------------------------------------------------------------------
 
-variable "vpc_existing_id" { type = string }
+variable "vpc_existing_id" {
+  type = string
+  validation {
+    condition     = !var.flag_use_existing_vpc || (var.vpc_existing_id != "REPLACE_ME" && length(trimspace(var.vpc_existing_id)) > 0)
+    error_message = "When flag_use_existing_vpc = true, vpc_existing_id must be set."
+  }
+}
 variable "vpc_existing_ec2_subnets" { type = list(string) }
 variable "vpc_existing_batch_subnets" { type = list(string) }
 variable "vpc_existing_db_subnets" { type = list(string) }
@@ -423,12 +482,18 @@ variable "ec2_update_ami_if_available" { type = bool }
 
 variable "alb_certificate_arn" {
   type = string
+
   validation {
-    # Permit "REPLACE_ME" passthrough so users who don't create the ALB don't have to populate this.
-    # The hard requirement (must be set when flag_create_load_balancer = true) lives in check_configuration.py
-    # because it crosses two variables.
+    # Shape rule: when set, must be a real ACM ARN. REPLACE_ME passthrough allowed
+    # so users who skip ALB creation don't need to populate this.
     condition     = var.alb_certificate_arn == "REPLACE_ME" || startswith(var.alb_certificate_arn, "arn:aws:acm:") || startswith(var.alb_certificate_arn, "arn:aws-us-gov:acm:")
     error_message = "alb_certificate_arn must be a full ACM certificate ARN (or \"REPLACE_ME\" if no ALB is being created)."
+  }
+
+  validation {
+    # Cross-variable rule: must be a real ARN (not REPLACE_ME) whenever the ALB is being created.
+    condition     = !var.flag_create_load_balancer || var.alb_certificate_arn != "REPLACE_ME"
+    error_message = "When flag_create_load_balancer = true, alb_certificate_arn must be set to a real ACM ARN."
   }
 }
 
