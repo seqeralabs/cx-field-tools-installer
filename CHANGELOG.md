@@ -30,6 +30,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
         - Documentation
             - Added Studios SSH design decision to `design_decisions.md`. [`#313`](https://github.com/seqeralabs/cx-field-tools-installer/issues/313)
             - Updated `TEMPLATE_terraform.tfvars` with Studios SSH variables and configuration guidance. [`#313`](https://github.com/seqeralabs/cx-field-tools-installer/issues/313)
+            - Added explicit Tower user auto-creation flags (`flag_tower_enable_participant_auto_create_user`, `flag_tower_enable_member_auto_create_user`) to `TEMPLATE_terraform.tfvars`. [`#312`](https://github.com/seqeralabs/cx-field-tools-installer/issues/312)
             - TBD
         <br /><br />
 
@@ -45,6 +46,9 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 | New | Studios SSH | `flag_enable_data_studio_ssh` | Master toggle to enable SSH access into running Studio sessions. Requires `flag_enable_data_studio = true` and Platform >= v25.3.3. When enabled, a dedicated NLB is provisioned (if `flag_create_load_balancer = true`) and a `connect-ssh.<tower_server_url>` DNS record is created. |
 | New | Studios SSH | `flag_limit_data_studio_ssh_to_some_workspaces` | When `true`, restricts SSH access to the workspace IDs listed in `data_studio_ssh_eligible_workspaces`. When `false`, SSH is available to all workspaces. |
 | New | Studios SSH | `data_studio_ssh_eligible_workspaces` | Comma-separated list of numeric workspace IDs that are permitted to use Studios SSH. Only evaluated when `flag_limit_data_studio_ssh_to_some_workspaces = true`. |
+||||
+| New | Tower Auth | `flag_tower_enable_participant_auto_create_user` | Controls Tower's `tower.participant.auto-create-user`. When `true`, allows a workspace participant to be auto-created when added by email. Defaults to `false`. [`#312`](https://github.com/seqeralabs/cx-field-tools-installer/issues/312) |
+| New | Tower Auth | `flag_tower_enable_member_auto_create_user` | Controls Tower's `tower.member.auto-create-user`. When `true`, allows the underlying User entity to be auto-created when an email is added as an Org Member. Defaults to `false`. [`#312`](https://github.com/seqeralabs/cx-field-tools-installer/issues/312) |
 ||||
 | Modified | Studios | `data_studio_container_version` | Updated from 0.9.0 to 0.11.0. Note: Studios SSH requires connect-proxy >= 0.10.0. |
 | Modified | Studios | `data_studio_options` | Removed 0.9.0 images and added 0.11.0 images. |
