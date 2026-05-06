@@ -94,5 +94,6 @@ jobs:
       - name: Run pytest (plan-based suite)
         # Only @pytest.mark.local — `terraform plan` against the mocked fixture, no
         # Docker. Testcontainer-based markers stay out until a separate job provisions
-        # a daemon.
-        run: pytest -c tests/pytest.ini -m local tests/
+        # a daemon. tests/remote/ is excluded because it imports boto3 at collection
+        # time; that suite belongs in a future "real-AWS" job.
+        run: pytest -c tests/pytest.ini -m local --ignore=tests/remote tests/
