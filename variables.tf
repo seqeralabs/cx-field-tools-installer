@@ -50,10 +50,18 @@ variable "tower_container_version" {
   }
 
   validation {
-    # master supports only the latest Platform major. See documentation/branching_policy.md.
+    # master is locked to Platform v26.x with a v26.1.0 floor. See documentation/branching_policy.md.
     # For v25.x or earlier, switch to the release/v25 branch.
-    condition     = var.tower_container_version >= "v26.1.0"
-    error_message = "This branch of the installer supports only Seqera Platform v26.1.0+. For v25.x or earlier, check out the release/v25 branch."
+    # The leading `!can(...)` clause skips this check when the tag-shape validation above is
+    # already failing, so callers see the cleaner shape error rather than a regex crash.
+    condition = (
+      !can(regex("^v[0-9]+\\.[0-9]+\\.[0-9]+", var.tower_container_version))
+      || (
+        tonumber(regex("^v([0-9]+)\\.", var.tower_container_version)[0]) == 26
+        && tonumber(regex("^v[0-9]+\\.([0-9]+)\\.", var.tower_container_version)[0]) >= 1
+      )
+    )
+    error_message = "This branch of the installer supports Seqera Platform v26.1.0 through v26.x. For v25.x or earlier, check out the release/v25 branch."
   }
 }
 

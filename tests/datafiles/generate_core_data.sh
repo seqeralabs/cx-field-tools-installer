@@ -44,8 +44,10 @@ aws_account = "128997144437"
 aws_region  = "us-east-1"
 aws_profile = "development"
 
-# TODO(#332): bump to the v26.1.x GA tag; baselines in tests/datafiles/expected_results/ will need to be regenerated.
-tower_container_version                 = "v25.3.0"
+# TODO(#332): replace the v26.1.0 placeholder below with the v26.1.x GA tag once known.
+# Baselines in tests/datafiles/expected_results/ will need to be regenerated if the GA tag
+# affects rendered template output.
+tower_container_version                 = "v26.1.0"
 
 
 ## ------------------------------------------------------------------------------------
