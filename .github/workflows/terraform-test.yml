@@ -1,0 +1,70 @@
+name: terraform test
+
+# Runs the variable-validation suite under tests/terraform/. See tests/terraform/README.md
+# and #334 for context. The suite uses `override_data` to stub the connection-strings
+# external Python data source, so plan-time variable validations can be exercised without
+# touching real cloud providers.
+
+on:
+  pull_request:
+    branches:
+      - master
+      - "release/v*"
+    paths:
+      - "**/*.tf"
+      - "**/*.tftest.hcl"
+      - "templates/TEMPLATE_terraform.tfvars"
+      - "scripts/installer/validation/**"
+      - "scripts/installer/data_external/**"
+      - "scripts/installer/utils/**"
+      - "tests/datafiles/**"
+      - "tests/terraform/**"
+      - "Makefile"
+      - ".github/workflows/terraform-test.yml"
+  push:
+    branches:
+      - master
+      - "release/v*"
+
+jobs:
+  terraform-test:
+    name: terraform test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.8
+          terraform_wrapper: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        # extractors.py / generate_test_data needs the runtime deps; tests/requirements.txt
+        # is the existing fixture-side requirements set used by the pytest suite.
+        run: |
+          python3 -m pip install --upgrade pip
+          if [ -f tests/requirements.txt ]; then pip install -r tests/requirements.txt; fi
+
+      - name: Terraform init (modules only)
+        # No backend, no providers refreshed — just enough to resolve module sources for
+        # `terraform test`. Variable validations run during plan and don't need real
+        # provider credentials thanks to the `override_data` blocks in the test files.
+        run: terraform init -backend=false
+
+      - name: Generate test fixtures
+        env:
+          # generate_core_data.sh respects this to skip writing real SSM parameters.
+          CX_SKIP_SSM: "true"
+        run: make generate_test_data
+
+      - name: Run terraform test
+        run: make terraform_test

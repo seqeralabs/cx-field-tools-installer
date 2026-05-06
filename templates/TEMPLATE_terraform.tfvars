@@ -225,8 +225,8 @@ to work. e.g:
     - mywavelite.example.com
 
 */
-flag_use_wave               = false
-flag_use_wave_lite          = false
+flag_use_wave      = false
+flag_use_wave_lite = false
 # TODO(#332): bump to the wave-lite version paired with the v26.1.x release set.
 wave_lite_container_version = "v1.29.1"
 
@@ -439,19 +439,19 @@ NOTES:
 */
 
 # Studios
-flag_enable_data_studio                       = true
+flag_enable_data_studio = true
 # TODO(#332): bump to the data-studio / connect-proxy version paired with the v26.1.x release set.
-data_studio_container_version                 = "0.11.0"
-flag_limit_data_studio_to_some_workspaces     = false
-data_studio_eligible_workspaces               = ""
+data_studio_container_version             = "0.11.0"
+flag_limit_data_studio_to_some_workspaces = false
+data_studio_eligible_workspaces           = ""
 
 # Studios SSH
 flag_enable_data_studio_ssh                   = false
 flag_limit_data_studio_ssh_to_some_workspaces = false
 data_studio_ssh_eligible_workspaces           = ""
 
-flag_studio_enable_path_routing               = false
-data_studio_path_routing_url                  = "REPLACE_ME_IF_NECESSARY"
+flag_studio_enable_path_routing = false
+data_studio_path_routing_url    = "REPLACE_ME_IF_NECESSARY"
 
 
 
@@ -500,7 +500,7 @@ data_studio_options = {
     status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.9.0"
   },
-    vscode-1-101-2-0-11-0 = {
+  vscode-1-101-2-0-11-0 = {
     qualifier = "VSCODE-1-101-2-0-11-0"
     icon      = "vscode"
     tool      = "vscode"
@@ -555,7 +555,7 @@ db_database_name = "tower"
 ## ------------------------------------------------------------------------------------
 This section added to handle new connection string requirements for Tower v24.1.0+
 */
-db_container_engine         = "mysql"
+db_container_engine = "mysql"
 # TODO(#332): confirm the container DB engine version paired with the v26.1.x release set.
 db_container_engine_version = "8.0"
 
@@ -580,7 +580,7 @@ WARNING:
   - You must supply your own backup solution.
 */
 
-db_engine            = "mysql"
+db_engine = "mysql"
 # TODO(#332): confirm the RDS engine version & matching param group paired with the v26.1.x release set.
 db_engine_version    = "8.0"
 db_param_group       = "mysql8.0"
@@ -594,7 +594,7 @@ db_backup_retention_period  = 7
 db_enable_storage_encrypted = true
 
 
-wave_lite_db_engine            = "postgres"
+wave_lite_db_engine = "postgres"
 # TODO(#332): confirm the wave-lite Postgres engine version paired with the v26.1.x release set.
 wave_lite_db_engine_version    = "17.5"
 wave_lite_db_param_group       = "postgres17"
