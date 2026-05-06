@@ -46,12 +46,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Python dependencies
-        # extractors.py / generate_test_data needs the runtime deps; tests/requirements.txt
-        # is the existing fixture-side requirements set used by the pytest suite.
-        run: |
-          python3 -m pip install --upgrade pip
-          if [ -f tests/requirements.txt ]; then pip install -r tests/requirements.txt; fi
+      # NOTE: tests/requirements.txt is intentionally NOT installed here — it carries
+      # pytest-suite deps (and at present a malformed line). The terraform-test path
+      # only needs stdlib Python: generate_core_data.sh -> generate_testing_secrets.py
+      # uses no third-party imports, and the data.external script is mocked via
+      # override_data. If this changes, install only the specific deps required, not
+      # the whole pytest fixture set.
 
       - name: Terraform init (modules only)
         # No backend, no providers refreshed — just enough to resolve module sources for
@@ -63,7 +63,9 @@ jobs:
         env:
           # generate_core_data.sh respects this to skip writing real SSM parameters.
           CX_SKIP_SSM: "true"
-        run: make generate_test_data
+        run: |
+          mkdir -p tests/logs
+          make generate_test_data
 
       - name: Run terraform test
         run: make terraform_test
