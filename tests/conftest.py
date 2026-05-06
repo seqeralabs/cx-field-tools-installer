@@ -51,8 +51,14 @@ def session_setup():
     # Create a fresh copy of the base testing terraform.tfvars file.
     subprocess.run("make generate_test_data", shell=True, check=True)
 
-    print("\nBacking up terraform.tfvars.")
-    FileHelper.move_file(FP.TFVARS_BASE, FP.TFVARS_BACKUP)
+    # Back up the project-root terraform.tfvars so a tester's local config is restored
+    # post-session. CI runs don't have a pre-existing tfvars at the root, so skip when
+    # there's nothing to back up.
+    if Path(FP.TFVARS_BASE).exists():
+        print("\nBacking up terraform.tfvars.")
+        FileHelper.move_file(FP.TFVARS_BASE, FP.TFVARS_BACKUP)
+    else:
+        print("\nNo project-root terraform.tfvars to back up; continuing.")
 
     # Swap in test tfvars (base and base-override), and testing-specific outputs (e.g. locals).
     print("\nLoading test tfvars and output artefacts.")
@@ -93,8 +99,9 @@ def session_setup():
 
     delete_pycache_folders(FP.ROOT)
 
-    # Restore original tfvars
-    FileHelper.move_file(FP.TFVARS_BACKUP, FP.TFVARS_BASE)
+    # Restore original tfvars (only if we backed one up at session start).
+    if Path(FP.TFVARS_BACKUP).exists():
+        FileHelper.move_file(FP.TFVARS_BACKUP, FP.TFVARS_BASE)
 
 
 @pytest.fixture(scope="session")  # function
