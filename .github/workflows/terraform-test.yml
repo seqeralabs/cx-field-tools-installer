@@ -53,10 +53,16 @@ jobs:
         run: tflint --init
 
       - name: tflint
-        # Errors fail the job; warnings are informational. Tighten via
-        # --minimum-failure-severity=warning once the residual housekeeping
-        # rules tracked in .tflint.hcl are addressed.
-        run: tflint --recursive
+        # tflint exits 2 on any issue (including warnings) by default.
+        # `--minimum-failure-severity=error` lets warnings stay informational
+        # in CI while errors still fail the job. Tighten to `warning` once
+        # the residual housekeeping rules tracked in .tflint.hcl are addressed.
+        # TFLINT_CONFIG_FILE is set so child modules walked by --recursive use
+        # the same .tflint.hcl ruleset as the root module (sub-dirs don't
+        # auto-discover the root config).
+        env:
+          TFLINT_CONFIG_FILE: ${{ github.workspace }}/.tflint.hcl
+        run: tflint --recursive --minimum-failure-severity=error
 
       - name: Setup Python
         uses: actions/setup-python@v5
