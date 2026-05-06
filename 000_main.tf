@@ -193,16 +193,6 @@ locals {
   oidc_consolidated = "${local.oidc_auth},${local.oidc_google},${local.oidc_github}"
 
 
-  # Studios
-  # ---------------------------------------------------------------------------------------
-  # Note: This is an ugly way to check but aligns to how I already check for migrate_db.
-  # TODO: Refactor in v2.
-  studio_uses_distroless = (
-    tonumber(length(regexall("^0.7.[8-9]", var.data_studio_container_version))) >= 1 ||
-    tonumber(length(regexall("^0.[8-9].[0-9]", var.data_studio_container_version))) >= 1 ? true : false
-  )
-
-
   # Wave
   # ---------------------------------------------------------------------------------------
   wave_enabled              = var.flag_use_wave == true || var.flag_use_wave_lite == true ? true : false
@@ -221,22 +211,6 @@ locals {
   # These are needed to handle templatefile rendering to Bash echoing to file craziness.
   dollar      = "$"
   singlequote = "'"
-
-
-  # Migrate-DB Flag
-  # ---------------------------------------------------------------------------------------
-  # Migrate-db only available for 23.4.1+ or higher. Check to ensure we don't include for 23.3.x or below. 
-  # TODO: Rationalize this to a single regex (July 26/25)
-  flag_new_enough_for_migrate_db = (
-    tonumber(length(regexall("^v23.4.[1-9]", var.tower_container_version))) >= 1 ||
-    tonumber(length(regexall("^v2[4-9]", var.tower_container_version))) >= 1 ? true : false
-  )
-
-  # Account for changes in tower.yml due to Micronaut 4
-  flag_using_micronaut_4 = (
-    tonumber(length(regexall("^v24.[0-9]", var.tower_container_version))) >= 1 ||
-    tonumber(length(regexall("^v2[5-9]", var.tower_container_version))) >= 1 ? true : false
-  )
 
 
   # Ansible

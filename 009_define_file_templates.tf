@@ -86,8 +86,6 @@ locals {
 
       tower_audit_retention_days = var.tower_audit_retention_days,
 
-      flag_using_micronaut_4 = local.flag_using_micronaut_4,
-
     }
   )
 
@@ -134,7 +132,6 @@ locals {
       tower_server_url         = module.connection_strings.tower_server_url,
       tower_redis_url          = module.connection_strings.tower_connect_redis_url,
       tower_connect_server_url = module.connection_strings.tower_connect_server_url,
-      studio_uses_distroless   = local.studio_uses_distroless,
       flag_enable_data_studio_ssh = var.flag_enable_data_studio_ssh,
       connect_ssh_key_path        = "/data/ssh-host-key",
     }
@@ -181,16 +178,12 @@ locals {
       flag_enable_groundswell = var.flag_enable_groundswell,
       swell_container_version = var.swell_container_version,
 
-      flag_new_enough_for_migrate_db = local.flag_new_enough_for_migrate_db,
-
       db_container_engine         = var.db_container_engine,
       db_container_engine_version = var.db_container_engine_version,
 
       flag_enable_data_studio       = var.flag_enable_data_studio,
       flag_enable_data_studio_ssh   = var.flag_enable_data_studio_ssh,
       data_studio_container_version = var.data_studio_container_version,
-      updated_redis_version         = tonumber(length(regexall("^v24.2.[0-9]", var.tower_container_version))) >= 1 || tonumber(length(regexall("^v2[5-9].[0-9].[0-9]", var.tower_container_version))) >= 1 ? true : false,
-      studio_uses_distroless        = local.studio_uses_distroless,
 
       flag_use_wave_lite          = var.flag_use_wave_lite,
       num_wave_lite_replicas      = var.num_wave_lite_replicas,
