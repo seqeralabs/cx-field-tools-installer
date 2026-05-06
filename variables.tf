@@ -302,8 +302,9 @@ variable "db_container_engine" { type = string }
 variable "db_container_engine_version" {
   type = string
   validation {
-    condition     = !startswith(var.db_container_engine_version, "5.6")
-    error_message = "db_container_engine_version 5.6 is obsolete. Use 5.7 or 8.x."
+    # master supports MySQL 8.x only.
+    condition     = startswith(var.db_container_engine_version, "8.")
+    error_message = "db_container_engine_version must be MySQL 8.x. master supports only MySQL 8 and above."
   }
 }
 
@@ -316,9 +317,9 @@ variable "db_engine" { type = string }
 variable "db_engine_version" {
   type = string
   validation {
-    # MySQL 5.6 is obsolete; v26.1.x requires 5.7+ (8.x recommended).
-    condition     = !startswith(var.db_engine_version, "5.6")
-    error_message = "db_engine_version 5.6 is obsolete. Use 5.7 or 8.x."
+    # master supports MySQL 8.x only.
+    condition     = startswith(var.db_engine_version, "8.")
+    error_message = "db_engine_version must be MySQL 8.x. master supports only MySQL 8 and above."
   }
 }
 variable "db_param_group" { type = string }

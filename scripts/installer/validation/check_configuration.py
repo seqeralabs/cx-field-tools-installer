@@ -395,22 +395,22 @@ def verify_database_configuration(data: SimpleNamespace):
 
 
 def verify_docker_version(data: SimpleNamespace):
-    """Make sure MySQL 5.6 is not pinned in the docker-compose template.
+    """Make sure the docker-compose template only pins MySQL 8.x.
 
-    Note: the `db_engine_version` / `db_container_engine_version` 5.6 checks are now enforced
-    by `validation {}` blocks on those variables. The filesystem read of the docker-compose
-    template stays here because it can't be expressed as a variable validation.
+    Note: the engine-version 8.x rule on `db_engine_version` / `db_container_engine_version`
+    is enforced by `validation {}` blocks on those variables. The filesystem read of the
+    docker-compose template stays here because it can't be expressed as a variable validation.
     """
     yaml.sort_base_mapping_type_on_output = False
 
+    mysql_pin = re.compile(r"mysql:(\d+)")
     with open("assets/src/docker_compose/docker-compose.yml.tpl") as file:
         # PYYAML fails with `yaml.scanner.ScannerError` due to Terraform templating. Switching to less elegant alternative.
-        lines = file.readlines()
-
-        for line in lines:
-            if "mysql:5.6" in line:
+        for line in file.readlines():
+            match = mysql_pin.search(line)
+            if match and int(match.group(1)) < 8:
                 log_error_and_exit(
-                    "MySQL 5.6 is obsolete. Please chooses MySQL 5.7 or higher in your docker-compose file."
+                    f"docker-compose template pins MySQL {match.group(1)}.x. master supports only MySQL 8 and above."
                 )
 
 
