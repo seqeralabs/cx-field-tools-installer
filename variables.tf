@@ -43,6 +43,18 @@ variable "tower_container_version" {
   type        = string
   description = "Seqera Platform container version. master supports only v26.1.0+ — earlier majors live on the release/vN branches. See documentation/branching_policy.md."
   # TODO(#332): once v26.1.x GA is selected, document the exact pinned tag here for reference.
+
+  validation {
+    condition     = can(regex("^v[0-9]+\\.[0-9]+\\.[0-9]+", var.tower_container_version))
+    error_message = "tower_container_version must be a Seqera Platform tag like \"v26.1.0\"."
+  }
+
+  validation {
+    # master supports only the latest Platform major. See documentation/branching_policy.md.
+    # For v25.x or earlier, switch to the release/v25 branch.
+    condition     = var.tower_container_version >= "v26.1.0"
+    error_message = "This branch of the installer supports only Seqera Platform v26.1.0+. For v25.x or earlier, check out the release/v25 branch."
+  }
 }
 
 
@@ -137,7 +149,15 @@ variable "existing_route53_private_zone_name" { type = string }
 # Custom Private CA
 # ------------------------------------------------------------------------------------
 
-variable "private_cacert_bucket_prefix" { type = string }
+variable "private_cacert_bucket_prefix" {
+  type = string
+  validation {
+    # Allow "REPLACE_ME" so users who don't use private certs don't have to populate this.
+    # The "required when flag_use_private_cacert = true" rule lives in check_configuration.py because it spans variables.
+    condition     = var.private_cacert_bucket_prefix == "REPLACE_ME" || startswith(var.private_cacert_bucket_prefix, "s3://")
+    error_message = "private_cacert_bucket_prefix must start with \"s3://\" (or be \"REPLACE_ME\" if private certs are not in use)."
+  }
+}
 
 
 # ------------------------------------------------------------------------------------
@@ -230,11 +250,25 @@ variable "data_explorer_disabled_workspaces" { type = string }
 variable "flag_enable_data_studio" { type = bool }
 variable "data_studio_container_version" { type = string }
 variable "flag_limit_data_studio_to_some_workspaces" { type = bool }
-variable "data_studio_eligible_workspaces" { type = string }
+variable "data_studio_eligible_workspaces" {
+  type        = string
+  description = "Comma-separated list of numeric workspace IDs eligible for Studios. Empty string allowed when not limiting."
+  validation {
+    condition     = var.data_studio_eligible_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_studio_eligible_workspaces))
+    error_message = "data_studio_eligible_workspaces must be a comma-separated list of integers (e.g. \"123,456\") or an empty string."
+  }
+}
 
 variable "flag_enable_data_studio_ssh" { type = bool }
 variable "flag_limit_data_studio_ssh_to_some_workspaces" { type = bool }
-variable "data_studio_ssh_eligible_workspaces" { type = string }
+variable "data_studio_ssh_eligible_workspaces" {
+  type        = string
+  description = "Comma-separated list of numeric workspace IDs eligible for Studios SSH. Empty string allowed when not limiting."
+  validation {
+    condition     = var.data_studio_ssh_eligible_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_studio_ssh_eligible_workspaces))
+    error_message = "data_studio_ssh_eligible_workspaces must be a comma-separated list of integers (e.g. \"123,456\") or an empty string."
+  }
+}
 
 variable "flag_studio_enable_path_routing" { type = bool }
 variable "data_studio_path_routing_url" {
@@ -265,7 +299,13 @@ variable "db_database_name" { type = string }
 # ------------------------------------------------------------------------------------
 
 variable "db_container_engine" { type = string }
-variable "db_container_engine_version" { type = string }
+variable "db_container_engine_version" {
+  type = string
+  validation {
+    condition     = !startswith(var.db_container_engine_version, "5.6")
+    error_message = "db_container_engine_version 5.6 is obsolete. Use 5.7 or 8.x."
+  }
+}
 
 
 # ------------------------------------------------------------------------------------
@@ -273,7 +313,14 @@ variable "db_container_engine_version" { type = string }
 # ------------------------------------------------------------------------------------
 
 variable "db_engine" { type = string }
-variable "db_engine_version" { type = string }
+variable "db_engine_version" {
+  type = string
+  validation {
+    # MySQL 5.6 is obsolete; v26.1.x requires 5.7+ (8.x recommended).
+    condition     = !startswith(var.db_engine_version, "5.6")
+    error_message = "db_engine_version 5.6 is obsolete. Use 5.7 or 8.x."
+  }
+}
 variable "db_param_group" { type = string }
 variable "db_instance_class" { type = string }
 variable "db_allocated_storage" { type = number }
@@ -365,14 +412,29 @@ variable "ec2_update_ami_if_available" { type = bool }
 # ALB
 # ------------------------------------------------------------------------------------
 
-variable "alb_certificate_arn" { type = string }
+variable "alb_certificate_arn" {
+  type = string
+  validation {
+    # Permit "REPLACE_ME" passthrough so users who don't create the ALB don't have to populate this.
+    # The hard requirement (must be set when flag_create_load_balancer = true) lives in check_configuration.py
+    # because it crosses two variables.
+    condition     = var.alb_certificate_arn == "REPLACE_ME" || startswith(var.alb_certificate_arn, "arn:aws:acm:") || startswith(var.alb_certificate_arn, "arn:aws-us-gov:acm:")
+    error_message = "alb_certificate_arn must be a full ACM certificate ARN (or \"REPLACE_ME\" if no ALB is being created)."
+  }
+}
 
 
 # ------------------------------------------------------------------------------------
 # TOWER CONFIGURATION
 # ------------------------------------------------------------------------------------
 
-variable "tower_server_url" { type = string }
+variable "tower_server_url" {
+  type = string
+  validation {
+    condition     = !startswith(var.tower_server_url, "http://") && !startswith(var.tower_server_url, "https://")
+    error_message = "tower_server_url must not include a scheme prefix (no \"http://\" or \"https://\")."
+  }
+}
 variable "tower_server_port" { type = string } # TODO: Update SG-generation logic to use this value
 variable "tower_contact_email" { type = string }
 variable "tower_enable_platforms" { type = string }
@@ -391,7 +453,14 @@ variable "tower_smtp_starttls_enable" { type = bool }
 variable "tower_smtp_starttls_required" { type = bool }
 variable "tower_smtp_ssl_protocols" { type = string }
 
-variable "tower_root_users" { type = string }
+variable "tower_root_users" {
+  type        = string
+  description = "Comma-separated list of email addresses to be granted root-user privileges in Seqera Platform."
+  validation {
+    condition     = length(trimspace(var.tower_root_users)) > 0 && var.tower_root_users != "REPLACE_ME"
+    error_message = "tower_root_users must contain at least one email address."
+  }
+}
 variable "tower_email_trusted_orgs" { type = string }
 variable "tower_email_trusted_users" { type = string }
 
@@ -400,7 +469,14 @@ variable "tower_audit_retention_days" { type = number }
 variable "tower_enable_openapi" { type = bool }
 
 variable "tower_enable_pipeline_versioning" { type = bool }
-variable "pipeline_versioning_eligible_workspaces" { type = string }
+variable "pipeline_versioning_eligible_workspaces" {
+  type        = string
+  description = "Comma-separated list of numeric workspace IDs eligible for pipeline versioning. Empty string allowed when not limiting."
+  validation {
+    condition     = var.pipeline_versioning_eligible_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.pipeline_versioning_eligible_workspaces))
+    error_message = "pipeline_versioning_eligible_workspaces must be a comma-separated list of integers (e.g. \"123,456\") or an empty string."
+  }
+}
 
 # ------------------------------------------------------------------------------------
 # TOWER CONFIGURATION - OIDC

@@ -143,32 +143,31 @@ def verify_tfvars_config_dependencies(data: SimpleNamespace):
 
 
 def verify_tower_server_url(data: SimpleNamespace):
-    """Verify the tower server url is correctly configured."""
+    """Verify the tower server url is correctly configured.
 
-    if data.tower_server_url.startswith("http"):
-        log_error_and_exit("Field `tower_server_url` must not have a prefix.")
-
+    Note: the no-scheme-prefix rule is now enforced by `validation {}` on var.tower_server_url.
+    Only the (non-fatal) port reminder remains here.
+    """
     if data.tower_server_port != "8000":
         logger.warning(
             "Tower instance not using default port (8000). Ensure Docker-Compose file is updated accordingly."
         )
 
 
-def verify_tower_root_users(data: SimpleNamespace):
-    """Ensure at least one root user is specified."""
-    if data.tower_root_users in ["REPLACE_ME", ""]:
-        log_error_and_exit(
-            "Please populate `tower_root_user` with at least one email address."
-        )
-
-
 def verify_tower_self_signed_certs(data: SimpleNamespace):
-    """Check self-signed certificate settings (if necessary)."""
-    if data.flag_use_private_cacert:
-        if not data.private_cacert_bucket_prefix.startswith("s3://"):
-            log_error_and_exit(
-                " Field `private_cacert_bucket_prefix` must start with `s3://`"
-            )
+    """Cross-variable check: when private cert mode is on, the bucket prefix must be set.
+
+    The s3:// shape check itself is enforced by `validation {}` on
+    var.private_cacert_bucket_prefix; the conditional-required rule below spans two
+    variables and so stays in Python.
+    """
+    if (
+        data.flag_use_private_cacert
+        and data.private_cacert_bucket_prefix == "REPLACE_ME"
+    ):
+        log_error_and_exit(
+            "When `flag_use_private_cacert = true`, `private_cacert_bucket_prefix` must be set to an s3:// URI."
+        )
 
 
 def verify_docker_daemon_loggin(data: SimpleNamespace):
@@ -396,13 +395,16 @@ def verify_database_configuration(data: SimpleNamespace):
 
 
 def verify_docker_version(data: SimpleNamespace):
-    """Make sure MySQL 5.6 is not present"""
+    """Make sure MySQL 5.6 is not pinned in the docker-compose template.
+
+    Note: the `db_engine_version` / `db_container_engine_version` 5.6 checks are now enforced
+    by `validation {}` blocks on those variables. The filesystem read of the docker-compose
+    template stays here because it can't be expressed as a variable validation.
+    """
     yaml.sort_base_mapping_type_on_output = False
 
     with open("assets/src/docker_compose/docker-compose.yml.tpl") as file:
         # PYYAML fails with `yaml.scanner.ScannerError` due to Terraform templating. Switching to less elegant alternative.
-        # dcfile = yaml.safe_load(file)
-        # image = dcfile['services']['db']['image']
         lines = file.readlines()
 
         for line in lines:
@@ -411,24 +413,15 @@ def verify_docker_version(data: SimpleNamespace):
                     "MySQL 5.6 is obsolete. Please chooses MySQL 5.7 or higher in your docker-compose file."
                 )
 
-    if "5.6" in data.db_engine_version:
-        log_error_and_exit(
-            "MySQL 5.6 is obsolete. Please chooses MySQL 5.7 in `db_engine_version`."
-        )
-
 
 def verify_data_studio(data: SimpleNamespace):
-    """Verify fields related to Data Studio."""
+    """Verify fields related to Data Studio.
+
+    Note: the digit/comma-format check on `data_studio_eligible_workspaces` is now enforced
+    by a `validation {}` block on that variable.
+    """
 
     if data.flag_enable_data_studio:
-        if data.flag_limit_data_studio_to_some_workspaces:
-            # https://www.geeksforgeeks.org/python-check-whether-string-contains-only-numbers-or-not/
-            # if re.match('[0-9]*$', data.data_studio_eligible_workspaces):
-            if not re.findall(r"[0-9]+,[0-9]+", data.data_studio_eligible_workspaces):
-                log_error_and_exit(
-                    "`data_studio_eligible_workspaces may only be populated by digits and commas."
-                )
-
         if data.flag_use_private_cacert:
             logger.warning(
                 "Please see documentation to understand how to make private certs work with Studios images."
@@ -465,16 +458,8 @@ def verify_data_studio_ssh(data: SimpleNamespace):
                 "Studios SSH requires connect-proxy >= 0.10.0. Please verify your `data_studio_container_version`."
             )
 
-        if data.flag_limit_data_studio_ssh_to_some_workspaces:
-            workspaces = data.data_studio_ssh_eligible_workspaces
-            try:
-                workspaces = workspaces.split(",")
-                for wsp in workspaces:
-                    isinstance(int(wsp), int)
-            except ValueError:
-                log_error_and_exit(
-                    "Variable `data_studio_ssh_eligible_workspaces` has non-integer values. Fix before deploying."
-                )
+        # Note: the digit/comma-format check on `data_studio_ssh_eligible_workspaces`
+        # is now enforced by a `validation {}` block on that variable.
 
 
 def verify_alb_settings(data: SimpleNamespace):
@@ -544,22 +529,14 @@ def verify_insecure_platform(data: SimpleNamespace):
 
 
 def verify_pipeline_versioning(data: SimpleNamespace):
-    """Conduct checks if pipeline versioning is active."""
-    if data.tower_enable_pipeline_versioning:
-        # All workspaces eligible. Return.
-        if data.pipeline_versioning_eligible_workspaces == "":
-            return
+    """Conduct checks if pipeline versioning is active.
 
-        # Only some eligible (via comma-delimited string); verify
-        workspaces = data.pipeline_versioning_eligible_workspaces
-        try:
-            workspaces = workspaces.split(",")
-            for wsp in workspaces:
-                isinstance(int(wsp), int)
-        except ValueError:
-            log_error_and_exit(
-                "Variable `pipeline_versioning_eligible_workspaces` has non-integer values. Fix before deploying."
-            )
+    Note: the digit/comma-format check on `pipeline_versioning_eligible_workspaces`
+    is now enforced by a `validation {}` block on that variable. Nothing currently
+    needs to happen at the Python layer; kept as a stub for any future cross-variable
+    checks (e.g. dependence on other workspace-scoped flags).
+    """
+    return
 
 
 # -------------------------------------------------------------------------------
@@ -574,15 +551,9 @@ if __name__ == "__main__":
     data_dictionary = tf_vars_json_payload
     data = SimpleNamespace(**data_dictionary)
 
-    # Check minimum container version. master supports only the latest Platform major (v26.1.x).
-    # Bug-fix support for v25-and-below lives on the release/v25 branch — see documentation/branching_policy.md.
-    if not ((data.tower_container_version).startswith("v")) or (
-        data.tower_container_version < "v26.1.0"
-    ):
-        log_error_and_exit(
-            "This branch of the installer supports only Seqera Platform v26.1.0+. "
-            "For v25.x or earlier, check out the release/v25 branch."
-        )
+    # Note: the v26.1.0 floor and tag-shape check are now enforced by `validation {}` blocks
+    # on var.tower_container_version (see variables.tf). Terraform fires those before Python
+    # ever runs, so the duplicate check has been removed here.
 
     # Verify tfvars fields
     print("\n")
@@ -597,7 +568,9 @@ if __name__ == "__main__":
     print("\n")
     logger.info("Verifying Tower configurations")
     logger.info("-" * 50)
-    verify_tower_root_users(data)
+    # Note: tower_root_users shape and private_cacert_bucket_prefix shape are now enforced by
+    # `validation {}` blocks on those variables. The cross-variable rule below (private cert
+    # required when flag_use_private_cacert = true) stays in Python because it spans variables.
     verify_tower_self_signed_certs(data)
     verify_tower_server_url(data)
     verify_docker_daemon_loggin(data)
