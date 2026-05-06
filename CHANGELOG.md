@@ -49,6 +49,8 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 | Modified | Studios | `data_studio_container_version` | Updated from 0.9.0 to 0.11.0. Note: Studios SSH requires connect-proxy >= 0.10.0. |
 | Modified | Studios | `data_studio_options` | Removed 0.9.0 images and added 0.11.0 images. |
 ||||
+| New | Redis | `platform_redis_elasticache` | Configuration block (`node_type`, `num_cache_nodes`, `engine_version`, `port`) for the standalone Seqera Platform ElastiCache (Redis) cluster. Required when `flag_create_external_redis = true`. |
+||||
 
 
 
