@@ -30,7 +30,6 @@ BACKUP_*
 
 CLAUDE.local.md
 .ai/
-.claude/
 
 tests/logs/*
 tests/datafiles/*.tfvars
