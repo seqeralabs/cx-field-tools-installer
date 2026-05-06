@@ -39,6 +39,7 @@ aws_account = "REPLACE_ME"
 aws_region  = "REPLACE_ME"
 aws_profile = "REPLACE_ME"
 
+# TODO(#332): bump to the v26.1.x GA tag before merging. Master supports only v26.1.0+.
 tower_container_version = "v25.3.0"
 
 
@@ -226,6 +227,7 @@ to work. e.g:
 */
 flag_use_wave               = false
 flag_use_wave_lite          = false
+# TODO(#332): bump to the wave-lite version paired with the v26.1.x release set.
 wave_lite_container_version = "v1.29.1"
 
 num_wave_lite_replicas = 2
@@ -387,6 +389,7 @@ Enable to allow pipeline optimization.
 
 flag_enable_groundswell = true
 
+# TODO(#332): bump to the groundswell version paired with the v26.1.x release set.
 swell_container_version = "0.4.6"
 swell_database_name     = "swell"
 ## swell_db_user                        = "DO_NOT_UNCOMMENT_ME"
@@ -437,6 +440,7 @@ NOTES:
 
 # Studios
 flag_enable_data_studio                       = true
+# TODO(#332): bump to the data-studio / connect-proxy version paired with the v26.1.x release set.
 data_studio_container_version                 = "0.11.0"
 flag_limit_data_studio_to_some_workspaces     = false
 data_studio_eligible_workspaces               = ""
@@ -552,6 +556,7 @@ db_database_name = "tower"
 This section added to handle new connection string requirements for Tower v24.1.0+
 */
 db_container_engine         = "mysql"
+# TODO(#332): confirm the container DB engine version paired with the v26.1.x release set.
 db_container_engine_version = "8.0"
 
 /*
@@ -576,6 +581,7 @@ WARNING:
 */
 
 db_engine            = "mysql"
+# TODO(#332): confirm the RDS engine version & matching param group paired with the v26.1.x release set.
 db_engine_version    = "8.0"
 db_param_group       = "mysql8.0"
 db_instance_class    = "db.m5.large"
@@ -589,6 +595,7 @@ db_enable_storage_encrypted = true
 
 
 wave_lite_db_engine            = "postgres"
+# TODO(#332): confirm the wave-lite Postgres engine version paired with the v26.1.x release set.
 wave_lite_db_engine_version    = "17.5"
 wave_lite_db_param_group       = "postgres17"
 wave_lite_db_instance_class    = "db.t4g.micro" #"db.m5.large"
