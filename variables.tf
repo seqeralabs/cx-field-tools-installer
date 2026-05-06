@@ -394,6 +394,9 @@ variable "tower_root_users" { type = string }
 variable "tower_email_trusted_orgs" { type = string }
 variable "tower_email_trusted_users" { type = string }
 
+variable "flag_tower_enable_participant_auto_create_user" { type = bool }
+variable "flag_tower_enable_member_auto_create_user" { type = bool }
+
 variable "tower_audit_retention_days" { type = number }
 
 variable "tower_enable_openapi" { type = bool }
