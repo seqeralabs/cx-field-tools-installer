@@ -70,11 +70,7 @@ def verify_sensitive_keys(data: SimpleNamespace, data_dictionary: dict):
 
 
 def verify_tower_server_url(data: SimpleNamespace):
-    """Verify the tower server url is correctly configured.
-
-    Note: the no-scheme-prefix rule is now enforced by `validation {}` on var.tower_server_url.
-    Only the (non-fatal) port reminder remains here.
-    """
+    """Warn when tower_server_port is non-default, since the docker-compose template assumes 8000."""
     if data.tower_server_port != "8000":
         logger.warning(
             "Tower instance not using default port (8000). Ensure Docker-Compose file is updated accordingly."
@@ -82,12 +78,7 @@ def verify_tower_server_url(data: SimpleNamespace):
 
 
 def verify_tower_self_signed_certs(data: SimpleNamespace):
-    """Cross-variable check: when private cert mode is on, the bucket prefix must be set.
-
-    The s3:// shape check itself is enforced by `validation {}` on
-    var.private_cacert_bucket_prefix; the conditional-required rule below spans two
-    variables and so stays in Python.
-    """
+    """When private cert mode is on, the bucket prefix must be populated."""
     if (
         data.flag_use_private_cacert
         and data.private_cacert_bucket_prefix == "REPLACE_ME"
@@ -322,12 +313,7 @@ def verify_database_configuration(data: SimpleNamespace):
 
 
 def verify_docker_version(data: SimpleNamespace):
-    """Make sure the docker-compose template only pins MySQL 8.x.
-
-    Note: the engine-version 8.x rule on `db_engine_version` / `db_container_engine_version`
-    is enforced by `validation {}` blocks on those variables. The filesystem read of the
-    docker-compose template stays here because it can't be expressed as a variable validation.
-    """
+    """Reject docker-compose templates that pin a MySQL image below 8.x."""
     yaml.sort_base_mapping_type_on_output = False
 
     mysql_pin = re.compile(r"mysql:(\d+)")
@@ -342,12 +328,7 @@ def verify_docker_version(data: SimpleNamespace):
 
 
 def verify_data_studio(data: SimpleNamespace):
-    """Verify fields related to Data Studio.
-
-    Note: the digit/comma-format check on `data_studio_eligible_workspaces` is now enforced
-    by a `validation {}` block on that variable.
-    """
-
+    """Verify fields related to Data Studio."""
     if data.flag_enable_data_studio:
         if data.flag_use_private_cacert:
             logger.warning(
@@ -384,9 +365,6 @@ def verify_data_studio_ssh(data: SimpleNamespace):
             logger.warning(
                 "Studios SSH requires connect-proxy >= 0.10.0. Please verify your `data_studio_container_version`."
             )
-
-        # Note: the digit/comma-format check on `data_studio_ssh_eligible_workspaces`
-        # is now enforced by a `validation {}` block on that variable.
 
 
 def verify_alb_settings(data: SimpleNamespace):
@@ -455,17 +433,6 @@ def verify_insecure_platform(data: SimpleNamespace):
             log_error_and_exit("Wave-Lite requires a secure Seqera Platform endpoint.")
 
 
-def verify_pipeline_versioning(data: SimpleNamespace):
-    """Conduct checks if pipeline versioning is active.
-
-    Note: the digit/comma-format check on `pipeline_versioning_eligible_workspaces`
-    is now enforced by a `validation {}` block on that variable. Nothing currently
-    needs to happen at the Python layer; kept as a stub for any future cross-variable
-    checks (e.g. dependence on other workspace-scoped flags).
-    """
-    return
-
-
 # -------------------------------------------------------------------------------
 # MAIN
 # -------------------------------------------------------------------------------
@@ -478,13 +445,7 @@ if __name__ == "__main__":
     data_dictionary = tf_vars_json_payload
     data = SimpleNamespace(**data_dictionary)
 
-    # Note: the v26.1.0 floor and tag-shape check are now enforced by `validation {}` blocks
-    # on var.tower_container_version (see variables.tf). Terraform fires those before Python
-    # ever runs, so the duplicate check has been removed here.
-
     # Verify tfvars fields
-    # Note: only-one-of-N flag groups and dependency-population rules are now enforced
-    # by cross-variable `validation {}` blocks in variables.tf.
     print("\n")
     logger.info("Verifying TFVARS file")
     logger.info("-" * 50)
@@ -495,9 +456,6 @@ if __name__ == "__main__":
     print("\n")
     logger.info("Verifying Tower configurations")
     logger.info("-" * 50)
-    # Note: tower_root_users shape and private_cacert_bucket_prefix shape are now enforced by
-    # `validation {}` blocks on those variables. The cross-variable rule below (private cert
-    # required when flag_use_private_cacert = true) stays in Python because it spans variables.
     verify_tower_self_signed_certs(data)
     verify_tower_server_url(data)
     verify_docker_daemon_loggin(data)
@@ -546,12 +504,6 @@ if __name__ == "__main__":
     logger.info("-" * 50)
     verify_production_deployment(data)
     verify_insecure_platform(data=data)
-
-    # Check pipeline versioning
-    print("\n")
-    logger.info("Verifying pipeline versioning")
-    logger.info("-" * 50)
-    verify_pipeline_versioning(data)
 
     print("\n")
     logger.info("Finished tfvars configuration check.")

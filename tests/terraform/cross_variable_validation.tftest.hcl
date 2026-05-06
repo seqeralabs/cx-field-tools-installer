@@ -1,17 +1,10 @@
-## ------------------------------------------------------------------------------------
-## Negative tests for the cross-variable `validation {}` rules in variables.tf.
-##
-## These rules replace the verify_only_one_true_set and verify_tfvars_config_dependencies
-## groups previously implemented in scripts/installer/validation/check_configuration.py.
-## See version_validation.tftest.hcl for the baseline-tfvars convention.
-## ------------------------------------------------------------------------------------
+## Cross-variable validation rules: only-one-of-N flag groups and
+## conditional-dependency requirements.
 
 mock_provider "aws" {}
 
-# 000_main.tf jsondecodes each SSM payload and downstream locals look up specific
-# keys (TOWER_DB_USER, SWELL_DB_USER, WAVE_LITE_REDIS_AUTH, etc.). Provide stub
-# JSON per data source so plan can complete and the variable-validation diagnostics
-# can surface. Keep this in sync with any new SSM key references in the .tf files.
+# Each SSM payload is jsondecode'd by the root locals, which then look up specific
+# keys (and an inner `ssm_key` field) — so the stub JSON has to mirror that shape.
 
 override_data {
   target = data.aws_ssm_parameter.tower_secrets

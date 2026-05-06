@@ -50,10 +50,8 @@ variable "tower_container_version" {
   }
 
   validation {
-    # master is locked to Platform v26.x with a v26.1.0 floor. See documentation/branching_policy.md.
-    # For v25.x or earlier, switch to the release/v25 branch.
-    # The leading `!can(...)` clause skips this check when the tag-shape validation above is
-    # already failing, so callers see the cleaner shape error rather than a regex crash.
+    # The leading !can(...) short-circuits when the tag-shape validation above is already
+    # failing, so a malformed input produces the shape error rather than a regex crash.
     condition = (
       !can(regex("^v[0-9]+\\.[0-9]+\\.[0-9]+", var.tower_container_version))
       || (
@@ -96,9 +94,9 @@ variable "custom_resource_naming_prefix" { type = string }
 # Flags - Infrastructure
 # ------------------------------------------------------------------------------------
 
-# Each cross-variable validation below replaces a corresponding `only_one_true_set`
-# group from check_configuration.py. The rule is attached to the first flag in each
-# group; Terraform fires it once any of the referenced variables is set.
+# Cross-variable "exactly one of N flags must be true" rules are attached to the
+# first flag in each group, so the validation fires regardless of which flag the
+# user toggled.
 
 variable "flag_create_new_vpc" {
   type = bool
@@ -213,8 +211,6 @@ variable "existing_route53_private_zone_name" {
 variable "private_cacert_bucket_prefix" {
   type = string
   validation {
-    # Allow "REPLACE_ME" so users who don't use private certs don't have to populate this.
-    # The "required when flag_use_private_cacert = true" rule lives in check_configuration.py because it spans variables.
     condition     = var.private_cacert_bucket_prefix == "REPLACE_ME" || startswith(var.private_cacert_bucket_prefix, "s3://")
     error_message = "private_cacert_bucket_prefix must start with \"s3://\" (or be \"REPLACE_ME\" if private certs are not in use)."
   }
@@ -369,7 +365,6 @@ variable "db_container_engine" { type = string }
 variable "db_container_engine_version" {
   type = string
   validation {
-    # master supports MySQL 8.x only.
     condition     = startswith(var.db_container_engine_version, "8.")
     error_message = "db_container_engine_version must be MySQL 8.x. master supports only MySQL 8 and above."
   }
@@ -384,7 +379,6 @@ variable "db_engine" { type = string }
 variable "db_engine_version" {
   type = string
   validation {
-    # master supports MySQL 8.x only.
     condition     = startswith(var.db_engine_version, "8.")
     error_message = "db_engine_version must be MySQL 8.x. master supports only MySQL 8 and above."
   }
@@ -484,14 +478,11 @@ variable "alb_certificate_arn" {
   type = string
 
   validation {
-    # Shape rule: when set, must be a real ACM ARN. REPLACE_ME passthrough allowed
-    # so users who skip ALB creation don't need to populate this.
     condition     = var.alb_certificate_arn == "REPLACE_ME" || startswith(var.alb_certificate_arn, "arn:aws:acm:") || startswith(var.alb_certificate_arn, "arn:aws-us-gov:acm:")
     error_message = "alb_certificate_arn must be a full ACM certificate ARN (or \"REPLACE_ME\" if no ALB is being created)."
   }
 
   validation {
-    # Cross-variable rule: must be a real ARN (not REPLACE_ME) whenever the ALB is being created.
     condition     = !var.flag_create_load_balancer || var.alb_certificate_arn != "REPLACE_ME"
     error_message = "When flag_create_load_balancer = true, alb_certificate_arn must be set to a real ACM ARN."
   }

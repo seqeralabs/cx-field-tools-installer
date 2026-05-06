@@ -1,9 +1,7 @@
 name: terraform test
 
-# Runs the variable-validation suite under tests/terraform/. See tests/terraform/README.md
-# and #334 for context. The suite uses `override_data` to stub the connection-strings
-# external Python data source, so plan-time variable validations can be exercised without
-# touching real cloud providers.
+# Runs the variable-validation suite under tests/terraform/.
+# See tests/terraform/README.md for what's covered and how to run locally.
 
 on:
   pull_request:
@@ -53,10 +51,8 @@ jobs:
         run: tflint --init
 
       - name: tflint
-        # Fail the job on any tflint warning or error (default behaviour:
-        # exit 2 on issues found). TFLINT_CONFIG_FILE is set so child modules
-        # walked by --recursive use the root .tflint.hcl ruleset (sub-dirs
-        # don't auto-discover the root config).
+        # TFLINT_CONFIG_FILE is required so child modules walked by --recursive
+        # use the root .tflint.hcl — they don't auto-discover it.
         env:
           TFLINT_CONFIG_FILE: ${{ github.workspace }}/.tflint.hcl
         run: tflint --recursive
@@ -66,22 +62,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      # NOTE: tests/requirements.txt is intentionally NOT installed here — it carries
-      # pytest-suite deps (and at present a malformed line). The terraform-test path
-      # only needs stdlib Python: generate_core_data.sh -> generate_testing_secrets.py
-      # uses no third-party imports, and the data.external script is mocked via
-      # override_data. If this changes, install only the specific deps required, not
-      # the whole pytest fixture set.
+      # tests/requirements.txt is the pytest-suite fixture; this job only needs
+      # stdlib Python (generate_testing_secrets.py uses no third-party imports).
 
       - name: Terraform init (modules only)
-        # No backend, no providers refreshed — just enough to resolve module sources for
-        # `terraform test`. Variable validations run during plan and don't need real
-        # provider credentials thanks to the `override_data` blocks in the test files.
         run: terraform init -backend=false
 
       - name: Generate test fixtures
         env:
-          # generate_core_data.sh respects this to skip writing real SSM parameters.
           CX_SKIP_SSM: "true"
         run: |
           mkdir -p tests/logs
