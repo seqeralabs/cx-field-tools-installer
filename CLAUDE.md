@@ -157,6 +157,7 @@ Sequential numbered files defining infrastructure resources in dependency order.
 - **No default values** in `variables.tf` - all values must be explicitly defined in `terraform.tfvars`
 - Uses `null_resource` with `local-exec` provisioners instead of `local_file` resources
 - State stored locally by default (`DONTDELETE/terraform.tfstate`)
+- **Adding/removing/modifying a variable requires a `CHANGELOG.md` update in the same PR.** Add a row to the upcoming-release section under `### Configuration File Changes` → `#### terraform.tfvars` (columns: Status / Component / Parameter Name / Description) and a corresponding bullet under that release's `Notable Changes → Documentation`. `documentation/upgrade_steps.md` step 5 directs upgraders to CHANGELOG for tfvars guidance, so missing entries silently break upgrades.
 
 ### Security Considerations
 - Sensitive values stored in AWS SSM Parameter Store only
