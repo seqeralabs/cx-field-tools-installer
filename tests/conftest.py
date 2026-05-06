@@ -1,8 +1,10 @@
+import json
 import os
 import subprocess
 import time
 from pathlib import Path
 
+import hcl2
 import pytest
 
 # Single-sourced in top-level conftest.py.
@@ -61,13 +63,13 @@ def session_setup():
     # Prepare plan cache directory
     os.makedirs(FP.CACHE_PLAN_DIR, exist_ok=True)
 
-    # Prepare JSONified 009 (via hcl2json container)
-    # CLI_command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
-    command = (
-        f"docker run --rm -v {FP.ROOT}:/tmp ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:vendored"
-        f" /tmp/009_define_file_templates.tf > {FP.ROOT}/009_define_file_templates.json"
-    )
-    result = execute_subprocess(command)
+    # Prepare JSONified 009 — read by tests/utils/terraform/template_generator.py.
+    # Switched from a docker hcl2json call to in-process python-hcl2 so the suite
+    # can run without a Docker daemon.
+    with open(f"{FP.ROOT}/009_define_file_templates.tf") as fp:
+        parsed = hcl2.load(fp)
+    with open(f"{FP.ROOT}/009_define_file_templates.json", "w") as fp:
+        json.dump(parsed, fp)
 
     yield
 

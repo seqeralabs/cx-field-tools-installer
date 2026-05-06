@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 
@@ -7,8 +8,14 @@ def check_aws_sso_token():
     """
     Terraform plan will fail if valid AWS SSO token not present.
     Invoke AWS CLI via subprocess call (STS get-caller-identity).
-    Raises RuntimeError if token is expired or invalid
+    Raises RuntimeError if token is expired or invalid.
+
+    Set CX_SKIP_AWS_CHECK=true to bypass — used by CI runs of the plan-based
+    suite, where the fixture sets `use_mocks = true` so no real AWS calls fire.
     """
+    if os.environ.get("CX_SKIP_AWS_CHECK", "").lower() in ("1", "true", "yes"):
+        return True
+
     try:
         result = subprocess.run(
             ["aws", "sts", "get-caller-identity"],

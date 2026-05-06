@@ -19,8 +19,14 @@ on:
     branches:
       - master
       - "release/v*"
-      - "chore/v26-**" # Temporary: keep visibility while the stacked v26 work is in flight.
   workflow_dispatch:
+
+# A push to a branch with an open PR fires both the push and pull_request
+# triggers, producing duplicate runs. Group by ref + event so the second one
+# cancels the first.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
 
 jobs:
   ci:
@@ -96,4 +102,6 @@ jobs:
         # Docker. Testcontainer-based markers stay out until a separate job provisions
         # a daemon. tests/remote/ is excluded because it imports boto3 at collection
         # time; that suite belongs in a future "real-AWS" job.
+        env:
+          CX_SKIP_AWS_CHECK: "true"
         run: pytest -c tests/pytest.ini -m local --ignore=tests/remote tests/
