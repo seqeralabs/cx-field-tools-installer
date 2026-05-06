@@ -334,5 +334,10 @@ cat << 'EOF' > 012_testing_outputs.tf
 ## ------------------------------------------------------------------------------------
 output local_wave_enabled {
     value = local.wave_enabled
-} 
+}
 EOF
+
+# Apply terraform fmt to the generated fixtures so the repo-wide fmt-check stays green.
+# Failures here are non-fatal (terraform may not be on PATH in every dev environment),
+# but CI installs terraform and will catch any drift via `terraform fmt -check -recursive`.
+terraform fmt 012_testing_outputs.tf terraform.tfvars base-overrides.auto.tfvars >/dev/null 2>&1 || true

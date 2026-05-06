@@ -14,11 +14,10 @@ locals {
       tag_key                     = local.global_prefix,
       aws_region                  = var.aws_region,
       aws_account                 = var.aws_account,
-      app_name                    = var.app_name,
       ssm_key_arn                 = data.aws_kms_alias.default_ssm.arn,
 
       flag_allow_aws_instance_credentials = var.flag_allow_aws_instance_credentials,
-      tower_aws_role     = local.seqerakit_secrets["TOWER_AWS_ROLE"]["value"],
+      tower_aws_role                      = local.seqerakit_secrets["TOWER_AWS_ROLE"]["value"],
     }
   )
 

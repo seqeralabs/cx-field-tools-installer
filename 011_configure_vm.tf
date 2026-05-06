@@ -13,7 +13,7 @@ Accepting repetitive boilerplate in return for finer granularity and more visibi
 resource "null_resource" "ssh_connectivity_check" {
   count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
+  triggers   = { always_run = timestamp() }
   depends_on = [null_resource.allow_file_copy_to_start]
 
   provisioner "local-exec" {
@@ -41,7 +41,7 @@ resource "null_resource" "ssh_connectivity_check" {
 resource "null_resource" "file_transfer" {
   count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
+  triggers   = { always_run = timestamp() }
   depends_on = [null_resource.ssh_connectivity_check]
 
   provisioner "local-exec" {
@@ -66,7 +66,7 @@ resource "null_resource" "file_transfer" {
 resource "null_resource" "host_configuration" {
   count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
+  triggers   = { always_run = timestamp() }
   depends_on = [null_resource.file_transfer]
 
   provisioner "local-exec" {
@@ -87,7 +87,7 @@ resource "null_resource" "host_configuration" {
 resource "null_resource" "ansible_setup" {
   count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
+  triggers   = { always_run = timestamp() }
   depends_on = [null_resource.host_configuration]
 
   provisioner "local-exec" {
@@ -108,7 +108,7 @@ resource "null_resource" "ansible_setup" {
 resource "null_resource" "system_packages" {
   count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
+  triggers   = { always_run = timestamp() }
   depends_on = [null_resource.ansible_setup]
 
   provisioner "local-exec" {
@@ -129,7 +129,7 @@ resource "null_resource" "system_packages" {
 resource "null_resource" "update_configuration_files" {
   count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
+  triggers   = { always_run = timestamp() }
   depends_on = [null_resource.system_packages]
 
   provisioner "local-exec" {
@@ -150,7 +150,7 @@ resource "null_resource" "update_configuration_files" {
 resource "null_resource" "pull_containers_run_tower" {
   count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
+  triggers   = { always_run = timestamp() }
   depends_on = [null_resource.update_configuration_files]
 
   provisioner "local-exec" {
@@ -171,7 +171,7 @@ resource "null_resource" "pull_containers_run_tower" {
 resource "null_resource" "wait_for_tower" {
   count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
+  triggers   = { always_run = timestamp() }
   depends_on = [null_resource.pull_containers_run_tower]
 
   provisioner "local-exec" {
@@ -192,7 +192,7 @@ resource "null_resource" "wait_for_tower" {
 resource "null_resource" "patch_groundswell" {
   count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
+  triggers   = { always_run = timestamp() }
   depends_on = [null_resource.wait_for_tower]
 
   provisioner "local-exec" {
@@ -214,7 +214,7 @@ resource "null_resource" "patch_groundswell" {
 resource "null_resource" "run_seqerkit" {
   count = var.flag_vm_copy_files_to_instance == true && var.flag_run_seqerakit == true ? 1 : 0
 
-  triggers   = { always_run = "${timestamp()}" }
+  triggers   = { always_run = timestamp() }
   depends_on = [null_resource.patch_groundswell]
 
   provisioner "local-exec" {

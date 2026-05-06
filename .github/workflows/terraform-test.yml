@@ -41,6 +41,23 @@ jobs:
           terraform_version: 1.14.8
           terraform_wrapper: false
 
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -diff
+
+      - name: Setup tflint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.61.0
+
+      - name: tflint init
+        run: tflint --init
+
+      - name: tflint
+        # Errors fail the job; warnings are informational. Tighten via
+        # --minimum-failure-severity=warning once the residual housekeeping
+        # rules tracked in .tflint.hcl are addressed.
+        run: tflint --recursive
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:

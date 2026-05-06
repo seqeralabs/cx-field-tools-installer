@@ -11,8 +11,8 @@
 output "dns" {
   value = (
     var.elasticache_instance.clustered.multi_az_enabled == true ?
-    "${aws_elasticache_replication_group.redis.configuration_endpoint_address}" :
-    "${aws_elasticache_replication_group.redis.primary_endpoint_address}"
+    aws_elasticache_replication_group.redis.configuration_endpoint_address :
+    aws_elasticache_replication_group.redis.primary_endpoint_address
   )
   description = "DNS of the Elasticache instance / cluster."
 }

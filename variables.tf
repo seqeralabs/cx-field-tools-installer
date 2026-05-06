@@ -509,7 +509,6 @@ variable "tower_server_url" {
     error_message = "tower_server_url must not include a scheme prefix (no \"http://\" or \"https://\")."
   }
 }
-variable "tower_server_port" { type = string } # TODO: Update SG-generation logic to use this value
 variable "tower_contact_email" { type = string }
 variable "tower_enable_platforms" { type = string }
 
