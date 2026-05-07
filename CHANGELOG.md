@@ -20,6 +20,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Added Studios SSH support. Requires Platform >= v25.3.3 and connect-proxy >= 0.10.0. [`#313`](https://github.com/seqeralabs/cx-field-tools-installer/issues/313)
             - Updated Platform Connect containers version to 0.11.0.
             - Updated Studios recommended base images.
+            - Raised wave-lite nginx `client_max_body_size` from 1m to 10m to prevent HTTP 413 errors when Fusion uploads large bin/ bundles. [`#315`](https://github.com/seqeralabs/cx-field-tools-installer/issues/315)
             - TBD
         <br /><br />
 
