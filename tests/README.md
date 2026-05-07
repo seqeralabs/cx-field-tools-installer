@@ -319,3 +319,25 @@ Example LLM queries:
 - **Size**: Monitor log file size to prevent disk space issues
 - **Retention**: Archive old logs for historical analysis
 - **Privacy**: Ensure no sensitive data is logged in test output
+
+
+## CAVEAT!
+Testcontainer package has problems if socket is not exposed (needed by `docker-py`). 
+
+```
+# Solution for system running rootless Podman
+
+# 1. Enable the podman socket (one-time; survives reboots)
+systemctl --user enable --now podman.socket
+
+# 2. Tell every Python lib that uses docker-py where to find it
+export DOCKER_HOST="unix://${XDG_RUNTIME_DIR}/podman/podman.sock"
+
+# 3. Disable testcontainers' Ryuk cleanup container — known incompatibility
+#    with rootless podman; without this, container teardown will hang or fail.
+export TESTCONTAINERS_RYUK_DISABLED=true
+
+# 4. Verify the socket is live and reachable before retrying:
+ls -l "${XDG_RUNTIME_DIR}/podman/podman.sock"   # should exist, owned by you
+podman version                                  # confirms socket is responding
+```
