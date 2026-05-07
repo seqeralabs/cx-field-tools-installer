@@ -523,7 +523,7 @@ data_studio_options = {
     tool      = "xpra"
     status    = "recommended"
     container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.11.0"
-  },
+  }
 }
 
 /*
