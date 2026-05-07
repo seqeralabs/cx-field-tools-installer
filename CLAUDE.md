@@ -14,7 +14,7 @@ References in the table below use these prefixes:
 |-----------|----------|
 | ALWAYS DO FOR ALL TASKS | `proj:variable_default_values.md` |
 | Any PR that changes deployer-visible behaviour (variables, component config, components added/removed) | `proj:changelog_protocol.md` |
-| Writing or editing Terraform (`*.tf`, `terraform.tfvars`) | `proj:terraform_conventions.md` |
+| Writing or editing Terraform (`*.tf`, `terraform.tfvars`) | `proj:terraform_conventions.md`, `proj:terraform_style_guide.md` |
 | Writing or editing Python | `proj:python_standards.md` |
 | Running, writing, or analysing tests | `proj:testing_strategy.md`, `proj:testing_commands.md` |
 | Working on security-sensitive code (secrets, IAM, SSM, certificates) | `proj:security_considerations.md` |
@@ -75,7 +75,7 @@ For test commands and structured-logging tooling, see [`proj:testing_commands.md
 ## Project Structure
 
 ### Core Infrastructure (`*.tf` files)
-Sequential numbered files defining infrastructure resources in dependency order.
+Sequential numbered files defining infrastructure resources in (rough) dependency order.
 
 ### Python Scripts (`scripts/`)
 - `scripts/installer/validation/` - Configuration validation
