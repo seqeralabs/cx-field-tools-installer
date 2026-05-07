@@ -17,6 +17,7 @@ References in the table below use these prefixes:
 | Writing or editing Terraform (`*.tf`, `terraform.tfvars`) | `proj:terraform_conventions.md`, `proj:terraform_style_guide.md` |
 | Writing or editing Python | `proj:python_standards.md` |
 | Running, writing, or analysing tests | `proj:testing_strategy.md`, `proj:testing_commands.md` |
+| Adding/modifying a `terraform.tfvars` variable that drives a generated artefact (`tower.yml`, `tower.env`, etc.) | `proj:testing_for_tfvars_changes.md` |
 | Working on security-sensitive code (secrets, IAM, SSM, certificates) | `proj:security_considerations.md` |
 
 ## Project Overview

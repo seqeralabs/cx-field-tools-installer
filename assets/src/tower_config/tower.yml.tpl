@@ -148,12 +148,19 @@ tower:
       - label: "Docs"
         url: "https://docs.seqera.io"
 
-  # Controls whether an individual must have a registered account with Seqera Platform before they can be 
+  # Controls whether an individual must have a registered account with Seqera Platform before they can be
   # added directly to a Workspace as a collaborator.
-  #   - If `true`: The user does not need a pre-existing Platform account before they can be added. 
-  #   - If `false`: The user must have a pre-existing Platform account before they can be added. 
+  #   - If `true`: The user does not need a pre-existing Platform account before they can be added.
+  #   - If `false`: The user must have a pre-existing Platform account before they can be added.
   participant:
-    auto-create-user: false
+    auto-create-user: ${flag_tower_enable_participant_auto_create_user}
+
+  # Controls whether an individual must have a registered account with Seqera Platform before they can be
+  # added directly to an Organization as a member.
+  #   - If `true`: The user does not need a pre-existing Platform account before they can be added.
+  #   - If `false`: The user must have a pre-existing Platform account before they can be added.
+  member:
+    auto-create-user: ${flag_tower_enable_member_auto_create_user}
 
   # By default, if an update is not received for 180 seconds, Seqera Platform marks the pipeline status as UNKNOWN.
   # Making this setting explicit in case some sites need to customize due to local conditions.
