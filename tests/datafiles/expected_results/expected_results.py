@@ -1,6 +1,7 @@
 from tests.utils.config import all_template_files, expected_sql_dir
 from tests.utils.filehandling import FileHelper
 
+
 """
 Generate two sets of baseline value sets.
   1. Settings when all features / assets activated.
@@ -133,6 +134,8 @@ def generate_tower_yml_entries_all_active(overrides={}):
             "micronaut.application.name": "tower-testing",
             "tower.cron.audit-log.clean-up.time-offset": "1095d",
             "tower.data-studio.allowed-workspaces": None,
+            "tower.member.auto-create-user": True,
+            "tower.participant.auto-create-user": True,
             "tower.trustedEmails[0]": "'graham.wright@seqera.io,gwright99@hotmail.com'",
             "tower.trustedEmails[1]": "'*@abc.com,*@def.com'",
             "tower.trustedEmails[2]": "'123@abc.com,456@def.com'",
@@ -244,12 +247,22 @@ def generate_assertions_all_active(template_files, overrides):
     entries = {
         "tower_env": generate_tower_env_entries_all_active(overrides["tower_env"]),
         "tower_yml": generate_tower_yml_entries_all_active(overrides["tower_yml"]),
-        "data_studios_env": generate_data_studios_env_entries_all_active(overrides["data_studios_env"]),
+        "data_studios_env": generate_data_studios_env_entries_all_active(
+            overrides["data_studios_env"]
+        ),
         "tower_sql": generate_tower_sql_entries_all_active(overrides["tower_sql"]),
-        "docker_compose": generate_docker_compose_yml_entries_all_active(overrides["docker_compose"]),
-        "wave_lite_yml": generate_wave_lite_yml_entries_all_active(overrides["wave_lite_yml"]),
-        "wave_lite_rds": generate_wave_lite_rds_entries_all_active(overrides["wave_lite_rds"]),
-        "groundswell_env": generate_groundswell_env_entries_all_active(overrides["groundswell_env"]),
+        "docker_compose": generate_docker_compose_yml_entries_all_active(
+            overrides["docker_compose"]
+        ),
+        "wave_lite_yml": generate_wave_lite_yml_entries_all_active(
+            overrides["wave_lite_yml"]
+        ),
+        "wave_lite_rds": generate_wave_lite_rds_entries_all_active(
+            overrides["wave_lite_rds"]
+        ),
+        "groundswell_env": generate_groundswell_env_entries_all_active(
+            overrides["groundswell_env"]
+        ),
         # TODO: Build out stubs OR identify as not-in-scope due to other testing method (e.g. .sql)
         "groundswell_sql": {"present": {}, "omitted": {}},
         "seqerakit_yml": {"present": {}, "omitted": {}},
@@ -391,6 +404,8 @@ def generate_tower_yml_entries_all_disabled(overrides={}):
             "mail.smtp.ssl.protocols": "TLSv1.2",
             "micronaut.application.name": "tower-testing",
             "tower.cron.audit-log.clean-up.time-offset": "1095d",
+            "tower.member.auto-create-user": False,
+            "tower.participant.auto-create-user": False,
             "tower.trustedEmails[0]": "'graham.wright@seqera.io,gwright99@hotmail.com'",
             "tower.trustedEmails[1]": "'*@abc.com,*@def.com'",
             "tower.trustedEmails[2]": "'123@abc.com,456@def.com'",
@@ -499,12 +514,22 @@ def generate_assertions_all_disabled(template_files, overrides):
     entries = {
         "tower_env": generate_tower_env_entries_all_disabled(overrides["tower_env"]),
         "tower_yml": generate_tower_yml_entries_all_disabled(overrides["tower_yml"]),
-        "data_studios_env": generate_data_studios_env_entries_all_disabled(overrides["data_studios_env"]),
+        "data_studios_env": generate_data_studios_env_entries_all_disabled(
+            overrides["data_studios_env"]
+        ),
         "tower_sql": generate_tower_sql_entries_all_disabled(overrides["tower_sql"]),
-        "docker_compose": generate_docker_compose_yml_entries_all_disabled(overrides["docker_compose"]),
-        "wave_lite_yml": generate_wave_lite_yml_entries_all_disabled(overrides["wave_lite_yml"]),
-        "wave_lite_rds": generate_wave_lite_rds_entries_all_disabled(overrides["wave_lite_rds"]),
-        "groundswell_env": generate_groundswell_env_entries_all_disabled(overrides["groundswell_env"]),
+        "docker_compose": generate_docker_compose_yml_entries_all_disabled(
+            overrides["docker_compose"]
+        ),
+        "wave_lite_yml": generate_wave_lite_yml_entries_all_disabled(
+            overrides["wave_lite_yml"]
+        ),
+        "wave_lite_rds": generate_wave_lite_rds_entries_all_disabled(
+            overrides["wave_lite_rds"]
+        ),
+        "groundswell_env": generate_groundswell_env_entries_all_disabled(
+            overrides["groundswell_env"]
+        ),
         # TODO: Build out stubs OR identify as not-in-scope due to other testing method (e.g. .sql)
         "groundswell_sql": {"present": {}, "omitted": {}},
         "seqerakit_yml": {"present": {}, "omitted": {}},
@@ -542,8 +567,7 @@ def purge_baseline_of_specified_overrides(baseline, overrides):
 
 
 def assertion_modifiers_template():
-    """
-    Generate a blank dict for each testcase file to attach test-specific assertion modifiers to.
+    """Generate a blank dict for each testcase file to attach test-specific assertion modifiers to.
     These are then reconciled with the core set of assertions in `expected_results.py` (via `generate_assertions_xxx`).
     """
     return {k: {} for k in all_template_files}

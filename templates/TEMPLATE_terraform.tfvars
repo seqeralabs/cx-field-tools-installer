@@ -784,9 +784,11 @@ tower_email_trusted_users = "REPLACE_ME"
 
 # Controls whether Seqera Platform will auto-create an underlying User entity when an
 # unknown email is added directly to a resource.
+#
 #   - `flag_tower_enable_participant_auto_create_user` governs Workspace **collaborators**
 #     (`tower.participant.auto-create-user`). If `true`, the email does not need a
 #     pre-existing Platform account; if `false`, the User must already exist.
+#
 #   - `flag_tower_enable_member_auto_create_user` governs Organization **members**
 #     (`tower.member.auto-create-user`). If `true`, adding an unknown email as an
 #     Organization User auto-generates the underlying Platform User; if `false`, the
