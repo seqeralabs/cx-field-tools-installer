@@ -5,14 +5,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Path Prefixes
 References in the table below use these prefixes:
 
-- `guid:` → `~/.claude/guidelines/`
+- `proj:` → `<repo>/.claude/guidelines/`
 
 ## Important Reminders - LOAD BEFORE EVERY TASK
 - Identify task type(s) and load applicable resources per the table below.
 
 | Task Type | Required |
 |-----------|----------|
-| ALWAYS DO FOR ALL TASKS               | `guid:variable_default_values.md` |
+| ALWAYS DO FOR ALL TASKS | `proj:variable_default_values.md` |
+| Any PR that changes deployer-visible behaviour (variables, component config, components added/removed) | `proj:changelog_protocol.md` |
+| Writing or editing Terraform (`*.tf`, `terraform.tfvars`) | `proj:terraform_conventions.md` |
+| Writing or editing Python | `proj:python_standards.md` |
+| Running, writing, or analysing tests | `proj:testing_strategy.md`, `proj:testing_commands.md` |
+| Working on security-sensitive code (secrets, IAM, SSM, certificates) | `proj:security_considerations.md` |
 
 ## Project Overview
 
@@ -65,58 +70,7 @@ make verify
 make verify-full
 ```
 
-### Testing Commands
-```bash
-# Run all tests
-./tests/run_tests.sh
-
-# Run unit tests only
-pytest tests/unit/test_module_connection_strings/ -v -s -x
-
-# Run plan-based tests only
-make test_plan_only
-
-# Generate test data
-make generate_test_data
-
-# Generate JSON plan for testing
-make generate_json_plan
-```
-
-### Python Development
-```bash
-# Run Python validation script
-python3 scripts/installer/validation/check_configuration.py
-
-# Format Python files (required after any Python modifications)
-black <filename>.py
-
-# Run pytest with specific markers
-pytest -m "local" -v
-pytest -m "db" -v
-pytest -m "redis" -v
-```
-
-### Testing with Structured Logging
-```bash
-# View structured test results
-python tests/utils/log_parser.py summarize
-
-# Extract failed tests for LLM analysis
-python tests/utils/log_parser.py extract-failures
-
-# View pytest logs for debugging
-tail -f tests/logs/pytest_structured.log
-
-# Parse logs for LLM analysis
-python tests/utils/log_parser.py llm-format --recent 100
-
-# Validate log format
-python tests/utils/log_parser.py validate
-
-# Export logs as JSON for programmatic analysis
-python tests/utils/log_parser.py export-json
-```
+For test commands and structured-logging tooling, see [`proj:testing_commands.md`](.claude/guidelines/testing_commands.md).
 
 ## Project Structure
 
@@ -143,7 +97,7 @@ Sequential numbered files defining infrastructure resources in dependency order.
 - `tests/datafiles/` - Test data generation
 - `tests/logs/` - Structured pytest logs for LLM analysis
 - `tests/utils/` - Test utilities including log parsing and formatting
-- Pytest markers: `local`, `db`, `db_new`, `db_existing`, `redis`, `urls`, `urls_insecure`, `log_enabled`
+- Pytest markers are defined in [`tests/pytest.ini`](tests/pytest.ini).
 
 ## Configuration Files
 
@@ -157,25 +111,6 @@ Sequential numbered files defining infrastructure resources in dependency order.
 - Generated files placed in `assets/target/`
 - Templates support variable substitution via Terraform `templatefile()` function
 
-## Development Notes
-
-### Python Code Standards
-- **Must run `black` formatter after any Python file modifications**
-- Uses custom tfvars parser (`installer/utils/extractors.py`)
-- Logging configured via `installer/utils/logger.py`
-- No `__pycache__` directories created (disabled in pytest.ini)
-
-### Terraform Conventions
-- **No default values** in `variables.tf` - all values must be explicitly defined in `terraform.tfvars`
-- Uses `null_resource` with `local-exec` provisioners instead of `local_file` resources
-- State stored locally by default (`DONTDELETE/terraform.tfstate`)
-
-### Security Considerations
-- Sensitive values stored in AWS SSM Parameter Store only
-- Uses AWS Instance Connect Endpoint for private subnet access
-- Templates contain `.tpl` extension to avoid accidental secret exposure
-- Custom certificates supported via `assets/src/customcerts/`
-
 ## Troubleshooting
 
 ### Common Issues
@@ -187,14 +122,3 @@ Sequential numbered files defining infrastructure resources in dependency order.
 - Configuration validation via `check_configuration.py` before Terraform execution
 - Destroy validation via `check_destroy.py` before teardown
 - Security scanning available via `tfsec` (use `make verify-full`)
-
-## Testing Strategy
-
-The project uses a hybrid testing approach:
-1. **Plan-based tests** - Mock resources using `terraform plan` output
-    1. Plan outputs are cached in `tests/.plan_cache` to speed up n+1 test cycles when underlying values are unchanged.
-2. **Unit tests** - Test individual modules in isolation
-3. **Integration tests** - Full deployment and validation cycle
-4. **Local value tests** - Validate computed values and data sources
-
-All tests designed to run without requiring actual AWS resources for basic validation.
