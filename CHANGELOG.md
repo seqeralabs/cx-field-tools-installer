@@ -20,6 +20,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Added Studios SSH support. Requires Platform >= v25.3.3 and connect-proxy >= 0.10.0. [`#313`](https://github.com/seqeralabs/cx-field-tools-installer/issues/313)
             - Updated Platform Connect containers version to 0.11.0.
             - Updated Studios recommended base images.
+            - Raised wave-lite nginx `client_max_body_size` from 1m to 10m to prevent HTTP 413 errors when Fusion uploads large bin/ bundles. [`#315`](https://github.com/seqeralabs/cx-field-tools-installer/issues/315)
             - TBD
         <br /><br />
 
@@ -52,6 +53,8 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 ||||
 | Modified | Studios | `data_studio_container_version` | Updated from 0.9.0 to 0.11.0. Note: Studios SSH requires connect-proxy >= 0.10.0. |
 | Modified | Studios | `data_studio_options` | Removed 0.9.0 images and added 0.11.0 images. |
+||||
+| New | Redis | `platform_redis_elasticache` | Configuration block (`node_type`, `num_cache_nodes`, `engine_version`, `port`) for the standalone Seqera Platform ElastiCache (Redis) cluster. Required when `flag_create_external_redis = true`. |
 ||||
 
 

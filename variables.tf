@@ -46,7 +46,7 @@ variable "tower_container_version" {
 
 
 # ------------------------------------------------------------------------------------
-# SSM 
+# SSM
 # ------------------------------------------------------------------------------------
 
 variable "flag_overwrite_ssm_keys" {
@@ -300,7 +300,15 @@ variable "wave_lite_db_enable_storage_encrypted" { type = bool }
 # Elasicache (External)
 # ------------------------------------------------------------------------------------
 
-# TODO: Add Seqera Platform core instance post Wave-Lite feature release.
+variable "platform_redis_elasticache" {
+  type = object({
+    node_type       = string
+    num_cache_nodes = number
+    engine_version  = string
+    port            = number
+  })
+  description = "Configuration for the standalone Seqera Platform ElastiCache (Redis) cluster created when flag_create_external_redis is true."
+}
 
 variable "wave_lite_elasticache" {
   type = object({
@@ -472,4 +480,3 @@ variable "seqerakit_flag_credential_create_codecommit" { type = bool }
 
 variable "seqerakit_flag_credential_use_aws_role" { type = bool }
 variable "seqerakit_flag_credential_use_codecommit_baseurl" { type = bool }
-
