@@ -136,11 +136,11 @@ resource "aws_elasticache_cluster" "redis" {
 
   cluster_id      = "${local.global_prefix}-redis"
   engine          = "redis"
-  node_type       = "cache.m4.xlarge"
-  num_cache_nodes = 1
+  node_type       = var.platform_redis_elasticache.node_type
+  num_cache_nodes = var.platform_redis_elasticache.num_cache_nodes
   # parameter_group_name = "default.redis7.0.4"
-  engine_version = "7.0"
-  port           = 6379
+  engine_version = var.platform_redis_elasticache.engine_version
+  port           = var.platform_redis_elasticache.port
 
   subnet_group_name  = aws_elasticache_subnet_group.redis[0].name
   security_group_ids = [module.sg_redis[0].security_group_id]
