@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 
-import sys
-from pathlib import Path
-
 import json
+from pathlib import Path
+import sys
 from types import SimpleNamespace
+
 
 # https://stackoverflow.com/questions/27844088/python-get-directory-two-levels-up
 # Assumes following path: .. > installer > validation > check_configuration.py
 grandparent_dir = Path(__file__).resolve().parents[2]
 sys.path.append(str(grandparent_dir))
 
-from installer.utils.extractors import tf_vars_json_payload
+from installer.utils.extractors import get_tfvars_as_json  # noqa: E402  (sys.path manipulation above)
 
 
 ## ------------------------------------------------------------------------------------
-## WARNING / REMINDER: DONT ADD ANY stdout emissions (beyond a single print of the payload we are returning) 
+## WARNING / REMINDER: DONT ADD ANY stdout emissions (beyond a single print of the payload we are returning)
 # in this logic or you'll break the TF `external` mechanism!!
 ## ------------------------------------------------------------------------------------
 
@@ -31,7 +31,6 @@ def return_tf_payload(status: str, value: str):
 
 # def generate_connection_string(mysql8: str, v24plus: str):
 def generate_connection_string(data: SimpleNamespace):
-
     if data.flag_use_container_db:
         db_engine = data.db_container_engine_version
     else:
@@ -60,10 +59,9 @@ def generate_connection_string(data: SimpleNamespace):
 
 
 if __name__ == "__main__":
-
     # Extract tfvars just like we do with the Python validation script
-    data_dictionary = tf_vars_json_payload
+    data_dictionary = get_tfvars_as_json()
     data = SimpleNamespace(**data_dictionary)
 
     return_tf_payload("0", generate_connection_string(data))
-    exit(0)
+    sys.exit(0)
