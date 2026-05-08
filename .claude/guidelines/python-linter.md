@@ -44,8 +44,10 @@ When you encounter these rules, add `# noqa: <RULE>  (one-line reason)` at the e
 |------|----------------|---------------------------------------|
 | **PLR0915** | Function has too many statements (default threshold: 50) | Acceptable for one-shot test scaffolding (e.g. SSM secrets generation) where a linear top-to-bottom procedure is more readable than a forced split. Suppress with `# noqa: PLR0915  (test data generation; refactor not in scope)` on the function definition line. In production code, refactor instead. |
 | **PT003** | `@pytest.fixture(scope="function")` — `function` is the default scope | Keep the explicit `scope="function"` for documentation value (makes fixture lifetime visible to readers); suppress with `# noqa: PT003  (explicit for documentation)`. |
+| **PLW0603** | `global` statement to update module-level state | Pending refactor to class-based registry pattern (see TODO list). Suppress with `# noqa: PLW0603  (...; TODO refactor)` per occurrence in the meantime. |
 | **S105** | Hardcoded password string | Test fixtures use literal passwords like `"test_password"` for local containers — never real credentials. Suppress with `# noqa: S105  (test fixture)`. |
 | **S310** | `urllib.request.urlopen` accepts any URL scheme (file://, ftp://, custom) | Test URLs are hardcoded localhost endpoints; no scheme variation possible. |
+| **S602** | `subprocess.run(..., shell=True)` | Used intentionally for shell features (`&&` chains, heredoc strings, `make` invocations). Inputs are hardcoded test paths/commands — no injection vector. Suppress with `# noqa: S602  (intentional shell features; inputs are hardcoded test ...)`. Co-locate with S607 noqa where both fire (`# noqa: S602, S607`). |
 | **S607** | Process started with partial executable path (e.g. `["aws", ...]`, `["terraform", ...]`) | Test scripts rely on `$PATH` having the standard dev tools (`aws`, `terraform`, `make`). For multi-line `subprocess.run` calls, place the noqa on the **args-list line** (where ruff reports the violation), not the `subprocess.run(` line. Suppress with `# noqa: S607  (relies on PATH; standard for test env)`. |
 | **S608** | SQL injection via string-based query construction | Test fixtures use hardcoded values; the `run_mysql_query` / `run_postgres_query` helpers shell out to the `mysql` / `psql` CLI rather than using a Python driver, so parameter binding isn't available without a framework refactor. |
 
@@ -66,6 +68,7 @@ Rules with no final decision yet — revisit when explicitly asked.
 | Rule | Notes |
 |------|-------|
 | **F841** | Unused local variable. 14 occurrences in `tests/`. Three patterns: (A) dead assignments where the call has side effects (drop `var =`); (B) `with ... as <name>` where name is unused inside the block (drop `as <name>`); (C) likely test-coverage gap in [`tests/unit/config_files/test_ansible_files.py`](../../tests/unit/config_files/test_ansible_files.py) — 6 tests build `tc_assertions = generate_assertions_*(...)` but never call `verify_all_assertions`. Pattern C requires per-test decisions on whether to add the missing call or delete the line. |
+| **PLW0603** | `global` statement for singleton state. 3 occurrences. Currently suppressed per-line with noqa. The proper refactor is to convert [`tests/utils/pytest_logger.py`](../../tests/utils/pytest_logger.py)'s `_logger_instance` singleton (lines ~226, ~249) to a class-based registry (e.g. `_LoggerRegistry.get()` / `.reset()`), eliminating the need for `global`. The [`tests/conftest.py:175`](../../tests/conftest.py#L175) occurrence is a legitimate module-level assignment but flagged because the rule discourages `global` broadly — could be left suppressed even after refactoring the singleton. |
 
 ## How to update this file
 

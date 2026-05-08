@@ -11,6 +11,7 @@ import pytest
 from testcontainers.compose import DockerCompose
 from testcontainers.mysql import MySqlContainer
 from testcontainers.postgres import PostgresContainer
+
 from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 from tests.utils.terraform.executor import prepare_plan
@@ -81,7 +82,7 @@ def test_tower_sql_population(session_setup):
                 mysql:8.0 \
                 -c '{mysql_invoke}'
         """
-        result = subprocess.run(mysql_cmd, check=False, shell=True, capture_output=True, text=True, timeout=30)
+        result = subprocess.run(mysql_cmd, check=False, shell=True, capture_output=True, text=True, timeout=30)  # noqa: S602  (intentional shell heredoc for docker run)
         assert result.returncode == 0
         return result.stdout.strip()
 
@@ -181,7 +182,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
                 postgres:17.6 \
                 -c '{psql_invoke}'
         """
-        result = subprocess.run(postgres_cmd, check=False, shell=True, capture_output=True, text=True, timeout=30)
+        result = subprocess.run(postgres_cmd, check=False, shell=True, capture_output=True, text=True, timeout=30)  # noqa: S602  (intentional shell heredoc for docker run)
         assert result.returncode == 0
         return result.stdout.strip()
 

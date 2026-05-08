@@ -184,7 +184,7 @@ def generate_tc_files(plan, desired_files, testcase_name):
             # Run substitution script
             # TODO: Make credentials configurable instead of hardcoded
             command = f"python3 {script_path} wave_lite_test_limited wave_lite_test_limited_password {cache_dir}"
-            subprocess.run(command, shell=True, text=True, capture_output=False, check=True)
+            subprocess.run(command, shell=True, text=True, capture_output=False, check=True)  # noqa: S602  (intentional shell features; inputs are hardcoded test paths)
 
             # Store content
             tc.all_template_files[key]["content"] = read_type(target_path)

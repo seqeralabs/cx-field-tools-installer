@@ -223,7 +223,7 @@ _logger_instance = None
 
 def get_logger(log_file: str = "") -> PytestStructuredLogger:
     """Get or create global logger instance."""
-    global _logger_instance
+    global _logger_instance  # noqa: PLW0603  (singleton instance pattern; TODO refactor to class-based registry)
 
     # Check environment variable to see if should be disabled
     logger_setting = os.environ.get("PYTEST_STRUCTURED_LOGGING", "n/a")
@@ -246,5 +246,5 @@ def get_logger(log_file: str = "") -> PytestStructuredLogger:
 
 def reset_logger():
     """Reset global logger instance (primarily for testing)."""
-    global _logger_instance
+    global _logger_instance  # noqa: PLW0603  (singleton instance pattern; TODO refactor to class-based registry)
     _logger_instance = None
