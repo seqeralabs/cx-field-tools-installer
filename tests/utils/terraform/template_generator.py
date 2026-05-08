@@ -100,8 +100,7 @@ def prepare_templatefile_payload(key, tc: TCValues):
     # same reason module.connection_strings.* values are substituted.
     tls_ssh_host_key_values = {"public_key_fingerprint_sha256": "SHA256:mocksshfingerprintfortesting"}
     payload = replace_vars_in_templatefile(payload, tls_ssh_host_key_values, "tls_connect_ssh_host_key")
-    payload = payload.replace("\n", "")  # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
-    return payload
+    return payload.replace("\n", "")  # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
 
 
 def write_populated_templatefile(outfile, payload):
@@ -156,7 +155,7 @@ def generate_tc_files(plan, desired_files, testcase_name):
     tc.all_template_files = filter_templates(desired_files)  # Master dictionary relevant to this testcase
     tc.testcase_name = testcase_name
 
-    for key in tc.all_template_files.keys():  # (e.g., "tower_env")
+    for key in tc.all_template_files:  # (e.g., "tower_env")
         extension = all_template_files[key]["extension"]
         read_type = all_template_files[key]["read_type"]
 

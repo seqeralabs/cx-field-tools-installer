@@ -50,7 +50,7 @@ def assert_yaml_key_present(entries: dict, file):
     # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
     (yaml_data, document_loaded) = Parsers.get_yaml_data(yamlParser, logger, "/tmp/cx-testing-yml")
     if not document_loaded:
-        exit(1)
+        sys.exit(1)
     processor = Processor(logger, yaml_data)
 
     for k, v in entries.items():
@@ -80,13 +80,13 @@ def assert_yaml_key_omitted(entries: dict, file):
     # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
     (yaml_data, document_loaded) = Parsers.get_yaml_data(yamlParser, logger, "/tmp/cx-testing-yml")
     if not document_loaded:
-        exit(1)
+        sys.exit(1)
     processor = Processor(logger, yaml_data)
 
     # This one is a bit odd because of how the library works. I WANT to have Exceptions raised when trying to find the YAMLPath
     # (i.e. path doesnt exist). The most concise code block avoids try/except but doesn't identify an key that actually does exist.
     # Using slightly more convoluted code.
-    for k, v in entries.items():
+    for k in entries:
         data_yaml_path = YAMLPath(k)
         with pytest.raises(UnmatchedYAMLPathException):
             list(processor.get_nodes(data_yaml_path, mustexist=True))

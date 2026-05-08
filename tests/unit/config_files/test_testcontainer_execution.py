@@ -101,7 +101,7 @@ def test_tower_sql_population(session_setup):
         assert db_result == tower_db_name
 
         # Verify user creation
-        query = f"SELECT user FROM mysql.user WHERE user='{tower_db_user}';"
+        query = f"SELECT user FROM mysql.user WHERE user='{tower_db_user}';"  # noqa: S608  (test fixture; values hardcoded)
         user_result = run_mysql_query(query, master_user, master_password)
         assert user_result == tower_db_user
 
@@ -333,7 +333,7 @@ def test_wave_containers(session_setup):
 
         for attempt in range(max_retries):
             try:
-                with urllib.request.urlopen(service_url, timeout=10) as response:
+                with urllib.request.urlopen(service_url, timeout=10) as response:  # noqa: S310  (hardcoded localhost test URL)
                     assert response.status == 200, f"Expected HTTP 200, got {response.status}"
                     response_data = json.loads(response.read().decode("utf-8"))
 

@@ -15,7 +15,7 @@ from tests.utils.filehandling import FileHelper
 #       Replaced with shell-type subprocess.run commands Bash redirect output to files.
 def execute_subprocess(command: str) -> bytes:
     """Execute a subprocess command."""
-    result = subprocess.run(
+    return subprocess.run(
         command,
         check=True,
         # stdout=subprocess.PIPE,
@@ -23,8 +23,6 @@ def execute_subprocess(command: str) -> bytes:
         stderr=subprocess.STDOUT,  # 2>&1
         shell=True,
     ).stdout
-
-    return result
 
 
 ## ------------------------------------------------------------------------------------

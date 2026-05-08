@@ -27,6 +27,15 @@ When you encounter a rule listed below while writing or editing Python, apply th
 | **UP015** | Unnecessary `'r'` mode argument in `open()` | Drop the `'r'` — read is the default |
 | **UP045** | Type annotation uses `Optional[X]` instead of `X \| None` | Convert to `X \| None` syntax (companion of RUF013) |
 
+## Suppress at site (with reason)
+
+When you encounter these rules, add `# noqa: <RULE>  (one-line reason)` at the end of the offending line. **Do not** suppress silently — the inline reason is mandatory. In production code (non-test), the rule should be properly addressed (parameterised query, validated scheme, etc.); escalate to the user before suppressing outside tests.
+
+| Rule | What it catches | Why suppression is acceptable in tests |
+|------|----------------|---------------------------------------|
+| **S310** | `urllib.request.urlopen` accepts any URL scheme (file://, ftp://, custom) | Test URLs are hardcoded localhost endpoints; no scheme variation possible. |
+| **S608** | SQL injection via string-based query construction | Test fixtures use hardcoded values; the `run_mysql_query` / `run_postgres_query` helpers shell out to the `mysql` / `psql` CLI rather than using a Python driver, so parameter binding isn't available without a framework refactor. |
+
 ## Deliberately ignored
 
 These rules are project-deliberate exceptions. Do **not** apply ruff's recommended fix for these; do not silently suppress with `# noqa` either — they're known and tolerated.

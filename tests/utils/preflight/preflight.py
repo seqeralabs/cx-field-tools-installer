@@ -36,4 +36,4 @@ def check_aws_sso_token():
         sys.exit(1)
 
     except Exception as e:
-        raise RuntimeError(f"Unexpected error checking AWS SSO token: {e!s}")
+        raise RuntimeError(f"Unexpected error checking AWS SSO token: {e!s}") from e

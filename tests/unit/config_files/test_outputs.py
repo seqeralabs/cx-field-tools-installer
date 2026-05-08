@@ -1,4 +1,5 @@
 import pytest
+
 from tests.utils.config import TCValues
 from tests.utils.terraform.executor import prepare_plan
 from tests.utils.terraform.parser import extract_config_values

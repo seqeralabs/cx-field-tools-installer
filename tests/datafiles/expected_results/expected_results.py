@@ -260,7 +260,7 @@ def generate_groundswell_env_entries_all_active(overrides=None):
 
 
 def generate_assertions_all_active(template_files, overrides):
-    entries = {
+    return {
         "tower_env": generate_tower_env_entries_all_active(overrides["tower_env"]),
         "tower_yml": generate_tower_yml_entries_all_active(overrides["tower_yml"]),
         "data_studios_env": generate_data_studios_env_entries_all_active(overrides["data_studios_env"]),
@@ -280,7 +280,6 @@ def generate_assertions_all_active(template_files, overrides):
         "docker_logging": {"present": {}, "omitted": {}},
         "private_ca_conf": {"present": {}, "omitted": {}},
     }
-    return entries
 
 
 ## ------------------------------------------------------------------------------------
@@ -533,7 +532,7 @@ def generate_groundswell_env_entries_all_disabled(overrides=None):
 
 
 def generate_assertions_all_disabled(template_files, overrides):
-    entries = {
+    return {
         "tower_env": generate_tower_env_entries_all_disabled(overrides["tower_env"]),
         "tower_yml": generate_tower_yml_entries_all_disabled(overrides["tower_yml"]),
         "data_studios_env": generate_data_studios_env_entries_all_disabled(overrides["data_studios_env"]),
@@ -553,7 +552,6 @@ def generate_assertions_all_disabled(template_files, overrides):
         "docker_logging": {"present": {}, "omitted": {}},
         "private_ca_conf": {"present": {}, "omitted": {}},
     }
-    return entries
 
 
 ## ------------------------------------------------------------------------------------
@@ -563,13 +561,13 @@ def purge_baseline_of_specified_overrides(baseline, overrides):
     """Overrides could be inverse of baseline. Purge baseline of matches so subsequent merge is clean."""
     print(f"{overrides=}")
     if len(overrides.keys()) > 0:
-        for key in overrides["present"].keys():
+        for key in overrides["present"]:
             try:
                 baseline["omitted"].pop(key)
             except KeyError:
                 pass
 
-        for key in overrides["omitted"].keys():
+        for key in overrides["omitted"]:
             try:
                 baseline["present"].pop(key)
             except KeyError:

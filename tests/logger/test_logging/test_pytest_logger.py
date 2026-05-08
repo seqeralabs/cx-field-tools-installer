@@ -35,8 +35,7 @@ class TestPytestStructuredLogger:
             return []
 
         with open(self.log_file) as f:
-            entries = [json.loads(line.strip()) for line in f if line.strip()]
-        return entries
+            return [json.loads(line.strip()) for line in f if line.strip()]
 
     def test_logger_initialization(self):
         """Test logger initialization with custom log file."""
@@ -290,7 +289,7 @@ class TestLoggerIntegration:
 
         # Time without logging
         start = time.time()
-        for i in range(100):
+        for _ in range(100):
             pass
         baseline = time.time() - start
 

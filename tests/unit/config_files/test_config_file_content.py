@@ -1,6 +1,7 @@
 import sys
 
 import pytest
+
 from tests.datafiles.expected_results.expected_results import (
     assertion_modifiers_template,
     generate_assertions_all_active,

@@ -104,13 +104,12 @@ def config_baseline_settings_default():
     Plan with ALL resources rather than targeted, to get all outputs in plan document.
     """
     tf_modifiers = """#NONE"""
-    plan = prepare_plan(tf_modifiers)
 
     # DONT USE THESE - no longer needed since the new `terraform template` approach is used.
     # qualifier = "-target=null_resource.generate_independent_config_files"
     # run_terraform_apply(qualifier)
 
-    return plan
+    return prepare_plan(tf_modifiers)
 
     # run_terraform_destroy()
 
