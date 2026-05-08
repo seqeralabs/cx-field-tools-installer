@@ -69,7 +69,7 @@ def session_setup():
         f"docker run --rm -v {FP.ROOT}:/tmp ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:vendored"
         f" /tmp/009_define_file_templates.tf > {FP.ROOT}/009_define_file_templates.json"
     )
-    result = execute_subprocess(command)
+    execute_subprocess(command)
 
     yield
 

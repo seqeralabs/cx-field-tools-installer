@@ -654,7 +654,6 @@ def test_wave_sql_file_content(session_setup):
     plan = prepare_plan(tf_modifiers)
 
     desired_files = ["wave_lite_rds"]
-    assertion_modifiers = assertion_modifiers_template()
     tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
     # No assertions for this since it's file-comparison based.

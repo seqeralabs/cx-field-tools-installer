@@ -92,7 +92,7 @@ def test_tower_sql_population(session_setup):
         .with_env("MYSQL_PASSWORD", master_password)
         .with_env("MYSQL_DATABASE", master_db_name)
         .with_bind_ports(3306, 3306)
-    ) as mysql_container:
+    ) as mysql_container:  # noqa: F841  (kept for readability)
         # POPULATE
         # Run initial population script.
         query = tc_files["tower_sql"]["content"]
@@ -196,11 +196,11 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
         PostgresContainer("postgres:17.6", username=master_user, password=master_password, dbname=master_db_name)
         .with_env("GRAHAM", "graham")
         .with_bind_ports(5432, 5432)
-    ) as postgres_container:
+    ) as postgres_container:  # noqa: F841  (kept for readability)
         # POPULATE
         # Run initial population script.
         query = tc_files["wave_lite_rds"]["content"]
-        db_result = run_postgres_query(query, master_user, master_password, master_db_name)
+        run_postgres_query(query, master_user, master_password, master_db_name)
 
         # VERIFY
         # Test master user connection to wave database
@@ -234,7 +234,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
         .with_env("GRAHAM", "graham")
         .with_bind_ports(5432, 5432)
         .with_volume_mapping(init_sql_rds_path, "/docker-entrypoint-initdb.d/01-init.sql")
-    ) as postgres_container3:
+    ) as postgres_container3:  # noqa: F841  (kept for readability)
         # POPULATE
         # No need to run explicit population step since volume mounting should hanlde for us on initial boot.
 
@@ -334,7 +334,7 @@ def test_wave_containers(session_setup):
     filename = os.path.basename(wave_docker_compose_path)
 
     # Start docker-compose deployment and run tests
-    with DockerCompose(context=folder_path, compose_file_name=filename, pull=True) as compose:
+    with DockerCompose(context=folder_path, compose_file_name=filename, pull=True) as compose:  # noqa: F841  (kept for readability)
         # Test wave-lite service-info endpoint
         service_url = "http://localhost:9099/service-info"
         max_retries = 10
