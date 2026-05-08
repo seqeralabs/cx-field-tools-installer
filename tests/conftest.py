@@ -11,6 +11,7 @@ import pytest
 # if base_import_dir not in sys.path:
 #     sys.path.append(str(base_import_dir))
 from scripts.installer.utils.purge_folders import delete_pycache_folders
+
 from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 from tests.utils.preflight.preflight import check_aws_sso_token
@@ -49,7 +50,7 @@ def session_setup():
     check_aws_sso_token()
 
     # Create a fresh copy of the base testing terraform.tfvars file.
-    subprocess.run("make generate_test_data", shell=True, check=True)
+    subprocess.run("make generate_test_data", shell=True, check=True)  # noqa: S607  (relies on PATH; standard for test env)
 
     print("\nBacking up terraform.tfvars.")
     FileHelper.move_file(FP.TFVARS_BASE, FP.TFVARS_BACKUP)

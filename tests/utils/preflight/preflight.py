@@ -11,7 +11,7 @@ def check_aws_sso_token():
     """
     try:
         result = subprocess.run(
-            ["aws", "sts", "get-caller-identity"],
+            ["aws", "sts", "get-caller-identity"],  # noqa: S607  (relies on PATH; standard for test env)
             capture_output=True,
             text=True,
             check=True,
@@ -32,7 +32,7 @@ def check_aws_sso_token():
 
         # Trigger SSO login
         print("Initiating AWS SSO login.")
-        subprocess.run(["aws", "sso", "login"], check=False)
+        subprocess.run(["aws", "sso", "login"], check=False)  # noqa: S607  (relies on PATH; standard for test env)
         sys.exit(1)
 
     except Exception as e:

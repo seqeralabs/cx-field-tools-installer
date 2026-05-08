@@ -1,4 +1,6 @@
+import os
 import sys
+import tempfile
 from types import SimpleNamespace
 
 import pytest
@@ -44,26 +46,30 @@ def assert_yaml_key_present(entries: dict, file):
     Reference: https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
     """
     # file content is passes as a dictionary, I need to write out yaml
-    with open("/tmp/cx-testing-yml", "w") as f:
-        yaml.dump(file, f)
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as tmp:
+        yaml.dump(file, tmp)
+        tmp_path = tmp.name
 
-    # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
-    (yaml_data, document_loaded) = Parsers.get_yaml_data(yaml_parser, logger, "/tmp/cx-testing-yml")
-    if not document_loaded:
-        sys.exit(1)
-    processor = Processor(logger, yaml_data)
+    try:
+        # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
+        (yaml_data, document_loaded) = Parsers.get_yaml_data(yaml_parser, logger, tmp_path)
+        if not document_loaded:
+            sys.exit(1)
+        processor = Processor(logger, yaml_data)
 
-    for k, v in entries.items():
-        try:
-            # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
-            data_yaml_path = YAMLPath(k)
-            for node_coordinate in processor.get_nodes(data_yaml_path, mustexist=True):
-                node_data = NodeCoords.unwrap_node_coords(node_coordinate)
-                print(f"yaml_key{k}")
-                print(f"nodeData={node_data!s}")
-                assert str(node_data) == str(v), f"Key {k} does not match Value {v}."
-        except AssertionError as e:
-            pytest.fail(f"Assertion failed for {k}: {e!s}")
+        for k, v in entries.items():
+            try:
+                # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
+                data_yaml_path = YAMLPath(k)
+                for node_coordinate in processor.get_nodes(data_yaml_path, mustexist=True):
+                    node_data = NodeCoords.unwrap_node_coords(node_coordinate)
+                    print(f"yaml_key{k}")
+                    print(f"nodeData={node_data!s}")
+                    assert str(node_data) == str(v), f"Key {k} does not match Value {v}."
+            except AssertionError as e:
+                pytest.fail(f"Assertion failed for {k}: {e!s}")
+    finally:
+        os.unlink(tmp_path)
 
 
 def assert_yaml_key_omitted(entries: dict, file):
@@ -74,23 +80,27 @@ def assert_yaml_key_omitted(entries: dict, file):
     Reference: https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
     """
     # file content is passes as a dictionary, I need to write out yaml
-    with open("/tmp/cx-testing-yml", "w") as f:
-        yaml.dump(file, f)
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as tmp:
+        yaml.dump(file, tmp)
+        tmp_path = tmp.name
 
-    # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
-    (yaml_data, document_loaded) = Parsers.get_yaml_data(yaml_parser, logger, "/tmp/cx-testing-yml")
-    if not document_loaded:
-        sys.exit(1)
-    processor = Processor(logger, yaml_data)
+    try:
+        # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
+        (yaml_data, document_loaded) = Parsers.get_yaml_data(yaml_parser, logger, tmp_path)
+        if not document_loaded:
+            sys.exit(1)
+        processor = Processor(logger, yaml_data)
 
-    # This one is a bit odd because of how the library works. I WANT to have Exceptions raised
-    # when trying to find the YAMLPath (i.e. path doesnt exist). The most concise code block
-    # avoids try/except but doesn't identify an key that actually does exist. Using slightly more
-    # convoluted code.
-    for k in entries:
-        data_yaml_path = YAMLPath(k)
-        with pytest.raises(UnmatchedYAMLPathException):
-            list(processor.get_nodes(data_yaml_path, mustexist=True))
+        # This one is a bit odd because of how the library works. I WANT to have Exceptions raised
+        # when trying to find the YAMLPath (i.e. path doesnt exist). The most concise code block
+        # avoids try/except but doesn't identify an key that actually does exist. Using slightly more
+        # convoluted code.
+        for k in entries:
+            data_yaml_path = YAMLPath(k)
+            with pytest.raises(UnmatchedYAMLPathException):
+                list(processor.get_nodes(data_yaml_path, mustexist=True))
+    finally:
+        os.unlink(tmp_path)
 
 
 ## ------------------------------------------------------------------------------------

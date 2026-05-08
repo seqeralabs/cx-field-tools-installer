@@ -11,7 +11,6 @@ import pytest
 from testcontainers.compose import DockerCompose
 from testcontainers.mysql import MySqlContainer
 from testcontainers.postgres import PostgresContainer
-
 from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 from tests.utils.terraform.executor import prepare_plan
@@ -51,12 +50,12 @@ def test_tower_sql_population(session_setup):
     # WARNING: DONT CHANGE THESE OR TEST FAILS.
     # https://hub.docker.com/_/mysql
     master_user = "root"
-    master_password = "test"
+    master_password = "test"  # noqa: S105  (test fixture)
     master_db_name = "test"
 
     # User & Password set in 'tower_secrets'.
     tower_db_user = "tower_test_user"
-    tower_db_password = "tower_test_password"
+    tower_db_password = "tower_test_password"  # noqa: S105  (test fixture)
     tower_db_name = "tower"
 
     def run_mysql_query(query, user=None, password=None, database=None):
@@ -153,12 +152,12 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
 
     # https://hub.docker.com/_/postgres
     master_user = "wave_lite_test_master"
-    master_password = "wave_lite_test_master_password"
+    master_password = "wave_lite_test_master_password"  # noqa: S105  (test fixture)
     master_db_name = "test"
 
     # User & Password set in wave_lite secrets.
     wave_db_user = "wave_lite_test_limited"
-    wave_db_password = "wave_lite_test_limited_password"
+    wave_db_password = "wave_lite_test_limited_password"  # noqa: S105  (test fixture)
     wave_db_name = "wave"
 
     def run_postgres_query(query, user=wave_db_user, password=wave_db_password, database="wave"):

@@ -31,6 +31,7 @@ When you encounter a rule listed below while writing or editing Python, apply th
 | **PLW1510** | `subprocess.run` without explicit `check=` argument | Pass `check=False` explicitly to declare that ignoring exit codes is intentional. Use `check=True` only if you want non-zero exits to raise `CalledProcessError` — that's a behaviour change. |
 | **PLW2901** | `for x in ...:` loop variable overwritten inside the body | Rename the loop variable so the original is preserved: `for raw_line in lines: line = raw_line.strip()` |
 | **RUF013** | Implicit `Optional` (`x: int = None` with no `None` in annotation) | Make `None` explicit: `x: int \| None = None` |
+| **S108** | Hardcoded `/tmp/...` path | Use `tempfile.NamedTemporaryFile(mode="w", suffix=".<ext>", delete=False)` with manual cleanup in a `finally` block. Pattern: write inside a `with` block to capture `tmp.name`, do work in a `try`, `os.unlink(tmp.name)` in `finally`. |
 | **UP015** | Unnecessary `'r'` mode argument in `open()` | Drop the `'r'` — read is the default |
 | **UP022** | `subprocess.run(stdout=PIPE, stderr=PIPE)` | Replace with `capture_output=True`. Drop both `stdout=PIPE` and `stderr=PIPE` lines — `capture_output` covers both. |
 | **UP045** | Type annotation uses `Optional[X]` instead of `X \| None` | Convert to `X \| None` syntax (companion of RUF013) |
@@ -43,7 +44,9 @@ When you encounter these rules, add `# noqa: <RULE>  (one-line reason)` at the e
 |------|----------------|---------------------------------------|
 | **PLR0915** | Function has too many statements (default threshold: 50) | Acceptable for one-shot test scaffolding (e.g. SSM secrets generation) where a linear top-to-bottom procedure is more readable than a forced split. Suppress with `# noqa: PLR0915  (test data generation; refactor not in scope)` on the function definition line. In production code, refactor instead. |
 | **PT003** | `@pytest.fixture(scope="function")` — `function` is the default scope | Keep the explicit `scope="function"` for documentation value (makes fixture lifetime visible to readers); suppress with `# noqa: PT003  (explicit for documentation)`. |
+| **S105** | Hardcoded password string | Test fixtures use literal passwords like `"test_password"` for local containers — never real credentials. Suppress with `# noqa: S105  (test fixture)`. |
 | **S310** | `urllib.request.urlopen` accepts any URL scheme (file://, ftp://, custom) | Test URLs are hardcoded localhost endpoints; no scheme variation possible. |
+| **S607** | Process started with partial executable path (e.g. `["aws", ...]`, `["terraform", ...]`) | Test scripts rely on `$PATH` having the standard dev tools (`aws`, `terraform`, `make`). For multi-line `subprocess.run` calls, place the noqa on the **args-list line** (where ruff reports the violation), not the `subprocess.run(` line. Suppress with `# noqa: S607  (relies on PATH; standard for test env)`. |
 | **S608** | SQL injection via string-based query construction | Test fixtures use hardcoded values; the `run_mysql_query` / `run_postgres_query` helpers shell out to the `mysql` / `psql` CLI rather than using a Python driver, so parameter binding isn't available without a framework refactor. |
 
 ## Deliberately ignored

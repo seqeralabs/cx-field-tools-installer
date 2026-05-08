@@ -117,7 +117,7 @@ def write_populated_templatefile(outfile, payload):
     """
     # print(payload)
     payload = subprocess.run(
-        ["terraform", "console"],
+        ["terraform", "console"],  # noqa: S607  (relies on PATH; standard for test env)
         input=str(payload),
         capture_output=True,
         text=True,
