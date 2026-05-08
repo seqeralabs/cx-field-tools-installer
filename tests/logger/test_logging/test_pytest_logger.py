@@ -1,16 +1,13 @@
-"""
-Tests for pytest structured logging functionality.
-"""
+"""Tests for pytest structured logging functionality."""
 
 import json
 import os
+from pathlib import Path
 import tempfile
 import time
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from tests.utils.pytest_logger import PytestStructuredLogger, get_logger, reset_logger
 
 
@@ -37,11 +34,8 @@ class TestPytestStructuredLogger:
         if not self.log_file.exists():
             return []
 
-        entries = []
-        with open(self.log_file, "r") as f:
-            for line in f:
-                if line.strip():
-                    entries.append(json.loads(line.strip()))
+        with open(self.log_file) as f:
+            entries = [json.loads(line.strip()) for line in f if line.strip()]
         return entries
 
     def test_logger_initialization(self):

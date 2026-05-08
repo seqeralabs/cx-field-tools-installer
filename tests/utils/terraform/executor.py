@@ -1,7 +1,7 @@
 import os
+from pathlib import Path
 import shutil
 import subprocess
-from pathlib import Path
 
 from tests.utils.cache.cache import hash_cache_key, normalize_whitespace
 from tests.utils.config import FP
@@ -14,9 +14,7 @@ from tests.utils.filehandling import FileHelper
 # NOTE: PIPE needed to capture plan output (for apply), but causes noisy console.
 #       Replaced with shell-type subprocess.run commands Bash redirect output to files.
 def execute_subprocess(command: str) -> bytes:
-    """
-    Execute a subprocess command.
-    """
+    """Execute a subprocess command."""
     result = subprocess.run(
         command,
         check=True,
@@ -34,14 +32,14 @@ def execute_subprocess(command: str) -> bytes:
 ## ------------------------------------------------------------------------------------
 # Keep all file method helpers in a single class to simplify imports.
 class TF:
-    """
-    Terraform command execution helpers.
-      - Plan based on core tfvars, core override, and testcase override.
-      - Targeted apply/destroy available if necessary. eg.
-        - `terraform apply   --auto-approve tfpan`
-        - `terraform apply   --auto-approve -target=null_resource.my_resource`
-        - `terraform destroy --auto-approve`
-        - `terraform destroy --auto-approve -target=null_resource.my_resource`
+    """Terraform command execution helpers.
+
+    - Plan based on core tfvars, core override, and testcase override.
+    - Targeted apply/destroy available if necessary. eg.
+      - `terraform apply   --auto-approve tfpan`
+      - `terraform apply   --auto-approve -target=null_resource.my_resource`
+      - `terraform destroy --auto-approve`
+      - `terraform destroy --auto-approve -target=null_resource.my_resource`
     """
 
     @staticmethod
@@ -84,7 +82,6 @@ def prepare_plan(tf_modifiers: str, qualifier: str = "") -> dict:
     Returns:
         Terraform plan JSON data
     """
-
     # Cache key affected by whitespace. Standardize before hashing.
     tf_modifiers = normalize_whitespace(tf_modifiers)
     cache_key = hash_cache_key(tf_modifiers, qualifier)

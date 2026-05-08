@@ -1,7 +1,7 @@
+from datetime import UTC, datetime
 import hashlib
-import re
-from datetime import datetime
 from pathlib import Path
+import re
 
 from tests.utils.config import FP, TCValues
 from tests.utils.filehandling import FileHelper
@@ -12,7 +12,6 @@ from tests.utils.filehandling import FileHelper
 ## ------------------------------------------------------------------------------------
 def hash_cache_key(tf_modifiers: str, qualifier: str = "") -> str:
     """Generate SHA-256 hash of override data and tfvars content for cache key."""
-
     tfvars_base = FileHelper.read_file(FP.TFVARS_BASE).strip()
     tfvars_override = FileHelper.read_file(FP.TFVARS_BASE_OVERRIDE_DST).strip()
     tf_modifiers = tf_modifiers.strip()
@@ -24,8 +23,8 @@ def hash_cache_key(tf_modifiers: str, qualifier: str = "") -> str:
 
 
 def normalize_whitespace(tf_modifiers: str) -> str:
-    """
-    Purges intermediate whitespace (extra space makes same keys hash to different values).
+    """Purge intermediate whitespace (extra space makes same keys hash to different values).
+
     Convert multiple spaces to single space (ASSUMPTION: Python tabs insert spaces!)
     NOTE: Need to keep `\n` to not break HCL formatting expectations.
     """
@@ -46,9 +45,7 @@ def hash_tc_values(tc: TCValues) -> str:
 
 
 def create_templatefile_cache_folder(tc: TCValues) -> str:
-    """
-    Create a folder to store generated templatefiles for reuse.
-    """
+    """Create a folder to store generated templatefiles for reuse."""
     hashed_tc = hash_tc_values(tc)
 
     # Make cache folder if missing
@@ -59,7 +56,7 @@ def create_templatefile_cache_folder(tc: TCValues) -> str:
     # Timestamp cant be in name -- will affect cache check in `generate_templatefile`. Write timestamp in the folder instead.
     existing_timestamps = list(folder_path.glob(".timestamp*"))
     if not existing_timestamps:
-        timestamp = datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
+        timestamp = datetime.now(tz=UTC).strftime("%Y-%m-%d--%H:%M:%S")
         timestamp_file = folder_path / f".timestamp--{timestamp}"
         timestamp_file.write_text(timestamp)
 

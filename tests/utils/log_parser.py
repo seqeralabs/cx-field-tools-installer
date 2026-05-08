@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
-"""
-LLM-friendly log parsing utilities for pytest structured logs.
-"""
+"""LLM-friendly log parsing utilities for pytest structured logs."""
 
 import argparse
 import json
 import sys
-from pathlib import Path
-from typing import Dict, List, Any, Optional
 
 from tests.utils.log_formatter import PytestLogFormatter
 
@@ -15,7 +11,7 @@ from tests.utils.log_formatter import PytestLogFormatter
 class PytestLogParser:
     """Parser for pytest structured logs with LLM-friendly output."""
 
-    def __init__(self, log_file: Optional[str] = None):
+    def __init__(self, log_file: str | None = None):
         self.formatter = PytestLogFormatter(log_file)
 
     def validate_log_format(self) -> bool:
@@ -73,15 +69,15 @@ class PytestLogParser:
 
         if include_reasons:
             return self.formatter.format_failed_tests(entries)
-        else:
-            failed_tests = []
-            for entry in entries:
-                if entry.get("event_type") == "test_result" and entry.get("status") == "FAILED":
-                    failed_tests.append(entry.get("test_path", "Unknown"))
+        failed_tests = [
+            entry.get("test_path", "Unknown")
+            for entry in entries
+            if entry.get("event_type") == "test_result" and entry.get("status") == "FAILED"
+        ]
 
-            return "\n".join(failed_tests) if failed_tests else "No failed tests found."
+        return "\n".join(failed_tests) if failed_tests else "No failed tests found."
 
-    def llm_format(self, recent: int = None) -> str:
+    def llm_format(self, recent: int | None = None) -> str:
         """Format logs for LLM consumption."""
         entries = self.formatter.read_log_entries(max_entries=recent)
         insights = self.formatter.extract_key_insights(entries)
@@ -128,7 +124,7 @@ class PytestLogParser:
 
         return "\n".join(output)
 
-    def export_json(self, recent: int = None) -> str:
+    def export_json(self, recent: int | None = None) -> str:
         """Export log data as JSON for programmatic analysis."""
         entries = self.formatter.read_log_entries(max_entries=recent)
         insights = self.formatter.extract_key_insights(entries)

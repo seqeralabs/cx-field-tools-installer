@@ -25,7 +25,9 @@ Generate two sets of baseline value sets.
 ## ------------------------------------------------------------------------------------
 ## MARK: Config - All Active
 ## ------------------------------------------------------------------------------------
-def generate_tower_env_entries_all_active(overrides={}):
+def generate_tower_env_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         "present": {
             "TOWER_ENABLE_AWS_SSM": "true",
@@ -124,7 +126,9 @@ def generate_tower_env_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_tower_yml_entries_all_active(overrides={}):
+def generate_tower_yml_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         "present": {
             "mail.smtp.auth": True,
@@ -148,7 +152,9 @@ def generate_tower_yml_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_data_studios_env_entries_all_active(overrides={}):
+def generate_data_studios_env_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         "present": {
             "PLATFORM_URL": "https://autodc.dev-seqera.net",
@@ -167,7 +173,9 @@ def generate_data_studios_env_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_tower_sql_entries_all_active(overrides={}):
+def generate_tower_sql_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
     baseline = {
         "present": {
@@ -179,7 +187,9 @@ def generate_tower_sql_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_docker_compose_yml_entries_all_active(overrides={}):
+def generate_docker_compose_yml_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
     baseline = {
         "present": {
@@ -195,7 +205,9 @@ def generate_docker_compose_yml_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_wave_lite_yml_entries_all_active(overrides={}):
+def generate_wave_lite_yml_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
         "present": {
@@ -215,7 +227,9 @@ def generate_wave_lite_yml_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_wave_lite_rds_entries_all_active(overrides={}):
+def generate_wave_lite_rds_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
         "present": {
@@ -227,7 +241,9 @@ def generate_wave_lite_rds_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_groundswell_env_entries_all_active(overrides={}):
+def generate_groundswell_env_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         "present": {
             "TOWER_DB_URL": "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
@@ -247,22 +263,12 @@ def generate_assertions_all_active(template_files, overrides):
     entries = {
         "tower_env": generate_tower_env_entries_all_active(overrides["tower_env"]),
         "tower_yml": generate_tower_yml_entries_all_active(overrides["tower_yml"]),
-        "data_studios_env": generate_data_studios_env_entries_all_active(
-            overrides["data_studios_env"]
-        ),
+        "data_studios_env": generate_data_studios_env_entries_all_active(overrides["data_studios_env"]),
         "tower_sql": generate_tower_sql_entries_all_active(overrides["tower_sql"]),
-        "docker_compose": generate_docker_compose_yml_entries_all_active(
-            overrides["docker_compose"]
-        ),
-        "wave_lite_yml": generate_wave_lite_yml_entries_all_active(
-            overrides["wave_lite_yml"]
-        ),
-        "wave_lite_rds": generate_wave_lite_rds_entries_all_active(
-            overrides["wave_lite_rds"]
-        ),
-        "groundswell_env": generate_groundswell_env_entries_all_active(
-            overrides["groundswell_env"]
-        ),
+        "docker_compose": generate_docker_compose_yml_entries_all_active(overrides["docker_compose"]),
+        "wave_lite_yml": generate_wave_lite_yml_entries_all_active(overrides["wave_lite_yml"]),
+        "wave_lite_rds": generate_wave_lite_rds_entries_all_active(overrides["wave_lite_rds"]),
+        "groundswell_env": generate_groundswell_env_entries_all_active(overrides["groundswell_env"]),
         # TODO: Build out stubs OR identify as not-in-scope due to other testing method (e.g. .sql)
         "groundswell_sql": {"present": {}, "omitted": {}},
         "seqerakit_yml": {"present": {}, "omitted": {}},
@@ -292,7 +298,9 @@ def generate_assertions_all_active(template_files, overrides):
 """
 
 
-def generate_tower_env_entries_all_disabled(overrides={}):
+def generate_tower_env_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         "present": {
             "TOWER_ENABLE_AWS_SSM": "true",
@@ -394,7 +402,9 @@ def generate_tower_env_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_tower_yml_entries_all_disabled(overrides={}):
+def generate_tower_yml_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         # PROBLEM - Leftside will resolve to True multiple times. Earlier keys overwritten by later keys.
         "present": {
@@ -419,7 +429,9 @@ def generate_tower_yml_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_data_studios_env_entries_all_disabled(overrides={}):
+def generate_data_studios_env_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         "present": {
             "# STUDIOS_NOT_ENABLED": "DO_NOT_UNCOMMENT",
@@ -438,7 +450,9 @@ def generate_data_studios_env_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_tower_sql_entries_all_disabled(overrides={}):
+def generate_tower_sql_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
     baseline = {
         "present": {
@@ -450,7 +464,9 @@ def generate_tower_sql_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_docker_compose_yml_entries_all_disabled(overrides={}):
+def generate_docker_compose_yml_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
     baseline = {
         "present": {},
@@ -466,7 +482,9 @@ def generate_docker_compose_yml_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_wave_lite_yml_entries_all_disabled(overrides={}):
+def generate_wave_lite_yml_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
         # TODO: Aug 13 -- fix Wave-Lite file population so passwords dont end up in file when N/A
@@ -487,7 +505,9 @@ def generate_wave_lite_yml_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_wave_lite_rds_entries_all_disabled(overrides={}):
+def generate_wave_lite_rds_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
         "present": {
@@ -499,7 +519,9 @@ def generate_wave_lite_rds_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_groundswell_env_entries_all_disabled(overrides={}):
+def generate_groundswell_env_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         "present": {
             "SWELL_DB_URL": "N/A",
@@ -514,22 +536,12 @@ def generate_assertions_all_disabled(template_files, overrides):
     entries = {
         "tower_env": generate_tower_env_entries_all_disabled(overrides["tower_env"]),
         "tower_yml": generate_tower_yml_entries_all_disabled(overrides["tower_yml"]),
-        "data_studios_env": generate_data_studios_env_entries_all_disabled(
-            overrides["data_studios_env"]
-        ),
+        "data_studios_env": generate_data_studios_env_entries_all_disabled(overrides["data_studios_env"]),
         "tower_sql": generate_tower_sql_entries_all_disabled(overrides["tower_sql"]),
-        "docker_compose": generate_docker_compose_yml_entries_all_disabled(
-            overrides["docker_compose"]
-        ),
-        "wave_lite_yml": generate_wave_lite_yml_entries_all_disabled(
-            overrides["wave_lite_yml"]
-        ),
-        "wave_lite_rds": generate_wave_lite_rds_entries_all_disabled(
-            overrides["wave_lite_rds"]
-        ),
-        "groundswell_env": generate_groundswell_env_entries_all_disabled(
-            overrides["groundswell_env"]
-        ),
+        "docker_compose": generate_docker_compose_yml_entries_all_disabled(overrides["docker_compose"]),
+        "wave_lite_yml": generate_wave_lite_yml_entries_all_disabled(overrides["wave_lite_yml"]),
+        "wave_lite_rds": generate_wave_lite_rds_entries_all_disabled(overrides["wave_lite_rds"]),
+        "groundswell_env": generate_groundswell_env_entries_all_disabled(overrides["groundswell_env"]),
         # TODO: Build out stubs OR identify as not-in-scope due to other testing method (e.g. .sql)
         "groundswell_sql": {"present": {}, "omitted": {}},
         "seqerakit_yml": {"present": {}, "omitted": {}},
@@ -568,6 +580,7 @@ def purge_baseline_of_specified_overrides(baseline, overrides):
 
 def assertion_modifiers_template():
     """Generate a blank dict for each testcase file to attach test-specific assertion modifiers to.
+
     These are then reconciled with the core set of assertions in `expected_results.py` (via `generate_assertions_xxx`).
     """
     return {k: {} for k in all_template_files}

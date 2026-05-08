@@ -1,7 +1,7 @@
 import json
 import shutil
 import sys
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 
@@ -10,26 +10,24 @@ import yaml
 ## File Utility Functions
 ## ------------------------------------------------------------------------------------
 class FileHelper:
-    """
-    Utility class for file operations.
-    """
+    """Utility class for file operations."""
 
     @staticmethod
     def read_json(file_path: str) -> dict:
         """Read a JSON plan file."""
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             return json.load(f)
 
     @staticmethod
     def read_yaml(file_path: str) -> Any:
         """Read a YAML plan file."""
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             return yaml.safe_load(f)
 
     @staticmethod
     def read_file(file_path: str) -> str:
         """Read a file."""
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             return f.read()
 
     @staticmethod
@@ -59,7 +57,7 @@ class FileHelper:
             sys.exit(1)
 
     @staticmethod
-    def parse_kv(file_path: str) -> Dict[str, Any]:
+    def parse_kv(file_path: str) -> dict[str, Any]:
         """Parse a file containing KEY=VALUE pairs. Function intended to be used with tfvars files.
 
         Args:
@@ -68,7 +66,7 @@ class FileHelper:
         Returns:
             Dictionary containing key-value pairs
 
-        NOTE:
+        Note:
             Double-quotes / single-quottes as part of string messes up pytest string assertions. Remove these to normalize.
             Terraform always hasd double-quotes.
             Env files can be either double-quotes or single-quotes.

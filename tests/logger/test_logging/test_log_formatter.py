@@ -1,10 +1,8 @@
-"""
-Tests for log formatting utilities.
-"""
+"""Tests for log formatting utilities."""
 
 import json
-import tempfile
 from pathlib import Path
+import tempfile
 
 import pytest
 

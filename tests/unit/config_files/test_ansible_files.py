@@ -18,10 +18,7 @@ from tests.utils.terraform.template_generator import generate_tc_files
 @pytest.mark.local
 @pytest.mark.ansible
 def test_002_all_present(session_setup):
-    """
-    Confirm that all conditional blocks are present.
-    """
-
+    """Confirm that all conditional blocks are present."""
     tf_modifiers = """
         flag_create_external_db       = true
         flag_use_container_db         = false
@@ -55,10 +52,7 @@ def test_002_all_present(session_setup):
 @pytest.mark.local
 @pytest.mark.ansible
 def test_002_none_present(session_setup):
-    """
-    Confirm that no conditional blocks are present.
-    """
-
+    """Confirm that no conditional blocks are present."""
     # Given
     tf_modifiers = """
         flag_create_external_db       = false
@@ -96,10 +90,7 @@ def test_002_none_present(session_setup):
 @pytest.mark.local
 @pytest.mark.ansible
 def test_005_all_present(session_setup):  # teardown_tf_state_all):
-    """
-    Confirm that all conditional blocks are present.
-    """
-
+    """Confirm that all conditional blocks are present."""
     tf_modifiers = """
         flag_create_external_db       = false
         flag_use_container_db         = true
@@ -121,10 +112,7 @@ def test_005_all_present(session_setup):  # teardown_tf_state_all):
 @pytest.mark.local
 @pytest.mark.ansible
 def test_005_none_present(session_setup):
-    """
-    Confirm that no conditional blocks are present.
-    """
-
+    """Confirm that no conditional blocks are present."""
     tf_modifiers = """
         flag_create_external_db       = false
         flag_use_container_db         = true
@@ -149,10 +137,7 @@ def test_005_none_present(session_setup):
 @pytest.mark.local
 @pytest.mark.ansible
 def test_006_all_present(session_setup):
-    """
-    Confirm that all conditional blocks are present.
-    """
-
+    """Confirm that all conditional blocks are present."""
     tf_modifiers = """
         flag_create_hosts_file_entry  = true
         flag_do_not_use_https         = true
@@ -174,10 +159,7 @@ def test_006_all_present(session_setup):
 @pytest.mark.local
 @pytest.mark.ansible
 def test_006_none_present(session_setup):
-    """
-    Confirm that no conditional blocks are present.
-    """
-
+    """Confirm that no conditional blocks are present."""
     tf_modifiers = """
         flag_create_external_db       = false
         flag_use_container_db         = true

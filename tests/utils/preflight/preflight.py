@@ -4,10 +4,10 @@ import sys
 
 
 def check_aws_sso_token():
-    """
-    Terraform plan will fail if valid AWS SSO token not present.
+    """Terraform plan will fail if valid AWS SSO token not present.
+
     Invoke AWS CLI via subprocess call (STS get-caller-identity).
-    Raises RuntimeError if token is expired or invalid
+    Raises RuntimeError if token is expired or invalid.
     """
     try:
         result = subprocess.run(
@@ -32,8 +32,8 @@ def check_aws_sso_token():
 
         # Trigger SSO login
         print("Initiating AWS SSO login.")
-        subprocess.run(["aws", "sso", "login"])
+        subprocess.run(["aws", "sso", "login"], check=False)
         sys.exit(1)
 
     except Exception as e:
-        raise RuntimeError(f"Unexpected error checking AWS SSO token: {str(e)}")
+        raise RuntimeError(f"Unexpected error checking AWS SSO token: {e!s}")

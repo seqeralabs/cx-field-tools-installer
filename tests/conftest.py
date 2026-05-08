@@ -1,7 +1,7 @@
 import os
+from pathlib import Path
 import subprocess
 import time
-from pathlib import Path
 
 import pytest
 
@@ -11,11 +11,13 @@ import pytest
 # if base_import_dir not in sys.path:
 #     sys.path.append(str(base_import_dir))
 from scripts.installer.utils.purge_folders import delete_pycache_folders
+
 from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 from tests.utils.preflight.preflight import check_aws_sso_token
 from tests.utils.pytest_logger import get_logger
 from tests.utils.terraform.executor import TF, execute_subprocess, prepare_plan
+
 
 """
 EXPLANATION
@@ -97,11 +99,10 @@ def session_setup():
 
 @pytest.fixture(scope="session")  # function
 def config_baseline_settings_default():
-    """
-    Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars.
+    """Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars.
+
     Plan with ALL resources rather than targeted, to get all outputs in plan document.
     """
-
     tf_modifiers = """#NONE"""
     plan = prepare_plan(tf_modifiers)
 
@@ -109,7 +110,7 @@ def config_baseline_settings_default():
     # qualifier = "-target=null_resource.generate_independent_config_files"
     # run_terraform_apply(qualifier)
 
-    yield plan
+    return plan
 
     # run_terraform_destroy()
 
@@ -190,10 +191,7 @@ def pytest_deselected(items):
     deselected_count = len(items)
 
     # Try to determine the reason for deselection
-    deselection_reasons = []
-    for item in items:
-        if hasattr(item, "deselected_reason"):
-            deselection_reasons.append(item.deselected_reason)
+    deselection_reasons = [item.deselected_reason for item in items if hasattr(item, "deselected_reason")]
 
     # Add identifier for the marker expression used to deselect tests.
     global global_marker_expression
@@ -263,7 +261,6 @@ def pytest_runtest_teardown(item, nextitem):
     #     duration = item.duration
 
     # logger.log_test_end(test_path=test_path, duration=duration)
-    pass
 
 
 def pytest_runtest_logreport(report):

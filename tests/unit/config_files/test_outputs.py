@@ -1,20 +1,20 @@
 import pytest
-
 from tests.utils.config import TCValues
 from tests.utils.terraform.executor import prepare_plan
 from tests.utils.terraform.parser import extract_config_values
 
+
 """
 These tests used to validate the outputs emitted by Terraform plan (with particular focus on those emitted by module.connection_strings).
 
-When making any change to the `connection_strings` module, this should be run as a sanity check prior to full config file testing, since the 
+When making any change to the `connection_strings` module, this should be run as a sanity check prior to full config file testing, since the
 config file testing relies on these same outputs. A mistake found and fixed here, avoids a mistake downstream that is harder to generate and fix.
 
 NOTE: Module outputs may not be available if you do a targeted plan and/or don't call them out as root level outputs. To compensate for this:
   1) All tests here make use of a full `terrform plan`. This takes a bit longer for the 1st time run, but we cache the JSON output so n+1 is much faster.
-  2) We make use of `tests/012_testing_outputs.tf` to define outputs that are desired for testing purposes (e.g. various service's DNS) but not really 
+  2) We make use of `tests/012_testing_outputs.tf` to define outputs that are desired for testing purposes (e.g. various service's DNS) but not really
      necessary for clients. As of Aug 22/25, I'm dumping these all out in the customer-facing outputs but intended to migrate several to the testing-only
-     view (to occur in a discrete branch TBD). 
+     view (to occur in a discrete branch TBD).
 """
 
 
@@ -25,11 +25,10 @@ NOTE: Module outputs may not be available if you do a targeted plan and/or don't
 @pytest.mark.outputs
 def test_outputs_baseline_all_enabled(session_setup):
     """Conduct baseline assertions when all SP services turned on."""
-
     tf_modifiers = """#NONE"""
     plan = prepare_plan(tf_modifiers)
-    TC: TCValues = extract_config_values(plan)
-    outputs: dict = TC.outputs
+    tc: TCValues = extract_config_values(plan)
+    outputs: dict = tc.outputs
 
     # Run assertions
     assert outputs["aws_account_id"] == "N/A"
@@ -76,7 +75,6 @@ def test_outputs_baseline_all_enabled(session_setup):
 @pytest.mark.outputs
 def test_outputs_baseline_all_disabled(session_setup):
     """Conduct baseline assertions when all SP services turned on."""
-
     # TODO: Get rid of email disabling. This should be a discrete check.
     tf_modifiers = """
         flag_use_aws_ses_iam_integration    = false
@@ -88,8 +86,8 @@ def test_outputs_baseline_all_disabled(session_setup):
         flag_use_wave_lite                  = false
     """
     plan = prepare_plan(tf_modifiers)
-    TC: TCValues = extract_config_values(plan)
-    outputs: dict = TC.outputs
+    tc: TCValues = extract_config_values(plan)
+    outputs: dict = tc.outputs
 
     # Run assertions
     assert outputs["aws_account_id"] == "N/A"
@@ -139,14 +137,13 @@ def test_outputs_baseline_all_disabled(session_setup):
 @pytest.mark.outputs
 def test_outputs_no_https_all_enabled(session_setup):
     """Conduct baseline assertions when all SP services turned on."""
-
     tf_modifiers = """
         flag_create_load_balancer                       = false
         flag_do_not_use_https                           = true
     """
     plan = prepare_plan(tf_modifiers)
-    TC: TCValues = extract_config_values(plan)
-    outputs: dict = TC.outputs
+    tc: TCValues = extract_config_values(plan)
+    outputs: dict = tc.outputs
 
     # Run assertions
     assert outputs["aws_account_id"] == "N/A"
@@ -193,7 +190,6 @@ def test_outputs_no_https_all_enabled(session_setup):
 @pytest.mark.outputs
 def test_outputs_no_https_all_disabled(session_setup):
     """Conduct baseline assertions when all SP services turned on."""
-
     tf_modifiers = """
         flag_create_load_balancer                       = false
         flag_do_not_use_https                           = true
@@ -204,8 +200,8 @@ def test_outputs_no_https_all_disabled(session_setup):
     """
     plan = prepare_plan(tf_modifiers)
 
-    TC: TCValues = extract_config_values(plan)
-    outputs: dict = TC.outputs
+    tc: TCValues = extract_config_values(plan)
+    outputs: dict = tc.outputs
 
     # Run assertions
     assert outputs["aws_account_id"] == "N/A"
@@ -266,8 +262,8 @@ def test_outputs_connect_alb_pathrouting(session_setup):
 
     # When
     plan = prepare_plan(tf_modifiers)
-    TC: TCValues = extract_config_values(plan)
-    outputs: dict = TC.outputs
+    tc: TCValues = extract_config_values(plan)
+    outputs: dict = tc.outputs
 
     # Then
     assert outputs["tower_connect_dns"] == "autoconnect.example.com"
@@ -290,8 +286,8 @@ def test_outputs_connect_ec2_pathrouting(session_setup):
 
     # When
     plan = prepare_plan(tf_modifiers)
-    TC: TCValues = extract_config_values(plan)
-    outputs: dict = TC.outputs
+    tc: TCValues = extract_config_values(plan)
+    outputs: dict = tc.outputs
 
     # Then
     assert outputs["tower_connect_dns"] == "autoconnect.example.com"
