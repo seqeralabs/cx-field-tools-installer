@@ -23,7 +23,7 @@ def hash_cache_key(tf_modifiers: str, qualifier: str = "") -> str:
 
 
 def normalize_whitespace(tf_modifiers: str) -> str:
-    """Purge intermediate whitespace (extra space makes same keys hash to different values).
+    r"""Purge intermediate whitespace (extra space makes same keys hash to different values).
 
     Convert multiple spaces to single space (ASSUMPTION: Python tabs insert spaces!)
     NOTE: Need to keep `\n` to not break HCL formatting expectations.
@@ -53,7 +53,8 @@ def create_templatefile_cache_folder(tc: TCValues) -> str:
     folder_path = Path(cache_dir)
     folder_path.mkdir(parents=True, exist_ok=True)
 
-    # Timestamp cant be in name -- will affect cache check in `generate_templatefile`. Write timestamp in the folder instead.
+    # Timestamp cant be in name -- will affect cache check in `generate_templatefile`.
+    # Write timestamp in the folder instead.
     existing_timestamps = list(folder_path.glob(".timestamp*"))
     if not existing_timestamps:
         timestamp = datetime.now(tz=UTC).strftime("%Y-%m-%d--%H:%M:%S")

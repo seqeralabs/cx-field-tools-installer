@@ -11,6 +11,7 @@ import pytest
 from testcontainers.compose import DockerCompose
 from testcontainers.mysql import MySqlContainer
 from testcontainers.postgres import PostgresContainer
+
 from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 from tests.utils.terraform.executor import prepare_plan
@@ -69,6 +70,9 @@ def test_tower_sql_population(session_setup):
             query_sql.write(query)
             query_sql_path = query_sql.name
 
+        mysql_invoke = (
+            f"mysql --host host.docker.internal --port=3306 --user={user} --silent --skip-column-names < query.sql"
+        )
         mysql_cmd = f"""
             docker run --rm -t \
                 -v {query_sql_path}:/query.sql \
@@ -76,7 +80,7 @@ def test_tower_sql_population(session_setup):
                 --entrypoint /bin/bash \
                 --add-host host.docker.internal:host-gateway \
                 mysql:8.0 \
-                -c 'mysql --host host.docker.internal --port=3306 --user={user} --silent --skip-column-names < query.sql'
+                -c '{mysql_invoke}'
         """
         result = subprocess.run(mysql_cmd, check=False, shell=True, capture_output=True, text=True, timeout=30)
         assert result.returncode == 0
@@ -165,6 +169,10 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
 
         # -t — Tuples only (removes headers and footers)
         # -A — Unaligned output (removes column formatting, outputs plain text)
+        psql_invoke = (
+            f"PGPASSWORD={password} psql --host host.docker.internal --port=5432 "
+            f"--user={user} -d {database} -t -A < query.sql"
+        )
         postgres_cmd = f"""
             docker run --rm -t \
                 -v {query_sql_path}:/query.sql \
@@ -172,7 +180,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
                 --entrypoint /bin/bash \
                 --add-host host.docker.internal:host-gateway \
                 postgres:17.6 \
-                -c 'PGPASSWORD={password} psql --host host.docker.internal --port=5432 --user={user} -d {database} -t -A < query.sql'
+                -c '{psql_invoke}'
         """
         result = subprocess.run(postgres_cmd, check=False, shell=True, capture_output=True, text=True, timeout=30)
         assert result.returncode == 0
@@ -263,7 +271,8 @@ def test_wave_containers(session_setup):
 
     How it works:
         1. Read in content of generated docker-compose file.
-        2. Purge any key in ["services"] if it's not in ["wave-lite", "wave-lite-reverse-proxy", "wave-db", "wave-redis"]
+        2. Purge any key in ["services"] if it's not in
+           ["wave-lite", "wave-lite-reverse-proxy", "wave-db", "wave-redis"]
         3. Purge ['wave-lite']['volumes'] and replace with path to test-generated YAML.
         4. Purge ['wave-lite-reverse-proxy']['volumes'] and replace with path to target. TODO: FIX THIS.
         5. Purge ['wave-db]['volumes'] and replace with path to test-generated SQL.

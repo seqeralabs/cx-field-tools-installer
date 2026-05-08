@@ -22,9 +22,9 @@ def replace_vars_in_templatefile(input_str, vars_dict, pattern) -> str:
     Do not need to replace 'var.' or 'local.' since terraform console knows these.
 
     Args:
-        input_str: Templatefile string from JSONified 009
-        vars_dict: Dictionary of values to substitute
-        type: Which terraform reference type to replace (e.g. "module.connection_strings")
+        input_str: Templatefile string from JSONified 009.
+        vars_dict: Dictionary of values to substitute.
+        pattern: Which terraform reference type to replace (e.g. "module.connection_strings").
 
     Example:
         Input:  "module.connection_strings.tower_db_url"
@@ -68,13 +68,14 @@ def replace_vars_in_templatefile(input_str, vars_dict, pattern) -> str:
 
 
 def prepare_templatefile_payload(key, tc: TCValues):
-    """Extract the templatefile command from JSONified 009, then sub values as necessary.
+    r"""Extract the templatefile command from JSONified 009, then sub values as necessary.
 
     BACKGROUND:
     A normal terraform plan/apply would have all the input values availabe at execution (this is SLOW).
 
     Instead, using the much faster 'terraform console' approach.
-        - Console appears to have access to tfvars & locals, but not module outputs (emitted file is "known after apply").
+        - Console appears to have access to tfvars & locals, but not module outputs (emitted file
+          is "known after apply").
         - As a result:
             - 1) Must run 'terraform plan' (full) once to generate all outputs (including of module outputs),
             - 2) Substitution in the templatefile string passed to 'terraform console'.
@@ -118,8 +119,7 @@ def write_populated_templatefile(outfile, payload):
     payload = subprocess.run(
         ["terraform", "console"],
         input=str(payload),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         text=True,
         check=True,
     )
@@ -145,10 +145,12 @@ def generate_tc_files(plan, desired_files, testcase_name):
     """Create templatefiles relevant to the testcase.
 
     Args:
-        tc: Test case context object.
+        plan: Terraform plan JSON used to extract config values.
+        desired_files: List of template file keys to generate (empty list = all).
+        testcase_name: Name of the testcase, used as a sub-folder for cache output.
 
     Returns:
-        Updated template_files dict with content and filepath added
+        Updated template_files dict with content and filepath added.
     """
     tc: TCValues = extract_config_values(plan)
 

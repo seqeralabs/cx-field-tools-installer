@@ -11,7 +11,6 @@ import pytest
 # if base_import_dir not in sys.path:
 #     sys.path.append(str(base_import_dir))
 from scripts.installer.utils.purge_folders import delete_pycache_folders
-
 from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 from tests.utils.preflight.preflight import check_aws_sso_token
@@ -22,8 +21,8 @@ from tests.utils.terraform.executor import TF, execute_subprocess, prepare_plan
 """
 EXPLANATION
 =======================================
-Originally tried using [tftest](https://pypi.org/project/tftest/) package to test but this became complicated and unwieldy. Instead, simplified
-testing loop to:
+Originally tried using [tftest](https://pypi.org/project/tftest/) package to test but this became
+complicated and unwieldy. Instead, simplified testing loop to:
 
 1. Test in the project directory.
 2. Take a backup of the existing `terraform.tfvars` file.
@@ -31,7 +30,8 @@ testing loop to:
 4. Provide override values to test fixtures (which will generate a new `override.auto.tfvars` file in the project root).
     This file supercedes the same keys defined in the `terraform.tfvars` file.
 5. Run the tests:
-    1. For each fixture, run `terraform plan` based on the test tvars and override file. Results as cached to speed up n+1 test runs.
+    1. For each fixture, run `terraform plan` based on the test tvars and override file.
+       Results as cached to speed up n+1 test runs.
     2. Execute tests tied to that fixture.
     3. Repeat.
 6. Purge the test tfvars and override file.
@@ -114,7 +114,7 @@ def config_baseline_settings_default():
     # run_terraform_destroy()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="function")  # noqa: PT003  (explicit for documentation)
 def teardown_tf_state_all():
     print("This testcase will have all tf state destroyed.")
 
@@ -148,8 +148,10 @@ As per ChatGPT: Pytest Lifecycle (Simplified)
 
 Key Point:
 - Test collection happens after pytest_sessionstart.
-- The pytest_sessionstart hook is called before test collection, so you cannot reliably access the total number of tests at this point.
-- The correct place to access the number of collected tests is in the pytest_collection_finish hook, which runs after collection is complete.
+- The pytest_sessionstart hook is called before test collection, so you cannot reliably access the
+  total number of tests at this point.
+- The correct place to access the number of collected tests is in the pytest_collection_finish
+  hook, which runs after collection is complete.
 """
 global_marker_expression = []
 
@@ -193,7 +195,6 @@ def pytest_deselected(items):
     deselection_reasons = [item.deselected_reason for item in items if hasattr(item, "deselected_reason")]
 
     # Add identifier for the marker expression used to deselect tests.
-    global global_marker_expression
     if len(global_marker_expression) > 0:
         deselection_reasons.append(f"Presence of marker: {global_marker_expression[0]}")
 

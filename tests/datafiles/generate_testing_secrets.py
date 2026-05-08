@@ -12,7 +12,7 @@ sys.path.insert(0, str(project_root))
 from tests.utils.config import FP  # noqa: E402  (sys.path manipulation above)
 
 
-def modify_all_ssm_json_for_testing():
+def modify_all_ssm_json_for_testing():  # noqa: PLR0915  (test data generation; refactor not in scope)
     """Load SSM sensitive-values JSON files and rewrite for testing.
 
     Modifies ssm_key paths for testing and provides a section to customize all values.

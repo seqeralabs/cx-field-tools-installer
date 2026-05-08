@@ -11,9 +11,9 @@ from yamlpath.exceptions import UnmatchedYAMLPathException
 from yamlpath.wrappers import ConsolePrinter, NodeCoords
 
 
-loggingArgs = SimpleNamespace(quiet=True, verbose=False, debug=False)
-logger = ConsolePrinter(loggingArgs)
-yamlParser = Parsers.get_yaml_editor()
+logging_args = SimpleNamespace(quiet=True, verbose=False, debug=False)
+logger = ConsolePrinter(logging_args)
+yaml_parser = Parsers.get_yaml_editor()
 
 
 ## ------------------------------------------------------------------------------------
@@ -48,7 +48,7 @@ def assert_yaml_key_present(entries: dict, file):
         yaml.dump(file, f)
 
     # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
-    (yaml_data, document_loaded) = Parsers.get_yaml_data(yamlParser, logger, "/tmp/cx-testing-yml")
+    (yaml_data, document_loaded) = Parsers.get_yaml_data(yaml_parser, logger, "/tmp/cx-testing-yml")
     if not document_loaded:
         sys.exit(1)
     processor = Processor(logger, yaml_data)
@@ -78,14 +78,15 @@ def assert_yaml_key_omitted(entries: dict, file):
         yaml.dump(file, f)
 
     # https://gist.github.com/lsloan/dedd22cb319594f232155c37e280ebd7
-    (yaml_data, document_loaded) = Parsers.get_yaml_data(yamlParser, logger, "/tmp/cx-testing-yml")
+    (yaml_data, document_loaded) = Parsers.get_yaml_data(yaml_parser, logger, "/tmp/cx-testing-yml")
     if not document_loaded:
         sys.exit(1)
     processor = Processor(logger, yaml_data)
 
-    # This one is a bit odd because of how the library works. I WANT to have Exceptions raised when trying to find the YAMLPath
-    # (i.e. path doesnt exist). The most concise code block avoids try/except but doesn't identify an key that actually does exist.
-    # Using slightly more convoluted code.
+    # This one is a bit odd because of how the library works. I WANT to have Exceptions raised
+    # when trying to find the YAMLPath (i.e. path doesnt exist). The most concise code block
+    # avoids try/except but doesn't identify an key that actually does exist. Using slightly more
+    # convoluted code.
     for k in entries:
         data_yaml_path = YAMLPath(k)
         with pytest.raises(UnmatchedYAMLPathException):

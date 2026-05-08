@@ -67,21 +67,22 @@ class FileHelper:
             Dictionary containing key-value pairs
 
         Note:
-            Double-quotes / single-quottes as part of string messes up pytest string assertions. Remove these to normalize.
+            Double-quotes / single-quottes as part of string messes up pytest string assertions.
+            Remove these to normalize.
             Terraform always hasd double-quotes.
             Env files can be either double-quotes or single-quotes.
         """
         result = {}
         raw = FileHelper.read_file(file_path)
 
-        for line in raw.splitlines():
-            line = line.strip()
+        for raw_line in raw.splitlines():
+            line = raw_line.strip()
             if line and "=" in line:
                 key, value = line.split("=", 1)
                 value = value.strip()
 
                 # Edgecase: Empty strings represented by "" or '' but this confuses python (e.g. '""')
-                if (value == '""') or (value == "''"):
+                if value in {'""', "''"}:
                     value = ""
                 elif value.startswith("'") and value.endswith("'"):
                     value = value.strip("'")

@@ -66,38 +66,38 @@ def generate_tower_env_entries_all_active(overrides=None):
             "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN": "ipsemlorem",
             # ---
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_ICON": "jupyter",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.9.0",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.9.0",  # noqa: E501  (Studios template URL)
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_TOOL": "jupyter",
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_STATUS": "deprecated",
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_ICON": "jupyter",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.11.0",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.11.0",  # noqa: E501  (Studios template URL)
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_TOOL": "jupyter",
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_STATUS": "recommended",
             # ---
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_ICON": "rstudio",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.9.0",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.9.0",  # noqa: E501  (Studios template URL)
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_TOOL": "rstudio",
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_STATUS": "deprecated",
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_ICON": "rstudio",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.11.0",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.11.0",  # noqa: E501  (Studios template URL)
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_TOOL": "rstudio",
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_STATUS": "recommended",
             # ---
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_ICON": "vscode",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.9.0",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.9.0",  # noqa: E501  (Studios template URL)
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_TOOL": "vscode",
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_STATUS": "deprecated",
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_ICON": "vscode",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.11.0",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.11.0",  # noqa: E501  (Studios template URL)
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_TOOL": "vscode",
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_STATUS": "recommended",
             # ---
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_ICON": "xpra",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.9.0",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.9.0",  # noqa: E501  (Studios template URL)
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_TOOL": "xpra",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_STATUS": "deprecated",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_ICON": "xpra",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.11.0",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.11.0",  # noqa: E501  (Studios template URL)
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_TOOL": "xpra",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_STATUS": "recommended",
             # ---

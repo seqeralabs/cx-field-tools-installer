@@ -15,16 +15,24 @@ When you encounter a rule listed below while writing or editing Python, apply th
 | **B006** | Mutable default argument (`def f(x={})` / `def f(x=[])`) | Convert to `def f(x=None):` and initialise inside the function: `if x is None: x = {}` |
 | **D200** | One-line docstring spans multiple lines | Collapse to a single line: `"""One sentence summary."""` |
 | **D205** | No blank line between summary and description | Insert a blank line after the summary line |
+| **D301** | Backslash in docstring without raw-string prefix | Change `"""..."""` to `r"""..."""` so backslashes (e.g. `\n` references) are literal. |
 | **D405** | Section name not properly capitalised (e.g. `note` → `Note`) | Capitalise section headers (Google docstring convention) |
 | **D415** | First docstring line doesn't end with `.`, `?`, or `!` | Add the trailing punctuation |
+| **D417** | Missing argument descriptions in docstring | Document every parameter under `Args:`. If the docstring is stale, rewrite the Args block to match the current signature. |
 | **DTZ005** | `datetime.datetime.now()` without `tz=` | Pass an explicit timezone (`tz=timezone.utc` for project-internal logs) |
 | **E402** | Module-level import not at top of file | If `sys.path` manipulation precedes the import, suppress with `# noqa: E402` and a comment explaining why. Otherwise, move the import to the top. |
+| **E501** | Line too long (>120 chars) | Wrap the line. For genuinely unwrappable content (long fixed URLs in dict values, single-quoted bash heredocs), suppress with `# noqa: E501  (<reason>)`. **Note**: `# noqa` inside a triple-quoted string literal is NOT honoured by ruff — refactor (e.g. extract to a separate variable) instead. |
 | **F401** | Unused import | Delete the import. For placeholder modules where a future import is intended, prefer `# noqa: F401` with a one-line comment. |
 | **N806** | Variable in function should be lowercase | Rename to lowercase. (Constants belong at module scope, not inside functions.) |
+| **N816** | Mixed-case variable in module scope (e.g. `yamlParser`, `loggingArgs`) | Rename to `snake_case`. Module-scope variables follow Python convention regardless of any third-party library casing the project happens to mirror. |
 | **PERF401** | `for ...: result.append(...)` pattern | Convert to a list comprehension |
+| **PLR1714** | `value == A or value == B` chain | Use set membership: `value in {A, B}` |
+| **PLW0602** | `global` declared without assignment in scope | Remove the `global` line. Variables can still be *read* from module scope without `global` — only assignments need it. |
 | **PLW1510** | `subprocess.run` without explicit `check=` argument | Pass `check=False` explicitly to declare that ignoring exit codes is intentional. Use `check=True` only if you want non-zero exits to raise `CalledProcessError` — that's a behaviour change. |
+| **PLW2901** | `for x in ...:` loop variable overwritten inside the body | Rename the loop variable so the original is preserved: `for raw_line in lines: line = raw_line.strip()` |
 | **RUF013** | Implicit `Optional` (`x: int = None` with no `None` in annotation) | Make `None` explicit: `x: int \| None = None` |
 | **UP015** | Unnecessary `'r'` mode argument in `open()` | Drop the `'r'` — read is the default |
+| **UP022** | `subprocess.run(stdout=PIPE, stderr=PIPE)` | Replace with `capture_output=True`. Drop both `stdout=PIPE` and `stderr=PIPE` lines — `capture_output` covers both. |
 | **UP045** | Type annotation uses `Optional[X]` instead of `X \| None` | Convert to `X \| None` syntax (companion of RUF013) |
 
 ## Suppress at site (with reason)
@@ -33,16 +41,20 @@ When you encounter these rules, add `# noqa: <RULE>  (one-line reason)` at the e
 
 | Rule | What it catches | Why suppression is acceptable in tests |
 |------|----------------|---------------------------------------|
+| **PLR0915** | Function has too many statements (default threshold: 50) | Acceptable for one-shot test scaffolding (e.g. SSM secrets generation) where a linear top-to-bottom procedure is more readable than a forced split. Suppress with `# noqa: PLR0915  (test data generation; refactor not in scope)` on the function definition line. In production code, refactor instead. |
+| **PT003** | `@pytest.fixture(scope="function")` — `function` is the default scope | Keep the explicit `scope="function"` for documentation value (makes fixture lifetime visible to readers); suppress with `# noqa: PT003  (explicit for documentation)`. |
 | **S310** | `urllib.request.urlopen` accepts any URL scheme (file://, ftp://, custom) | Test URLs are hardcoded localhost endpoints; no scheme variation possible. |
 | **S608** | SQL injection via string-based query construction | Test fixtures use hardcoded values; the `run_mysql_query` / `run_postgres_query` helpers shell out to the `mysql` / `psql` CLI rather than using a Python driver, so parameter binding isn't available without a framework refactor. |
 
 ## Deliberately ignored
 
-These rules are project-deliberate exceptions. Do **not** apply ruff's recommended fix for these; do not silently suppress with `# noqa` either — they're known and tolerated.
+These rules are silenced in the strict hook config (`~/.config/precommit/ruff.toml` `ignore = [...]`) — ruff will not flag them. Listed here so future agents know they're a deliberate project decision, not an oversight. Do **not** apply ruff's recommended fix proactively; if a future need arises, raise the question with the user.
 
 | Rule | What it catches | Why ignored | Alternative if needed |
 |------|----------------|-------------|----------------------|
 | **SIM105** | `try / except E: pass` instead of `contextlib.suppress(E)` | Team prefers the familiarity of try/except for exception suppression. | `from contextlib import suppress; with suppress(KeyError): ...` is the linter-preferred form if you ever want it. |
+| **SIM108** | Use ternary operator instead of `if`/`else` block | Team finds ternaries harder to read than the explicit `if`/`else` form, especially for non-trivial expressions. | `result = a if cond else b` is the linter-preferred form. |
+| **TC001** | Move type-only application import behind `TYPE_CHECKING` | The pattern is most valuable in production modules with heavy import graphs or startup-cost concerns. Test files import a class for a single annotation — the `if TYPE_CHECKING:` ceremony costs more than it saves. | `from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n    from foo import Bar` is the linter-preferred form for production. |
 
 ## TODO / Follow-up
 

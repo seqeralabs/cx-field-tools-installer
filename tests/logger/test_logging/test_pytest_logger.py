@@ -8,6 +8,7 @@ import time
 from unittest.mock import patch
 
 import pytest
+
 from tests.utils.pytest_logger import PytestStructuredLogger, get_logger, reset_logger
 
 

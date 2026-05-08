@@ -6,16 +6,21 @@ from tests.utils.terraform.parser import extract_config_values
 
 
 """
-These tests used to validate the outputs emitted by Terraform plan (with particular focus on those emitted by module.connection_strings).
+These tests used to validate the outputs emitted by Terraform plan (with particular focus on those
+emitted by module.connection_strings).
 
-When making any change to the `connection_strings` module, this should be run as a sanity check prior to full config file testing, since the
-config file testing relies on these same outputs. A mistake found and fixed here, avoids a mistake downstream that is harder to generate and fix.
+When making any change to the `connection_strings` module, this should be run as a sanity check
+prior to full config file testing, since the config file testing relies on these same outputs.
+A mistake found and fixed here, avoids a mistake downstream that is harder to generate and fix.
 
-NOTE: Module outputs may not be available if you do a targeted plan and/or don't call them out as root level outputs. To compensate for this:
-  1) All tests here make use of a full `terrform plan`. This takes a bit longer for the 1st time run, but we cache the JSON output so n+1 is much faster.
-  2) We make use of `tests/012_testing_outputs.tf` to define outputs that are desired for testing purposes (e.g. various service's DNS) but not really
-     necessary for clients. As of Aug 22/25, I'm dumping these all out in the customer-facing outputs but intended to migrate several to the testing-only
-     view (to occur in a discrete branch TBD).
+NOTE: Module outputs may not be available if you do a targeted plan and/or don't call them out as
+root level outputs. To compensate for this:
+  1) All tests here make use of a full `terrform plan`. This takes a bit longer for the 1st time
+     run, but we cache the JSON output so n+1 is much faster.
+  2) We make use of `tests/012_testing_outputs.tf` to define outputs that are desired for testing
+     purposes (e.g. various service's DNS) but not really necessary for clients. As of Aug 22/25,
+     I'm dumping these all out in the customer-facing outputs but intended to migrate several to
+     the testing-only view (to occur in a discrete branch TBD).
 """
 
 
