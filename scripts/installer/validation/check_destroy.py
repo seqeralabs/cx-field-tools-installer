@@ -52,7 +52,7 @@ if __name__ == "__main__":
                 "Please update the resource to remove protection before running `terraform destroy`."
             )
 
-        if data.skip_final_snapshot == False:
+        if not data.skip_final_snapshot:
             raise AssertionError(
                 " You will create a final snapshot of your RDS instance. "
                 "Please disable snapshotting before running `terraform destroy`."

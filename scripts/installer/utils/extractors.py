@@ -68,7 +68,7 @@ def get_tfvars_as_json(tfvars_path=None):
     ]
 
     # Assign result to variable (to then be returned directly or written to file for debugging)
-    result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+    result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # noqa: S603  (cmd is a hardcoded list with vendored container hash)
 
     # Capture Docker runtime failures
     if result.returncode != 0:

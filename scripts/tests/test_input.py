@@ -13,7 +13,7 @@ def test_input():
 
     # Must encode to avoid: `TypeError: memoryview: a bytes-like object is required, not 'str'` error
     # Source: https://stackoverflow.com/questions/38723140/i-want-to-use-stdin-in-a-pytest-test
-    res = subprocess.run(
+    res = subprocess.run(  # noqa: S603  (target_script path is hardcoded relative to this test file)
         [target_script],
         check=False,
         input=payload.encode(),

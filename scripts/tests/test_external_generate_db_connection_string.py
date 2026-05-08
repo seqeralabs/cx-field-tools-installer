@@ -31,7 +31,7 @@ TEST_MATRIX = [
 
 def test_db_connstrings():
     for values in TEST_MATRIX:
-        data_dictionary = dict(zip(KEYS, values))
+        data_dictionary = dict(zip(KEYS, values, strict=True))
         data = SimpleNamespace(**data_dictionary)
         connstring = generate_connection_string(data)
         assert connstring == data.expected

@@ -28,33 +28,30 @@ sys.tracebacklimit = 0
 # HELPER FUNCTIONS
 # -------------------------------------------------------------------------------
 def log_error_and_exit(message: str):
+    """Log an error message and exit with status 1."""
     logger.error(message)
     sys.exit(1)
 
 
 def only_one_true_set(flags: list) -> None:
     """Ensure only 1 entry per flag grouping is `true`. Aggregate values of all specified values and then count."""
-    values = [flag for flag in flags]
+    values = list(flags)
     if values.count(True) != 1:
         log_error_and_exit(f"Only one of these flags may be true: {flags!s}.")
 
 
 def subnet_privacy(tfvars_subnets: list, vpc_subnets: list, qualifier: str) -> None:
     """Compare VPC subnets privacy vs CIDRs defined in tfvars for various components."""
-    try:
-        assert set(tfvars_subnets).issubset(set(vpc_subnets))
-    except AssertionError:
+    if not set(tfvars_subnets).issubset(set(vpc_subnets)):
         log_error_and_exit(qualifier)
 
 
 def ensure_dependency_populated(flag: bool, child: str, qualifier: str) -> None:
     """If a flag is set, ensure dependent keys also set."""
     if flag:
-        try:
-            assert "REPLACE_ME" not in child, f"[ERROR]: {qualifier}"
-            logger.debug(f"[OK]: {qualifier}")
-        except AssertionError:
+        if "REPLACE_ME" in child:
             log_error_and_exit(qualifier)
+        logger.debug(f"[OK]: {qualifier}")
     else:
         logger.debug(f"[SKIP]: {qualifier}")
 
@@ -157,16 +154,14 @@ def verify_tower_root_users(data: SimpleNamespace):
 
 def verify_tower_self_signed_certs(data: SimpleNamespace):
     """Check self-signed certificate settings (if necessary)."""
-    if data.flag_use_private_cacert:
-        if not data.private_cacert_bucket_prefix.startswith("s3://"):
-            log_error_and_exit(" Field `private_cacert_bucket_prefix` must start with `s3://`")
+    if data.flag_use_private_cacert and not data.private_cacert_bucket_prefix.startswith("s3://"):
+        log_error_and_exit(" Field `private_cacert_bucket_prefix` must start with `s3://`")
 
 
 def verify_tower_groundswell(data: SimpleNamespace):
     """Check Groundwell validity."""
-    if data.flag_enable_groundswell:
-        if data.tower_container_version < "v23.3.0":
-            log_error_and_exit(" Groundswell is only available in Tower 23.3.0+")
+    if data.flag_enable_groundswell and data.tower_container_version < "v23.3.0":
+        log_error_and_exit(" Groundswell is only available in Tower 23.3.0+")
 
 
 def verify_docker_daemon_loggin(data: SimpleNamespace):
@@ -271,18 +266,20 @@ def verify_ses_integration(data: SimpleNamespace):
 
 def verify_route53_integration(data: SimpleNamespace):
     """Check DNS settings."""
-    # Catching multiple checks with same `except` since message is the same.
-    try:
-        if data.flag_create_route53_private_zone:
-            assert data.new_route53_private_zone_name in data.tower_server_url
-
-        if data.flag_use_existing_route53_public_zone:
-            assert data.existing_route53_public_zone_name in data.tower_server_url
-
-        if data.flag_use_existing_route53_private_zone:
-            assert data.existing_route53_private_zone_name in data.tower_server_url
-
-    except AssertionError:
+    mismatch = False
+    if data.flag_create_route53_private_zone and data.new_route53_private_zone_name not in data.tower_server_url:
+        mismatch = True
+    if (
+        data.flag_use_existing_route53_public_zone
+        and data.existing_route53_public_zone_name not in data.tower_server_url
+    ):
+        mismatch = True
+    if (
+        data.flag_use_existing_route53_private_zone
+        and data.existing_route53_private_zone_name not in data.tower_server_url
+    ):
+        mismatch = True
+    if mismatch:
         log_error_and_exit("`tower_server_url` does not match DNS zone.")
 
 
@@ -327,7 +324,7 @@ def verify_ami_update_behaviour(data: SimpleNamespace):
             )
 
 
-def verify_database_configuration(data: SimpleNamespace):
+def verify_database_configuration(data: SimpleNamespace):  # noqa: C901  (sequence of validation gates; some logic to migrate to native Terraform variable enforcement)
     """Verify / Warn about various database configuration items."""
     if (data.db_engine == "mysql") and ("8" in data.db_engine_version):
         logger.warning("MySQL 8 may need TOWER_DB_URL connection string modifiers.")
@@ -341,12 +338,11 @@ def verify_database_configuration(data: SimpleNamespace):
     if data.tower_db_dialect != "io.seqera.util.MySQL55DialectCollateBin":
         log_error_and_exit("Field `tower_db_dialect` must be `org.mariadb.jdbc.Driver`.")
 
-    if data.flag_use_container_db:
-        if data.tower_db_url != "db:3306":
-            logger.warning(
-                "You are using a non-standard db container name or port. "
-                "Ensure Docker-Compose config is updated accordingly."
-            )
+    if data.flag_use_container_db and data.tower_db_url != "db:3306":
+        logger.warning(
+            "You are using a non-standard db container name or port. "
+            "Ensure Docker-Compose config is updated accordingly."
+        )
 
     if data.flag_use_existing_external_db:
         logger.warning(
@@ -421,11 +417,12 @@ def verify_data_studio(data: SimpleNamespace):
                 "`data_studio_container_version` cannot be 0.7.8+ when `tower_container_version` is less than v24.3.0."
             )
 
-        if data.flag_limit_data_studio_to_some_workspaces:
-            # https://www.geeksforgeeks.org/python-check-whether-string-contains-only-numbers-or-not/
-            # if re.match('[0-9]*$', data.data_studio_eligible_workspaces):
-            if not re.findall(r"[0-9]+,[0-9]+", data.data_studio_eligible_workspaces):
-                log_error_and_exit("`data_studio_eligible_workspaces may only be populated by digits and commas.")
+        # https://www.geeksforgeeks.org/python-check-whether-string-contains-only-numbers-or-not/
+        # if re.match('[0-9]*$', data.data_studio_eligible_workspaces):
+        if data.flag_limit_data_studio_to_some_workspaces and not re.findall(
+            r"[0-9]+,[0-9]+", data.data_studio_eligible_workspaces
+        ):
+            log_error_and_exit("`data_studio_eligible_workspaces may only be populated by digits and commas.")
 
         if data.flag_use_private_cacert:
             logger.warning("Please see documentation to understand how to make private certs work with Studios images.")
@@ -564,26 +561,27 @@ def verify_redis_version(data: SimpleNamespace):
 
 
 def verify_wave(data: SimpleNamespace):
-    if (data.flag_use_wave == True) and (data.flag_use_wave_lite == True):
+    """Verify Wave / Wave-Lite flags are not both enabled and warn on private CA."""
+    if data.flag_use_wave and data.flag_use_wave_lite:
         log_error_and_exit("`flag_use_wave` and `flag_use_wave_lite` cannot both be set to true.")
 
-    if data.flag_use_wave_lite == True:
-        if data.flag_use_private_cacert:
-            logger.warning("Please see documentation to understand how to make private certs work with Wave-Lite.")
+    if data.flag_use_wave_lite and data.flag_use_private_cacert:
+        logger.warning("Please see documentation to understand how to make private certs work with Wave-Lite.")
 
 
 def verify_ssh_access(data: SimpleNamespace):
+    """Verify SSH access prerequisites when EC2 is set to be publicly reachable."""
     # VM needs to be sitting in public subnet in order to connect to it by SSH directly (instead of EICE).
     # I often try this with VM in private subnet and it takes awhile to figure out why. Adding check.
-    if data.flag_make_instance_public == True:
-        if data.flag_create_new_vpc == True:
+    if data.flag_make_instance_public:
+        if data.flag_create_new_vpc:  # noqa: SIM102  (kept nested for readability; sibling check below shares the outer condition)
             if data.vpc_new_ec2_subnets[0] not in data.vpc_new_public_subnets:
                 log_error_and_exit(
                     "You have set `flag_make_instance_public = true` but your EC2 is in a "
                     "private subnet. SSH will fail. Please fix."
                 )
 
-        if data.flag_use_existing_vpc == True:
+        if data.flag_use_existing_vpc:
             logger.warning(
                 "You have set `flag_make_instance_public = true`. "
                 "Please ensure `vpc_existing_ec2_subnets` is populated by a public subnet CIDR."
@@ -591,16 +589,15 @@ def verify_ssh_access(data: SimpleNamespace):
 
 
 def verify_production_deployment(data: SimpleNamespace):
-    if (data.flag_create_external_db == False) or (data.flag_create_external_redis == False):
+    """Warn when configuration deviates from production-recommended managed DB/Redis."""
+    if (not data.flag_create_external_db) or (not data.flag_create_external_redis):
         logger.warning(
             "WARNING: You are running Seqera Platform without a managed DB/Redis. "
             "This does not align to Seqera-recommended Production deployment best practices "
             "and can result in system instability."
         )
 
-    if (data.flag_use_wave_lite == True) and (
-        (data.flag_create_external_db == False) or (data.flag_create_external_redis == False)
-    ):
+    if data.flag_use_wave_lite and ((not data.flag_create_external_db) or (not data.flag_create_external_redis)):
         logger.warning(
             "WARNING: You are running Wave Lite without a managed DB/Redis. "
             "This does not align to Seqera-recommended Production deployment best practices "
@@ -609,6 +606,7 @@ def verify_production_deployment(data: SimpleNamespace):
 
 
 def verify_insecure_platform(data: SimpleNamespace):
+    """Block feature combinations that require HTTPS when HTTPS is disabled."""
     if data.flag_do_not_use_https:
         if data.flag_enable_data_studio:
             log_error_and_exit("Studios requires a secure Seqera Platform endpoint.")

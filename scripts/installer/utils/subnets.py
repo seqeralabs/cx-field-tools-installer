@@ -11,6 +11,7 @@ def _get_data():
 
 
 def generate_aws_session(data=None):
+    """Build a boto3 EC2 client using credentials from tfvars."""
     if data is None:
         data = _get_data()
     session = boto3.Session(profile_name=data.aws_profile)
@@ -18,15 +19,16 @@ def generate_aws_session(data=None):
 
 
 def get_all_subnets(cloud_provider="aws"):
+    """Return public/private subnet CIDRs for the configured VPC."""
     if cloud_provider.lower() == "aws":
         return get_all_aws_subnets()
-    if cloud_provider.lower() == "azure" or cloud_provider.lower() == "gcp":
-        pass
-    else:
-        raise AssertionError("[ERROR]: Unsupported Cloud Provider specified.")
+    if cloud_provider.lower() in ("azure", "gcp"):
+        return None  # Azure/GCP support not yet implemented.
+    raise AssertionError("[ERROR]: Unsupported Cloud Provider specified.")
 
 
 def get_all_aws_subnets():
+    """Query AWS for the configured VPC's public/private subnet CIDRs."""
     data = _get_data()
 
     ec2_client = generate_aws_session(data)
@@ -40,7 +42,7 @@ def get_all_aws_subnets():
             subnet["CidrBlock"] for subnet in all_subnets["Subnets"] if subnet["MapPublicIpOnLaunch"]
         ]
         private_subnet_cidrs = [
-            subnet["CidrBlock"] for subnet in all_subnets["Subnets"] if subnet["MapPublicIpOnLaunch"] == False
+            subnet["CidrBlock"] for subnet in all_subnets["Subnets"] if not subnet["MapPublicIpOnLaunch"]
         ]
 
     logger.debug(public_subnet_cidrs)

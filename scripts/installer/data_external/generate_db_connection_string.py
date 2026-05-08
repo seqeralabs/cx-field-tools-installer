@@ -25,12 +25,14 @@ V24PLUS_CONNSTRING = "permitMysqlScheme=true"
 
 
 def return_tf_payload(status: str, value: str):
+    """Emit a Terraform `external` data-source JSON payload to stdout."""
     payload = {"status": status, "value": value}
     print(json.dumps(payload))
 
 
 # def generate_connection_string(mysql8: str, v24plus: str):
 def generate_connection_string(data: SimpleNamespace):
+    """Build the Tower DB connection-string suffix from the tfvars-derived data."""
     if data.flag_use_container_db:
         db_engine = data.db_container_engine_version
     else:
