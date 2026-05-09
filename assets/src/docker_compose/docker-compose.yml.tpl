@@ -3,7 +3,7 @@ services:
 
 %{ if flag_use_container_db == true ~}
   db:
-    image: ${db_container_engine}:${db_container_engine_version} #mysql:8.0  #mysql:5.7
+    image: ${db_container_engine}:${db_container_engine_version} #mysql:8.0
     networks:
       - backend
     expose:
@@ -29,12 +29,7 @@ services:
 
 %{ if flag_use_container_redis == true ~}
   redis:
-    image: 
-%{ if updated_redis_version ~}
-      redis:7.2.6
-%{ else ~}
-      cr.seqera.io/public/redis:6.0
-%{ endif ~}
+    image: redis:7.2.6
     networks:
       - backend
     expose:
@@ -69,7 +64,6 @@ services:
 %{ endif ~}
 
 
-%{ if flag_new_enough_for_migrate_db == true ~}
   migrate:
     image: cr.seqera.io/private/nf-tower-enterprise/migrate-db:${docker_version}
     platform: linux/amd64
@@ -88,10 +82,8 @@ services:
       db:
         condition: service_healthy
 %{ endif ~}
-%{ endif ~}
 
 
-%{ if flag_new_enough_for_migrate_db == true ~}
   cron:
     image: cr.seqera.io/private/nf-tower-enterprise/backend:${docker_version}
     command: -c "/tower.sh"
@@ -113,39 +105,6 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
-%{ else ~}
-  cron:
-    image: cr.seqera.io/private/nf-tower-enterprise/backend:${docker_version}
-%{ if flag_use_container_db == true ~}
-    command: -c "/wait-for-it.sh db:3306 -t 60; /migrate-db.sh; /tower.sh"
-%{ else ~}
-    command: -c "/migrate-db.sh; /tower.sh"
-%{ endif }
-    networks:
-      - frontend
-      - backend
-    volumes:
-      - $HOME/target/tower_config/tower.yml:/tower.yml
-%{ if flag_enable_data_studio == true ~}
-      - $HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem
-%{ endif ~}
-    env_file:
-      # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
-      - $HOME/target/tower_config/tower.env
-    environment:
-      # Micronaut environments are required. Do not edit these value
-      - MICRONAUT_ENVIRONMENTS=prod,redis,cron,${oidc_consolidated}
-    restart: always
-%{ if flag_use_container_db == true || flag_use_container_redis == true ~}
-    depends_on:
-%{ if flag_use_container_db == true ~}
-      - db
-%{ endif ~}
-%{ if flag_use_container_redis == true ~}
-      - redis
-%{ endif ~}
-%{ endif ~}
-%{ endif ~}
 
 
   backend:
@@ -201,9 +160,7 @@ services:
   connect-proxy:
     image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-proxy:${data_studio_container_version}
     platform: linux/amd64
-%{ if studio_uses_distroless == true ~}
     user: 65532:65532
-%{ endif ~}
     env_file:
       - $HOME/target/tower_config/data-studios.env
     networks:
@@ -230,13 +187,11 @@ services:
   connect-server:
     image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-server:${data_studio_container_version}
     platform: linux/amd64
-%{ if studio_uses_distroless == true ~}
     user: 65532:65532
     cap_drop:
       - ALL
     cap_add:
       - NET_BIND_SERVICE
-%{ endif ~}
     env_file:
       - $HOME/target/tower_config/data-studios.env
     networks:

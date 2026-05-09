@@ -25,11 +25,7 @@ CONNECT_SSH_KEY_PATH=${connect_ssh_key_path}
 # CONNECT_SSH_KEY_PATH=DO_NOT_UNCOMMENT
 %{ endif ~}
 
-%{ if studio_uses_distroless == true ~}
 CONNECT_LOG_LEVEL=debug
-%{ else}
-CONNECT_SERVER_LOG_LEVEL=debug
-%{ endif ~}
 
 %{ else ~}
 # STUDIOS_NOT_ENABLED=DO_NOT_UNCOMMENT
