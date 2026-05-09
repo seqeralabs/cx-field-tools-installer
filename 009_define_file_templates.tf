@@ -44,12 +44,12 @@ locals {
       flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces,
       data_studio_eligible_workspaces           = var.data_studio_eligible_workspaces,
 
-      flag_enable_data_studio_ssh                       = var.flag_enable_data_studio_ssh,
-      data_studio_ssh_address                           = module.connection_strings.tower_connect_ssh_url,
-      flag_limit_data_studio_ssh_to_some_workspaces     = var.flag_limit_data_studio_ssh_to_some_workspaces,
-      data_studio_ssh_eligible_workspaces                = var.data_studio_ssh_eligible_workspaces,
-      connect_ssh_fingerprint                           = tls_private_key.connect_ssh_host_key.public_key_fingerprint_sha256,
-      
+      flag_enable_data_studio_ssh                   = var.flag_enable_data_studio_ssh,
+      data_studio_ssh_address                       = module.connection_strings.tower_connect_ssh_url,
+      flag_limit_data_studio_ssh_to_some_workspaces = var.flag_limit_data_studio_ssh_to_some_workspaces,
+      data_studio_ssh_eligible_workspaces           = var.data_studio_ssh_eligible_workspaces,
+      connect_ssh_fingerprint                       = tls_private_key.connect_ssh_host_key.public_key_fingerprint_sha256,
+
       data_studio_options             = var.data_studio_options,
       flag_studio_enable_path_routing = var.flag_studio_enable_path_routing,
 
@@ -88,8 +88,6 @@ locals {
 
       flag_tower_enable_participant_auto_create_user = var.flag_tower_enable_participant_auto_create_user,
       flag_tower_enable_member_auto_create_user      = var.flag_tower_enable_member_auto_create_user,
-
-      flag_using_micronaut_4 = local.flag_using_micronaut_4,
 
     }
   )
@@ -133,10 +131,10 @@ locals {
 
   data_studios_env = templatefile("assets/src/tower_config/data-studios.env.tpl",
     {
-      flag_enable_data_studio  = var.flag_enable_data_studio,
-      tower_server_url         = module.connection_strings.tower_server_url,
-      tower_redis_url          = module.connection_strings.tower_connect_redis_url,
-      tower_connect_server_url = module.connection_strings.tower_connect_server_url,
+      flag_enable_data_studio     = var.flag_enable_data_studio,
+      tower_server_url            = module.connection_strings.tower_server_url,
+      tower_redis_url             = module.connection_strings.tower_connect_redis_url,
+      tower_connect_server_url    = module.connection_strings.tower_connect_server_url,
       flag_enable_data_studio_ssh = var.flag_enable_data_studio_ssh,
       connect_ssh_key_path        = "/data/ssh-host-key",
     }
@@ -427,7 +425,7 @@ resource "tls_private_key" "connect_pem" {
 }
 
 resource "tls_private_key" "connect_ssh_host_key" {
-    algorithm = "ED25519"
+  algorithm = "ED25519"
 }
 
 
