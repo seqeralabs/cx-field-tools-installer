@@ -1,7 +1,7 @@
 import os
+from pathlib import Path
 import shutil
 import subprocess
-from pathlib import Path
 
 from tests.utils.cache.cache import hash_cache_key, normalize_whitespace
 from tests.utils.config import FP
@@ -11,22 +11,26 @@ from tests.utils.filehandling import FileHelper
 ## ------------------------------------------------------------------------------------
 ## Subprocess Utility Functions
 ## ------------------------------------------------------------------------------------
-# NOTE: PIPE needed to capture plan output (for apply), but causes noisy console.
-#       Replaced with shell-type subprocess.run commands Bash redirect output to files.
-def execute_subprocess(command: str) -> bytes:
-    """
-    Execute a subprocess command.
-    """
-    result = subprocess.run(
-        command,
-        check=True,
-        # stdout=subprocess.PIPE,
-        stdout=subprocess.DEVNULL,  # > /dev/null
-        stderr=subprocess.STDOUT,  # 2>&1
-        shell=True,
-    ).stdout
-
-    return result
+# stdout/stderr are captured (not echoed) to keep the test console clean during success.
+# On failure, both streams are surfaced inside the raised RuntimeError so pytest tracebacks
+# include the actual terraform error rather than a bare "exit status 1".
+def execute_subprocess(command: str) -> str:
+    """Execute a subprocess command. Surfaces stdout+stderr on failure."""
+    try:
+        result = subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True,
+            shell=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(
+            f"Subprocess failed (exit {e.returncode}): {command}\n"
+            f"--- STDOUT ---\n{e.stdout}\n"
+            f"--- STDERR ---\n{e.stderr}"
+        ) from e
+    return result.stdout
 
 
 ## ------------------------------------------------------------------------------------
@@ -34,14 +38,13 @@ def execute_subprocess(command: str) -> bytes:
 ## ------------------------------------------------------------------------------------
 # Keep all file method helpers in a single class to simplify imports.
 class TF:
-    """
-    Terraform command execution helpers.
-      - Plan based on core tfvars, core override, and testcase override.
-      - Targeted apply/destroy available if necessary. eg.
-        - `terraform apply   --auto-approve tfpan`
-        - `terraform apply   --auto-approve -target=null_resource.my_resource`
-        - `terraform destroy --auto-approve`
-        - `terraform destroy --auto-approve -target=null_resource.my_resource`
+    """Terraform command execution helpers.
+    - Plan based on core tfvars, core override, and testcase override.
+    - Targeted apply/destroy available if necessary. eg.
+      - `terraform apply   --auto-approve tfpan`
+      - `terraform apply   --auto-approve -target=null_resource.my_resource`
+      - `terraform destroy --auto-approve`
+      - `terraform destroy --auto-approve -target=null_resource.my_resource`
     """
 
     @staticmethod
@@ -84,7 +87,6 @@ def prepare_plan(tf_modifiers: str, qualifier: str = "") -> dict:
     Returns:
         Terraform plan JSON data
     """
-
     # Cache key affected by whitespace. Standardize before hashing.
     tf_modifiers = normalize_whitespace(tf_modifiers)
     cache_key = hash_cache_key(tf_modifiers, qualifier)
