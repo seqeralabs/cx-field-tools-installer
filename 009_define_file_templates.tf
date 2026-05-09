@@ -86,6 +86,11 @@ locals {
 
       tower_audit_retention_days = var.tower_audit_retention_days,
 
+      flag_tower_enable_participant_auto_create_user = var.flag_tower_enable_participant_auto_create_user,
+      flag_tower_enable_member_auto_create_user      = var.flag_tower_enable_member_auto_create_user,
+
+      flag_using_micronaut_4 = local.flag_using_micronaut_4,
+
     }
   )
 

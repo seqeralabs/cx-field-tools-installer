@@ -16,7 +16,7 @@ apply: verify
 	@echo "Invoking 'terraform apply'"
 	@terraform apply
 
-destroy: 
+destroy:
 	@python3 .githooks/check_destroy.py
 	@terraform destroy
 
@@ -35,7 +35,7 @@ generate_json_plan:
 test_cleanse:
 	@rm tests/datafiles/base-overrides.auto.tfvars
 	@rm tests/datafiles/terraform.tfvars
-	@rm tests/datafiles/secrets/*.json 
+	@rm tests/datafiles/secrets/*.json
 
 generate_test_data:
 	@echo "Generating test data."
@@ -44,6 +44,9 @@ generate_test_data:
 
 run_tests:
 	@pytest -c tests/pytest.ini tests/
+
+run_tests_no_containers:
+	@pytest -c tests/pytest.ini tests/ -m "not testcontainer"
 
 purge_cached_plans:
 	@cd tests/ && rm -rf .plan_cache
@@ -55,7 +58,3 @@ purge_cache:
 	@echo "Purging testing caches"
 	@$(MAKE) purge_cached_templatefiles
 	@$(MAKE) purge_cached_plans
-
-
-
-
