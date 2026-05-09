@@ -26,14 +26,13 @@ variable "flag_use_container_db" {
   type        = bool
 }
 
-variable "flag_create_external_redis" {
-  description = "Whether to create external Redis"
-  type        = bool
-}
-
-variable "flag_use_container_redis" {
-  description = "Whether to use a Redis."
-  type        = bool
+variable "platform_redis_mode" {
+  type = string
+  # NOTE: must match keys of local.platform_redis_dns_options in main.tf
+  validation {
+    condition     = contains(["container", "new", "mock"], var.redis_mode)
+    error_message = "redis_mode must be one of: container, new, mock."
+  }
 }
 
 variable "flag_enable_data_studio" {
@@ -103,6 +102,7 @@ variable "elasticache_tower" {
   type        = any
   default     = null
 }
+
 
 ## ------------------------------------------------------------------------------------
 ## Groundswell Configuration

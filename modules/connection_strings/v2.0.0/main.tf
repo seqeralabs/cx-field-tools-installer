@@ -8,6 +8,12 @@ locals {
   # If use_mocks is true, we will mock the resources that would otherwise be created.
   # This is useful for testing the connection strings without having to create the resources.
 
+  # Lookup Objects
+  platform_redis_dns_options = {
+    container = "redis:6379"
+    new       = try("${var.elasticache_tower.cache_nodes[0].address}:${var.elasticache_tower.cache_nodes[0].port}", "")
+    mock      = "mock.tower-redis.com:6379"
+  }
 
   # TOWER CORE
   # ---------------------------------------------------------------------------------------
@@ -25,21 +31,15 @@ locals {
   platform_db_container         = var.flag_use_container_db ? "db" : ""
   platform_db_external_new      = var.flag_create_external_db ? var.rds_tower.db_instance_address : ""
   platform_db_external_existing = var.flag_use_existing_external_db ? var.tower_db_url : ""
-  platform_db_unmocked_url      = join("", [local.platform_db_container, local.platform_db_external_new, local.platform_db_external_existing])
-  platform_db_mock_url          = "mock.tower-db.com"
-  platform_db_dns               = var.use_mocks ? "${local.platform_db_mock_url}:3306" : "${platform_db_unmocked_url}:3306"
+  platform_db_unmocked_dns      = join("", [local.platform_db_container, local.platform_db_external_new, local.platform_db_external_existing])
+  platform_db_mocked_dns        = "mock.tower-db.com"
+  platform_db_dns               = var.use_mocks ? "${local.platform_db_mocked_dns}:3306" : "${platform_db_unmocked_dns}:3306"
   platform_connstring           = startswith(var.db_engine, "8.") ? "?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true" : ""
   tower_db_url                  = "jdbc:mysql://${local.platform_db_dns}/${var.db_database_name}${local.platform_connstring}"
 
-  # TODO: May 16/2025 -- This Redis is unsecured (unlike Wave). To be fixed in post-Wave-Lite Feature Release.
-  # NOTE: Connect has same logic. I've duplicated to better handle divergence risk.
-  sp_redis_container     = var.flag_use_container_redis ? "redis" : ""
-  sp_redis_external_mock = var.flag_create_external_redis && var.use_mocks ? "mock.tower-redis.com" : ""
-  sp_redis_external_new  = var.flag_create_external_redis && !var.use_mocks ? "${var.elasticache_tower.cache_nodes[0].address}" : ""
-  tower_redis_dns        = join("", [local.sp_redis_container, local.sp_redis_external_mock, local.sp_redis_external_new])
-
-  sp_redis_dns_with_port = var.flag_create_external_redis && !var.use_mocks ? "${local.tower_redis_dns}:${var.elasticache_tower.cache_nodes[0].port}" : "${local.tower_redis_dns}:6379"
-  tower_redis_url        = "redis://${local.sp_redis_dns_with_port}"
+  # TODO: May 16/2025 -- This Redis is unsecured (unlike Wave). Convert to secure rediss.
+  platform_redis_dns = local.platform_redis_dns_options[var.platform_redis_mode]
+  tower_redis_url    = "redis://${local.platform_redis_dns}"
 
 
   # GROUNDSWELL
