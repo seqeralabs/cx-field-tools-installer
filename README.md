@@ -1,6 +1,6 @@
 # Terraform Installer For Seqera Platform Enterprise (Docker-Compose)
 
-A successful Seqera Platform deployment requires making decisions about networking, security posture, container orchestration, permissions, etc. which can sometimes be overwhelming to a client administrator who just wants to get their users onboarded and using the features offered by the Platform. 
+A successful Seqera Platform deployment requires making decisions about networking, security posture, container orchestration, permissions, etc. which can sometimes be overwhelming to a client administrator who just wants to get their users onboarded and using the features offered by the Platform.
 
 The Seqera CX team has developed a field tool to simplify deployment in two ways:
 
@@ -11,6 +11,7 @@ The Seqera CX team has developed a field tool to simplify deployment in two ways
 
 ## Table of Contents
 - [Disclaimer](#disclaimer)
+- [Supported Seqera Platform Versions](#supported-seqera-platform-versions)
 - [Appropriateness Criteria](#appropriateness-criteria)
 - [Prerequisites](#prerequisites)
   - [01: Tool Dependencies](#01-tool-dependencies)
@@ -37,7 +38,7 @@ The Seqera CX team has developed a field tool to simplify deployment in two ways
 
 ## Disclaimer
 
-**This is an unofficial field tool. Use at your own discretion!!** 
+**This is an unofficial field tool. Use at your own discretion!!**
 
 The solution is delivered on a best-effort basis, but provides no guarantees of appropriateness for your specific scenario. Please conduct your due diligence prior to execution within your environment.
 
@@ -59,6 +60,19 @@ For further information on how the project is managed, please see:
     Ensure you are compliant with software licenses.
 
 
+## Supported Seqera Platform Versions
+
+This repository supports **Seqera Platform v25 and later only**. Earlier versions are no longer maintained here.
+
+If you need to deploy a pre-v25 version of Seqera Platform — for example, to reproduce an existing customer environment — check out the `legacy-final-pre-v25` tag (_created May 6/26_), which marks the final commit that supported the legacy version range:
+
+```bash
+git checkout legacy-final-pre-v25
+```
+
+New features and fixes are not backported to that tag.
+
+
 ## Appropriateness Criteria
 You must meet the following criteria to use this solution successfully.
 
@@ -67,14 +81,15 @@ You must meet the following criteria to use this solution successfully.
 3. Your corporate policies allow you to store secrets in [AWS Systems Manager Parameter Store](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html) (SSM).
 4. You have access to a local **Linux**-based terminal (_Mac supported, with caveats_).
 5. You can use [Terraform](https://www.terraform.io/) to provision infrastructure.
-6. You use OpenSSH and can maintain a `~/.ssh/config` file. 
+6. You use OpenSSH and can maintain a `~/.ssh/config` file.
 7. **(New as of May 21, 2025)** You have access to a local container runtime (_e.g. [Docker](https://www.docker.com/)_).
+8. **(New as of 2026-05-06)** You are deploying Seqera Platform v25 or later. For pre-v25 deployments, see [Supported Seqera Platform Versions](#supported-seqera-platform-versions).
 
 <br />
 
 ## Prerequisites
 #### 01: Tool Dependencies
-See [Tool Dependencies](./documentation/setup/install_tools.md) for tooling requirements. 
+See [Tool Dependencies](./documentation/setup/install_tools.md) for tooling requirements.
 
 
 #### 02: AWS IAM Permissions
@@ -96,11 +111,11 @@ See [Configuration Files](./documentation/setup/configuration_files.md) for file
 
 #### 02: Prepare Configuration Files
 1. Select a name for your Seqera Platform application (_default: `tower-template`_).
-    
+
     _This is a namespace isolator which prevents concurrent instances (e.g., `dev` and `prod`) from accidentally sharing configurations._
 
 
-#### 02A: Prepare secrets 
+#### 02A: Prepare secrets
 1. Follow the instructions in [Prepare Secrets](./documentation/setup/prepare_secrets.md) and then return here.
 
 2. Follow the instructions in [Prepare SSM Secrets](./documentation/setup/prepare_ssm.md) and then return here.
@@ -128,7 +143,7 @@ The following configuration actions are encouraged but not mandatory.
 #### 01: Review your Terraform state storage strategy
 1. Follow the instructions in [Review Terraform State Strategy](./documentation/setup/optional_tfstate.md).
 
-#### 02: Fusion Binary Vendoring 
+#### 02: Fusion Binary Vendoring
 1. Follow the instructions in [Fusion Binary Vendoring](./documentation/setup/optional_fusion_binary_vendoring.md).
 
 #### 03: Update your Git repo settings
@@ -156,7 +171,7 @@ The following configuration actions are encouraged but not mandatory.
 
 2. Create and review an execution plan:
     ```bash
-    # Recommended approach. 
+    # Recommended approach.
     # Execute the Seqera-supplied Python script to check your `terraform.tfvars` file for known configuration conflicts prior to terraform binary invocation.
     $ make plan
 
@@ -167,7 +182,7 @@ The following configuration actions are encouraged but not mandatory.
 
 2. Execute the actions reviewed in the Terraform plan:
     ```bash
-    # Recommended approach. 
+    # Recommended approach.
     # Execute the Seqera-supplied Python script to check your  `terraform.tfvars` file for known configuration conflicts prior to terraform binary invocation.
     $ make apply
 
