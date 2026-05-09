@@ -1,7 +1,7 @@
+from pathlib import Path
 import re
 import shutil
 import subprocess
-from pathlib import Path
 
 from tests.utils.assertions.file_filters import filter_templates
 from tests.utils.cache.cache import create_templatefile_cache_folder
@@ -9,22 +9,22 @@ from tests.utils.config import FP, TCValues, all_template_files
 from tests.utils.filehandling import FileHelper
 from tests.utils.terraform.parser import extract_config_values
 
+
 ## ------------------------------------------------------------------------------------
 ## Helpers - Templatefile
 ## ------------------------------------------------------------------------------------
 
 
 def replace_vars_in_templatefile(input_str, vars_dict, pattern) -> str:
-    """
-    Replace terraform references with actual values in templatefile string.
+    """Replace terraform references with actual values in templatefile string.
 
     Critical replacements: module.connection_strings.* and secrets
     Do not need to replace 'var.' or 'local.' since terraform console knows these.
 
     Args:
-        input_str: Templatefile string from JSONified 009
-        vars_dict: Dictionary of values to substitute
-        type: Which terraform reference type to replace (e.g. "module.connection_strings")
+        input_str: Templatefile string from JSONified 009.
+        vars_dict: Dictionary of values to substitute.
+        pattern: Which terraform reference type to replace (e.g. "module.connection_strings").
 
     Example:
         Input:  "module.connection_strings.tower_db_url"
@@ -59,24 +59,23 @@ def replace_vars_in_templatefile(input_str, vars_dict, pattern) -> str:
             # Format the value correctly for terraform
             if isinstance(value, str):
                 return f'"{value}"'  # Strings need quotes
-            elif isinstance(value, bool):
+            if isinstance(value, bool):
                 return str(value).lower()  # Booleans need lowercase
-            else:
-                return str(value)  # Numbers stay as-is
+            return str(value)  # Numbers stay as-is
         return match.group(0)  # Keep original if not found
 
     return re.sub(pattern, replace_match, input_str)
 
 
 def prepare_templatefile_payload(key, tc: TCValues):
-    """
-    Extract the templatefile command from JSONified 009, then sub values as necessary.
+    r"""Extract the templatefile command from JSONified 009, then sub values as necessary.
 
     BACKGROUND:
     A normal terraform plan/apply would have all the input values availabe at execution (this is SLOW).
 
     Instead, using the much faster 'terraform console' approach.
-        - Console appears to have access to tfvars & locals, but not module outputs (emitted file is "known after apply").
+        - Console appears to have access to tfvars & locals, but not module outputs (emitted file
+          is "known after apply").
         - As a result:
             - 1) Must run 'terraform plan' (full) once to generate all outputs (including of module outputs),
             - 2) Substitution in the templatefile string passed to 'terraform console'.
@@ -102,28 +101,25 @@ def prepare_templatefile_payload(key, tc: TCValues):
     # same reason module.connection_strings.* values are substituted.
     tls_ssh_host_key_values = {"public_key_fingerprint_sha256": "SHA256:mocksshfingerprintfortesting"}
     payload = replace_vars_in_templatefile(payload, tls_ssh_host_key_values, "tls_connect_ssh_host_key")
-    payload = payload.replace("\n", "")  # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
-    return payload
+    return payload.replace("\n", "")  # MUST REMOVE NEW LINES OR CONSOLE CALL BREAKS.
 
 
 def write_populated_templatefile(outfile, payload):
-    """
-    Executes 'terraform console', passing in the specific templatefile and substituted payload.
+    """Executes 'terraform console', passing in the specific templatefile and substituted payload.
 
     Example :
         > terraform console <<< 'templatefile("assets/src/ansible/06_run_seqerakit.yml.tpl",
             { app_name = "abc", flag_create_hosts_file_entry = false, flag_do_not_use_https = true })'
 
-    NOTE:
+    Note:
         - 'terraform console' command needs single quotes on outside and double-quotes within.
         - 'terraform console' emits '<<EOT' and 'EOT' at start/finish of multi-line payload. These must be stripped.
     """
     # print(payload)
     payload = subprocess.run(
-        ["terraform", "console"],
+        ["terraform", "console"],  # noqa: S607  (relies on PATH; standard for test env)
         input=str(payload),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         text=True,
         check=True,
     )
@@ -137,8 +133,8 @@ def write_populated_templatefile(outfile, payload):
 
 
 def _is_wave_lite_rds(key: str) -> bool:
-    """
-    Check if file needs special SQL handling (can't use terraform console).
+    """Check if file needs special SQL handling (can't use terraform console).
+
     SQL files with postgres single-quotes break terraform console input parsing.
     """
     sql_exception_files = ["wave_lite_rds"]
@@ -146,25 +142,26 @@ def _is_wave_lite_rds(key: str) -> bool:
 
 
 def generate_tc_files(plan, desired_files, testcase_name):
-    """
-    Create templatefiles relevant to the testcase.
+    """Create templatefiles relevant to the testcase.
 
     Args:
-        tc: Test case context object.
+        plan: Terraform plan JSON used to extract config values.
+        desired_files: List of template file keys to generate (empty list = all).
+        testcase_name: Name of the testcase, used as a sub-folder for cache output.
 
     Returns:
-        Updated template_files dict with content and filepath added
+        Updated template_files dict with content and filepath added.
     """
-    TC: TCValues = extract_config_values(plan)
+    tc: TCValues = extract_config_values(plan)
 
-    TC.all_template_files = filter_templates(desired_files)  # Master dictionary relevant to this testcase
-    TC.testcase_name = testcase_name
+    tc.all_template_files = filter_templates(desired_files)  # Master dictionary relevant to this testcase
+    tc.testcase_name = testcase_name
 
-    for key in TC.all_template_files.keys():  # (e.g., "tower_env")
+    for key in tc.all_template_files:  # (e.g., "tower_env")
         extension = all_template_files[key]["extension"]
         read_type = all_template_files[key]["read_type"]
 
-        cache_dir = create_templatefile_cache_folder(TC)
+        cache_dir = create_templatefile_cache_folder(tc)
         cache_file_str = f"{cache_dir}/{key}{extension}"
         cache_file_path = Path(cache_file_str)
 
@@ -187,20 +184,20 @@ def generate_tc_files(plan, desired_files, testcase_name):
             # Run substitution script
             # TODO: Make credentials configurable instead of hardcoded
             command = f"python3 {script_path} wave_lite_test_limited wave_lite_test_limited_password {cache_dir}"
-            subprocess.run(command, shell=True, text=True, capture_output=False, check=True)
+            subprocess.run(command, shell=True, text=True, capture_output=False, check=True)  # noqa: S602  (intentional shell features; inputs are hardcoded test paths)
 
             # Store content
-            TC.all_template_files[key]["content"] = read_type(target_path)
-            TC.all_template_files[key]["filepath"] = target_path  # DONT USE THIS: cache_file_str
+            tc.all_template_files[key]["content"] = read_type(target_path)
+            tc.all_template_files[key]["filepath"] = target_path  # DONT USE THIS: cache_file_str
 
         else:
             if not cache_file_path.exists():
                 # Cache miss. Create file
-                payload = prepare_templatefile_payload(key, TC)
+                payload = prepare_templatefile_payload(key, tc)
                 write_populated_templatefile(cache_file_str, payload)
             cache_file_content = read_type(cache_file_path.as_posix())
 
-            TC.all_template_files[key]["content"] = cache_file_content
-            TC.all_template_files[key]["filepath"] = cache_file_str
+            tc.all_template_files[key]["content"] = cache_file_content
+            tc.all_template_files[key]["filepath"] = cache_file_str
 
-    return TC.all_template_files
+    return tc.all_template_files

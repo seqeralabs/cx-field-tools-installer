@@ -24,18 +24,17 @@ from tests.utils.terraform.template_generator import generate_tc_files
 @pytest.mark.local
 @pytest.mark.testcontainer
 def test_tower_sql_population(session_setup):
-    """
-    Test that tower.sql successfully populates a MySQL8 database as expected (via Testcontainer).
+    """Test that tower.sql successfully populates a MySQL8 database as expected (via Testcontainer).
+
     Emulates execution of RDS prepping script in Ansible.
 
-    NOTE:
+    Note:
     Container DB cant be connected to via master creds like standard RDS.
     Emulate by creating one user "test", then run the script that we'd normally run against RDS with the master user.
     Then try to log in with the "tower" user.
 
     Cant use `mysql_container.get_container_host_ip()` because it returns `localhost` and we need the host's actual IP.
     """
-
     ## SETUP
     ## =======================================================================================
     tf_modifiers = """#NONE"""
@@ -52,26 +51,28 @@ def test_tower_sql_population(session_setup):
     # WARNING: DONT CHANGE THESE OR TEST FAILS.
     # https://hub.docker.com/_/mysql
     master_user = "root"
-    master_password = "test"
+    master_password = "test"  # noqa: S105  (test fixture)
     master_db_name = "test"
 
     # User & Password set in 'tower_secrets'.
     tower_db_user = "tower_test_user"
-    tower_db_password = "tower_test_password"
+    tower_db_password = "tower_test_password"  # noqa: S105  (test fixture)
     tower_db_name = "tower"
 
     def run_mysql_query(query, user=None, password=None, database=None):
-        """
-        Helper function to run MySQL queries using container commands
+        """Run MySQL queries using container commands.
+
         -  Write desired SQL command to temporary file.
         -  Volume mounts temporary file into a runner MySQL8 container (for access to CLI).
         -  Establishes connection to testcontainer MySQL and runs command.
         """
-
         with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as query_sql:
             query_sql.write(query)
             query_sql_path = query_sql.name
 
+        mysql_invoke = (
+            f"mysql --host host.docker.internal --port=3306 --user={user} --silent --skip-column-names < query.sql"
+        )
         mysql_cmd = f"""
             docker run --rm -t \
                 -v {query_sql_path}:/query.sql \
@@ -79,9 +80,9 @@ def test_tower_sql_population(session_setup):
                 --entrypoint /bin/bash \
                 --add-host host.docker.internal:host-gateway \
                 mysql:8.0 \
-                -c 'mysql --host host.docker.internal --port=3306 --user={user} --silent --skip-column-names < query.sql'
+                -c '{mysql_invoke}'
         """
-        result = subprocess.run(mysql_cmd, shell=True, capture_output=True, text=True, timeout=30)
+        result = subprocess.run(mysql_cmd, check=False, shell=True, capture_output=True, text=True, timeout=30)  # noqa: S602  (intentional shell heredoc for docker run)
         assert result.returncode == 0
         return result.stdout.strip()
 
@@ -91,7 +92,7 @@ def test_tower_sql_population(session_setup):
         .with_env("MYSQL_PASSWORD", master_password)
         .with_env("MYSQL_DATABASE", master_db_name)
         .with_bind_ports(3306, 3306)
-    ) as mysql_container:
+    ) as mysql_container:  # noqa: F841  (kept for readability)
         # POPULATE
         # Run initial population script.
         query = tc_files["tower_sql"]["content"]
@@ -104,7 +105,7 @@ def test_tower_sql_population(session_setup):
         assert db_result == tower_db_name
 
         # Verify user creation
-        query = f"SELECT user FROM mysql.user WHERE user='{tower_db_user}';"
+        query = f"SELECT user FROM mysql.user WHERE user='{tower_db_user}';"  # noqa: S608  (test fixture; values hardcoded)
         user_result = run_mysql_query(query, master_user, master_password)
         assert user_result == tower_db_user
 
@@ -126,18 +127,17 @@ def test_tower_sql_population(session_setup):
 @pytest.mark.local
 @pytest.mark.testcontainer
 def test_wave_sql_rds_population(session_setup, config_baseline_settings_default):
-    """
-    Test that wave-lite-rds.sql successfully populates a Postgres database as expected (via Testcontainer).
+    """Test that wave-lite-rds.sql successfully populates a Postgres database as expected (via Testcontainer).
+
     Emulates execution of RDS prepping script in Ansible.
 
-    NOTE:
+    Note:
     Container DB cant be connected to via master creds like standard RDS.
     Emulate by creating one user "test", then run the script that we'd normally run against RDS with the master user.
     Then try to log in with the "tower" user.
 
     Cant use `mysql_container.get_container_host_ip()` because it returns `localhost` and we need the host's actual IP.
     """
-
     ## SETUP
     ## =======================================================================================
     tf_modifiers = """#NONE"""
@@ -153,23 +153,26 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
 
     # https://hub.docker.com/_/postgres
     master_user = "wave_lite_test_master"
-    master_password = "wave_lite_test_master_password"
+    master_password = "wave_lite_test_master_password"  # noqa: S105  (test fixture)
     master_db_name = "test"
 
     # User & Password set in wave_lite secrets.
     wave_db_user = "wave_lite_test_limited"
-    wave_db_password = "wave_lite_test_limited_password"
+    wave_db_password = "wave_lite_test_limited_password"  # noqa: S105  (test fixture)
     wave_db_name = "wave"
 
     def run_postgres_query(query, user=wave_db_user, password=wave_db_password, database="wave"):
-        """Helper function to run psql queries using container commands"""
-
+        """Run psql queries using container commands."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as query_sql:
             query_sql.write(query)
             query_sql_path = query_sql.name
 
         # -t — Tuples only (removes headers and footers)
         # -A — Unaligned output (removes column formatting, outputs plain text)
+        psql_invoke = (
+            f"PGPASSWORD={password} psql --host host.docker.internal --port=5432 "
+            f"--user={user} -d {database} -t -A < query.sql"
+        )
         postgres_cmd = f"""
             docker run --rm -t \
                 -v {query_sql_path}:/query.sql \
@@ -177,9 +180,9 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
                 --entrypoint /bin/bash \
                 --add-host host.docker.internal:host-gateway \
                 postgres:17.6 \
-                -c 'PGPASSWORD={password} psql --host host.docker.internal --port=5432 --user={user} -d {database} -t -A < query.sql'
+                -c '{psql_invoke}'
         """
-        result = subprocess.run(postgres_cmd, shell=True, capture_output=True, text=True, timeout=30)
+        result = subprocess.run(postgres_cmd, check=False, shell=True, capture_output=True, text=True, timeout=30)  # noqa: S602  (intentional shell heredoc for docker run)
         assert result.returncode == 0
         return result.stdout.strip()
 
@@ -193,11 +196,11 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
         PostgresContainer("postgres:17.6", username=master_user, password=master_password, dbname=master_db_name)
         .with_env("GRAHAM", "graham")
         .with_bind_ports(5432, 5432)
-    ) as postgres_container:
+    ) as postgres_container:  # noqa: F841  (kept for readability)
         # POPULATE
         # Run initial population script.
         query = tc_files["wave_lite_rds"]["content"]
-        db_result = run_postgres_query(query, master_user, master_password, master_db_name)
+        run_postgres_query(query, master_user, master_password, master_db_name)
 
         # VERIFY
         # Test master user connection to wave database
@@ -231,7 +234,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
         .with_env("GRAHAM", "graham")
         .with_bind_ports(5432, 5432)
         .with_volume_mapping(init_sql_rds_path, "/docker-entrypoint-initdb.d/01-init.sql")
-    ) as postgres_container3:
+    ) as postgres_container3:  # noqa: F841  (kept for readability)
         # POPULATE
         # No need to run explicit population step since volume mounting should hanlde for us on initial boot.
 
@@ -264,18 +267,17 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
 @pytest.mark.local
 @pytest.mark.testcontainer
 def test_wave_containers(session_setup):
-    """
-    Ensure the entire Wave containerized ecosystem can run.
+    """Ensure the entire Wave containerized ecosystem can run.
 
     How it works:
         1. Read in content of generated docker-compose file.
-        2. Purge any key in ["services"] if it's not in ["wave-lite", "wave-lite-reverse-proxy", "wave-db", "wave-redis"]
+        2. Purge any key in ["services"] if it's not in
+           ["wave-lite", "wave-lite-reverse-proxy", "wave-db", "wave-redis"]
         3. Purge ['wave-lite']['volumes'] and replace with path to test-generated YAML.
         4. Purge ['wave-lite-reverse-proxy']['volumes'] and replace with path to target. TODO: FIX THIS.
         5. Purge ['wave-db]['volumes'] and replace with path to test-generated SQL.
         6. Purge ['wave-redis']['volumes'].
     """
-
     ## SETUP
     ## =======================================================================================
     tf_modifiers = """#NONE"""
@@ -332,7 +334,7 @@ def test_wave_containers(session_setup):
     filename = os.path.basename(wave_docker_compose_path)
 
     # Start docker-compose deployment and run tests
-    with DockerCompose(context=folder_path, compose_file_name=filename, pull=True) as compose:
+    with DockerCompose(context=folder_path, compose_file_name=filename, pull=True) as compose:  # noqa: F841  (kept for readability)
         # Test wave-lite service-info endpoint
         service_url = "http://localhost:9099/service-info"
         max_retries = 10
@@ -340,7 +342,7 @@ def test_wave_containers(session_setup):
 
         for attempt in range(max_retries):
             try:
-                with urllib.request.urlopen(service_url, timeout=10) as response:
+                with urllib.request.urlopen(service_url, timeout=10) as response:  # noqa: S310  (hardcoded localhost test URL)
                     assert response.status == 200, f"Expected HTTP 200, got {response.status}"
                     response_data = json.loads(response.read().decode("utf-8"))
 

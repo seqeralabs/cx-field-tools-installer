@@ -1,25 +1,27 @@
-from datetime import datetime
+from datetime import UTC, datetime
 import json
 import logging
 import os
 from pathlib import Path
-import platform
 import subprocess
 import sys
 import tempfile
+
 
 base_import_dir = Path(__file__).resolve().parents[2]
 if base_import_dir not in sys.path:
     sys.path.append(str(base_import_dir))
 
-from installer.utils.logger import logger
+from installer.utils.logger import logger  # noqa: E402  (sys.path manipulation above)
+
 
 ## ------------------------------------------------------------------------------------
 ## Convert terraform.tfvars to JSON
 ## Notes:
-##   1. As of May 16, 2025, the bespoke parser to convert terraform.tfvars into json is replaced with a new container-based
-##      solution from tmccombs/hcl2json. The home-rolled parser was originally created to avoid introducing packages from
-##      the internet. Due to more complicated parsing needs, the new parser solution has been implemented.
+##   1. As of May 16, 2025, the bespoke parser to convert terraform.tfvars into json is replaced
+##      with a new container-based solution from tmccombs/hcl2json. The home-rolled parser was
+##      originally created to avoid introducing packages from the internet. Due to more
+##      complicated parsing needs, the new parser solution has been implemented.
 ##      To refer to the previous parser, please refer to previous Git histroy.
 ##
 ##   2. The new parser relies on the containerized solution provided here: https://github.com/tmccombs/hcl2json.
@@ -29,18 +31,20 @@ from installer.utils.logger import logger
 ## ------------------------------------------------------------------------------------
 
 
-def get_tfvars_as_json():
-    """
-    Uses the `tmccombs/hcl2json` Docker image to convert `terraform.tfvars` into JSON format and return it as
-    a Python dictionary.
-    """
+def get_tfvars_as_json(tfvars_path=None):
+    """Use the `tmccombs/hcl2json` Docker image to convert a tfvars file into JSON format.
 
-    # Check for tfvars
-    tfvars_original_path = os.path.abspath("terraform.tfvars")
-    if not os.path.exists(tfvars_original_path):
-        raise FileNotFoundError(
-            f"terraform.tfvars file not found in path: {tfvars_original_path}."
-        )
+    Returns the JSON content as a Python dictionary.
+
+    If `tfvars_path` is None, defaults to `<cwd>/terraform.tfvars` (the production path).
+    Tests can pass an explicit absolute path (e.g. to `templates/TEMPLATE_terraform.tfvars`).
+    """
+    # Default to live terraform.tfvars at cwd if no path provided.
+    if tfvars_path is None:
+        tfvars_path = os.path.abspath("terraform.tfvars")
+
+    if not os.path.exists(tfvars_path):
+        raise FileNotFoundError(f"terraform.tfvars file not found in path: {tfvars_path}.")
 
     # Because this is a 3rd party container, we are locking down as much as possible for security reasons:
     # Single local file mounted as read-only, non-root user, disabled network capabilities, and
@@ -53,18 +57,18 @@ def get_tfvars_as_json():
         "-i",
         "--rm",
         "-v",
-        f"{os.getcwd()}/terraform.tfvars:/tmp/terraform.tfvars:ro",
+        f"{tfvars_path}:/tmp/terraform.tfvars:ro",
         "--user",
         "1000:1000",
         "--network",
         "none",
         # "tmccombs/hcl2json@sha256:312ac54d3418b87b2ad64f82027483cb8b7750db6458b7b9ebe42ec278696e96",
         "ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json@sha256:48af2029d19d824ba1bd1662c008e691c04d5adcb055464e07b2dc04980dcbf5",
-        "/tmp/terraform.tfvars",
+        "/tmp/terraform.tfvars",  # noqa: S108  (container-internal mount target, not a host path)
     ]
 
     # Assign result to variable (to then be returned directly or written to file for debugging)
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # noqa: S603  (cmd is a hardcoded list with vendored container hash)
 
     # Capture Docker runtime failures
     if result.returncode != 0:
@@ -75,7 +79,7 @@ def get_tfvars_as_json():
 
     # Redirect output to temporary JSON file (debugging only)
     if logging.getLevelName(logger.getEffectiveLevel()) == "DEBUG":
-        timestamp = datetime.now().strftime("%Y_%b%d_%I-%M%p")
+        timestamp = datetime.now(tz=UTC).strftime("%Y_%b%d_%I-%M%p")
         with tempfile.NamedTemporaryFile(
             delete=False,
             prefix=f"terraform_tfvars_{timestamp}_",
@@ -91,6 +95,3 @@ def get_tfvars_as_json():
         return json.loads(payload)  # json.loads converts json string to python object.
     except json.JSONDecodeError as e:
         raise RuntimeError("Failed to decode Docker output as JSON.") from e
-
-
-tf_vars_json_payload = get_tfvars_as_json()

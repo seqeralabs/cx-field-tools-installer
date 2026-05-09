@@ -2,11 +2,6 @@ import sys
 
 import pytest
 
-from tests.datafiles.expected_results.expected_results import (
-    assertion_modifiers_template,
-    generate_assertions_all_active,
-    generate_assertions_all_disabled,
-)
 from tests.utils.filehandling import FileHelper
 from tests.utils.terraform.executor import prepare_plan
 from tests.utils.terraform.template_generator import generate_tc_files
@@ -18,10 +13,7 @@ from tests.utils.terraform.template_generator import generate_tc_files
 @pytest.mark.local
 @pytest.mark.ansible
 def test_002_all_present(session_setup):
-    """
-    Confirm that all conditional blocks are present.
-    """
-
+    """Confirm that all conditional blocks are present."""
     tf_modifiers = """
         flag_create_external_db       = true
         flag_use_container_db         = false
@@ -39,10 +31,11 @@ def test_002_all_present(session_setup):
     plan = prepare_plan(tf_modifiers)
 
     desired_files = ["ansible_02_update_file_configurations"]
-    assertion_modifiers = assertion_modifiers_template()
+    # Kept for consistency with config-file tests; ansible tests use inline string assertions.
+    # assertion_modifiers = assertion_modifiers_template()
 
     tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    # tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     ansible_file_02 = FileHelper.read_file(f"{tc_files['ansible_02_update_file_configurations']['filepath']}")
     assert "Populating external Platform DB." in ansible_file_02
@@ -55,10 +48,7 @@ def test_002_all_present(session_setup):
 @pytest.mark.local
 @pytest.mark.ansible
 def test_002_none_present(session_setup):
-    """
-    Confirm that no conditional blocks are present.
-    """
-
+    """Confirm that no conditional blocks are present."""
     # Given
     tf_modifiers = """
         flag_create_external_db       = false
@@ -77,10 +67,11 @@ def test_002_none_present(session_setup):
     plan = prepare_plan(tf_modifiers)
 
     desired_files = ["ansible_02_update_file_configurations"]
-    assertion_modifiers = assertion_modifiers_template()
+    # Kept for consistency with config-file tests; ansible tests use inline string assertions.
+    # assertion_modifiers = assertion_modifiers_template()
 
     tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
-    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
+    # tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     ansible_file_02 = FileHelper.read_file(f"{tc_files['ansible_02_update_file_configurations']['filepath']}")
     assert "Populating external Platform DB." not in ansible_file_02
@@ -96,10 +87,7 @@ def test_002_none_present(session_setup):
 @pytest.mark.local
 @pytest.mark.ansible
 def test_005_all_present(session_setup):  # teardown_tf_state_all):
-    """
-    Confirm that all conditional blocks are present.
-    """
-
+    """Confirm that all conditional blocks are present."""
     tf_modifiers = """
         flag_create_external_db       = false
         flag_use_container_db         = true
@@ -109,10 +97,11 @@ def test_005_all_present(session_setup):  # teardown_tf_state_all):
     plan = prepare_plan(tf_modifiers)
 
     desired_files = ["ansible_05_patch_groundswell"]
-    assertion_modifiers = assertion_modifiers_template()
+    # Kept for consistency with config-file tests; ansible tests use inline string assertions.
+    # assertion_modifiers = assertion_modifiers_template()
 
     tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    # tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     ansible_file_05 = FileHelper.read_file(f"{tc_files['ansible_05_patch_groundswell']['filepath']}")
     assert "Patching container db with groundswell init script." in ansible_file_05
@@ -121,10 +110,7 @@ def test_005_all_present(session_setup):  # teardown_tf_state_all):
 @pytest.mark.local
 @pytest.mark.ansible
 def test_005_none_present(session_setup):
-    """
-    Confirm that no conditional blocks are present.
-    """
-
+    """Confirm that no conditional blocks are present."""
     tf_modifiers = """
         flag_create_external_db       = false
         flag_use_container_db         = true
@@ -134,10 +120,11 @@ def test_005_none_present(session_setup):
     plan = prepare_plan(tf_modifiers)
 
     desired_files = ["ansible_05_patch_groundswell"]
-    assertion_modifiers = assertion_modifiers_template()
+    # Kept for consistency with config-file tests; ansible tests use inline string assertions.
+    # assertion_modifiers = assertion_modifiers_template()
 
     tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
-    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
+    # tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     ansible_file_05 = FileHelper.read_file(f"{tc_files['ansible_05_patch_groundswell']['filepath']}")
     assert "Patching container db with groundswell init script." not in ansible_file_05
@@ -149,10 +136,7 @@ def test_005_none_present(session_setup):
 @pytest.mark.local
 @pytest.mark.ansible
 def test_006_all_present(session_setup):
-    """
-    Confirm that all conditional blocks are present.
-    """
-
+    """Confirm that all conditional blocks are present."""
     tf_modifiers = """
         flag_create_hosts_file_entry  = true
         flag_do_not_use_https         = true
@@ -160,10 +144,11 @@ def test_006_all_present(session_setup):
     plan = prepare_plan(tf_modifiers)
 
     desired_files = ["ansible_06_run_seqerakit"]
-    assertion_modifiers = assertion_modifiers_template()
+    # Kept for consistency with config-file tests; ansible tests use inline string assertions.
+    # assertion_modifiers = assertion_modifiers_template()
 
     tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    # tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     ansible_file_06 = FileHelper.read_file(f"{tc_files['ansible_06_run_seqerakit']['filepath']}")
     assert "Seqerakit - Using hosts file." in ansible_file_06
@@ -174,10 +159,7 @@ def test_006_all_present(session_setup):
 @pytest.mark.local
 @pytest.mark.ansible
 def test_006_none_present(session_setup):
-    """
-    Confirm that no conditional blocks are present.
-    """
-
+    """Confirm that no conditional blocks are present."""
     tf_modifiers = """
         flag_create_external_db       = false
         flag_use_container_db         = true
@@ -187,10 +169,11 @@ def test_006_none_present(session_setup):
     plan = prepare_plan(tf_modifiers)
 
     desired_files = ["ansible_06_run_seqerakit"]
-    assertion_modifiers = assertion_modifiers_template()
+    # Kept for consistency with config-file tests; ansible tests use inline string assertions.
+    # assertion_modifiers = assertion_modifiers_template()
 
     tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
-    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
+    # tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     ansible_file_06 = FileHelper.read_file(f"{tc_files['ansible_06_run_seqerakit']['filepath']}")
     assert "Seqerakit - Using hosts file." not in ansible_file_06

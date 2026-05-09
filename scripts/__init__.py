@@ -1,5 +1,6 @@
-import sys
 from pathlib import Path
+import sys
+
 
 # Load `PROJECT_ROOT/scripts/` into `sys.path`
 base_import_dir = Path(__file__).resolve().parents[0]

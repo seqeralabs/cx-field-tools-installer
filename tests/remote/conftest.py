@@ -1,7 +1,3 @@
-import boto3
-import pytest
-
-
 # # Default AWS-managed KMS key
 # aws ssm put-parameter \
 #   --name "/app/secret/db-password" \

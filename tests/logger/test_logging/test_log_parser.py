@@ -1,10 +1,8 @@
-"""
-Tests for log parser utilities.
-"""
+"""Tests for log parser utilities."""
 
 import json
-import tempfile
 from pathlib import Path
+import tempfile
 from unittest.mock import patch
 
 import pytest

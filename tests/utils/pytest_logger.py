@@ -1,17 +1,15 @@
-"""
-Pytest structured logging utilities for LLM-friendly test output capture.
-"""
+"""Pytest structured logging utilities for LLM-friendly test output capture."""
 
+from datetime import UTC, datetime
+from enum import Enum
 import json
 import logging
 import os
+from pathlib import Path
 import sys
 import time
+from typing import Any
 import uuid
-from datetime import datetime
-from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List
 
 from tests.utils.config import FP
 
@@ -64,24 +62,26 @@ class PytestStructuredLogger:
 
         self.logger.addHandler(handler)
 
-    def _create_base_entry(self, event_type: str, **kwargs) -> Dict[str, Any]:
-        """
-        Create base log entry with common fields.
+    def _create_base_entry(self, event_type: str, **kwargs) -> dict[str, Any]:
+        """Create base log entry with common fields.
+
         Other methods use this to generate a fulsome Python dictionary, then dump it to JSON output.
         """
         return {
             # "timestamp": datetime.utcnow().isoformat() + "Z",
             # "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
-            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            "timestamp": datetime.now(tz=UTC).strftime("%Y-%m-%dT%H:%M:%S"),
             "test_session_id": self.session_id,
             "event_type": event_type,
             **kwargs,
         }
 
-    def log_session_start(self, markers: List[str] = []):
+    def log_session_start(self, markers: list[str] | None = None):
         """Log test session start."""
         if not self.enabled:
             return
+        if markers is None:
+            markers = []
 
         entry = self._create_base_entry(
             "session_start",
@@ -103,10 +103,12 @@ class PytestStructuredLogger:
         )
         self.logger.info(json.dumps(entry))
 
-    def log_deselected(self, deselected_count: int, reasons: List[str] = []):
+    def log_deselected(self, deselected_count: int, reasons: list[str] | None = None):
         """Log information about tests that were deselected (filtered out)."""
         if not self.enabled:
             return
+        if reasons is None:
+            reasons = []
 
         entry = self._create_base_entry(
             "deselected",
@@ -137,13 +139,17 @@ class PytestStructuredLogger:
     def log_test_start(
         self,
         test_path: str,
-        markers: List[str] = [],
-        fixtures: List[str] = [],
+        markers: list[str] | None = None,
+        fixtures: list[str] | None = None,
         parametrize: str = "",
     ):
         """Log individual test start."""
         if not self.enabled:
             return
+        if markers is None:
+            markers = []
+        if fixtures is None:
+            fixtures = []
 
         entry = self._create_base_entry(
             "test_start",
@@ -181,13 +187,17 @@ class PytestStructuredLogger:
         stdout: str = "",
         stderr: str = "",
         failure_reason: str = "",
-        markers: List[str] = [],
-        fixtures: List[str] = [],
+        markers: list[str] | None = None,
+        fixtures: list[str] | None = None,
         parametrize: str = "",
     ):
         """Log individual test result."""
         if not self.enabled:
             return
+        if markers is None:
+            markers = []
+        if fixtures is None:
+            fixtures = []
 
         entry = self._create_base_entry(
             "test_result",
@@ -213,7 +223,7 @@ _logger_instance = None
 
 def get_logger(log_file: str = "") -> PytestStructuredLogger:
     """Get or create global logger instance."""
-    global _logger_instance
+    global _logger_instance  # noqa: PLW0603  (singleton instance pattern; TODO refactor to class-based registry)
 
     # Check environment variable to see if should be disabled
     logger_setting = os.environ.get("PYTEST_STRUCTURED_LOGGING", "n/a")
@@ -236,5 +246,5 @@ def get_logger(log_file: str = "") -> PytestStructuredLogger:
 
 def reset_logger():
     """Reset global logger instance (primarily for testing)."""
-    global _logger_instance
+    global _logger_instance  # noqa: PLW0603  (singleton instance pattern; TODO refactor to class-based registry)
     _logger_instance = None

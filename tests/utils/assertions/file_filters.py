@@ -2,11 +2,11 @@ from tests.utils.config import all_template_files, kitchen_sink
 
 
 def filter_templates(desired_files: list) -> dict:
-    """
-    Filter all_template_files based on desired files.
-      - If files are not specifically named in the testcase, generate all of them.
-      - If named files are provided, only use those.
-      - If kitchen_sink is True, we are doing a delibrate full-coverage test.
+    """Filter all_template_files based on desired files.
+
+    - If files are not specifically named in the testcase, generate all of them.
+    - If named files are provided, only use those.
+    - If kitchen_sink is True, we are doing a delibrate full-coverage test.
     """
     if kitchen_sink or desired_files == []:
         return all_template_files
