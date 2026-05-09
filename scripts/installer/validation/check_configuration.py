@@ -396,24 +396,16 @@ def verify_database_configuration(data: SimpleNamespace):
 
 
 def verify_docker_version(data: SimpleNamespace):
-    """Make sure MySQL 5.6 is not present"""
-    yaml.sort_base_mapping_type_on_output = False
-
-    with open("assets/src/docker_compose/docker-compose.yml.tpl") as file:
-        # PYYAML fails with `yaml.scanner.ScannerError` due to Terraform templating. Switching to less elegant alternative.
-        # dcfile = yaml.safe_load(file)
-        # image = dcfile['services']['db']['image']
-        lines = file.readlines()
-
-        for line in lines:
-            if "mysql:5" in line:
-                log_error_and_exit(
-                    "MySQL 5.x is obsolete. Please chooses MySQL 8.x in your docker-compose file."
-                )
+    """Make sure MySQL 5.x is not present"""
 
     if data.db_engine_version < "8.":
         log_error_and_exit(
             "MySQL version is obsolete. Please chooses MySQL 8.x in `db_engine_version`."
+        )
+
+    if data.db_container_engine_version< "8.":
+        log_error_and_exit(
+            "MySQL version is obsolete. Please chooses MySQL 8.x in `db_container_engine_version`."
         )
 
 

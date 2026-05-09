@@ -18,7 +18,7 @@ from installer.utils.extractors import tf_vars_json_payload
 # in this logic or you'll break the TF `external` mechanism!!
 ## ------------------------------------------------------------------------------------
 
-PLATFORM_CONNSTRING = "allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true"
+PLATFORM_CONNSTRING = "?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true"
 
 
 def return_tf_payload(status: str, value: str):
@@ -38,7 +38,7 @@ def generate_connection_string(data: SimpleNamespace):
         # TODO: Remove once terraform variable validation in place.
         pass
 
-    return f"?{PLATFORM_CONNSTRING}"
+    return PLATFORM_CONNSTRING
 
 
 if __name__ == "__main__":
