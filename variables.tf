@@ -41,7 +41,7 @@ variable "aws_profile" { type = string }
 
 variable "tower_container_version" {
   type        = string
-  description = "Seqera Platform container version. master supports only v26.1.0+ — earlier majors live on the release/vN branches. See documentation/branching_policy.md."
+  description = "Seqera Platform container version. master supports only v25+ — earlier majors live on the tag/legacy-final-pre-v25."
   # TODO(#332): once v26.1.x GA is selected, document the exact pinned tag here for reference.
 }
 

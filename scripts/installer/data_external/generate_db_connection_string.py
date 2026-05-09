@@ -18,9 +18,7 @@ from installer.utils.extractors import tf_vars_json_payload
 # in this logic or you'll break the TF `external` mechanism!!
 ## ------------------------------------------------------------------------------------
 
-BLANK_CONNSTRING = ""
-MYSQL8_CONNSTRING = "allowPublicKeyRetrieval=true&useSSL=false"
-PLATFORM_CONNSTRING = "permitMysqlScheme=true"
+PLATFORM_CONNSTRING = "allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true"
 
 
 def return_tf_payload(status: str, value: str):
@@ -29,15 +27,16 @@ def return_tf_payload(status: str, value: str):
 
 
 def generate_connection_string(data: SimpleNamespace):
-    # master supports only Platform v26.1.x, which always wants `permitMysqlScheme=true`.
-    # MySQL 8.x adds the public-key-retrieval flag on top.
+    # TODO: Remove once terraform variable validation in place.
     if data.flag_use_container_db:
         db_engine = data.db_container_engine_version
     else:
         db_engine = data.db_engine_version
 
-    if db_engine.startswith("8."):
-        return f"?{MYSQL8_CONNSTRING}&{PLATFORM_CONNSTRING}"
+    if not db_engine.startswith("8."):
+        # Check should not occur here. Better to do a Terraform variables validation.
+        # TODO: Remove once terraform variable validation in place.
+        pass
 
     return f"?{PLATFORM_CONNSTRING}"
 

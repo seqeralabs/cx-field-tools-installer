@@ -406,14 +406,14 @@ def verify_docker_version(data: SimpleNamespace):
         lines = file.readlines()
 
         for line in lines:
-            if "mysql:5.6" in line:
+            if "mysql:5" in line:
                 log_error_and_exit(
-                    "MySQL 5.6 is obsolete. Please chooses MySQL 5.7 or higher in your docker-compose file."
+                    "MySQL 5.x is obsolete. Please chooses MySQL 8.x in your docker-compose file."
                 )
 
-    if "5.6" in data.db_engine_version:
+    if data.db_engine_version < "8.":
         log_error_and_exit(
-            "MySQL 5.6 is obsolete. Please chooses MySQL 5.7 in `db_engine_version`."
+            "MySQL version is obsolete. Please chooses MySQL 8.x in `db_engine_version`."
         )
 
 
@@ -439,6 +439,16 @@ def verify_data_studio(data: SimpleNamespace):
         # - Add check that CONNECT_PROXY_URL and TOWER_DATA_STUDIO_CONNECT_URL are only one subdomain deeper than Tower server URL
 
         if data.flag_studio_enable_path_routing:
+            if data.tower_container_version < "v25.2.0":
+                log_error_and_exit(
+                    "To use Studios path-based routing, `tower_container_version` must be at least '25.2.0'."
+                )
+
+            if data.data_studio_container_version < "0.8.2":
+                log_error_and_exit(
+                    "To use Studios path-based routing, `data_studio_container_version` must be at least '0.8.2'."
+                )
+
             if len(data.data_studio_path_routing_url) == 0:
                 # Note: This isn't super but better than nothing.
                 # TODO: Find package to validate it's a legit domain.
@@ -458,6 +468,11 @@ def verify_data_studio_ssh(data: SimpleNamespace):
         if not data.flag_enable_data_studio:
             log_error_and_exit(
                 "`flag_enable_data_studio_ssh` requires `flag_enable_data_studio` to also be true."
+            )
+
+        if data.tower_container_version < "v25.3.3":
+            log_error_and_exit(
+                "Studios SSH (`flag_enable_data_studio_ssh`) requires Platform v25.3.3 or higher."
             )
 
         if data.data_studio_container_version < "0.10.0":
@@ -542,10 +557,21 @@ def verify_insecure_platform(data: SimpleNamespace):
         if data.flag_use_wave_lite:
             log_error_and_exit("Wave-Lite requires a secure Seqera Platform endpoint.")
 
+def warn_if_entra_id_error_possible(data: SimpleNamespace):
+    """Warn using a Platform version < 25.3, with Entra ID (Azure AD), will fail if extra config snippet not uncommented."""
+
+    if (data.tower_container_version < "v25.3") and data.flag_oidc_use_generic:
+        logger.warning(
+            "If you are using Entra ID (Azure AD) as your IDP, please consult text related to Issue 267 in `tower.yml` for a mandatory configuration change."
+        )
+
 
 def verify_pipeline_versioning(data: SimpleNamespace):
     """Conduct checks if pipeline versioning is active."""
     if data.tower_enable_pipeline_versioning:
+        if data.tower_container_version < "v25.3.0":
+            logger.warning("Your Platform version is too old to support pipeline versioning. Must be >= v25.3.0.")
+
         # All workspaces eligible. Return.
         if data.pipeline_versioning_eligible_workspaces == "":
             return
@@ -577,11 +603,11 @@ if __name__ == "__main__":
     # Check minimum container version. master supports only the latest Platform major (v26.1.x).
     # Bug-fix support for v25-and-below lives on the release/v25 branch — see documentation/branching_policy.md.
     if not ((data.tower_container_version).startswith("v")) or (
-        data.tower_container_version < "v26.1.0"
+        data.tower_container_version < "v25"
     ):
         log_error_and_exit(
-            "This branch of the installer supports only Seqera Platform v26.1.0+. "
-            "For v25.x or earlier, check out the release/v25 branch."
+            "This branch of the installer supports only Seqera Platform v25+. "
+            "For v24.x or earlier, check out git tag 'legacy-final-pre-v25'."
         )
 
     # Verify tfvars fields
@@ -646,6 +672,9 @@ if __name__ == "__main__":
     logger.info("-" * 50)
     verify_production_deployment(data)
     verify_insecure_platform(data=data)
+
+    # Issue Warnings (if applicable)
+    warn_if_entra_id_error_possible(data)
 
     # Check pipeline versioning
     print("\n")
