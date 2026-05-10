@@ -1,37 +1,48 @@
 ## ------------------------------------------------------------------------------------
 ## Feature Flags
 ## ------------------------------------------------------------------------------------
-variable "flag_create_load_balancer" {
-  description = "Whether to create a load balancer"
-  type        = bool
+variable "platform_security_mode" {
+  type = string
+  # NOTE: must match keys of local.platform_security_mode_options in main.tf
+  validation {
+    condition     = contains(["secure", "insecure"], var.platform_security_mode)
+    error_message = "platform_security_mode must be one of: secure, insecure."
+  }
 }
 
-variable "flag_do_not_use_https" {
-  description = "Whether to disable HTTPS"
-  type        = bool
-}
-
-variable "flag_create_external_db" {
-  description = "Whether to create an external database"
-  type        = bool
-}
-
-variable "flag_use_existing_external_db" {
-  description = "Whether to use an existing external database"
-  type        = bool
-}
-
-variable "flag_use_container_db" {
-  description = "Whether to use a container db."
-  type        = bool
+variable "platform_db_mode" {
+  type = string
+  # NOTE: must match keys of local.platform_db_dns_options in main.tf
+  validation {
+    condition     = contains(["container", "new", "existing", "mock"], var.platform_db_mode)
+    error_message = "platform_db_mode must be one of: container, new, existing, mock."
+  }
 }
 
 variable "platform_redis_mode" {
   type = string
   # NOTE: must match keys of local.platform_redis_dns_options in main.tf
   validation {
-    condition     = contains(["container", "new", "mock"], var.redis_mode)
-    error_message = "redis_mode must be one of: container, new, mock."
+    condition     = contains(["container", "new", "mock"], var.platform_redis_mode)
+    error_message = "platform_redis_mode must be one of: container, new, mock."
+  }
+}
+
+variable "studio_mode" {
+  type = string
+  # NOTE: must match keys of local.studio_dns_options in main.tf
+  validation {
+    condition     = contains(["subdomain", "path", "disabled"], var.studio_mode)
+    error_message = "studio_mode must be one of: wildcard, path, disabled."
+  }
+}
+
+variable "wave_mode" {
+  type = string
+  # NOTE: must match keys of local.wave_options in main.tf
+  validation {
+    condition     = contains(["wave", "wave-lite", "disabled"], var.wave_mode)
+    error_message = "wave_mode must be one of: wave, wave-lite, disabled."
   }
 }
 
@@ -75,17 +86,17 @@ variable "tower_server_url" {
   type        = string
 }
 
-variable "tower_db_url" {
-  description = "The database URL for Tower when not creating new DB"
+variable "platform_existing_db_url" {
+  description = "The database URL for an existing Platform DB."
   type        = string
 }
 
-variable "db_database_name" {
-  description = "The name of the Tower database"
+variable "platform_db_schema_name" {
+  description = "The name of the Tower database schema."
   type        = string
 }
 
-variable "db_engine" {
+variable "platform_db_engine" {
   description = "The active DB engine version string (e.g., \"8.0\" or \"5.7\"). Used to select the correct JDBC connection-string suffix."
   type        = string
 }

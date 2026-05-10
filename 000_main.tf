@@ -224,6 +224,19 @@ locals {
 
   # connection_strings (cs_*)
   # ---------------------------------------------------------------------------------------
+  cs_platform_security_mode = (
+    var.flag_do_not_use_https ? "insecure" :
+    "secure"
+  )
+
+  cs_platform_db_mode = (
+    var.use_mocks ? "mock" :
+    var.flag_use_container_db ? "container" :
+    var.flag_create_external_db ? "new" :
+    var.flag_use_existing_external_db ? "existing" :
+    "unknown"
+  )
+
   cs_platform_redis_mode = (
     var.use_mocks ? "mock" :
     var.flag_use_container_redis ? "container" :
@@ -231,6 +244,60 @@ locals {
     "unknown"
   )
 
+  cs_studio_mode = (
+    var.flag_enable_data_studio ? "disabled" :
+    var.flag_studio_enable_path_routing ? "path" :
+    "subdomain"
+  )
+
+  cs_wave_mode = (
+    var.flag_use_wave_lite ? "wave-lite" :
+    var.flag_use_wave ? "wave" :
+    "disabled"
+  )
+
+  platform_existing_db_url = var.flag_use_existing_external_db ? var.tower_db_url : "N/A"
+  studios_path_routing_url = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : "N/A"
+
+}
+
+
+# Add connection_strings module
+module "connection_strings" {
+  source = "./modules/connection_strings/v2.0.0"
+
+  platform_security_mode = local.cs_platform_security_mode
+  platform_db_mode       = local.cs_platform_db_mode
+  platform_redis_mode    = local.cs_platform_redis_mode
+
+  tower_server_url         = var.tower_server_url
+  platform_existing_db_url = local.platform_existing_db_url
+  platform_db_schema_name  = var.db_database_name
+  platform_db_engine       = local.db_engine
+
+  # Groundswell Configuration
+  flag_enable_groundswell = var.flag_enable_groundswell
+  swell_database_name     = var.swell_database_name
+
+  # Wave Configuration
+  flag_use_wave      = var.flag_use_wave
+  flag_use_wave_lite = var.flag_use_wave_lite
+  wave_server_url    = try(var.wave_server_url, null)
+
+  # Studios Configuration
+  studio_mode                     = cs_studio_mode
+  flag_enable_data_studio_ssh     = var.flag_enable_data_studio_ssh
+  flag_studio_enable_path_routing = var.flag_studio_enable_path_routing
+  data_studio_path_routing_url    = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : ""
+
+  # External Resource References
+  rds_tower             = var.use_mocks ? null : try(module.rds[0], null)
+  rds_wave_lite         = var.use_mocks ? null : try(module.rds-wave-lite[0], null)
+  elasticache_tower     = var.use_mocks ? null : try(aws_elasticache_cluster.redis[0], null)
+  elasticache_wave_lite = var.use_mocks ? null : try(module.elasticache_wave_lite[0], null)
+
+  # Testing flag
+  use_mocks = var.use_mocks
 }
 
 # Add subnet_collector module.
@@ -248,51 +315,6 @@ module "subnet_collector" {
   subnets_db    = var.flag_create_new_vpc ? var.vpc_new_db_subnets : var.vpc_existing_db_subnets
   subnets_redis = var.flag_create_new_vpc ? var.vpc_new_redis_subnets : var.vpc_existing_redis_subnets
   subnets_alb   = var.flag_create_new_vpc ? var.vpc_new_alb_subnets : var.vpc_existing_alb_subnets
-
-  # Testing flag
-  use_mocks = var.use_mocks
-}
-
-# Add connection_strings module
-module "connection_strings" {
-  source = "./modules/connection_strings/v2.0.0"
-
-  # Feature Flags
-  flag_create_load_balancer = var.flag_create_load_balancer
-  flag_do_not_use_https     = var.flag_do_not_use_https
-
-  flag_create_external_db       = var.flag_create_external_db
-  flag_use_existing_external_db = var.flag_use_existing_external_db
-  flag_use_container_db         = var.flag_use_container_db
-
-  platform_redis_mode = local.cs_platform_redis_mode
-
-  # Tower Configuration
-  tower_server_url = var.tower_server_url
-  tower_db_url     = var.flag_use_existing_external_db == true ? var.tower_db_url : ""
-  db_database_name = var.db_database_name
-  db_engine        = local.db_engine
-
-  # Groundswell Configuration
-  flag_enable_groundswell = var.flag_enable_groundswell
-  swell_database_name     = var.swell_database_name
-
-  # Wave Configuration
-  flag_use_wave      = var.flag_use_wave
-  flag_use_wave_lite = var.flag_use_wave_lite
-  wave_server_url    = try(var.wave_server_url, null)
-
-  # Studios Configuration
-  flag_enable_data_studio         = var.flag_enable_data_studio
-  flag_enable_data_studio_ssh     = var.flag_enable_data_studio_ssh
-  flag_studio_enable_path_routing = var.flag_studio_enable_path_routing
-  data_studio_path_routing_url    = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : ""
-
-  # External Resource References
-  rds_tower             = var.use_mocks ? null : try(module.rds[0], null)
-  rds_wave_lite         = var.use_mocks ? null : try(module.rds-wave-lite[0], null)
-  elasticache_tower     = var.use_mocks ? null : try(aws_elasticache_cluster.redis[0], null)
-  elasticache_wave_lite = var.use_mocks ? null : try(module.elasticache_wave_lite[0], null)
 
   # Testing flag
   use_mocks = var.use_mocks
