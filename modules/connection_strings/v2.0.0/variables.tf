@@ -1,9 +1,12 @@
 ## ------------------------------------------------------------------------------------
-## Feature Flags
+## Mode strings
+## Caller resolves user-facing flags into mode strings; module dispatches off the strings.
+## Validation enforces that the value matches a key in the corresponding `*_options` table
+## in main.tf — keep these lists in sync with that file when modes are added/removed.
 ## ------------------------------------------------------------------------------------
 variable "platform_security_mode" {
-  type = string
-  # NOTE: must match keys of local.platform_security_mode_options in main.tf
+  description = "Tower URL scheme: 'secure' (https) or 'insecure' (http with port 8000). Must match keys of local.platform_url_options."
+  type        = string
   validation {
     condition     = contains(["secure", "insecure"], var.platform_security_mode)
     error_message = "platform_security_mode must be one of: secure, insecure."
@@ -11,120 +14,95 @@ variable "platform_security_mode" {
 }
 
 variable "platform_db_deployment" {
-  type = string
-  # NOTE: must match keys of local.platform_db_dns_options in main.tf
+  description = "Tower DB deployment intent: 'container' (Docker), 'new' (newly-provisioned RDS), or 'existing' (caller-provided URL). Mock-vs-real host swap happens orthogonally via var.use_mocks. Must match keys of local.platform_db_dns_options."
+  type        = string
   validation {
-    condition     = contains(["container", "new", "existing", "mock"], var.platform_db_deployment)
-    error_message = "platform_db_deployment must be one of: container, new, existing, mock."
+    condition     = contains(["container", "new", "existing"], var.platform_db_deployment)
+    error_message = "platform_db_deployment must be one of: container, new, existing."
   }
 }
 
 variable "platform_redis_deployment" {
-  type = string
-  # NOTE: must match keys of local.platform_redis_dns_options in main.tf
+  description = "Tower Redis deployment intent: 'container' (Docker) or 'new' (newly-provisioned ElastiCache). Mock-vs-real host swap happens orthogonally via var.use_mocks. Must match keys of local.platform_redis_dns_options."
+  type        = string
   validation {
-    condition     = contains(["container", "new", "mock"], var.platform_redis_deployment)
-    error_message = "platform_redis_deployment must be one of: container, new, mock."
+    condition     = contains(["container", "new"], var.platform_redis_deployment)
+    error_message = "platform_redis_deployment must be one of: container, new."
   }
 }
 
-variable "studio_mode" {
-  type = string
-  # NOTE: must match keys of local.studio_dns_options in main.tf
-  validation {
-    condition     = contains(["subdomain", "path", "disabled"], var.studio_mode)
-    error_message = "studio_mode must be one of: wildcard, path, disabled."
-  }
-}
-
-variable "wave_mode" {
-  type = string
-  # NOTE: must match keys of local.wave_options in main.tf
-  validation {
-    condition     = contains(["wave", "wave-lite", "disabled"], var.wave_mode)
-    error_message = "wave_mode must be one of: wave, wave-lite, disabled."
-  }
-}
-
-variable "flag_enable_data_studio" {
-  description = "Whether to use Studios."
-  type        = bool
-}
-
-variable "flag_enable_data_studio_ssh" {
-  description = "Whether SSH access to Data Studios is enabled."
-  type        = bool
-}
-
-variable "flag_use_wave" {
-  description = "Whether to use Wave"
-  type        = bool
-}
-
-variable "flag_use_wave_lite" {
-  description = "Whether to use Wave"
-  type        = bool
-}
-
-variable "flag_studio_enable_path_routing" {
-  description = "Whether Studio should use favoured subdomain approach or workaround pathing approach."
+variable "use_mocks" {
+  description = "When true, the 'new' deployment mode uses mock host strings instead of dereferencing the (possibly-null) RDS/ElastiCache module objects. Container/existing deployments are unaffected (they're real regardless)."
   type        = bool
   default     = false
 }
 
-variable "data_studio_path_routing_url" {
+variable "studio_mode" {
+  description = "Studio (Connect) DNS routing: 'subdomain' (e.g., connect.example.com), 'path' (path-based routing), or 'disabled'. Must match keys of local.studio_options."
   type        = string
-  description = "Domain where Connect Proxy is available."
-  default     = ""
+  validation {
+    condition     = contains(["subdomain", "path", "disabled"], var.studio_mode)
+    error_message = "studio_mode must be one of: subdomain, path, disabled."
+  }
+}
+
+variable "wave_mode" {
+  description = "Wave deployment: 'wave-lite' (self-hosted), 'wave' (Seqera-hosted), or 'disabled'. Must match keys of local.wave_options."
+  type        = string
+  validation {
+    condition     = contains(["wave-lite", "wave", "disabled"], var.wave_mode)
+    error_message = "wave_mode must be one of: wave-lite, wave, disabled."
+  }
+}
+
+## ------------------------------------------------------------------------------------
+## Flag inputs (TODO: promote to mode strings in a later pass)
+## ------------------------------------------------------------------------------------
+variable "flag_enable_data_studio_ssh" {
+  description = "Whether SSH access to Data Studios is enabled. TODO: promote to var.studio_ssh_mode."
+  type        = bool
+}
+
+variable "flag_enable_groundswell" {
+  description = "Whether to activate Groundswell. TODO: promote to var.groundswell_mode."
+  type        = bool
 }
 
 ## ------------------------------------------------------------------------------------
 ## Tower Core Configuration
 ## ------------------------------------------------------------------------------------
 variable "tower_server_url" {
-  description = "The server URL for Tower"
+  description = "The base server URL for Tower (host only, e.g., 'tower.example.com')."
   type        = string
 }
 
 variable "platform_existing_db_url" {
-  description = "The database URL for an existing Platform DB."
+  description = "Pre-existing DB URL (host:port). Only consulted when platform_db_deployment = 'existing'."
   type        = string
+  default     = "N/A"
 }
 
 variable "platform_db_schema_name" {
-  description = "The name of the Tower database schema."
+  description = "Name of the Tower DB schema."
   type        = string
 }
 
 variable "platform_db_engine" {
-  description = "The active DB engine version string (e.g., \"8.0\" or \"5.7\"). Used to select the correct JDBC connection-string suffix."
+  description = "Active DB engine version string (e.g., '8.0' or '5.7'). Selects the JDBC connection-string suffix."
   type        = string
 }
 
-
-variable "rds_tower" {
-  description = "The rds module object containing Tower RDS configuration"
-  type        = any
-  default     = null
+variable "data_studio_path_routing_url" {
+  description = "Domain where Connect Proxy is available. Only consulted when studio_mode = 'path'."
+  type        = string
+  default     = ""
 }
-
-variable "elasticache_tower" {
-  description = "The aws_elasticache_cluster.redis object containing Redis cluster configuration"
-  type        = any
-  default     = null
-}
-
 
 ## ------------------------------------------------------------------------------------
 ## Groundswell Configuration
 ## ------------------------------------------------------------------------------------
-variable "flag_enable_groundswell" {
-  description = "Whether to activate Groundswell."
-  type        = bool
-}
-
 variable "swell_database_name" {
-  description = "The name of the Groundswell database"
+  description = "Name of the Groundswell DB schema."
   type        = string
 }
 
@@ -132,40 +110,35 @@ variable "swell_database_name" {
 ## Wave Configuration
 ## ------------------------------------------------------------------------------------
 variable "wave_server_url" {
-  description = "The server URL for Wave or Wave-Lite"
+  description = "Server URL for Wave or Wave-Lite (host only)."
   type        = string
+  default     = null
+}
+
+## ------------------------------------------------------------------------------------
+## External Resource References
+## TODO: replace these composite-typed inputs with resolved address strings (var.platform_db_address, etc.)
+## ------------------------------------------------------------------------------------
+variable "rds_tower" {
+  description = "RDS module object for Tower DB. Used only when platform_db_deployment = 'new'."
+  type        = any
+  default     = null
 }
 
 variable "rds_wave_lite" {
-  description = "The rds-wave-lite module object containing RDS configuration"
+  description = "RDS module object for Wave-Lite DB. Used only when wave_mode = 'wave-lite' AND platform_db_deployment = 'new'."
+  type        = any
+  default     = null
+}
+
+variable "elasticache_tower" {
+  description = "ElastiCache cluster object for Tower Redis. Used only when platform_redis_deployment = 'new'."
   type        = any
   default     = null
 }
 
 variable "elasticache_wave_lite" {
-  description = "The elasticache_wave_lite module object containing Redis configuration"
+  description = "ElastiCache module object for Wave-Lite Redis. Used only when wave_mode = 'wave-lite' AND platform_redis_deployment = 'new'."
   type        = any
   default     = null
-}
-
-
-## ------------------------------------------------------------------------------------
-## External Resource References
-## ------------------------------------------------------------------------------------
-# Note: These are referenced in main.tf but should be passed as data/resource references
-# from the parent module rather than as variables
-# - module.rds[0].db_instance_address
-# - aws_elasticache_cluster.redis[0].cache_nodes[0].address
-# - aws_elasticache_cluster.redis[0].cache_nodes[0].port
-# - module.rds-wave-lite[0].db_instance_address
-# - module.elasticache_wave_lite[0].url
-
-
-## ------------------------------------------------------------------------------------
-## Testing
-## ------------------------------------------------------------------------------------
-variable "use_mocks" {
-  type        = bool
-  default     = false
-  description = "Use to drive mocking behaviour for to-be-created resources."
 }

@@ -229,8 +229,8 @@ locals {
     "secure"
   )
 
+  # Deployment intent (use_mocks is orthogonal — handled inside module via var.use_mocks).
   cs_platform_db_deployment = (
-    var.use_mocks ? "mock" :
     var.flag_use_container_db ? "container" :
     var.flag_create_external_db ? "new" :
     var.flag_use_existing_external_db ? "existing" :
@@ -238,26 +238,26 @@ locals {
   )
 
   cs_platform_redis_deployment = (
-    var.use_mocks ? "mock" :
     var.flag_use_container_redis ? "container" :
     var.flag_create_external_redis ? "new" :
     "unknown"
   )
 
+  # Studios requires HTTPS — flag_do_not_use_https blocks studios entirely.
   cs_studio_mode = (
-    var.flag_enable_data_studio ? "disabled" :
+    !var.flag_enable_data_studio || var.flag_do_not_use_https ? "disabled" :
     var.flag_studio_enable_path_routing ? "path" :
     "subdomain"
   )
 
+  # Wave-Lite requires HTTPS; Wave (Seqera-hosted) does not.
   cs_wave_mode = (
-    var.flag_use_wave_lite ? "wave-lite" :
+    var.flag_use_wave_lite && !var.flag_do_not_use_https ? "wave-lite" :
     var.flag_use_wave ? "wave" :
     "disabled"
   )
 
   platform_existing_db_url = var.flag_use_existing_external_db ? var.tower_db_url : "N/A"
-  studios_path_routing_url = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : "N/A"
 
 }
 
@@ -266,37 +266,35 @@ locals {
 module "connection_strings" {
   source = "./modules/connection_strings/v2.0.0"
 
+  # Mode strings (caller resolves user-facing flags into modes)
   platform_security_mode    = local.cs_platform_security_mode
   platform_db_deployment    = local.cs_platform_db_deployment
   platform_redis_deployment = local.cs_platform_redis_deployment
+  studio_mode               = local.cs_studio_mode
+  wave_mode                 = local.cs_wave_mode
 
+  # Tower core
   tower_server_url         = var.tower_server_url
   platform_existing_db_url = local.platform_existing_db_url
   platform_db_schema_name  = var.db_database_name
   platform_db_engine       = local.db_engine
 
-  # Groundswell Configuration
-  flag_enable_groundswell = var.flag_enable_groundswell
-  swell_database_name     = var.swell_database_name
+  # Studios / Groundswell flags (still flag-driven inside module — TODO: promote to mode strings)
+  flag_enable_data_studio_ssh = var.flag_enable_data_studio_ssh
+  flag_enable_groundswell     = var.flag_enable_groundswell
 
-  # Wave Configuration
-  flag_use_wave      = var.flag_use_wave
-  flag_use_wave_lite = var.flag_use_wave_lite
-  wave_server_url    = try(var.wave_server_url, null)
+  # Per-component values
+  data_studio_path_routing_url = var.data_studio_path_routing_url
+  swell_database_name          = var.swell_database_name
+  wave_server_url              = try(var.wave_server_url, null)
 
-  # Studios Configuration
-  studio_mode                     = cs_studio_mode
-  flag_enable_data_studio_ssh     = var.flag_enable_data_studio_ssh
-  flag_studio_enable_path_routing = var.flag_studio_enable_path_routing
-  data_studio_path_routing_url    = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : ""
-
-  # External Resource References
+  # External resource references (TODO: replace with resolved address strings)
   rds_tower             = var.use_mocks ? null : try(module.rds[0], null)
   rds_wave_lite         = var.use_mocks ? null : try(module.rds-wave-lite[0], null)
   elasticache_tower     = var.use_mocks ? null : try(aws_elasticache_cluster.redis[0], null)
   elasticache_wave_lite = var.use_mocks ? null : try(module.elasticache_wave_lite[0], null)
 
-  # Testing flag
+  # Orthogonal mock toggle: swaps "new" deployment hosts to mock strings without changing intent.
   use_mocks = var.use_mocks
 }
 
