@@ -229,7 +229,7 @@ locals {
     "secure"
   )
 
-  cs_platform_db_mode = (
+  cs_platform_db_deployment = (
     var.use_mocks ? "mock" :
     var.flag_use_container_db ? "container" :
     var.flag_create_external_db ? "new" :
@@ -237,7 +237,7 @@ locals {
     "unknown"
   )
 
-  cs_platform_redis_mode = (
+  cs_platform_redis_deployment = (
     var.use_mocks ? "mock" :
     var.flag_use_container_redis ? "container" :
     var.flag_create_external_redis ? "new" :
@@ -266,9 +266,9 @@ locals {
 module "connection_strings" {
   source = "./modules/connection_strings/v2.0.0"
 
-  platform_security_mode = local.cs_platform_security_mode
-  platform_db_mode       = local.cs_platform_db_mode
-  platform_redis_mode    = local.cs_platform_redis_mode
+  platform_security_mode    = local.cs_platform_security_mode
+  platform_db_deployment    = local.cs_platform_db_deployment
+  platform_redis_deployment = local.cs_platform_redis_deployment
 
   tower_server_url         = var.tower_server_url
   platform_existing_db_url = local.platform_existing_db_url

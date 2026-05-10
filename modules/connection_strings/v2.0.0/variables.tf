@@ -10,21 +10,21 @@ variable "platform_security_mode" {
   }
 }
 
-variable "platform_db_mode" {
+variable "platform_db_deployment" {
   type = string
   # NOTE: must match keys of local.platform_db_dns_options in main.tf
   validation {
-    condition     = contains(["container", "new", "existing", "mock"], var.platform_db_mode)
-    error_message = "platform_db_mode must be one of: container, new, existing, mock."
+    condition     = contains(["container", "new", "existing", "mock"], var.platform_db_deployment)
+    error_message = "platform_db_deployment must be one of: container, new, existing, mock."
   }
 }
 
-variable "platform_redis_mode" {
+variable "platform_redis_deployment" {
   type = string
   # NOTE: must match keys of local.platform_redis_dns_options in main.tf
   validation {
-    condition     = contains(["container", "new", "mock"], var.platform_redis_mode)
-    error_message = "platform_redis_mode must be one of: container, new, mock."
+    condition     = contains(["container", "new", "mock"], var.platform_redis_deployment)
+    error_message = "platform_redis_deployment must be one of: container, new, mock."
   }
 }
 
