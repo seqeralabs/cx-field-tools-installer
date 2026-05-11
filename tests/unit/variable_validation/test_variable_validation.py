@@ -1,61 +1,74 @@
 """Regression tests for single-variable validation blocks migrated from check_configuration.py.
 
-Each migration adds:
-  1. A `validation` block on the variable in `variables.tf`
-  2. A new bad-value line in `tf_modifiers` below
-  3. A new entry in `expected_offenders`
+Structure: rounds.
+  - Round N contains each variable's Nth bad value (where it has one).
+  - Variables with K criteria appear in rounds 1..K.
+  - Each round runs ONE `terraform plan` and asserts every variable in that round's
+    bad-value dict is reported in stderr.
 
-Terraform aggregates all variable-validation failures from a single plan invocation,
-so one test exercises every migrated validation. When a new validation is migrated,
-extend `tf_modifiers` and `expected_offenders` together.
+Adding a new criterion → add an entry to the appropriate round dict (or add a new round
+if you've introduced a variable with more criteria than any existing one).
 
-NOTE: assertions match against variable NAMES (not full error messages) so error-message
-wording can be edited later without breaking the test.
+Trade-offs vs. one-criterion-per-parametrize:
+  - Fewer pytest cases (3 vs 20+) → much faster CI run (~3-6s vs ~20-40s)
+  - Each case asserts multiple validations in a single plan invocation
+  - Failure message reports the round + specific variable + criterion, so per-criterion
+    diagnostics are preserved when something breaks
 """
 
 import pytest
 from tests.utils.terraform.executor import prepare_plan
 
 
+# Each round: {variable_name: (bad_value, criterion_description)}
+SCENARIOS: dict[str, dict[str, tuple[str, str]]] = {
+    "round_1": {
+        "tower_server_url": ("http://example.com", "http prefix"),
+        "tower_root_users": ("REPLACE_ME", "placeholder value"),
+        "tower_db_url": ("jdbc:mysql://example.com:3306/tower", "jdbc: prefix"),
+        "tower_db_driver": ("wrong.driver", "non-matching driver"),
+        "tower_db_dialect": ("wrong.dialect", "non-matching dialect"),
+        "db_engine_version": ("5.7", "major version below 8"),
+        "db_container_engine_version": ("5.7", "major version below 8"),
+        "tower_container_version": ("25.3.0", "missing 'v' prefix"),
+        "data_studio_eligible_workspaces": ("abc", "non-numeric value"),
+        "data_studio_ssh_eligible_workspaces": ("abc", "non-numeric value"),
+        "pipeline_versioning_eligible_workspaces": ("abc", "non-numeric value"),
+    },
+    "round_2": {
+        "tower_server_url": ("https://example.com", "https prefix"),
+        "tower_root_users": ("", "empty string"),
+        "tower_db_url": ("mysql://example.com:3306/tower", "mysql: prefix"),
+        "db_engine_version": ("7.4", "major version below 8 (boundary)"),
+        "tower_container_version": ("v24.0.0", "major version below 25"),
+        "data_studio_eligible_workspaces": ("1,abc", "mixed numeric/non-numeric"),
+        "data_studio_ssh_eligible_workspaces": ("1,,2", "double comma"),
+        "pipeline_versioning_eligible_workspaces": ("12 34", "space breaks the CSV"),
+    },
+    "round_3": {
+        "tower_container_version": ("vfoo", "non-numeric after 'v'"),
+        "data_studio_eligible_workspaces": ("12 34", "space breaks the CSV"),
+    },
+}
+
+
 @pytest.mark.local
-def test_single_variable_validations_reject_bad_values(session_setup):
-    """Confirm each migrated single-variable validation block rejects its non-compliant value."""
-    tf_modifiers = """
-        tower_server_url                        = "http://example.com"
-        tower_root_users                        = "REPLACE_ME"
-        tower_db_url                            = "jdbc:mysql://example.com:3306/tower"
-        tower_db_driver                         = "wrong.driver"
-        tower_db_dialect                        = "wrong.dialect"
-        db_engine_version                       = "5.7"
-        db_container_engine_version             = "5.7"
-        tower_container_version                 = "v24.0.0"
-        data_studio_eligible_workspaces         = "abc"
-        data_studio_ssh_eligible_workspaces     = "1,abc"
-        pipeline_versioning_eligible_workspaces = "12 34"
+@pytest.mark.variable_validation
+@pytest.mark.parametrize("scenario_name", list(SCENARIOS.keys()))
+def test_validation_rejects_bad_values(session_setup, scenario_name):
+    """For each round, fire one plan with all that round's bad values and assert every entry is rejected.
+
+    `session_setup` is referenced to enforce AWS preflight ordering; the var is unused inside the body.
     """
+    scenario = SCENARIOS[scenario_name]
+    tf_modifiers = "\n".join(f'{name} = "{value}"' for name, (value, _) in scenario.items())
 
     with pytest.raises(RuntimeError) as excinfo:
         prepare_plan(tf_modifiers)
 
     error_text = str(excinfo.value)
-    expected_offenders = [
-        "tower_server_url",
-        "tower_root_users",
-        "tower_db_url",
-        "tower_db_driver",
-        "tower_db_dialect",
-        "db_engine_version",
-        "db_container_engine_version",
-        "tower_container_version",
-        "data_studio_eligible_workspaces",
-        "data_studio_ssh_eligible_workspaces",
-        "pipeline_versioning_eligible_workspaces",
-    ]
-
-    # For each variable passed with a non-compliant value, confirm Terraform's plan stderr
-    # mentions the variable name (i.e., its validation block fired and reported it).
-    for var_name in expected_offenders:
+    for var_name, (bad_value, criterion) in scenario.items():
         assert var_name in error_text, (
-            f"`{var_name}` does not have a compliant value, but Terraform did not report "
-            f"it as a validation failure.\n\nFull stderr:\n{error_text}"
+            f"In {scenario_name!r}: `{var_name}` set to {bad_value!r} (criterion: {criterion}) "
+            f"did not trigger validation.\n\nFull stderr:\n{error_text}"
         )
