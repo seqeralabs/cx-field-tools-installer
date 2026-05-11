@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# NOTE: Some checks that were previously here have been moved to variables.tf validation blocks.
 
 from pathlib import Path
 import re
@@ -141,20 +142,10 @@ def verify_tfvars_config_dependencies(data: SimpleNamespace):
 
 def verify_tower_server_url(data: SimpleNamespace):
     """Verify the tower server url is correctly configured."""
-    if data.tower_server_url.startswith("http"):
-        log_error_and_exit("Field `tower_server_url` must not have a prefix.")
 
     if data.tower_server_port != "8000":
         logger.warning(
             "Tower instance not using default port (8000). Ensure Docker-Compose file is updated accordingly."
-        )
-
-
-def verify_tower_root_users(data: SimpleNamespace):
-    """Ensure at least one root user is specified."""
-    if data.tower_root_users in ["REPLACE_ME", ""]:
-        log_error_and_exit(
-            "Please populate `tower_root_user` with at least one email address."
         )
 
 
@@ -334,21 +325,6 @@ def verify_database_configuration(data: SimpleNamespace):  # noqa: C901  (sequen
     if (data.db_engine == "mysql") and ("8" in data.db_engine_version):
         logger.warning("MySQL 8 may need TOWER_DB_URL connection string modifiers.")
 
-    if (data.tower_db_url.startswith("jdbc:")) or (
-        data.tower_db_url.startswith("mysql:")
-    ):
-        log_error_and_exit(
-            "Do not include protocol in `tower_db_url`. Start with hostname."
-        )
-
-    if data.tower_db_driver != "org.mariadb.jdbc.Driver":
-        log_error_and_exit("Field `tower_db_driver` must be `org.mariadb.jdbc.Driver`.")
-
-    if data.tower_db_dialect != "io.seqera.util.MySQL55DialectCollateBin":
-        log_error_and_exit(
-            "Field `tower_db_dialect` must be `org.mariadb.jdbc.Driver`."
-        )
-
     if data.flag_use_container_db and data.tower_db_url != "db:3306":
         logger.warning(
             "You are using a non-standard db container name or port. "
@@ -391,20 +367,6 @@ def verify_database_configuration(data: SimpleNamespace):  # noqa: C901  (sequen
     if data.flag_use_existing_external_db and data.tower_db_url == "db:3306":
         log_error_and_exit(
             "You are using the container db DNS for your external RDS instance. Please change `tower_db_url`."
-        )
-
-
-def verify_docker_version(data: SimpleNamespace):
-    """Make sure MySQL 5.x is not present"""
-
-    if data.db_engine_version < "8.":
-        log_error_and_exit(
-            "MySQL version is obsolete. Please chooses MySQL 8.x in `db_engine_version`."
-        )
-
-    if data.db_container_engine_version< "8.":
-        log_error_and_exit(
-            "MySQL version is obsolete. Please chooses MySQL 8.x in `db_container_engine_version`."
         )
 
 
@@ -610,15 +572,12 @@ if __name__ == "__main__":
     verify_only_one_true_set(data)
     verify_sensitive_keys(data, data_dictionary)
     verify_tfvars_config_dependencies(data)
-    verify_docker_version(data)
 
     # Verify Tower application configurations
     print("\n")
     logger.info("Verifying Tower configurations")
     logger.info("-" * 50)
-    verify_tower_root_users(data)
     verify_tower_self_signed_certs(data)
-    verify_tower_server_url(data)
     verify_docker_daemon_loggin(data)
     verify_email_login_disablement(data)
 

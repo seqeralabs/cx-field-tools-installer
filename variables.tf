@@ -43,6 +43,10 @@ variable "tower_container_version" {
   type        = string
   description = "Seqera Platform container version. master supports only v25+ — earlier majors live on the tag/legacy-final-pre-v25."
   # TODO(#332): once v26.1.x GA is selected, document the exact pinned tag here for reference.
+  validation {
+    condition     = startswith(var.tower_container_version, "v") && var.tower_container_version >= "v25"
+    error_message = "tower_container_version must start with \"v\" and be v25.x or higher. For v24.x or earlier, check out git tag 'legacy-final-pre-v25'."
+  }
 }
 
 
@@ -265,7 +269,14 @@ variable "db_database_name" { type = string }
 # ------------------------------------------------------------------------------------
 
 variable "db_container_engine" { type = string }
-variable "db_container_engine_version" { type = string }
+
+variable "db_container_engine_version" {
+  type = string
+  validation {
+    condition     = tonumber(regex("^[0-9]+", var.db_container_engine_version)) >= 8
+    error_message = "db_container_engine_version must be MySQL 8.x or higher."
+  }
+}
 
 
 # ------------------------------------------------------------------------------------
@@ -273,7 +284,14 @@ variable "db_container_engine_version" { type = string }
 # ------------------------------------------------------------------------------------
 
 variable "db_engine" { type = string }
-variable "db_engine_version" { type = string }
+
+variable "db_engine_version" {
+  type = string
+  validation {
+    condition     = tonumber(regex("^[0-9]+", var.db_engine_version)) >= 8
+    error_message = "db_engine_version must be MySQL 8.x or higher."
+  }
+}
 variable "db_param_group" { type = string }
 variable "db_instance_class" { type = string }
 variable "db_allocated_storage" { type = number }
@@ -380,14 +398,40 @@ variable "alb_certificate_arn" { type = string }
 # TOWER CONFIGURATION
 # ------------------------------------------------------------------------------------
 
-variable "tower_server_url" { type = string }
+variable "tower_server_url" {
+  type = string
+  validation {
+    condition     = !startswith(var.tower_server_url, "http")
+    error_message = "tower_server_url must not include a protocol prefix (e.g., \"http://\" or \"https://\"). Provide hostname only."
+  }
+}
 variable "tower_server_port" { type = string } # TODO: Update SG-generation logic to use this value
 variable "tower_contact_email" { type = string }
 variable "tower_enable_platforms" { type = string }
 
-variable "tower_db_url" { type = string }
-variable "tower_db_driver" { type = string }
-variable "tower_db_dialect" { type = string }
+variable "tower_db_url" {
+  type = string
+  validation {
+    condition     = !startswith(var.tower_db_url, "jdbc:") && !startswith(var.tower_db_url, "mysql:")
+    error_message = "tower_db_url must not include a protocol prefix. Start with hostname."
+  }
+}
+
+variable "tower_db_driver" {
+  type = string
+  validation {
+    condition     = var.tower_db_driver == "org.mariadb.jdbc.Driver"
+    error_message = "tower_db_driver must be \"org.mariadb.jdbc.Driver\"."
+  }
+}
+
+variable "tower_db_dialect" {
+  type = string
+  validation {
+    condition     = var.tower_db_dialect == "io.seqera.util.MySQL55DialectCollateBin"
+    error_message = "tower_db_dialect must be \"io.seqera.util.MySQL55DialectCollateBin\"."
+  }
+}
 variable "tower_db_min_pool_size" { type = number }
 variable "tower_db_max_pool_size" { type = number }
 variable "tower_db_max_lifetime" { type = number }
@@ -399,7 +443,13 @@ variable "tower_smtp_starttls_enable" { type = bool }
 variable "tower_smtp_starttls_required" { type = bool }
 variable "tower_smtp_ssl_protocols" { type = string }
 
-variable "tower_root_users" { type = string }
+variable "tower_root_users" {
+  type = string
+  validation {
+    condition     = !contains(["REPLACE_ME", ""], var.tower_root_users)
+    error_message = "tower_root_users must be populated with at least one email address."
+  }
+}
 variable "tower_email_trusted_orgs" { type = string }
 variable "tower_email_trusted_users" { type = string }
 
