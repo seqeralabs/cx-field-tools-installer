@@ -55,17 +55,22 @@ variable "wave_mode" {
   }
 }
 
-## ------------------------------------------------------------------------------------
-## Flag inputs (TODO: promote to mode strings in a later pass)
-## ------------------------------------------------------------------------------------
-variable "flag_enable_data_studio_ssh" {
-  description = "Whether SSH access to Data Studios is enabled. TODO: promote to var.studio_ssh_mode."
-  type        = bool
+variable "studio_ssh_mode" {
+  description = "Studio SSH state: 'enabled' or 'disabled'. Must match keys of local.studio_ssh_options."
+  type        = string
+  validation {
+    condition     = contains(["enabled", "disabled"], var.studio_ssh_mode)
+    error_message = "studio_ssh_mode must be one of: enabled, disabled."
+  }
 }
 
-variable "flag_enable_groundswell" {
-  description = "Whether to activate Groundswell. TODO: promote to var.groundswell_mode."
-  type        = bool
+variable "groundswell_mode" {
+  description = "Groundswell state: 'enabled' or 'disabled'."
+  type        = string
+  validation {
+    condition     = contains(["enabled", "disabled"], var.groundswell_mode)
+    error_message = "groundswell_mode must be one of: enabled, disabled."
+  }
 }
 
 ## ------------------------------------------------------------------------------------

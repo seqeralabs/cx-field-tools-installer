@@ -76,10 +76,8 @@ locals {
   # SECTION 2 — Resolved values (single [mode] dispatch per resource)
   # ─────────────────────────────────────────────────────────────────────────────
 
-  # Inferred mode strings derived from existing flags. TODO: promote each to a dedicated module variable.
-  studio_ssh_mode              = var.flag_enable_data_studio_ssh ? "enabled" : "disabled" # TODO: var.studio_ssh_mode
-  groundswell_mode             = var.flag_enable_groundswell ? "enabled" : "disabled"     # TODO: var.groundswell_mode
-  redis_security_mode_inferred = "insecure"                                               # TODO: var.platform_redis_security_mode (then add "secure" support)
+  # Inferred values derived from existing inputs. TODO: promote remaining ones to dedicated module variables in a later pass.
+  redis_security_mode_inferred = "insecure" # TODO: var.platform_redis_security_mode (then add "secure" support)
   platform_db_engine_key       = startswith(var.platform_db_engine, "8.") ? "8" : "5"
 
   # Pure dispatch — table[mode]. One step per resource, no composition.
@@ -89,7 +87,7 @@ locals {
   resolved_platform_redis_dns     = local.platform_redis_dns_options[var.platform_redis_deployment]
   resolved_platform_redis_prefix  = local.platform_redis_prefix_options[local.redis_security_mode_inferred]
   resolved_studio_config          = local.studio_options[var.studio_mode]
-  resolved_studio_ssh_config      = local.studio_ssh_options[local.studio_ssh_mode]
+  resolved_studio_ssh_config      = local.studio_ssh_options[var.studio_ssh_mode]
   resolved_wave_config            = local.wave_options[var.wave_mode]
   resolved_wave_lite_db_dns       = local.wave_lite_db_dns_options[var.platform_db_deployment]       # TODO: var.wave_lite_db_deployment (decouple from platform)
   resolved_wave_lite_redis_dns    = local.wave_lite_redis_dns_options[var.platform_redis_deployment] # TODO: var.wave_lite_redis_deployment
@@ -141,6 +139,6 @@ locals {
   )
 
   # Groundswell — uses Platform DB schema; no connstring suffix (breaks Groundswell's SQL connection)
-  composed_swell_db_dns = local.groundswell_mode == "disabled" ? "N/A" : local.resolved_platform_db_dns
-  composed_swell_db_url = local.groundswell_mode == "disabled" ? "N/A" : "mysql://${local.resolved_platform_db_dns}:3306/${var.swell_database_name}"
+  composed_swell_db_dns = var.groundswell_mode == "disabled" ? "N/A" : local.resolved_platform_db_dns
+  composed_swell_db_url = var.groundswell_mode == "disabled" ? "N/A" : "mysql://${local.resolved_platform_db_dns}:3306/${var.swell_database_name}"
 }

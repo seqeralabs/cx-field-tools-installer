@@ -257,6 +257,9 @@ locals {
     "disabled"
   )
 
+  cs_studio_ssh_mode  = var.flag_enable_data_studio_ssh ? "enabled" : "disabled"
+  cs_groundswell_mode = var.flag_enable_groundswell ? "enabled" : "disabled"
+
   platform_existing_db_url = var.flag_use_existing_external_db ? var.tower_db_url : "N/A"
 
 }
@@ -272,6 +275,8 @@ module "connection_strings" {
   platform_redis_deployment = local.cs_platform_redis_deployment
   studio_mode               = local.cs_studio_mode
   wave_mode                 = local.cs_wave_mode
+  studio_ssh_mode           = local.cs_studio_ssh_mode
+  groundswell_mode          = local.cs_groundswell_mode
 
   # Tower core
   tower_server_url         = var.tower_server_url
@@ -279,14 +284,10 @@ module "connection_strings" {
   platform_db_schema_name  = var.db_database_name
   platform_db_engine       = local.db_engine
 
-  # Studios / Groundswell flags (still flag-driven inside module — TODO: promote to mode strings)
-  flag_enable_data_studio_ssh = var.flag_enable_data_studio_ssh
-  flag_enable_groundswell     = var.flag_enable_groundswell
-
   # Per-component values
   data_studio_path_routing_url = var.data_studio_path_routing_url
   swell_database_name          = var.swell_database_name
-  wave_server_url              = try(var.wave_server_url, null)
+  wave_server_url              = var.wave_server_url
 
   # External resource references (TODO: replace with resolved address strings)
   rds_tower             = var.use_mocks ? null : try(module.rds[0], null)
