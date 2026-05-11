@@ -44,7 +44,9 @@ variable "tower_container_version" {
   description = "Seqera Platform container version. master supports only v25+ — earlier majors live on the tag/legacy-final-pre-v25."
   # TODO(#332): once v26.1.x GA is selected, document the exact pinned tag here for reference.
   validation {
-    condition     = startswith(var.tower_container_version, "v") && var.tower_container_version >= "v25"
+    # Match `v<digits>...`, then extract the major version as a number and compare numerically.
+    # HCL's `>=` requires numeric operands; lexicographic string compare (the Python equivalent) is not supported.
+    condition     = can(regex("^v[0-9]+", var.tower_container_version)) && tonumber(regex("^v([0-9]+)", var.tower_container_version)[0]) >= 25
     error_message = "tower_container_version must start with \"v\" and be v25.x or higher. For v24.x or earlier, check out git tag 'legacy-final-pre-v25'."
   }
 }
