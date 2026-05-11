@@ -234,11 +234,23 @@ variable "data_explorer_disabled_workspaces" { type = string }
 variable "flag_enable_data_studio" { type = bool }
 variable "data_studio_container_version" { type = string }
 variable "flag_limit_data_studio_to_some_workspaces" { type = bool }
-variable "data_studio_eligible_workspaces" { type = string }
+variable "data_studio_eligible_workspaces" {
+  type = string
+  validation {
+    condition     = var.data_studio_eligible_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_studio_eligible_workspaces))
+    error_message = "data_studio_eligible_workspaces must be empty or a comma-separated list of numeric workspace IDs (e.g., \"123\" or \"123,456,789\")."
+  }
+}
 
 variable "flag_enable_data_studio_ssh" { type = bool }
 variable "flag_limit_data_studio_ssh_to_some_workspaces" { type = bool }
-variable "data_studio_ssh_eligible_workspaces" { type = string }
+variable "data_studio_ssh_eligible_workspaces" {
+  type = string
+  validation {
+    condition     = var.data_studio_ssh_eligible_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_studio_ssh_eligible_workspaces))
+    error_message = "data_studio_ssh_eligible_workspaces must be empty or a comma-separated list of numeric workspace IDs (e.g., \"123\" or \"123,456,789\")."
+  }
+}
 
 variable "flag_studio_enable_path_routing" { type = bool }
 variable "data_studio_path_routing_url" {
@@ -461,7 +473,13 @@ variable "tower_audit_retention_days" { type = number }
 variable "tower_enable_openapi" { type = bool }
 
 variable "tower_enable_pipeline_versioning" { type = bool }
-variable "pipeline_versioning_eligible_workspaces" { type = string }
+variable "pipeline_versioning_eligible_workspaces" {
+  type = string
+  validation {
+    condition     = var.pipeline_versioning_eligible_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.pipeline_versioning_eligible_workspaces))
+    error_message = "pipeline_versioning_eligible_workspaces must be empty or a comma-separated list of numeric workspace IDs (e.g., \"123\" or \"123,456,789\")."
+  }
+}
 
 # ------------------------------------------------------------------------------------
 # TOWER CONFIGURATION - OIDC

@@ -21,14 +21,17 @@ from tests.utils.terraform.executor import prepare_plan
 def test_single_variable_validations_reject_bad_values(session_setup):
     """Confirm each migrated single-variable validation block rejects its non-compliant value."""
     tf_modifiers = """
-        tower_server_url            = "http://example.com"
-        tower_root_users            = "REPLACE_ME"
-        tower_db_url                = "jdbc:mysql://example.com:3306/tower"
-        tower_db_driver             = "wrong.driver"
-        tower_db_dialect            = "wrong.dialect"
-        db_engine_version           = "5.7"
-        db_container_engine_version = "5.7"
-        tower_container_version     = "v24.0.0"
+        tower_server_url                        = "http://example.com"
+        tower_root_users                        = "REPLACE_ME"
+        tower_db_url                            = "jdbc:mysql://example.com:3306/tower"
+        tower_db_driver                         = "wrong.driver"
+        tower_db_dialect                        = "wrong.dialect"
+        db_engine_version                       = "5.7"
+        db_container_engine_version             = "5.7"
+        tower_container_version                 = "v24.0.0"
+        data_studio_eligible_workspaces         = "abc"
+        data_studio_ssh_eligible_workspaces     = "1,abc"
+        pipeline_versioning_eligible_workspaces = "12 34"
     """
 
     with pytest.raises(RuntimeError) as excinfo:
@@ -44,6 +47,9 @@ def test_single_variable_validations_reject_bad_values(session_setup):
         "db_engine_version",
         "db_container_engine_version",
         "tower_container_version",
+        "data_studio_eligible_workspaces",
+        "data_studio_ssh_eligible_workspaces",
+        "pipeline_versioning_eligible_workspaces",
     ]
 
     # For each variable passed with a non-compliant value, confirm Terraform's plan stderr

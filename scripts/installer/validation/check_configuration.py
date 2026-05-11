@@ -373,13 +373,6 @@ def verify_database_configuration(data: SimpleNamespace):  # noqa: C901  (sequen
 def verify_data_studio(data: SimpleNamespace):
     """Verify fields related to Data Studio."""
     if data.flag_enable_data_studio:
-        if data.flag_limit_data_studio_to_some_workspaces:
-            # https://www.geeksforgeeks.org/python-check-whether-string-contains-only-numbers-or-not/
-            # if re.match('[0-9]*$', data.data_studio_eligible_workspaces):
-            if not re.findall(r"[0-9]+,[0-9]+", data.data_studio_eligible_workspaces):
-                log_error_and_exit(
-                    "`data_studio_eligible_workspaces may only be populated by digits and commas."
-                )
 
         if data.flag_use_private_cacert:
             logger.warning(
