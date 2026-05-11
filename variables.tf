@@ -143,7 +143,13 @@ variable "existing_route53_private_zone_name" { type = string }
 # Custom Private CA
 # ------------------------------------------------------------------------------------
 
-variable "private_cacert_bucket_prefix" { type = string }
+variable "private_cacert_bucket_prefix" {
+  type = string
+  validation {
+    condition     = var.private_cacert_bucket_prefix == "" || startswith(var.private_cacert_bucket_prefix, "s3://")
+    error_message = "private_cacert_bucket_prefix must be empty or start with \"s3://\"."
+  }
+}
 
 
 # ------------------------------------------------------------------------------------

@@ -34,6 +34,7 @@ SCENARIOS: dict[str, dict[str, tuple[str, str]]] = {
         "data_studio_eligible_workspaces": ("abc", "non-numeric value"),
         "data_studio_ssh_eligible_workspaces": ("abc", "non-numeric value"),
         "pipeline_versioning_eligible_workspaces": ("abc", "non-numeric value"),
+        "private_cacert_bucket_prefix": ("my-bucket", "missing s3:// prefix"),
     },
     "round_2": {
         "tower_server_url": ("https://example.com", "https prefix"),

@@ -25,10 +25,10 @@
 
 - [ ] `make verify` passes
 - [ ] `make plan` reviewed
-- [ ] `./tests/run_tests.sh` passes
+- [ ] `./tests/run_tests_all.sh` passes
 - [ ] Unit tests added/updated
 - [ ] Integration tested against a live deployment
-- [ ] `black` run on modified Python files
+- [ ] `ruff` run on modified Python files
 
 ## Configuration / Migration Notes
 
