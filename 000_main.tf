@@ -58,7 +58,7 @@ data "aws_caller_identity" "current" {
 ## ------------------------------------------------------------------------------------
 locals {
 
-  # Housekeeping 
+  # Housekeeping
   # ---------------------------------------------------------------------------------------
   global_prefix = var.flag_use_custom_resource_naming_prefix == true ? var.custom_resource_naming_prefix : "tf-${var.app_name}-${random_pet.stackname.id}"
 
@@ -71,7 +71,7 @@ locals {
   # NLB health checks originate from NLB nodes within the VPC — not from external IPs in sg_ingress_cidrs.
   # Without the VPC CIDR in the EC2 security group, health checks are blocked, the target shows unhealthy,
   # and the NLB stops forwarding real SSH traffic even though connect-proxy is running correctly.
-  vpc_cidr_block              = var.flag_create_new_vpc == true ? var.vpc_new_cidr_range : data.aws_vpc.preexisting[0].cidr_block
+  vpc_cidr_block = var.flag_create_new_vpc == true ? var.vpc_new_cidr_range : data.aws_vpc.preexisting[0].cidr_block
 
   flag_map_public_ip_on_launch = var.flag_map_public_ip_on_launch == true || var.flag_make_instance_public == true ? true : false
 
@@ -135,8 +135,8 @@ locals {
   # Studios SSH — see 002_security_groups.tf for why two separate rules are needed
   # (one for direct EC2 access, one for NLB path; NLBs don't have security groups
   # so both use CIDR-based rules rather than source_security_group_id)
-  sg_ec2_noalb_ssh                      = try([module.sg_ec2_noalb_ssh[0].security_group_id], [])
-  sg_from_nlb_ssh                       = try([module.sg_from_nlb_ssh[0].security_group_id], [])
+  sg_ec2_noalb_ssh = try([module.sg_ec2_noalb_ssh[0].security_group_id], [])
+  sg_from_nlb_ssh  = try([module.sg_from_nlb_ssh[0].security_group_id], [])
 
   sg_ec2_final = concat(
     local.sg_ec2_core,
@@ -180,8 +180,12 @@ locals {
 
   # Database
   # ---------------------------------------------------------------------------------------
-  # If creating new RDS, get address from TF. IF using existing RDS, get address from user. 
+  # If creating new RDS, get address from TF. IF using existing RDS, get address from user.
   populate_external_db = var.flag_create_external_db == true || var.flag_use_existing_external_db == true ? "true" : "false"
+
+  # Active DB engine version: container engine if container DB in use, else RDS engine.
+  # Fed into the connection_strings module to select the correct JDBC suffix.
+  db_engine = var.flag_use_container_db ? var.db_container_engine_version : var.db_engine_version
 
 
   # OIDC
@@ -217,9 +221,85 @@ locals {
   # ---------------------------------------------------------------------------------------
   playbook_dir = "/home/ec2-user/target/ansible"
 
+
+  # connection_strings (cs_*)
+  # ---------------------------------------------------------------------------------------
+  cs_platform_security_mode = (
+    var.flag_do_not_use_https ? "insecure" :
+    "secure"
+  )
+
+  # Deployment intent (use_mocks is orthogonal — handled inside module via var.use_mocks).
+  cs_platform_db_deployment = (
+    var.flag_use_container_db ? "container" :
+    var.flag_create_external_db ? "new" :
+    var.flag_use_existing_external_db ? "existing" :
+    "unknown"
+  )
+
+  cs_platform_redis_deployment = (
+    var.flag_use_container_redis ? "container" :
+    var.flag_create_external_redis ? "new" :
+    "unknown"
+  )
+
+  # Studios requires HTTPS — flag_do_not_use_https blocks studios entirely.
+  cs_studio_mode = (
+    !var.flag_enable_data_studio || var.flag_do_not_use_https ? "disabled" :
+    var.flag_studio_enable_path_routing ? "path" :
+    "subdomain"
+  )
+
+  # Wave-Lite requires HTTPS; Wave (Seqera-hosted) does not.
+  cs_wave_mode = (
+    var.flag_use_wave_lite && !var.flag_do_not_use_https ? "wave-lite" :
+    var.flag_use_wave ? "wave" :
+    "disabled"
+  )
+
+  cs_studio_ssh_mode  = var.flag_enable_data_studio_ssh ? "enabled" : "disabled"
+  cs_groundswell_mode = var.flag_enable_groundswell ? "enabled" : "disabled"
+
+  platform_existing_db_url = var.flag_use_existing_external_db ? var.tower_db_url : "N/A"
+
 }
 
-# Add subnet_collector module. 
+
+# Add connection_strings module
+module "connection_strings" {
+  source = "./modules/connection_strings/v2.0.0"
+
+  # Mode strings (caller resolves user-facing flags into modes)
+  platform_security_mode    = local.cs_platform_security_mode
+  platform_db_deployment    = local.cs_platform_db_deployment
+  platform_redis_deployment = local.cs_platform_redis_deployment
+  studio_mode               = local.cs_studio_mode
+  wave_mode                 = local.cs_wave_mode
+  studio_ssh_mode           = local.cs_studio_ssh_mode
+  groundswell_mode          = local.cs_groundswell_mode
+
+  # Tower core
+  tower_server_url         = var.tower_server_url
+  platform_existing_db_url = local.platform_existing_db_url
+  platform_db_schema_name  = var.db_database_name
+  platform_db_engine       = local.db_engine
+
+  # Per-component values
+  data_studio_path_routing_url = var.data_studio_path_routing_url
+  swell_database_name          = var.swell_database_name
+  wave_server_url              = var.wave_server_url
+
+  # External resource references (TODO: replace with resolved address strings)
+  rds_tower             = var.use_mocks ? null : try(module.rds[0], null)
+  rds_wave_lite         = var.use_mocks ? null : try(module.rds-wave-lite[0], null)
+  elasticache_tower     = var.use_mocks ? null : try(aws_elasticache_cluster.redis[0], null)
+  elasticache_wave_lite = var.use_mocks ? null : try(module.elasticache_wave_lite[0], null)
+
+  # Orthogonal mock toggle: swaps "new" deployment hosts to mock strings without changing intent.
+  use_mocks = var.use_mocks
+}
+
+# Add subnet_collector module.
 # Testing Note: For quick config testins, use existing VPC to bypass VPC asset generation.
 module "subnet_collector" {
   source = "./modules/subnet_collector/v1.0.0"
@@ -234,51 +314,6 @@ module "subnet_collector" {
   subnets_db    = var.flag_create_new_vpc ? var.vpc_new_db_subnets : var.vpc_existing_db_subnets
   subnets_redis = var.flag_create_new_vpc ? var.vpc_new_redis_subnets : var.vpc_existing_redis_subnets
   subnets_alb   = var.flag_create_new_vpc ? var.vpc_new_alb_subnets : var.vpc_existing_alb_subnets
-
-  # Testing flag
-  use_mocks = var.use_mocks
-}
-
-# Add connection_strings module
-module "connection_strings" {
-  source = "./modules/connection_strings/v1.0.0"
-
-  # Feature Flags
-  flag_create_load_balancer = var.flag_create_load_balancer
-  flag_do_not_use_https     = var.flag_do_not_use_https
-
-  flag_create_external_db       = var.flag_create_external_db
-  flag_use_existing_external_db = var.flag_use_existing_external_db
-  flag_use_container_db         = var.flag_use_container_db
-
-  flag_create_external_redis = var.flag_create_external_redis
-  flag_use_container_redis   = var.flag_use_container_redis
-
-  # Tower Configuration
-  tower_server_url = var.tower_server_url
-  tower_db_url     = var.flag_use_existing_external_db == true ? var.tower_db_url : ""
-  db_database_name = var.db_database_name
-
-  # Groundswell Configuration
-  flag_enable_groundswell = var.flag_enable_groundswell
-  swell_database_name     = var.swell_database_name
-
-  # Wave Configuration
-  flag_use_wave      = var.flag_use_wave
-  flag_use_wave_lite = var.flag_use_wave_lite
-  wave_server_url    = try(var.wave_server_url, null)
-
-  # Studios Configuration
-  flag_enable_data_studio         = var.flag_enable_data_studio
-  flag_enable_data_studio_ssh = var.flag_enable_data_studio_ssh
-  flag_studio_enable_path_routing = var.flag_studio_enable_path_routing
-  data_studio_path_routing_url    = var.flag_studio_enable_path_routing ? var.data_studio_path_routing_url : ""
-
-  # External Resource References
-  rds_tower             = var.use_mocks ? null : try(module.rds[0], null)
-  rds_wave_lite         = var.use_mocks ? null : try(module.rds-wave-lite[0], null)
-  elasticache_tower     = var.use_mocks ? null : try(aws_elasticache_cluster.redis[0], null)
-  elasticache_wave_lite = var.use_mocks ? null : try(module.elasticache_wave_lite[0], null)
 
   # Testing flag
   use_mocks = var.use_mocks

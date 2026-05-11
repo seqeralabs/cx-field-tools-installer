@@ -21,6 +21,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Updated Platform Connect containers version to 0.11.0.
             - Updated Studios recommended base images.
             - Raised wave-lite nginx `client_max_body_size` from 1m to 10m to prevent HTTP 413 errors when Fusion uploads large bin/ bundles. [`#315`](https://github.com/seqeralabs/cx-field-tools-installer/issues/315)
+            - Refactored `connection_strings` module to v2.0.0: streamlined module invocation (caller now resolves user-facing flags into mode strings — `platform_security_mode`, `platform_db_deployment`, `platform_redis_deployment`, `studio_mode`, `wave_mode` — before passing to the module, reducing input surface), and rationalized value generation (replaced interleaved flag ternaries with three logical sections: dispatch tables, single-step mode resolution, then composed final URLs). Removed the `data "external"` Python script for the DB connection-string suffix; logic now lives as a pure-HCL local conditional on engine version. v1.0.0 retained alongside v2.0.0 for reference. Deployer-visible behavior is unchanged.
             - TBD
         <br /><br />
 
