@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# NOTE: Some checks that were previously here have been moved to variables.tf validation blocks.
 
 from pathlib import Path
 import re
@@ -141,20 +142,10 @@ def verify_tfvars_config_dependencies(data: SimpleNamespace):
 
 def verify_tower_server_url(data: SimpleNamespace):
     """Verify the tower server url is correctly configured."""
-    if data.tower_server_url.startswith("http"):
-        log_error_and_exit("Field `tower_server_url` must not have a prefix.")
 
     if data.tower_server_port != "8000":
         logger.warning(
             "Tower instance not using default port (8000). Ensure Docker-Compose file is updated accordingly."
-        )
-
-
-def verify_tower_root_users(data: SimpleNamespace):
-    """Ensure at least one root user is specified."""
-    if data.tower_root_users in ["REPLACE_ME", ""]:
-        log_error_and_exit(
-            "Please populate `tower_root_user` with at least one email address."
         )
 
 
@@ -334,21 +325,6 @@ def verify_database_configuration(data: SimpleNamespace):  # noqa: C901  (sequen
     if (data.db_engine == "mysql") and ("8" in data.db_engine_version):
         logger.warning("MySQL 8 may need TOWER_DB_URL connection string modifiers.")
 
-    if (data.tower_db_url.startswith("jdbc:")) or (
-        data.tower_db_url.startswith("mysql:")
-    ):
-        log_error_and_exit(
-            "Do not include protocol in `tower_db_url`. Start with hostname."
-        )
-
-    if data.tower_db_driver != "org.mariadb.jdbc.Driver":
-        log_error_and_exit("Field `tower_db_driver` must be `org.mariadb.jdbc.Driver`.")
-
-    if data.tower_db_dialect != "io.seqera.util.MySQL55DialectCollateBin":
-        log_error_and_exit(
-            "Field `tower_db_dialect` must be `org.mariadb.jdbc.Driver`."
-        )
-
     if data.flag_use_container_db and data.tower_db_url != "db:3306":
         logger.warning(
             "You are using a non-standard db container name or port. "
@@ -394,30 +370,9 @@ def verify_database_configuration(data: SimpleNamespace):  # noqa: C901  (sequen
         )
 
 
-def verify_docker_version(data: SimpleNamespace):
-    """Make sure MySQL 5.x is not present"""
-
-    if data.db_engine_version < "8.":
-        log_error_and_exit(
-            "MySQL version is obsolete. Please chooses MySQL 8.x in `db_engine_version`."
-        )
-
-    if data.db_container_engine_version< "8.":
-        log_error_and_exit(
-            "MySQL version is obsolete. Please chooses MySQL 8.x in `db_container_engine_version`."
-        )
-
-
 def verify_data_studio(data: SimpleNamespace):
     """Verify fields related to Data Studio."""
     if data.flag_enable_data_studio:
-        if data.flag_limit_data_studio_to_some_workspaces:
-            # https://www.geeksforgeeks.org/python-check-whether-string-contains-only-numbers-or-not/
-            # if re.match('[0-9]*$', data.data_studio_eligible_workspaces):
-            if not re.findall(r"[0-9]+,[0-9]+", data.data_studio_eligible_workspaces):
-                log_error_and_exit(
-                    "`data_studio_eligible_workspaces may only be populated by digits and commas."
-                )
 
         if data.flag_use_private_cacert:
             logger.warning(
@@ -466,17 +421,6 @@ def verify_data_studio_ssh(data: SimpleNamespace):
             logger.warning(
                 "Studios SSH requires connect-proxy >= 0.10.0. Please verify your `data_studio_container_version`."
             )
-
-        if data.flag_limit_data_studio_ssh_to_some_workspaces:
-            workspaces = data.data_studio_ssh_eligible_workspaces
-            try:
-                workspaces = workspaces.split(",")
-                for wsp in workspaces:
-                    isinstance(int(wsp), int)
-            except ValueError:
-                log_error_and_exit(
-                    "Variable `data_studio_ssh_eligible_workspaces` has non-integer values. Fix before deploying."
-                )
 
 
 def verify_alb_settings(data: SimpleNamespace):
@@ -565,21 +509,6 @@ def verify_pipeline_versioning(data: SimpleNamespace):
         if data.tower_container_version < "v25.3.0":
             logger.warning("Your Platform version is too old to support pipeline versioning. Must be >= v25.3.0.")
 
-        # All workspaces eligible. Return.
-        if data.pipeline_versioning_eligible_workspaces == "":
-            return
-
-        # Only some eligible (via comma-delimited string); verify
-        workspaces = data.pipeline_versioning_eligible_workspaces
-        try:
-            workspaces = workspaces.split(",")
-            for wsp in workspaces:
-                isinstance(int(wsp), int)
-        except ValueError:
-            log_error_and_exit(
-                "Variable `pipeline_versioning_eligible_workspaces` has non-integer values. Fix before deploying."
-            )
-
 
 # -------------------------------------------------------------------------------
 # MAIN
@@ -593,16 +522,6 @@ if __name__ == "__main__":
     data_dictionary = get_tfvars_as_json()
     data = SimpleNamespace(**data_dictionary)
 
-    # Check minimum container version. master supports only the latest Platform major (v26.1.x).
-    # Bug-fix support for v25-and-below lives on the release/v25 branch — see documentation/branching_policy.md.
-    if not ((data.tower_container_version).startswith("v")) or (
-        data.tower_container_version < "v25"
-    ):
-        log_error_and_exit(
-            "This branch of the installer supports only Seqera Platform v25+. "
-            "For v24.x or earlier, check out git tag 'legacy-final-pre-v25'."
-        )
-
     # Verify tfvars fields
     print("\n")
     logger.info("Verifying TFVARS file")
@@ -610,15 +529,12 @@ if __name__ == "__main__":
     verify_only_one_true_set(data)
     verify_sensitive_keys(data, data_dictionary)
     verify_tfvars_config_dependencies(data)
-    verify_docker_version(data)
 
     # Verify Tower application configurations
     print("\n")
     logger.info("Verifying Tower configurations")
     logger.info("-" * 50)
-    verify_tower_root_users(data)
     verify_tower_self_signed_certs(data)
-    verify_tower_server_url(data)
     verify_docker_daemon_loggin(data)
     verify_email_login_disablement(data)
 

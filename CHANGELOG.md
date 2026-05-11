@@ -21,7 +21,9 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Updated Platform Connect containers version to 0.11.0.
             - Updated Studios recommended base images.
             - Raised wave-lite nginx `client_max_body_size` from 1m to 10m to prevent HTTP 413 errors when Fusion uploads large bin/ bundles. [`#315`](https://github.com/seqeralabs/cx-field-tools-installer/issues/315)
-            - Refactored `connection_strings` module to v2.0.0: streamlined module invocation (caller now resolves user-facing flags into mode strings — `platform_security_mode`, `platform_db_deployment`, `platform_redis_deployment`, `studio_mode`, `wave_mode` — before passing to the module, reducing input surface), and rationalized value generation (replaced interleaved flag ternaries with three logical sections: dispatch tables, single-step mode resolution, then composed final URLs). Removed the `data "external"` Python script for the DB connection-string suffix; logic now lives as a pure-HCL local conditional on engine version. v1.0.0 retained alongside v2.0.0 for reference. Deployer-visible behavior is unchanged.
+            - Refactored `connection_strings` module to v2.0.0: streamlined module invocation (caller now resolves user-facing flags into mode strings — `platform_security_mode`, `platform_db_deployment`, `platform_redis_deployment`, `studio_mode`, `wave_mode` — before passing to the module, reducing input surface), and rationalized value generation (replaced interleaved flag ternaries with three logical sections: dispatch tables, single-step mode resolution, then composed final URLs). v1.0.0 retained alongside v2.0.0 for reference. Deployer-visible behavior is unchanged.
+            - Removed the `data "external"` Python script for the DB connection-string suffix; logic now lives as a pure-HCL local conditional on engine version. 
+            - Migrated 12 single-variable validation checks from `scripts/installer/validation/check_configuration.py` to native Terraform `validation` blocks in `variables.tf` — `tower_server_url`, `tower_root_users`, `tower_db_url`, `tower_db_driver`, `tower_db_dialect`, `db_engine_version`, `db_container_engine_version`, `tower_container_version`, `data_studio_eligible_workspaces`, `data_studio_ssh_eligible_workspaces`, `pipeline_versioning_eligible_workspaces`, `private_cacert_bucket_prefix`. Errors now fire at plan time (earlier than the pre-plan Python script) and are co-located with each variable's declaration. Cross-variable and warning-only checks remain in the Python script.
             - TBD
         <br /><br />
 
@@ -38,6 +40,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 
         - Testing
             - Updated baseline tests for new Studios 0.11.0 connect-proxy version.
+            - Added parametrized round-based regression test for the 12 migrated single-variable validations (`tests/unit/variable_validation/`); new Makefile recipes (`run_tests_all`, `run_tests_core_only`, `run_tests_containers_only`, `run_tests_variables_only`, `run_tests_core_and_containers`, `run_tests_core_and_variables`) for marker-based test slicing.
             - TBD
 
 

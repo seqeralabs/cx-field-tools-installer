@@ -43,6 +43,12 @@ variable "tower_container_version" {
   type        = string
   description = "Seqera Platform container version. master supports only v25+ — earlier majors live on the tag/legacy-final-pre-v25."
   # TODO(#332): once v26.1.x GA is selected, document the exact pinned tag here for reference.
+  validation {
+    # Match `v<digits>...`, then extract the major version as a number and compare numerically.
+    # HCL's `>=` requires numeric operands; lexicographic string compare (the Python equivalent) is not supported.
+    condition     = can(regex("^v[0-9]+", var.tower_container_version)) && tonumber(regex("^v([0-9]+)", var.tower_container_version)[0]) >= 25
+    error_message = "tower_container_version must start with \"v\" and be v25.x or higher. For v24.x or earlier, check out git tag 'legacy-final-pre-v25'."
+  }
 }
 
 
@@ -137,7 +143,13 @@ variable "existing_route53_private_zone_name" { type = string }
 # Custom Private CA
 # ------------------------------------------------------------------------------------
 
-variable "private_cacert_bucket_prefix" { type = string }
+variable "private_cacert_bucket_prefix" {
+  type = string
+  validation {
+    condition     = var.private_cacert_bucket_prefix == "" || startswith(var.private_cacert_bucket_prefix, "s3://")
+    error_message = "private_cacert_bucket_prefix must be empty or start with \"s3://\"."
+  }
+}
 
 
 # ------------------------------------------------------------------------------------
@@ -230,11 +242,23 @@ variable "data_explorer_disabled_workspaces" { type = string }
 variable "flag_enable_data_studio" { type = bool }
 variable "data_studio_container_version" { type = string }
 variable "flag_limit_data_studio_to_some_workspaces" { type = bool }
-variable "data_studio_eligible_workspaces" { type = string }
+variable "data_studio_eligible_workspaces" {
+  type = string
+  validation {
+    condition     = var.data_studio_eligible_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_studio_eligible_workspaces))
+    error_message = "data_studio_eligible_workspaces must be empty or a comma-separated list of numeric workspace IDs (e.g., \"123\" or \"123,456,789\")."
+  }
+}
 
 variable "flag_enable_data_studio_ssh" { type = bool }
 variable "flag_limit_data_studio_ssh_to_some_workspaces" { type = bool }
-variable "data_studio_ssh_eligible_workspaces" { type = string }
+variable "data_studio_ssh_eligible_workspaces" {
+  type = string
+  validation {
+    condition     = var.data_studio_ssh_eligible_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_studio_ssh_eligible_workspaces))
+    error_message = "data_studio_ssh_eligible_workspaces must be empty or a comma-separated list of numeric workspace IDs (e.g., \"123\" or \"123,456,789\")."
+  }
+}
 
 variable "flag_studio_enable_path_routing" { type = bool }
 variable "data_studio_path_routing_url" {
@@ -265,7 +289,14 @@ variable "db_database_name" { type = string }
 # ------------------------------------------------------------------------------------
 
 variable "db_container_engine" { type = string }
-variable "db_container_engine_version" { type = string }
+
+variable "db_container_engine_version" {
+  type = string
+  validation {
+    condition     = tonumber(regex("^[0-9]+", var.db_container_engine_version)) >= 8
+    error_message = "db_container_engine_version must be MySQL 8.x or higher."
+  }
+}
 
 
 # ------------------------------------------------------------------------------------
@@ -273,7 +304,14 @@ variable "db_container_engine_version" { type = string }
 # ------------------------------------------------------------------------------------
 
 variable "db_engine" { type = string }
-variable "db_engine_version" { type = string }
+
+variable "db_engine_version" {
+  type = string
+  validation {
+    condition     = tonumber(regex("^[0-9]+", var.db_engine_version)) >= 8
+    error_message = "db_engine_version must be MySQL 8.x or higher."
+  }
+}
 variable "db_param_group" { type = string }
 variable "db_instance_class" { type = string }
 variable "db_allocated_storage" { type = number }
@@ -380,14 +418,40 @@ variable "alb_certificate_arn" { type = string }
 # TOWER CONFIGURATION
 # ------------------------------------------------------------------------------------
 
-variable "tower_server_url" { type = string }
+variable "tower_server_url" {
+  type = string
+  validation {
+    condition     = !startswith(var.tower_server_url, "http")
+    error_message = "tower_server_url must not include a protocol prefix (e.g., \"http://\" or \"https://\"). Provide hostname only."
+  }
+}
 variable "tower_server_port" { type = string } # TODO: Update SG-generation logic to use this value
 variable "tower_contact_email" { type = string }
 variable "tower_enable_platforms" { type = string }
 
-variable "tower_db_url" { type = string }
-variable "tower_db_driver" { type = string }
-variable "tower_db_dialect" { type = string }
+variable "tower_db_url" {
+  type = string
+  validation {
+    condition     = !startswith(var.tower_db_url, "jdbc:") && !startswith(var.tower_db_url, "mysql:")
+    error_message = "tower_db_url must not include a protocol prefix. Start with hostname."
+  }
+}
+
+variable "tower_db_driver" {
+  type = string
+  validation {
+    condition     = var.tower_db_driver == "org.mariadb.jdbc.Driver"
+    error_message = "tower_db_driver must be \"org.mariadb.jdbc.Driver\"."
+  }
+}
+
+variable "tower_db_dialect" {
+  type = string
+  validation {
+    condition     = var.tower_db_dialect == "io.seqera.util.MySQL55DialectCollateBin"
+    error_message = "tower_db_dialect must be \"io.seqera.util.MySQL55DialectCollateBin\"."
+  }
+}
 variable "tower_db_min_pool_size" { type = number }
 variable "tower_db_max_pool_size" { type = number }
 variable "tower_db_max_lifetime" { type = number }
@@ -399,7 +463,13 @@ variable "tower_smtp_starttls_enable" { type = bool }
 variable "tower_smtp_starttls_required" { type = bool }
 variable "tower_smtp_ssl_protocols" { type = string }
 
-variable "tower_root_users" { type = string }
+variable "tower_root_users" {
+  type = string
+  validation {
+    condition     = !contains(["REPLACE_ME", ""], var.tower_root_users)
+    error_message = "tower_root_users must be populated with at least one email address."
+  }
+}
 variable "tower_email_trusted_orgs" { type = string }
 variable "tower_email_trusted_users" { type = string }
 
@@ -411,7 +481,13 @@ variable "tower_audit_retention_days" { type = number }
 variable "tower_enable_openapi" { type = bool }
 
 variable "tower_enable_pipeline_versioning" { type = bool }
-variable "pipeline_versioning_eligible_workspaces" { type = string }
+variable "pipeline_versioning_eligible_workspaces" {
+  type = string
+  validation {
+    condition     = var.pipeline_versioning_eligible_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.pipeline_versioning_eligible_workspaces))
+    error_message = "pipeline_versioning_eligible_workspaces must be empty or a comma-separated list of numeric workspace IDs (e.g., \"123\" or \"123,456,789\")."
+  }
+}
 
 # ------------------------------------------------------------------------------------
 # TOWER CONFIGURATION - OIDC
