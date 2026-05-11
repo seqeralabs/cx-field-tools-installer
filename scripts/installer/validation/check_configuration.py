@@ -422,17 +422,6 @@ def verify_data_studio_ssh(data: SimpleNamespace):
                 "Studios SSH requires connect-proxy >= 0.10.0. Please verify your `data_studio_container_version`."
             )
 
-        if data.flag_limit_data_studio_ssh_to_some_workspaces:
-            workspaces = data.data_studio_ssh_eligible_workspaces
-            try:
-                workspaces = workspaces.split(",")
-                for wsp in workspaces:
-                    isinstance(int(wsp), int)
-            except ValueError:
-                log_error_and_exit(
-                    "Variable `data_studio_ssh_eligible_workspaces` has non-integer values. Fix before deploying."
-                )
-
 
 def verify_alb_settings(data: SimpleNamespace):
     """Verify that user does not have contradictory settings in case of ALB vs. no ALB."""
@@ -520,21 +509,6 @@ def verify_pipeline_versioning(data: SimpleNamespace):
         if data.tower_container_version < "v25.3.0":
             logger.warning("Your Platform version is too old to support pipeline versioning. Must be >= v25.3.0.")
 
-        # All workspaces eligible. Return.
-        if data.pipeline_versioning_eligible_workspaces == "":
-            return
-
-        # Only some eligible (via comma-delimited string); verify
-        workspaces = data.pipeline_versioning_eligible_workspaces
-        try:
-            workspaces = workspaces.split(",")
-            for wsp in workspaces:
-                isinstance(int(wsp), int)
-        except ValueError:
-            log_error_and_exit(
-                "Variable `pipeline_versioning_eligible_workspaces` has non-integer values. Fix before deploying."
-            )
-
 
 # -------------------------------------------------------------------------------
 # MAIN
@@ -547,16 +521,6 @@ if __name__ == "__main__":
     # Kept the two objects different for convenience when .keys() method is required.
     data_dictionary = get_tfvars_as_json()
     data = SimpleNamespace(**data_dictionary)
-
-    # Check minimum container version. master supports only the latest Platform major (v26.1.x).
-    # Bug-fix support for v25-and-below lives on the release/v25 branch — see documentation/branching_policy.md.
-    if not ((data.tower_container_version).startswith("v")) or (
-        data.tower_container_version < "v25"
-    ):
-        log_error_and_exit(
-            "This branch of the installer supports only Seqera Platform v25+. "
-            "For v24.x or earlier, check out git tag 'legacy-final-pre-v25'."
-        )
 
     # Verify tfvars fields
     print("\n")
