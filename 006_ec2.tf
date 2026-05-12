@@ -52,7 +52,7 @@ resource "aws_launch_template" "lt_with_no_ami_lifecycle" {
   image_id      = data.aws_ami.amazon_linux_2023.id
   instance_type = var.ec2_host_instance_type
 
-  vpc_security_group_ids = local.ec2_sg_final
+  vpc_security_group_ids = local.sg_ec2_final
   key_name               = aws_key_pair.generated_key.key_name
 
   iam_instance_profile {
@@ -75,7 +75,7 @@ resource "aws_launch_template" "lt_with_ami_lifecycle" {
   image_id      = data.aws_ami.amazon_linux_2023.id
   instance_type = var.ec2_host_instance_type
 
-  vpc_security_group_ids = local.ec2_sg_final
+  vpc_security_group_ids = local.sg_ec2_final
   key_name               = aws_key_pair.generated_key.key_name
 
   iam_instance_profile {
@@ -90,7 +90,7 @@ resource "aws_launch_template" "lt_with_ami_lifecycle" {
   user_data = base64encode(local.lt_content_raw)
 
   lifecycle {
-    ignore_changes = [ image_id ]
+    ignore_changes = [image_id]
   }
 }
 
@@ -102,19 +102,19 @@ resource "aws_instance" "ec2" {
 
   depends_on = [module.rds[0]]
 
-  subnet_id = local.subnet_ids_ec2[0]
+  subnet_id = module.subnet_collector.subnet_ids_ec2[0]
 
   launch_template {
     # id      = aws_launch_template.lt.id
-    id        = ( var.ec2_update_ami_if_available == true ? 
+    id = (var.ec2_update_ami_if_available == true ?
       aws_launch_template.lt_with_no_ami_lifecycle[0].id : aws_launch_template.lt_with_ami_lifecycle[0].id
     )
     version = "$Latest"
   }
 
   root_block_device {
-    encrypted  = var.flag_encrypt_ebs
-    kms_key_id = var.flag_use_kms_key == true ? var.ec2_ebs_kms_key : ""
+    encrypted   = var.flag_encrypt_ebs
+    kms_key_id  = var.flag_use_kms_key == true ? var.ec2_ebs_kms_key : ""
     volume_size = var.ec2_root_volume_size
   }
 
@@ -166,8 +166,8 @@ resource "aws_eip_association" "eip_assoc" {
 resource "aws_ec2_instance_connect_endpoint" "example" {
   count = var.flag_make_instance_private == true || var.flag_make_instance_private_behind_public_alb == true ? 1 : 0
 
-  subnet_id          = local.subnet_ids_ec2[0]
-  security_group_ids = [module.tower_eice_egress_sg.security_group_id]
+  subnet_id          = module.subnet_collector.subnet_ids_ec2[0]
+  security_group_ids = [module.sg_eice.security_group_id]
 
   tags = {
     Name = local.global_prefix

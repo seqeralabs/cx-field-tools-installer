@@ -34,6 +34,7 @@ resource "aws_route53_zone" "private" {
 ## Route53 A Record Generation
 ##   Note: If no Route53 records are generated, an entry will be added to the EC2 hosts file
 ## ------------------------------------------------------------------------------------
+# Badly named resource -- this is the record need to reach SP via ALB.
 resource "aws_route53_record" "alb" {
   count = local.dns_create_alb_record == true ? 1 : 0
 
@@ -48,7 +49,7 @@ resource "aws_route53_record" "alb" {
   }
 }
 
-
+# Badly named resource -- this is the record need to reach SP directly via EC2.
 resource "aws_route53_record" "ec2" {
   count = local.dns_create_ec2_record == true ? 1 : 0
 
@@ -65,9 +66,9 @@ resource "aws_route53_record" "alb_connect" {
   count = local.dns_create_alb_record == true ? 1 : 0
 
   zone_id = local.dns_zone_id
-  # name    = local.tower_connect_dns
-  name    = local.tower_connect_wildcard_dns
-  type    = "A"
+  name    = var.flag_studio_enable_path_routing ? module.connection_strings.tower_connect_dns : module.connection_strings.tower_connect_wildcard_dns
+
+  type = "A"
 
   alias {
     name                   = module.alb[0].lb_dns_name
@@ -81,9 +82,66 @@ resource "aws_route53_record" "ec2_connect" {
   count = local.dns_create_ec2_record == true ? 1 : 0
 
   zone_id = local.dns_zone_id
-  # name    = local.tower_connect_dns
-  name    = local.tower_connect_wildcard_dns
+  name    = var.flag_studio_enable_path_routing ? module.connection_strings.tower_connect_dns : module.connection_strings.tower_connect_wildcard_dns
   type    = "A"
+
+  ttl     = "5"
+  records = [local.dns_instance_ip]
+}
+
+
+# Tower Connect SSH
+# NLB record (flag_create_load_balancer = true): points to the NLB for TCP passthrough on port 2222.
+# EC2 record (flag_create_load_balancer = false): points directly to the EC2 instance IP.
+# Both resolve to connect-ssh.<tower_server_url>, which Platform shows users as the SSH address.
+resource "aws_route53_record" "nlb_ssh" {
+  count = local.dns_create_alb_record == true && var.flag_enable_data_studio_ssh == true ? 1 : 0
+
+  zone_id = local.dns_zone_id
+  name    = module.connection_strings.tower_connect_ssh_dns
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.nlb_ssh[0].dns_name
+    zone_id                = aws_lb.nlb_ssh[0].zone_id
+    evaluate_target_health = true
+  }
+}
+
+resource "aws_route53_record" "ec2_ssh" {
+  count = local.dns_create_ec2_record == true && var.flag_enable_data_studio_ssh == true ? 1 : 0
+
+  zone_id = local.dns_zone_id
+  name    = module.connection_strings.tower_connect_ssh_dns
+  type    = "A"
+
+  ttl     = "5"
+  records = [local.dns_instance_ip]
+}
+
+
+resource "aws_route53_record" "alb_wave" {
+  count = local.dns_create_alb_record == true && var.flag_use_wave_lite == true ? 1 : 0
+
+  zone_id = local.dns_zone_id
+  name    = module.connection_strings.tower_wave_dns
+  type    = "A"
+
+  alias {
+    name                   = module.alb[0].lb_dns_name
+    zone_id                = module.alb[0].lb_zone_id
+    evaluate_target_health = true
+  }
+}
+
+resource "aws_route53_record" "ec2_wave" {
+  count = local.dns_create_ec2_record == true ? 1 : 0
+
+  zone_id = local.dns_zone_id
+  # name    = local.tower_connect_dns
+  # name = module.connection_strings.tower_connect_wildcard_dns
+  name = module.connection_strings.tower_wave_dns
+  type = "A"
 
   ttl     = "5"
   records = [local.dns_instance_ip]

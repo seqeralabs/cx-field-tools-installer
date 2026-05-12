@@ -1,1 +1,1 @@
-export NXF_VER=24.04.2
+export NXF_VER=25.04.6

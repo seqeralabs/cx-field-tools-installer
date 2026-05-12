@@ -4,7 +4,7 @@
 locals {
   tower_env = templatefile("assets/src/tower_config/tower.env.tpl",
     {
-      tower_server_url       = local.tower_server_url,
+      tower_server_url       = module.connection_strings.tower_server_url,
       tower_contact_email    = var.tower_contact_email,
       tower_enable_platforms = replace(var.tower_enable_platforms, "/\\s+/", ""),
 
@@ -13,15 +13,14 @@ locals {
       flag_use_container_db = var.flag_use_container_db,
       db_engine_version     = var.db_engine_version,
 
-      tower_db_url           = local.tower_db_url,
+      tower_db_url           = module.connection_strings.tower_db_url,
       tower_db_driver        = var.tower_db_driver,
       tower_db_dialect       = var.tower_db_dialect,
       tower_db_min_pool_size = var.tower_db_min_pool_size,
       tower_db_max_pool_size = var.tower_db_max_pool_size,
       tower_db_max_lifetime  = var.tower_db_max_lifetime,
-      flyway_locations       = var.flyway_locations,
 
-      tower_redis_url = local.tower_redis_url,
+      tower_redis_url = module.connection_strings.tower_redis_url,
 
       flag_use_aws_ses_iam_integration = var.flag_use_aws_ses_iam_integration,
       flag_use_existing_smtp           = var.flag_use_existing_smtp,
@@ -31,21 +30,34 @@ locals {
 
       flag_do_not_use_https = var.flag_do_not_use_https,
 
-      flag_use_wave           = var.flag_use_wave,
-      wave_server_url         = var.wave_server_url,
+      flag_use_wave           = local.wave_enabled,
+      wave_server_url         = module.connection_strings.tower_wave_url,
       flag_enable_groundswell = var.flag_enable_groundswell,
 
       flag_data_explorer_enabled        = var.flag_data_explorer_enabled,
       data_explorer_disabled_workspaces = var.data_explorer_disabled_workspaces,
 
       tower_container_version = var.tower_container_version,
-      
-      flag_enable_data_studio = var.flag_enable_data_studio,
-      flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces,
-      data_studio_eligible_workspaces = var.data_studio_eligible_workspaces,
-      tower_connect_server_url = local.tower_connect_server_url,
 
-      data_studio_options = var.data_studio_options,
+      flag_enable_data_studio                   = var.flag_enable_data_studio,
+      tower_connect_server_url                  = module.connection_strings.tower_connect_server_url,
+      flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces,
+      data_studio_eligible_workspaces           = var.data_studio_eligible_workspaces,
+
+      flag_enable_data_studio_ssh                   = var.flag_enable_data_studio_ssh,
+      data_studio_ssh_address                       = module.connection_strings.tower_connect_ssh_url,
+      flag_limit_data_studio_ssh_to_some_workspaces = var.flag_limit_data_studio_ssh_to_some_workspaces,
+      data_studio_ssh_eligible_workspaces           = var.data_studio_ssh_eligible_workspaces,
+      connect_ssh_fingerprint                       = tls_private_key.connect_ssh_host_key.public_key_fingerprint_sha256,
+
+      data_studio_options             = var.data_studio_options,
+      flag_studio_enable_path_routing = var.flag_studio_enable_path_routing,
+
+      flag_allow_aws_instance_credentials = var.flag_allow_aws_instance_credentials,
+      tower_enable_openapi                = var.tower_enable_openapi,
+
+      tower_enable_pipeline_versioning        = var.tower_enable_pipeline_versioning,
+      pipeline_versioning_eligible_workspaces = var.pipeline_versioning_eligible_workspaces,
     }
   )
 
@@ -70,12 +82,13 @@ locals {
 
       flag_disable_email_login = var.flag_disable_email_login,
 
-      flag_enable_data_studio = var.flag_enable_data_studio,
+      flag_enable_data_studio                   = var.flag_enable_data_studio,
       flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces,
 
       tower_audit_retention_days = var.tower_audit_retention_days,
 
-      flag_using_micronaut_4 = local.flag_using_micronaut_4 ,
+      flag_tower_enable_participant_auto_create_user = var.flag_tower_enable_participant_auto_create_user,
+      flag_tower_enable_member_auto_create_user      = var.flag_tower_enable_member_auto_create_user,
 
     }
   )
@@ -84,7 +97,7 @@ locals {
     {
       db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"],
       db_tower_password = local.tower_secrets["TOWER_DB_PASSWORD"]["value"],
-      db_database_name  = var.db_database_name
+      db_database_name  = var.db_database_name,
     }
   )
 
@@ -97,7 +110,7 @@ locals {
       swell_db_user       = local.groundswell_secrets["SWELL_DB_USER"]["value"],
       swell_db_password   = local.groundswell_secrets["SWELL_DB_PASSWORD"]["value"],
       swell_database_name = var.swell_database_name,
-      db_database_name  = var.db_database_name,
+      db_database_name    = var.db_database_name,
     }
   )
 
@@ -106,69 +119,95 @@ locals {
       db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"],
       db_tower_password = local.tower_secrets["TOWER_DB_PASSWORD"]["value"],
       db_database_name  = var.db_database_name,
-      tower_db_url      = local.tower_db_url,
+      tower_db_url      = module.connection_strings.tower_db_url,
 
-      swell_db_user       = local.groundswell_secrets["SWELL_DB_USER"]["value"],
-      swell_db_password   = local.groundswell_secrets["SWELL_DB_PASSWORD"]["value"],
-      # swell_database_name = var.swell_database_name,
-      swell_db_url = local.swell_db_url,
+      swell_db_user     = local.groundswell_secrets["SWELL_DB_USER"]["value"],
+      swell_db_password = local.groundswell_secrets["SWELL_DB_PASSWORD"]["value"],
+      swell_db_url      = module.connection_strings.swell_db_url,
 
       flag_use_container_db = var.flag_use_container_db,
-      db_engine_version     = var.db_engine_version
+      db_engine_version     = var.db_engine_version,
     }
   )
 
   data_studios_env = templatefile("assets/src/tower_config/data-studios.env.tpl",
     {
-      tower_server_url          = local.tower_server_url,
-      # tower_redis_url           = local.tower_redis_url,
-      tower_redis_url           = local.tower_connect_redis_url,
-      tower_connect_server_url  = local.tower_connect_server_url, 
-      studio_uses_distroless = local.studio_uses_distroless
+      flag_enable_data_studio     = var.flag_enable_data_studio,
+      tower_server_url            = module.connection_strings.tower_server_url,
+      tower_redis_url             = module.connection_strings.tower_connect_redis_url,
+      tower_connect_server_url    = module.connection_strings.tower_connect_server_url,
+      flag_enable_data_studio_ssh = var.flag_enable_data_studio_ssh,
+      connect_ssh_key_path        = "/data/ssh-host-key",
     }
   )
-}
 
 
+  ## ------------------------------------------------------------------------------------
+  ## Wave Lite config files
+  ## ------------------------------------------------------------------------------------
+  wave_lite_yml = templatefile("assets/src/wave_lite_config/wave-lite.yml.tpl",
+    {
+      tower_server_url = module.connection_strings.tower_server_url,
+      wave_server_url  = module.connection_strings.tower_wave_url,
 
-## ------------------------------------------------------------------------------------
-## Update Docker-Compose with Docker version
-## ------------------------------------------------------------------------------------
-locals {
+      wave_lite_db_master_user      = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_USER"]["value"],
+      wave_lite_db_master_password  = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_PASSWORD"]["value"],
+      wave_lite_db_limited_user     = local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_USER"]["value"],
+      wave_lite_db_limited_password = local.wave_lite_secrets["WAVE_LITE_DB_LIMITED_PASSWORD"]["value"],
+      wave_lite_redis_auth          = local.wave_lite_secrets["WAVE_LITE_REDIS_AUTH"]["value"],
+
+      wave_lite_db_url    = module.connection_strings.wave_lite_db_url,
+      wave_lite_redis_url = module.connection_strings.wave_lite_redis_url,
+      tower_contact_email = var.tower_contact_email,
+    }
+  )
+
+
+  ## ------------------------------------------------------------------------------------
+  ## Update Docker-Compose with Docker version
+  ## ------------------------------------------------------------------------------------
   docker_compose = templatefile("assets/src/docker_compose/docker-compose.yml.tpl",
     {
-      docker_version = var.tower_container_version,
-      auth_oidc      = local.oidc_auth,
-      auth_github    = local.oidc_github,
+      docker_version    = var.tower_container_version,
+      oidc_consolidated = local.oidc_consolidated,
 
-      db_database_name  = var.db_database_name
+      db_database_name  = var.db_database_name,
       db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"],
       db_tower_password = local.tower_secrets["TOWER_DB_PASSWORD"]["value"],
 
-      flag_use_container_db               = var.flag_use_container_db,
-      flag_use_container_redis            = var.flag_use_container_redis,
-      flag_use_custom_docker_compose_file = var.flag_use_custom_docker_compose_file,
+      flag_use_container_db    = var.flag_use_container_db,
+      flag_use_container_redis = var.flag_use_container_redis,
+      flag_use_private_cacert  = var.flag_use_private_cacert,
 
       flag_enable_groundswell = var.flag_enable_groundswell,
       swell_container_version = var.swell_container_version,
 
-      flag_new_enough_for_migrate_db = local.flag_new_enough_for_migrate_db,
-
-      db_container_engine = var.db_container_engine,
+      db_container_engine         = var.db_container_engine,
       db_container_engine_version = var.db_container_engine_version,
 
-      flag_enable_data_studio = var.flag_enable_data_studio,
+      flag_enable_data_studio       = var.flag_enable_data_studio,
+      flag_enable_data_studio_ssh   = var.flag_enable_data_studio_ssh,
       data_studio_container_version = var.data_studio_container_version,
-      updated_redis_version = tonumber(length(regexall("^v24.2.[0-9]", var.tower_container_version))) >= 1 || tonumber(length(regexall("^v25.1.[0-9]", var.tower_container_version))) >= 1 ? true : false,
-      studio_uses_distroless = local.studio_uses_distroless
+
+      flag_use_wave_lite          = var.flag_use_wave_lite,
+      num_wave_lite_replicas      = var.num_wave_lite_replicas,
+      wave_lite_redis_container   = local.wave_lite_redis_container,
+      wave_lite_db_container      = local.wave_lite_db_container,
+      wave_lite_container_version = var.wave_lite_container_version,
+
+      wave_lite_db_master_user     = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_USER"]["value"],
+      wave_lite_db_master_password = local.wave_lite_secrets["WAVE_LITE_DB_MASTER_PASSWORD"]["value"],
+      wave_lite_redis_auth         = local.wave_lite_secrets["WAVE_LITE_REDIS_AUTH"]["value"],
+
+      private_ca_cert = local.private_ca_cert,
+      private_ca_key  = local.private_ca_key,
     }
   )
-}
 
-## ------------------------------------------------------------------------------------
-## Seqerakit - Everything But Compute Environments
-## ------------------------------------------------------------------------------------
-locals {
+
+  ## ------------------------------------------------------------------------------------
+  ## Seqerakit - Everything But Compute Environments
+  ## ------------------------------------------------------------------------------------
   seqerakit_yml = templatefile("assets/src/seqerakit/setup.yml.tpl",
     {
       seqerakit_org_name     = var.seqerakit_org_name,
@@ -185,22 +224,22 @@ locals {
       seqerakit_outdir           = var.seqerakit_outdir,
       seqerakit_compute_env_name = var.seqerakit_compute_env_name,
 
-      seqerakit_flag_credential_create_aws    = var.seqerakit_flag_credential_create_aws,
-      seqerakit_flag_credential_create_github = var.seqerakit_flag_credential_create_github,
-      seqerakit_flag_credential_create_docker = var.seqerakit_flag_credential_create_docker,
+      seqerakit_flag_credential_create_aws        = var.seqerakit_flag_credential_create_aws,
+      seqerakit_flag_credential_create_github     = var.seqerakit_flag_credential_create_github,
+      seqerakit_flag_credential_create_docker     = var.seqerakit_flag_credential_create_docker,
       seqerakit_flag_credential_create_codecommit = var.seqerakit_flag_credential_create_codecommit,
 
-      seqerakit_flag_credential_use_aws_role = var.seqerakit_flag_credential_use_aws_role
-      seqerakit_flag_credential_use_codecommit_baseurl = var.seqerakit_flag_credential_use_codecommit_baseurl
+      seqerakit_flag_credential_use_aws_role           = var.seqerakit_flag_credential_use_aws_role,
+      seqerakit_flag_credential_use_codecommit_baseurl = var.seqerakit_flag_credential_use_codecommit_baseurl,
+
+      flag_allow_aws_instance_credentials = var.flag_allow_aws_instance_credentials,
     }
   )
-}
 
 
-## ------------------------------------------------------------------------------------
-## Seqerakit - Compute Environments
-## ------------------------------------------------------------------------------------
-locals {
+  ## ------------------------------------------------------------------------------------
+  ## Seqerakit - Compute Environments
+  ## ------------------------------------------------------------------------------------
   aws_batch_manual = templatefile("assets/src/seqerakit/compute-envs/aws_batch_manual.yml.tpl",
     {
       aws_region = var.seqerakit_compute_env_region,
@@ -215,13 +254,13 @@ locals {
 
       use_fusion_v2    = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",
       use_wave         = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",
-      use_fast_storage = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False"
+      use_fast_storage = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",
     }
   )
-}
 
-
-locals {
+  ## ------------------------------------------------------------------------------------
+  ## Forge
+  ## ------------------------------------------------------------------------------------
   aws_batch_forge = templatefile("assets/src/seqerakit/compute-envs/aws_batch_forge.yml.tpl",
     {
       aws_region = var.seqerakit_compute_env_region,
@@ -232,8 +271,8 @@ locals {
       seqerakit_compute_env_name = var.seqerakit_compute_env_name,
 
       vpc_id         = local.vpc_id,
-      subnets        = local.subnet_ids_ec2,
-      securityGroups = [module.tower_batch_sg.security_group_id], # local.ec2_sg_final,
+      subnets        = module.subnet_collector.subnet_ids_ec2,
+      securityGroups = [module.sg_batch.security_group_id], # local.sg_ec2_final,
       ec2KeyPair     = aws_key_pair.generated_key.key_name,
 
       use_fusion_v2    = var.seqerakit_aws_use_fusion_v2 == true ? "True" : "False",
@@ -244,92 +283,90 @@ locals {
         var.seqerakit_aws_use_fusion_v2 == true ?
         replace(var.seqerakit_aws_fusion_instances, "/\\s+/", "") :
         replace(var.seqerakit_aws_normal_instances, "/\\s+/", "")
-      )
+      ),
     }
   )
-}
 
 
-## ------------------------------------------------------------------------------------
-## VM Configuration - Mandatory
-## ------------------------------------------------------------------------------------
-locals {
+  ## ------------------------------------------------------------------------------------
+  ## VM Configuration - Mandatory
+  ## ------------------------------------------------------------------------------------
   cleanse_and_configure_host = templatefile(
     "assets/src/bash/remote/cleanse_and_configure_host.sh.tpl",
     {
       app_name = var.app_name,
 
-      flag_generate_private_cacert     = tostring(var.flag_generate_private_cacert),
-      flag_use_existing_private_cacert = tostring(var.flag_use_existing_private_cacert),
-      flag_do_not_use_https            = tostring(var.flag_do_not_use_https),
+      flag_use_private_cacert = tostring(var.flag_use_private_cacert),
+      flag_do_not_use_https   = tostring(var.flag_do_not_use_https),
 
-      bucket_prefix_for_new_private_ca_cert = var.bucket_prefix_for_new_private_ca_cert,
-      existing_ca_cert_file                 = var.existing_ca_cert_file,
-      existing_ca_key_file                  = var.existing_ca_key_file,
+      private_cacert_bucket_prefix = var.private_cacert_bucket_prefix,
 
       populate_external_db = local.populate_external_db,
-      tower_db_url         = local.tower_db_root,
+      tower_db_url         = module.connection_strings.tower_db_dns,
       db_database_name     = var.db_database_name,
 
-      docker_compose_file = local.docker_compose_file,
+      use_wave_lite    = var.flag_use_wave_lite,
+      wave_lite_db_url = module.connection_strings.wave_lite_db_url,
 
-      tower_base_url     = local.tower_base_url,
-      tower_server_url   = local.tower_server_url,
-      tower_api_endpoint = local.tower_api_endpoint,
+      tower_base_url     = module.connection_strings.tower_base_url,
+      tower_server_url   = module.connection_strings.tower_server_url,
+      tower_api_endpoint = module.connection_strings.tower_api_endpoint,
 
-      flag_create_hosts_file_entry = var.flag_create_hosts_file_entry
+      flag_create_hosts_file_entry = var.flag_create_hosts_file_entry,
 
     }
   )
-}
 
-
-## ------------------------------------------------------------------------------------
-## Ansible
-## ------------------------------------------------------------------------------------
-locals {
+  ## ------------------------------------------------------------------------------------
+  ## Ansible
+  ## ------------------------------------------------------------------------------------
   ansible_02_update_file_configurations = templatefile("assets/src/ansible/02_update_file_configurations.yml.tpl",
     {
-      app_name          = var.app_name
-      db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"]
-      db_tower_password = local.tower_secrets["TOWER_DB_PASSWORD"]["value"]
+      app_name                     = var.app_name,
+      tower_base_url               = module.connection_strings.tower_base_url,
+      flag_use_private_cacert      = var.flag_use_private_cacert,
+      private_cacert_bucket_prefix = var.private_cacert_bucket_prefix,
+      populate_external_db         = local.populate_external_db,
+      tower_db_dns                 = module.connection_strings.tower_db_dns,
+      flag_enable_groundswell      = var.flag_enable_groundswell,
+      flag_enable_data_studio      = var.flag_enable_data_studio,
+      flag_use_wave_lite           = var.flag_use_wave_lite,
+      wave_lite_db_dns             = module.connection_strings.wave_lite_db_dns,
     }
   )
 
   ansible_03_pull_containers_and_run_tower = templatefile("assets/src/ansible/03_pull_containers_and_run_tower.yml.tpl",
     {
-      app_name = var.app_name
+      app_name = var.app_name,
     }
   )
 
   ansible_05_patch_groundswell = templatefile("assets/src/ansible/05_patch_groundswell.yml.tpl",
     {
-      flag_enable_groundswell = tostring(var.flag_enable_groundswell)
-      flag_use_container_db = tostring(var.flag_use_container_db)
+      flag_enable_groundswell = tostring(var.flag_enable_groundswell),
+      flag_use_container_db   = tostring(var.flag_use_container_db),
     }
   )
 
   ansible_06_run_seqerakit = templatefile("assets/src/ansible/06_run_seqerakit.yml.tpl",
     {
-      app_name = var.app_name,
-      seqerakit_flag_credential_create_codecommit = var.seqerakit_flag_credential_create_codecommit
+      app_name                     = var.app_name,
+      flag_create_hosts_file_entry = var.flag_create_hosts_file_entry,
+      flag_do_not_use_https        = var.flag_do_not_use_https,
     }
   )
 
   codecommit_seqerakit = templatefile("assets/src/bash/remote/codecommit_set_workspace_id.sh.tpl",
-  {
-    seqerakit_org_name = var.seqerakit_org_name,
-    seqerakit_workspace_name =  var.seqerakit_workspace_name
-  }
-)
-
-}
+    {
+      seqerakit_org_name       = var.seqerakit_org_name,
+      seqerakit_workspace_name = var.seqerakit_workspace_name,
+    }
+  )
 
 
-## ------------------------------------------------------------------------------------
-## SSH Config
-## ------------------------------------------------------------------------------------
-locals {
+  ## ------------------------------------------------------------------------------------
+  ## SSH Config
+  ## ------------------------------------------------------------------------------------
   ssh_config = templatefile("assets/src/ssh/ssh_config.tpl",
     {
       node_id = aws_instance.ec2.id,
@@ -341,24 +378,40 @@ locals {
       flag_private_tower_without_eice = var.flag_private_tower_without_eice,
       dns_instance_ip                 = local.dns_instance_ip
 
-      app_name = var.app_name
-      profile  = var.aws_profile
+      app_name = var.app_name,
+      profile  = var.aws_profile,
     }
   )
-}
 
 
-## ------------------------------------------------------------------------------------
-## EC2 Docker Logging
-## ------------------------------------------------------------------------------------
-locals {
+  ## ------------------------------------------------------------------------------------
+  ## EC2 Docker Logging
+  ## ------------------------------------------------------------------------------------
   docker_logging = templatefile("assets/src/docker_logging/daemon.json.tpl",
     {
-      flag_docker_logging_local = var.flag_docker_logging_local,
+      flag_docker_logging_local    = var.flag_docker_logging_local,
       flag_docker_logging_journald = var.flag_docker_logging_journald,
       flag_docker_logging_jsonfile = var.flag_docker_logging_jsonfile,
 
-      docker_cidr_range = var.docker_cidr_range
+      docker_cidr_range = var.docker_cidr_range,
+    }
+  )
+
+
+  ## ------------------------------------------------------------------------------------
+  ## Local Server With Private CA Config
+  ## ------------------------------------------------------------------------------------
+  private_ca_conf = templatefile("assets/src/customcerts/custom_default.conf.tpl",
+    {
+      flag_enable_data_studio = var.flag_enable_data_studio,
+      flag_use_wave_lite      = var.flag_use_wave_lite,
+
+      tower_base_url    = module.connection_strings.tower_base_url,
+      tower_connect_dns = module.connection_strings.tower_connect_dns,
+      tower_wave_dns    = module.connection_strings.tower_wave_dns,
+
+      private_ca_cert = local.private_ca_cert,
+      private_ca_key  = local.private_ca_key,
     }
   )
 }
@@ -371,3 +424,9 @@ resource "tls_private_key" "connect_pem" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
+
+resource "tls_private_key" "connect_ssh_host_key" {
+  algorithm = "ED25519"
+}
+
+

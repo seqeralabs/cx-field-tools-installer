@@ -75,6 +75,21 @@
             ],
             "Effect": "Allow",
 			"Resource": [ "${ssm_key_arn}" ]
+            
+%{ if flag_allow_aws_instance_credentials == false }
         }
     ]
 }
+%{ else }
+        },
+        {
+            "Sid": "AllowInstanceRole",
+            "Action": [
+                "sts:AssumeRole"
+            ],
+            "Effect": "Allow",
+			"Resource": [ "${tower_aws_role}" ]
+        }
+    ]
+}
+%{ endif }

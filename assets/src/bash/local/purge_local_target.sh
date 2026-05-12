@@ -10,6 +10,7 @@ mkdir -p $TARGET
 rm ssh_key_for_* || true
 
 # Copy some source folders to target
+# July 24/25: customcerts further modified in 010.
 cp -R $SRC/ansible $TARGET
 cp -R $SRC/customcerts $TARGET
 cp -R $SRC/python $TARGET
@@ -19,6 +20,7 @@ cp -R $SRC/docker_compose $TARGET
 # Create necessary folders which weren't copied over (because templated data will be put here)
 mkdir -p $TARGET/bash/remote
 mkdir -p $TARGET/tower_config
+mkdir -p $TARGET/wave_lite_config
 mkdir -p $TARGET/groundswell_config
 mkdir -p $TARGET/docker_logging
 

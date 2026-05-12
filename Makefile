@@ -16,6 +16,57 @@ apply: verify
 	@echo "Invoking 'terraform apply'"
 	@terraform apply
 
-destroy: 
+destroy:
 	@python3 .githooks/check_destroy.py
 	@terraform destroy
+
+## =============================================================================================================
+## TESTING
+## =============================================================================================================
+# If this stage fails with exit status 2, renew AWS SSO credentials.
+# MAKE_TF_QUALIFIER is used to pass a qualifier to the plan command (eg. target specific resource or variable)
+generate_json_plan:
+	@echo "\nGenerating JSON representation of plan."
+	@rm -f tfplan
+	@rm -f tfplan.json
+	@terraform plan ${MAKE_TF_QUALIFIER} -out=tfplan >  /dev/null 2>&1
+	@terraform show -json tfplan | jq . > tfplan.json
+
+test_cleanse:
+	@rm tests/datafiles/base-overrides.auto.tfvars
+	@rm tests/datafiles/terraform.tfvars
+	@rm tests/datafiles/secrets/*.json
+
+generate_test_data:
+	@echo "Generating test data."
+	@cp templates/TEMPLATE_terraform.tfvars tests/datafiles/terraform.tfvars
+	@cd tests/datafiles && ./generate_core_data.sh
+
+run_tests_all:
+	@pytest -c tests/pytest.ini tests/
+
+run_tests_core_only:
+	@pytest -c tests/pytest.ini tests/ -m "not testcontainer and not variable_validation"
+
+run_tests_containers_only:
+	@pytest -c tests/pytest.ini tests/ -m "testcontainer"
+
+run_tests_variables_only:
+	@pytest -c tests/pytest.ini tests/ -m "variable_validation"
+
+run_tests_core_and_containers:
+	@pytest -c tests/pytest.ini tests/ -m "not variable_validation"
+
+run_tests_core_and_variables:
+	@pytest -c tests/pytest.ini tests/ -m "not testcontainer"
+
+purge_cached_plans:
+	@cd tests/ && rm -rf .plan_cache
+
+purge_cached_templatefiles:
+	@cd tests/ && rm -rf .templatefile_cache
+
+purge_cache:
+	@echo "Purging testing caches"
+	@$(MAKE) purge_cached_templatefiles
+	@$(MAKE) purge_cached_plans

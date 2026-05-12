@@ -42,15 +42,23 @@ micronaut:
       read-timeout: 30s
 
   security:
+    # oauth2:
+    #   clients:
+    #     oidc:
+    #       openid:
+    #         token:
+    #           # See: https://github.com/seqeralabs/cx-field-tools-installer/issues/267
+    #           # Commented out by default since snippet added in CX Installer release which uses Platform 25.3 by default.
+    #           # This fix MUST be present for any Seqera Platform version < 25.3
+    #           auth-method: "client_secret_post"
     redirect:
       login-success : "/auth?success=true"
       login-failure : "/auth?success=false"
 
     # WARNING! Do not disable `refresh-token.enabled`. User and pipeline authentication affected equally - breaks long pipelines. (Last updated: March 2/24)
     token:
-%{ if flag_using_micronaut_4 == true }
         # Tower embeds an access-refresh tokens pair in the head job when launching a pipeline.
-        # Access token used by Nextflow to authenticate with Tower. 
+        # Access token used by Nextflow to authenticate with Tower.
         # Defaults: Access Token: 1 hour  | Refresh Token:  6 hours
         #
         # Refresh-token expiry may require bumping if your job takes too long to be scheduled (i.e. 6h+).
@@ -61,21 +69,6 @@ micronaut:
         refresh-token:
           enabled: true                                   # true | false
           expiration: 6h                                  # Duration is integer + unit (e.g. 6h | 1d)
-%{ else }
-      jwt:
-        # Tower embeds an access-refresh tokens pair in the head job when launching a pipeline.
-        # Access token used by Nextflow to authenticate with Tower. 
-        # Defaults: Access Token: 1 hour  | Refresh Token:  6 hours
-        #
-        # Refresh-token expiry may require bumping if your job takes too long to be scheduled (i.e. 6h+).
-        # Ensure the `tower.ephemeral.duration` value exceeds the lifespan of your refresh token expiration as well.
-        generator:
-          access-token:
-            expiration: 3600                                # Duration in seconds (ANOMALY: Integer only!) dont add time unit at end!
-          refresh-token:
-            enabled: true                                   # true | false
-            expiration: 6h                                  # Duration is integer + unit (e.g. 6h | 1d)
-%{ endif }
 
 
 ### The tower scope is used for providing config for your Tower Enterprise installation
@@ -141,6 +134,34 @@ tower:
     menus:
       - label: "Docs"
         url: "https://docs.seqera.io"
+
+  # Controls whether an individual must have a registered account with Seqera Platform before they can be
+  # added directly to a Workspace as a collaborator.
+  #   - If `true`: The user does not need a pre-existing Platform account before they can be added.
+  #   - If `false`: The user must have a pre-existing Platform account before they can be added.
+  participant:
+    auto-create-user: ${flag_tower_enable_participant_auto_create_user}
+
+  # Controls whether an individual must have a registered account with Seqera Platform before they can be
+  # added directly to an Organization as a member.
+  #   - If `true`: The user does not need a pre-existing Platform account before they can be added.
+  #   - If `false`: The user must have a pre-existing Platform account before they can be added.
+  member:
+    auto-create-user: ${flag_tower_enable_member_auto_create_user}
+
+  # By default, if an update is not received for 180 seconds, Seqera Platform marks the pipeline status as UNKNOWN.
+  # Making this setting explicit in case some sites need to customize due to local conditions.
+  runner:
+    phantom-job:
+      interval: 180s
+
+  # Key rotation feature available as of 25.2.0. For more details please see:
+  #    1. Official Seqera documentation (TODO: Add official link)
+  #    2. How to (manually) engage this feature within the `cx-field-tools-installer` project: 
+  #        documentation/setup/optional_crypto_secret_rotation.md
+  # secret-rotation:
+    # enabled:      "DO_NOT_UNCOMMENT. KEY MUST BE SET IN SSM."
+    # previous-key: "DO_NOT_UNCOMMENT. KEY MUST BE SET IN SSM."
 
   trustedEmails:
     - "'${tower_root_users}'"

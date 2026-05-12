@@ -1,5 +1,6 @@
-import sys
 from pathlib import Path
+import sys
+
 
 # https://stackoverflow.com/questions/27844088/python-get-directory-two-levels-up
 # Assumes following path: .. > installer > validation > check_configuration.py

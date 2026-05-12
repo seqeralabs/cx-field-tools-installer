@@ -1,9 +1,5 @@
 # Tower settings
-%{ if flag_use_container_db == false && startswith(db_engine_version, "8") == false ~}
-TOWER_DB_URL=jdbc:mysql://${tower_db_url}/${db_database_name}
-%{~ else ~}
-TOWER_DB_URL=jdbc:mysql://${tower_db_url}
-%{ endif }
+TOWER_DB_URL=${tower_db_url}
 TOWER_DB_USER=${db_tower_user}
 TOWER_DB_PASSWORD=${db_tower_password}
 
@@ -17,8 +13,8 @@ SWELL_API_TRAIN_BATCH_SIZE=1000
 SWELL_API_PREDICT_FRACTIONAL_CPUS=false
 
 # Database settings
-# NOTE: DO NOT ADD 'jdbc' at the front (breaks migration)
-SWELL_DB_URL=mysql://${swell_db_url}
+# NOTE: DO NOT ADD *jdbc* at the front (breaks migration)
+SWELL_DB_URL=${swell_db_url}
 SWELL_DB_USER=${swell_db_user}
 SWELL_DB_PASSWORD=${swell_db_password}
 SWELL_DB_DIALECT=mysql

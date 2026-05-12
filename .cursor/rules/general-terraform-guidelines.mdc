@@ -1,0 +1,16 @@
+---
+description: 
+globs: *.tf
+alwaysApply: false
+---
+- **Terraform Modules**
+    - Ensure variables are defined in `variables.tf`.
+    - Ensure locals and resources are defined within `main.tf`.
+    - Ensure outputs are defined in `outputs.tfs`
+    - Ensure any created module includes: `README.md`, and `CHANGELOG.md`.
+    - Ensure newly-created or modified modules are locally versioned using semantic versioning.
+        - Versioning starts at `v1.0.0`.
+    - If changes are made to an existing module, ensure updates are made to the `README.md` and `CHANGELOG.md`
+        - `README.md`:
+            - Ensure all entries in the `Inputs` table are sorted alphabetically.
+            - Enusre all entries in the `Outputs`table are sorted alphabetically. 

@@ -1,9 +1,9 @@
-version: "3"
+# `version: "3"` causes problems with the native compose feature in Docker (i.e. not the separate docker-compose extension)
 services:
 
 %{ if flag_use_container_db == true ~}
   db:
-    image: ${db_container_engine}:${db_container_engine_version} #mysql:8.0  #mysql:5.7
+    image: ${db_container_engine}:${db_container_engine_version} #mysql:8.0
     networks:
       - backend
     expose:
@@ -29,12 +29,7 @@ services:
 
 %{ if flag_use_container_redis == true ~}
   redis:
-    image: 
-%{ if updated_redis_version ~}
-      cr.seqera.io/public/redis:7
-%{ else ~}
-      cr.seqera.io/public/redis:6.0
-%{ endif ~}
+    image: redis:7.2.6
     networks:
       - backend
     expose:
@@ -60,16 +55,15 @@ services:
     ports:
       - 8090:8090
     env_file:
-      - groundswell.env
+      - $HOME/target/groundswell_config/groundswell.env
     restart: always
 %{ if flag_use_container_db == true ~}
     depends_on:
-      - db
+      - backend
 %{ endif ~}
 %{ endif ~}
 
 
-%{ if flag_new_enough_for_migrate_db == true ~}
   migrate:
     image: cr.seqera.io/private/nf-tower-enterprise/migrate-db:${docker_version}
     platform: linux/amd64
@@ -78,20 +72,18 @@ services:
     networks:
       - backend
     volumes:
-      - $HOME/tower.yml:/tower.yml
+      - $HOME/target/tower_config/tower.yml:/tower.yml
     env_file:
       # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
-      - tower.env
+      - $HOME/target/tower_config/tower.env
     restart: no
 %{ if flag_use_container_db == true ~}
     depends_on:
       db:
         condition: service_healthy
 %{ endif ~}
-%{ endif ~}
 
 
-%{ if flag_new_enough_for_migrate_db == true ~}
   cron:
     image: cr.seqera.io/private/nf-tower-enterprise/backend:${docker_version}
     command: -c "/tower.sh"
@@ -99,53 +91,20 @@ services:
       - frontend
       - backend
     volumes:
-      - $HOME/tower.yml:/tower.yml
+      - $HOME/target/tower_config/tower.yml:/tower.yml
 %{ if flag_enable_data_studio == true ~}
-      - $HOME/data-studios-rsa.pem:/data-studios-rsa.pem
+      - $HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem
 %{ endif ~}
     env_file:
       # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
-      - tower.env
+      - $HOME/target/tower_config/tower.env
     environment:
       # Micronaut environments are required. Do not edit these value
-      - MICRONAUT_ENVIRONMENTS=prod,redis,cron${auth_oidc}${auth_github}
+      - MICRONAUT_ENVIRONMENTS=prod,redis,cron,${oidc_consolidated}
     restart: always
     depends_on:
       migrate:
         condition: service_completed_successfully
-%{ else ~}
-  cron:
-    image: cr.seqera.io/private/nf-tower-enterprise/backend:${docker_version}
-%{ if flag_use_container_db == true ~}
-    command: -c "/wait-for-it.sh db:3306 -t 60; /migrate-db.sh; /tower.sh"
-%{ else ~}
-    command: -c "/migrate-db.sh; /tower.sh"
-%{ endif }
-    networks:
-      - frontend
-      - backend
-    volumes:
-      - $HOME/tower.yml:/tower.yml
-%{ if flag_enable_data_studio == true ~}
-      - $HOME/data-studios-rsa.pem:/data-studios-rsa.pem
-%{ endif ~}
-    env_file:
-      # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
-      - tower.env
-    environment:
-      # Micronaut environments are required. Do not edit these value
-      - MICRONAUT_ENVIRONMENTS=prod,redis,cron${auth_oidc}${auth_github}
-    restart: always
-%{ if flag_use_container_db == true || flag_use_container_redis == true ~}
-    depends_on:
-%{ if flag_use_container_db == true ~}
-      - db
-%{ endif ~}
-%{ if flag_use_container_redis == true ~}
-      - redis
-%{ endif ~}
-%{ endif ~}
-%{ endif ~}
 
 
   backend:
@@ -161,14 +120,14 @@ services:
     expose:
       - 8080
     volumes:
-      - $HOME/tower.yml:/tower.yml
+      - $HOME/target/tower_config/tower.yml:/tower.yml
 %{ if flag_enable_data_studio == true ~}
-      - $HOME/data-studios-rsa.pem:/data-studios-rsa.pem
+      - $HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem
 %{ endif ~}
     env_file:
-      - tower.env
+      - $HOME/target/tower_config/tower.env
     environment:
-      - MICRONAUT_ENVIRONMENTS=prod,redis,ha${auth_oidc}${auth_github}
+      - MICRONAUT_ENVIRONMENTS=prod,redis,ha,${oidc_consolidated}
     restart: always
     depends_on:
 %{ if flag_use_container_db == true ~}
@@ -181,11 +140,18 @@ services:
 
 
   frontend:
-    image: cr.seqera.io/private/nf-tower-enterprise/frontend:${docker_version}
+    image: cr.seqera.io/private/nf-tower-enterprise/frontend:${docker_version}-unprivileged
     networks:
       - frontend
     ports:
-      - 8000:80
+      - 8000:8000
+    # environment:
+      ## DO NOT UNCOMMENT THESE (SAME AS DEFAULTS).
+      ## DOCUMENTED HERE FOR CLARITY AND FUTURE CONFIGURATION ENHANCEMENT
+      # - NGINX_LISTEN_PORT=8000
+      # - NGINX_LISTEN_PORT_IPV6=8000   (DO NOT UNCOMMENT -- IPV6 not yet supported in Installer)
+      # - NGINX_UPSTREAM_HOST=backend
+      # - NGINX_UPSTREAM_PORT=8080
     restart: always
     depends_on:
       - backend
@@ -194,34 +160,40 @@ services:
   connect-proxy:
     image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-proxy:${data_studio_container_version}
     platform: linux/amd64
-%{ if studio_uses_distroless == true ~}
     user: 65532:65532
-%{ endif ~}
     env_file:
-      - data-studios.env
+      - $HOME/target/tower_config/data-studios.env
     networks:
       - frontend
       - backend
     ports:
       - 9090:9090
+%{ if flag_enable_data_studio_ssh == true ~}
+      - 2222:2222
+%{ endif ~}
     restart: always
 %{ if flag_use_container_redis == true ~}
     depends_on:
       - redis
 %{endif ~}
+    volumes:
+      # DEPENDENCY: July 22/25 -- remove in subsequent release when fixed upstream in Studios.
+      - $HOME/.tower/connect:/data
+%{ if flag_enable_data_studio_ssh == true ~}
+      - $HOME/target/tower_config/connect_proxy_ssh_host_key:/data/ssh-host-key
+%{ endif ~}
+
 
   connect-server:
     image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-server:${data_studio_container_version}
     platform: linux/amd64
-%{ if studio_uses_distroless == true ~}
     user: 65532:65532
     cap_drop:
       - ALL
     cap_add:
       - NET_BIND_SERVICE
-%{ endif ~}
     env_file:
-      - data-studios.env
+      - $HOME/target/tower_config/data-studios.env
     networks:
       - backend
     ports:
@@ -229,24 +201,112 @@ services:
     restart: always
 %{ endif ~}
 
-%{ if flag_use_custom_docker_compose_file == true ~}
+%{ if flag_use_private_cacert == true ~}
   # Expectations: 
   #   - docker-compose.yml in `/home/ec2-user/``
   #   - All custom cert files present / generated in `/home/ec2-user/customcerts``
   reverseproxy:
+    labels:
+      seqera: reverseproxy
     image: nginx:latest
     container_name: reverseproxy
     networks:
       - frontend
+      - backend
     ports:
       - 80:80
       - 443:443
     volumes:
       - $HOME/target/customcerts/custom_default.conf:/etc/nginx/conf.d/default.conf
-      - $HOME/target/customcerts/REPLACE_CUSTOM_CRT:/etc/ssl/certs/REPLACE_CUSTOM_CRT
-      - $HOME/target/customcerts/REPLACE_CUSTOM_KEY:/etc/ssl/private/REPLACE_CUSTOM_KEY
+      - $HOME/target/customcerts/${private_ca_cert}:/etc/ssl/certs/${private_ca_cert}
+      - $HOME/target/customcerts/${private_ca_key}:/etc/ssl/private/${private_ca_key}
+    restart: always
+%{ if flag_use_wave_lite == true || flag_enable_data_studio == true ~}
+    depends_on:
+%{ if flag_use_wave_lite == true ~}
+      - wave-lite-reverse-proxy
+%{ endif ~}
+%{ if flag_enable_data_studio == true ~}
+      - connect-proxy
+%{ endif ~}
+%{ endif ~}
+%{ endif ~}
+
+%{ if flag_use_wave_lite == true ~}
+  wave-lite:
+    labels:
+      seqera: wave-lite
+    image: cr.seqera.io/private/nf-tower-enterprise/wave:${wave_lite_container_version}
+    # ports:
+    #   - 9099:9090
+    expose:
+      - 9090
+    volumes:
+      - $HOME/target/wave_lite_config/wave-lite.yml:/work/config.yml
+    #env_file:
+    #  - wave-lite.env
+    environment:
+      - MICRONAUT_ENVIRONMENTS=lite,rate-limit,redis,prometheus,postgres
+      - WAVE_JVM_OPTS=-Djdk.traceVirtualThreadInThreadDump=full -XX:InitialRAMPercentage=65 -XX:MaxRAMPercentage=65 -XX:+HeapDumpOnOutOfMemoryError -XX:MaxDirectMemorySize=200m -Dio.netty.maxDirectMemory=0 -Djdk.httpclient.keepalive.timeout=10 -Djdk.tracePinnedThreads=short
+    networks:
+      - frontend
+      - backend
+    working_dir: /work
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: ${num_wave_lite_replicas}
+
+  wave-lite-reverse-proxy:
+    labels:
+      seqera: wave-lite-reverse-proxy
+    image: nginx:latest
+    ports:
+      - "9099:80"
+    volumes:
+      - $HOME/target/wave_lite_config/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - wave-lite
+    networks:
+      - backend
+
+%{ if wave_lite_db_container == true ~}
+  wave-db:
+    labels:
+      seqera: wave-db
+    image: postgres:17.6
+    platform: linux/amd64
+    ports:
+      - 5432:5432
+    volumes:
+      - $HOME/.wave/db/postgresql:/var/lib/postgresql/data
+      - $HOME/target/wave_lite_config/wave-lite-rds.sql:/docker-entrypoint-initdb.d/01-init.sql
+    environment:
+      - POSTGRES_USER=${wave_lite_db_master_user}
+      - POSTGRES_PASSWORD=${wave_lite_db_master_password}
+      - POSTGRES_DB=wave
+    networks:
+      - backend
     restart: always
 %{ endif ~}
+
+%{ if wave_lite_redis_container == true ~}
+  wave-redis:
+    labels:
+      seqera: wave-redis
+    image: redis:7.2.6
+    platform: linux/amd64
+    expose:
+      - 6379
+    command: ["redis-server", "--requirepass", "${wave_lite_redis_auth}"]
+    restart: always
+    volumes:
+      - $HOME/.wave/db/wave-lite-redis:/data
+    networks:
+      - backend
+%{ endif ~}
+%{ endif ~}
+
 
 networks:
   frontend: {}

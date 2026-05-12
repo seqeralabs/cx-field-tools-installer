@@ -9,6 +9,12 @@ TOWER_SERVER_URL=${tower_server_url}
 TOWER_CONTACT_EMAIL=${tower_contact_email}
 TOWER_ENABLE_PLATFORMS=${tower_enable_platforms}
 
+%{ if flag_allow_aws_instance_credentials == true ~}
+TOWER_ALLOW_INSTANCE_CREDENTIALS=true
+%{ else ~}
+TOWER_ALLOW_INSTANCE_CREDENTIALS=false
+%{ endif ~}
+
 
 # ------------------------------------------------
 # Add Tower root users
@@ -19,14 +25,13 @@ TOWER_ROOT_USERS=${tower_root_users}
 # ------------------------------------------------
 # DB settings
 # ------------------------------------------------
-TOWER_DB_URL=jdbc:mysql://${tower_db_url}
+TOWER_DB_URL=${tower_db_url}
 
 TOWER_DB_DRIVER=${tower_db_driver}
 TOWER_DB_DIALECT=${tower_db_dialect}
 TOWER_DB_MIN_POOL_SIZE=${tower_db_min_pool_size}
 TOWER_DB_MAX_POOL_SIZE=${tower_db_max_pool_size}
 TOWER_DB_MAX_LIFETIME=${tower_db_max_lifetime}
-FLYWAY_LOCATIONS=${flyway_locations}
 
 # TOWER_DB_USER sourced from SSM.
 # TOWER_DB_PASSWORD sourced from SSM.
@@ -66,6 +71,15 @@ TOWER_ENABLE_UNSAFE_MODE=true
 TOWER_ENABLE_UNSAFE_MODE=false
 %{ endif ~}
 
+# ------------------------------------------------
+# ENABLE OpenAPI  
+# Set this variable to enable the OpenAPI documentation endpoint
+# ------------------------------------------------
+%{ if tower_enable_openapi == true }
+TOWER_ENABLE_OPENAPI=true
+%{ else ~}
+TOWER_ENABLE_OPENAPI=false
+%{ endif ~}
 
 # ------------------------------------------------
 # Wave & Fusion v2
@@ -86,7 +100,7 @@ TOWER_ENABLE_WAVE=false
 GROUNDSWELL_SERVER_URL="http://groundswell:8090"
 TOWER_ENABLE_GROUNDSWELL=true
 %{ else ~}
-# Groundswell is not activated.
+TOWER_ENABLE_GROUNDSWELL=false
 %{ endif ~}
 
 
@@ -95,10 +109,10 @@ TOWER_ENABLE_GROUNDSWELL=true
 # ------------------------------------------------
 %{ if flag_data_explorer_enabled == true ~}
 TOWER_DATA_EXPLORER_ENABLED=true
+TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES="${data_explorer_disabled_workspaces}"
 %{ else ~}
 TOWER_DATA_EXPLORER_ENABLED=false
 %{ endif ~}
-TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES="${data_explorer_disabled_workspaces}"
 
 
 # ------------------------------------------------
@@ -111,20 +125,72 @@ TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES="${data_explorer_disabled_workspac
 # DATA STUDIO
 # ------------------------------------------------
 %{ if flag_enable_data_studio == true ~}
+
+%{ if flag_studio_enable_path_routing == true ~}
+TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING=true
+%{ else ~}
+TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING=false
+%{ endif }
+
 %{ if flag_limit_data_studio_to_some_workspaces == true ~}
 TOWER_DATA_STUDIO_ALLOWED_WORKSPACES="${data_studio_eligible_workspaces}"
+%{ else ~}
+# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES=DO_NOT_UNCOMMENT
 %{ endif }
+
 TOWER_DATA_STUDIO_CONNECT_URL=${tower_connect_server_url}
 TOWER_OIDC_PEM_PATH=/data-studios-rsa.pem
 TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN="ipsemlorem"
 
 %{ for ds in data_studio_options ~}
-TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_ICON: "${ds.icon}"
-TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_REPOSITORY: "${ds.container}"
-TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_TOOL: "${ds.tool != null ? ds.tool : ""}"
-TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_STATUS: "${ds.status != null ? ds.status : ""}"
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_ICON="${ds.icon}"
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_REPOSITORY="${ds.container}"
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_TOOL="${ds.tool != null ? ds.tool : ""}"
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_STATUS="${ds.status != null ? ds.status : ""}"
 %{ endfor ~}
 
+%{ if flag_enable_data_studio_ssh == true ~}
+
+#-------------------------------------------------
+# DATA STUDIO - SSH ACCESS
+# ------------------------------------------------
+TOWER_SSH_KEYS_MANAGEMENT_ENABLED=true
+CONNECT_SSH_ENABLED=true
+TOWER_DATA_STUDIO_CONNECT_SSH_PORT=2222
+%{ if flag_limit_data_studio_ssh_to_some_workspaces == true ~}
+TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES="${data_studio_ssh_eligible_workspaces}"
+%{ else ~}
+TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES=
+%{ endif ~}
+TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS=${data_studio_ssh_address}
+TOWER_DATA_STUDIO_CONNECT_SSH_KEY_FINGERPRINT=${connect_ssh_fingerprint}
+
+%{ else ~}
+
+#-------------------------------------------------
+# DATA STUDIO - SSH ACCESS (NOT ENABLED)
+# ------------------------------------------------
+# TOWER_SSH_KEYS_MANAGEMENT_ENABLED=DO_NOT_UNCOMMENT
+# CONNECT_SSH_ENABLED=DO_NOT_UNCOMMENT
+# TOWER_DATA_STUDIO_CONNECT_SSH_PORT=DO_NOT_UNCOMMENT
+# TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES=DO_NOT_UNCOMMENT
+# TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS=DO_NOT_UNCOMMENT
+# TOWER_DATA_STUDIO_CONNECT_SSH_KEY_FINGERPRINT=DO_NOT_UNCOMMENT
+
+%{ endif ~}
+
+%{ else ~}
+# STUDIOS_NOT_ENABLED=DO_NOT_UNCOMMENT
+%{ endif }
+
+
+#-------------------------------------------------
+# PIPELINE VERSIONING
+# ------------------------------------------------
+%{ if tower_enable_pipeline_versioning == true ~}
+TOWER_PIPELINE_VERSIONING_ALLOWED_WORKSPACES=${pipeline_versioning_eligible_workspaces} 
+%{ else ~}
+# TOWER_PIPELINE_VERSIONING_NOT_ENABLED=DO_NOT_UNCOMMENT
 %{ endif }
 
 

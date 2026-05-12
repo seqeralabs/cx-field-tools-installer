@@ -65,7 +65,7 @@ In response to the outlined design considerations, the following design decision
 7. **Regenerate files via `null_resource` instead of `local_file`.**<br />
     This project uses `local-exec` provisioners with `null_resources` to generate files. Our preference would have been to use the more targeted `local_file` resource ([example](https://dfux.me/posts/ssh-config-terraform/)), but `local_file` resources don't regenerate consistently.
 
-8. **Do not optimize Terraform statement management**
+8. **Do not optimize Terraform state management**
     Terraform offers a wide variety of [backend options](https://developer.hashicorp.com/terraform/language/settings/backends/configuration). These implementations can get quite complex and are beyond the scope of this solution. We default to local state storage by default. Clients are free to implement a more robust state management solution without their own project effort. 
 
 9. **Minimize reliance on third-party tooling where possible**
@@ -133,16 +133,135 @@ In addition to the general design decisions noted above, there are a few decisio
 
     ```
     data_studio_options = {
-        rstudio4_0_0-0_8_0 = {
-            qualifier = "RSTUDIO-4-0-0-0-7-6"
-            icon = "rstudio"
-            container = "public.cr.seqera.io/platform/data-studio-rstudio:4.0.0-0.8.0"
+        vscode-1-83-0-0-8-0 = {
+            qualifier = "VSCODE-1-83-0-0-8-0"
+            icon      = "vscode"
+            tool      = "vscode"
+            status    = "deprecated"
+            container = "public.cr.seqera.io/platform/data-studio-vscode:1.83.0-0.8.0"
         },
-        rstudio4_4_1-0_8_0 = {
-            qualifier = "RSTUDIO-4-4-1-0-7-6"
-            icon = "rstudio"
-            container = "public.cr.seqera.io/platform/data-studio-rstudio:4.4.1-0.8.0"
-        }
+        vscode-1-101-2-0-8-5 = {
+            qualifier = "VSCODE-1-101-2-0-8-5"
+            icon      = "vscode"
+            tool      = "vscode"
+            status    = "recommended"
+            container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.8.5"
+        },
     }
     ```
 
+11. **Replace home-grown parser with better 3rd-party alternative** (_affects Releases > 1.5.0_)
+
+    Aspects of this solution rely on transforming the HCL contained in `terraform.tfvars` into a Python library (_i.e. database connection string generation, tfvars validation_). Releases <= 1.5.0 all rely on a crude parser created by `gwright99`. This approach was taken to avoid introducing a 3rd-party binary dependency in our clients' environments.
+
+    The [Add Wave Lite](https://github.com/seqeralabs/cx-field-tools-installer/issues/197) enhancement work has introduced more complex objects which the parser simply cannot handle. Rather than spend significant staff time to rewrite the crude solution, we have opted instead to introduce a third party dependency in the form of [`tmccombs/hcl2json`](https://github.com/tmccombs/hcl2json). Furthermore, rather than require our implementors to install Golang on their machines, we've opted to access the binary via supplied container (original source: [https://hub.docker.com/r/tmccombs/hcl2json](https://hub.docker.com/r/tmccombs/hcl2json)).
+
+    We recognize the effect of this decision on the existing security posture, and have thus taken the following actions to mitigate risks:
+
+    1. Seqera Security personnel conducted an analysis of the open-source project. 
+    2. We have [vendored our own copy](https://github.com/seqeralabs/cx-field-tools-installer/pkgs/container/cx-field-tools-installer%2Fhcl2json) of the image (_with source Dockerfile included in the project_).
+    3. When calling the container as part of the deployment process, the following precautions are in place:
+        1. Use of a non-root UID.
+        2. Volume bind-mounting only the `terraform.tfvars` file required as input.
+        3. Complete removal of access to any networking capability.
+        4. Container stdout is captured and written to file by our own code rather than allowing the container to do so.
+
+12. **Wave-Lite `.sql` file generation**
+
+    Prior to the introduction of the Wave-Lite feature (Release > 1.5.0), application configuration files were defined as `.tpl` files and processed / interpolated by Terrafrom templatefile functions at deployment time. Unfortunately, the Wave-Lite deployment relies on postgres as a backend; postgres is insistent on **single-quotes** in various SQL statements; and terraform templatefile functions detest single quotes.
+
+    The result is a mess: appeasing one tool enrages the other. As a result, the creation of `.sql` files for Wave-Lite behaves differently than the generation of other config files. For Wave-Lite files:
+
+    - The source file is does not have a `.tpl` extension.
+    - The source file is written in proper `psql`.
+    - The source file contains string-based text placeholders.
+    - The text placeholders are processed in `010_prepare_config_files.tf` by:
+        1. Copying the source file to the target folder.
+        2. Running targeted `sed` commands to replace the placeholder with configured SSM Secret.
+
+    As noted in the various config files, this is definitely a hacky solution but it allows the application to deploy and provide some degree of legibility and consistency. Suggestions for improvement are welcome but - in the meantime - we'll stick with this pattern.
+
+13. **Wave-Lite Multiple Replicas & Reverse-Proxy**
+
+    The Wave-Lite augmentation flow is a single-threaded blocking function. To reduce bottlenecks, the Wave Lite container has been designed to run with multiple replicas (_default 2_).
+
+    Running multiple container copies, however, created networking challenges:
+    
+        - The containers could not all share the same host port as this caused errors when the _nth_ container tried to bind an already-bound port. 
+        - Host ports could be dynamically assigned to each replica but this would require upstream work to modify how the ALB target groups send Wave-related traffic to the EC2 instance.
+        - We could use a "poor man's K8s Service" and introduce a reverse proxy container into the deployment which would accept all Wave-related traffic and then round-robin the calls to the downstream containers.
+
+    The decision was made to implement the reverse proxy solution. We introduced an brand new instance rather than repurposing the existing proxy using for private certs. This was done to minimize the mixing of concerns and simplify implementation. We may choose to rationalize this deployment in a future release (TBD).
+
+14. **Subdomain routing favoured over path-based routing**
+
+    Seqera Platform v25.2.0 introduces path-based routing for Studios instances. This exists as a workaround for sites who are unable to use the default `*.YOUR_PLATFORM_DOMAIN` DNS sub-domanin approach.
+    
+    Path-based routing has limitations, however, (_TODO: Add link to official docs outlining_) so the project favours use of the subdomains by default.
+
+15. **Private Certificate support overhaul**
+
+    As of <TODO: RELEASE TIED TO v25.2.0>, private certificate support has been overhauled. 
+
+    The original solution used a convoluted mix of files added to the project, Bash, and Ansible to generate necessary files and updated configurations. This has been shifted left as much as possible into the build-time **Terraform templatefile** mechanism. The change was mostly beneficial in that it reduced complexity and brittle Ansible runtime execution, restricted unnecessary re-execution, and better aligned the paths required for net-new private CA creation vs. using certificates form preexisting CAs.
+
+    Unfortunately, the change also highlighted a potential maintenance / security vulnerability: what do do about sensitive key files stored within the git project?
+
+        - Keys must be available in the event of loss / new administrators.
+        - Keys cant be checked into git due to their sensitivity, but can't be on .gitignore since this doesn't solve the distribution problem.
+
+    Two solutions were mooted:
+
+    1. Use SSM
+        - PROs: 
+            - We already use this mechanism for other secrets and it's easily adopted.
+        - CONS:
+            - The idea of properly pasting .crt/.key data into the JSON fills me with dread.
+            - Distribution not simple; must download string from SSM then convert into properly formatted file. Likely painful.
+            - Different flow nuances for a newly-created cert vs pre-existing.
+
+    2. Use S3 Bucket
+        - PROs:
+            - Well-understood pattern.
+            - File(ish) storage.
+            - Easy to implement
+            - Minimal deltas between new cert creation and use of pre-existing.
+            - Works well in context of wider Seqera ecosystem (Nextflow pipelines, Studios, etc.)
+        - CONs:
+            - Introduces a 3rd pillar to state storage (git + SSM + S3)
+            - Minor AWS IAM permissions creep
+
+    DECISION:
+      - Make generation of certificate a one-time non-automated step.
+      - Regardless of how cert generated, administrator manually loads cert & key (new or existing) into S3 Bucket.
+      - If private cert necessary, Ansible pulls target files onto EC2 and makes availabe to trust store and reverseproxy.
+
+16. **Introduction of `use_mock` flag into resources related to Database & Redis**
+
+    A `var.use_mocks` check has been introduced to database and Redis related resources in `003_database.tf`. 
+
+    (TODO: Release version) release shipped with the first phase of a testing framework. This feature conducts a series of quick local checks to ensure the veracity of core connection details and configuration files. While we favour `terraform plan` as much as possible, the generation of configuration files requires a `terraform apply` motion. 
+
+    Using `terraform apply -target=...` reduces scope and improves speed but, unfortunately, `module.connection_strings` is central to all the tests and it in turn relies upon the provision of RDS and Elasticache resources for deployments that follow best practices guidelines. As a result, a testing loop that must actually deploy these resources takes up to 20 minutes to complete.
+
+    By adding a `... && !var.use_mocks` to the `count` of the affected resources, I can descope these resources from the minimal footprint deployment, thereby vastly speeding up (_and thereby encouraging the on-going use of_) testing. The downside of this approach, however, is that there is an ongoing intermingling of concerns between logic meant to deploy resources for real, versus logic focused on testing. I cannot think of a better way to balance speed with rigour at the moment so this will be the go-forward approach until a better technique presents itself.
+
+17. **SSH access requires a dedicated NLB alongside the existing ALB**
+
+    The Studios SSH feature allows users to open an SSH connection directly into a running Studio session which requires the connect-proxy container port 2222 to be exposed.
+
+    An existing ALB solution cannot serve this need as ALBs operate at Layer 7 (HTTP/HTTPS) but Layer 4 TCP connections like SSH are not supported. To fill the gap, a **Network Load Balancer (NLB)** is the chosen infrastructure solution: it operates at Layer 4 and passes TCP connections through to the connect-proxy container.
+
+    The implementation handles both deployment topologies:
+
+    - **With a load balancer (`flag_create_load_balancer = true`):** A dedicated NLB is provisioned solely for SSH traffic on port 2222, and a Route53 A record (`connect-ssh.<tower_server_url>`) is pointed at it as an alias.
+    - **Without a load balancer (`flag_create_load_balancer = false`):** No NLB is created. The Route53 A record points directly to the EC2 instance IP, and a security group rule allows inbound TCP 2222 from the configured ingress CIDRs directly to the host.
+
+
+    The following are design choices baked into the implementation. They are not configurable without modifying files outside of `terraform.tfvars`. If any of these do not fit your environment, SSH for Studios is not supported for your deployment without custom work.
+
+    - **Port 2222 is hardcoded and not configurable.** If your network blocks port 2222 or you need a different port for any reason, this feature will not work for your deployment without custom changes outside of `terraform.tfvars`.
+    - **The SSH subdomain is always `connect-ssh.<tower_server_url>`.** This is derived automatically and follows the same one-level convention as the Studios connect proxy (`connect.<tower_server_url>`). It is not user-configurable.
+    - **An NLB is provisioned as a second load balancer when `flag_create_load_balancer = true`.** It runs continuously once provisioned and incurs additional AWS cost. There is no option to share it with the ALB.
+    - **The NLB uses the same subnets as the ALB (`subnet_ids_alb`).** The NLB needs to be reachable from wherever users connect to Platform, so it belongs in the same network.
+    - **Route53 DNS must be managed within the same AWS account.** If DNS is managed externally, the `connect-ssh.*` A record must be created manually before SSH connections will resolve correctly.

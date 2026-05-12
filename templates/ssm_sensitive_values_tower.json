@@ -1,84 +1,84 @@
 {
-	"TOWER_LICENSE": { 
-		"ssm_key": 	"/config/tower-dev/tower/license",
-		"value": 	"CHANGE_ME"
+	"TOWER_LICENSE": {
+		"ssm_key": "/config/tower-template/tower/license",
+		"value": "CHANGE_ME"
 	},
-	"HARBOR_USERNAME": { 
-		"ssm_key": 	"/seqera/tower-dev/scr-username",
-		"value": 	"CHANGE_ME"
+	"HARBOR_USERNAME": {
+		"ssm_key": "/seqera/tower-template/scr-username",
+		"value": "CHANGE_ME"
 	},
 	"HARBOR_PASSWORD": {
-		"ssm_key": 	"/seqera/tower-dev/scr-password",
-		"value": 	"CHANGE_ME"
+		"ssm_key": "/seqera/tower-template/scr-password",
+		"value": "CHANGE_ME"
 	},
-	"TOWER_CRYPTO_SECRET": { 
-		"ssm_key": 	"/config/tower-dev/tower/crypto/secretKey",
-		"value": 	"CHANGE_ME_SEE_SEQERA_DOCS"
+	"TOWER_CRYPTO_SECRET": {
+		"ssm_key": "/config/tower-template/tower/crypto/secretKey",
+		"value": "CHANGE_ME_SEE_SEQERA_DOCS"
 	},
-	"TOWER_JWT_SECRET1": { 
-		"ssm_key": 	"/config/tower-dev/micronaut/security/token/jwt/signatures/secret/generator/secret",
-		"value": 	"CHANGE_ME_SEE_SEQERA_DOCS (must be same value as JWT_SECRET_2)"
+	"TOWER_JWT_SECRET1": {
+		"ssm_key": "/config/tower-template/micronaut/security/token/jwt/signatures/secret/generator/secret",
+		"value": "CHANGE_ME_SEE_SEQERA_DOCS (must be same value as JWT_SECRET_2)"
 	},
-	"TOWER_JWT_SECRET2": { 
-		"ssm_key": 	"/config/tower-dev/micronaut/security/token/jwt/generator/refresh-token/secret",
-		"value": 	"CHANGE_ME_SEE_SEQERA_DOCS (must be same value as JWT_SECRET_1)"
+	"TOWER_JWT_SECRET2": {
+		"ssm_key": "/config/tower-template/micronaut/security/token/jwt/generator/refresh-token/secret",
+		"value": "CHANGE_ME_SEE_SEQERA_DOCS (must be same value as JWT_SECRET_1)"
 	},
-	"TOWER_SMTP_USER": { 
-		"ssm_key": 	"/config/tower-dev/mail/smtp/user",
-		"value": 	"REPLACE_ME_IF_NECESSARY",
+	"TOWER_SMTP_USER": {
+		"ssm_key": "/config/tower-template/mail/smtp/user",
+		"value": "REPLACE_ME_IF_NECESSARY",
 		"description": "The SMTP user."
 	},
-    "TOWER_SMTP_PASSWORD": { 
-		"ssm_key": 	"/config/tower-dev/mail/smtp/password",
-		"value": 	"REPLACE_ME_IF_NECESSARY",
+	"TOWER_SMTP_PASSWORD": {
+		"ssm_key": "/config/tower-template/mail/smtp/password",
+		"value": "REPLACE_ME_IF_NECESSARY",
 		"description": "The SMTP password."
 	},
-	"TOWER_DB_USER": { 
-		"ssm_key": 	"/config/tower-dev/datasources/default/username",
-		"value": 	"CHANGE_ME_SEE_SEQERA_DOCS"
+	"TOWER_DB_USER": {
+		"ssm_key": "/config/tower-template/datasources/default/username",
+		"value": "CHANGE_ME_SEE_SEQERA_DOCS"
 	},
-	"TOWER_DB_PASSWORD": { 
-		"ssm_key": 	"/config/tower-dev/datasources/default/password",
-		"value": 	"CHANGE_ME_SEE_SEQERA_DOCS"
+	"TOWER_DB_PASSWORD": {
+		"ssm_key": "/config/tower-template/datasources/default/password",
+		"value": "CHANGE_ME_SEE_SEQERA_DOCS"
 	},
-    "TOWER_DB_MASTER_USER": { 
-		"ssm_key": 	"/seqera/tower-dev/db-master-user",
-		"value": 	"CHANGE_ME_SEE_SEQERA_DOCS"
+	"TOWER_DB_MASTER_USER": {
+		"ssm_key": "/seqera/tower-template/db-master-user",
+		"value": "CHANGE_ME_SEE_SEQERA_DOCS"
 	},
-    "TOWER_DB_MASTER_PASSWORD": { 
-		"ssm_key": 	"/seqera/tower-dev/db-master-password",
-		"value": 	"CHANGE_ME_SEE_SEQERA_DOCS"
+	"TOWER_DB_MASTER_PASSWORD": {
+		"ssm_key": "/seqera/tower-template/db-master-password",
+		"value": "CHANGE_ME_SEE_SEQERA_DOCS"
 	},
-	"TOWER_OIDC_CLIENT": { 
-		"ssm_key": 	"/config/tower-dev/micronaut/security/oauth2/clients/oidc/client-id",
-		"value": 	"CHANGE_ME_IF_NECESSARY"
+	"TOWER_OIDC_CLIENT": {
+		"ssm_key": "/config/tower-template/micronaut/security/oauth2/clients/oidc/client-id",
+		"value": "CHANGE_ME_IF_NECESSARY"
 	},
-	"TOWER_OIDC_SECRET": { 
-		"ssm_key": 	"/config/tower-dev/micronaut/security/oauth2/clients/oidc/client-secret",
-		"value": 	"CHANGE_ME_IF_NECESSARY"
+	"TOWER_OIDC_SECRET": {
+		"ssm_key": "/config/tower-template/micronaut/security/oauth2/clients/oidc/client-secret",
+		"value": "CHANGE_ME_IF_NECESSARY"
 	},
-	"TOWER_OIDC_ISSUER": { 
-		"ssm_key": 	"/config/tower-dev/micronaut/security/oauth2/clients/oidc/openid/issuer",
-		"value": 	"CHANGE_ME_IF_NECESSARY"
+	"TOWER_OIDC_ISSUER": {
+		"ssm_key": "/config/tower-template/micronaut/security/oauth2/clients/oidc/openid/issuer",
+		"value": "CHANGE_ME_IF_NECESSARY"
 	},
-	"TOWER_GOOGLE_CLIENT": { 
-		"ssm_key": 	"/config/tower-dev/micronaut/security/oauth2/clients/google/client-id",
-		"value": 	"CHANGE_ME_IF_NECESSARY"
+	"TOWER_GOOGLE_CLIENT": {
+		"ssm_key": "/config/tower-template/micronaut/security/oauth2/clients/google/client-id",
+		"value": "CHANGE_ME_IF_NECESSARY"
 	},
-	"TOWER_GOOGLE_SECRET": { 
-		"ssm_key": 	"/config/tower-dev/micronaut/security/oauth2/clients/google/client-secret",
-		"value": 	"CHANGE_ME_IF_NECESSARY"
+	"TOWER_GOOGLE_SECRET": {
+		"ssm_key": "/config/tower-template/micronaut/security/oauth2/clients/google/client-secret",
+		"value": "CHANGE_ME_IF_NECESSARY"
 	},
-	"TOWER_GOOGLE_ISSUER": { 
-		"ssm_key": 	"/config/tower-dev/micronaut/security/oauth2/clients/google/oidc/openid/issuer",
-		"value": 	"https://accounts.google.com"
+	"TOWER_GOOGLE_ISSUER": {
+		"ssm_key": "/config/tower-template/micronaut/security/oauth2/clients/google/oidc/openid/issuer",
+		"value": "https://accounts.google.com"
 	},
-	"TOWER_GITHUB_CLIENT": { 
-		"ssm_key": 	"/config/tower-dev/micronaut/security/oauth2/clients/github/client-id",
-		"value": 	"CHANGE_ME_IF_NECESSARY"
+	"TOWER_GITHUB_CLIENT": {
+		"ssm_key": "/config/tower-template/micronaut/security/oauth2/clients/github/client-id",
+		"value": "CHANGE_ME_IF_NECESSARY"
 	},
-	"TOWER_GITHUB_SECRET": { 
-		"ssm_key": 	"/config/tower-dev/micronaut/security/oauth2/clients/github/client-secret",
-		"value": 	"CHANGE_ME_IF_NECESSARY"
+	"TOWER_GITHUB_SECRET": {
+		"ssm_key": "/config/tower-template/micronaut/security/oauth2/clients/github/client-secret",
+		"value": "CHANGE_ME_IF_NECESSARY"
 	}
 }
