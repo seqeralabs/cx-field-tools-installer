@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -10,13 +11,14 @@ import pytest
 # print(f"{base_import_dir=}")
 # if base_import_dir not in sys.path:
 #     sys.path.append(str(base_import_dir))
+from scripts.installer.utils.extractors import hcl_to_json
 from scripts.installer.utils.purge_folders import delete_pycache_folders
 
 from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 from tests.utils.preflight.preflight import check_aws_sso_token
 from tests.utils.pytest_logger import get_logger
-from tests.utils.terraform.executor import TF, execute_subprocess, prepare_plan
+from tests.utils.terraform.executor import TF, prepare_plan
 
 
 """
@@ -65,8 +67,9 @@ def session_setup():
     """Stage the test fixtures (tfvars, override tfvars, testing outputs, plan cache, 009 JSON).
 
     Backs up the project's `terraform.tfvars`, copies in test-specific replacements, JSONifies
-    `009_define_file_templates.tf` via the vendored `hcl2json` container, and yields for the
-    test session. Cleanup restores the original `terraform.tfvars` on teardown.
+    `009_define_file_templates.tf` via the shared `hcl_to_json` helper (extracted binary on
+    supported hosts, docker fallback elsewhere — see `scripts/installer/utils/extractors.py`),
+    and yields for the test session. Cleanup restores the original `terraform.tfvars` on teardown.
 
     AWS preflight is deliberately NOT part of this fixture — tests that need real AWS
     consume the separate `aws_preflight` fixture instead. See issue #351.
@@ -86,13 +89,11 @@ def session_setup():
     # Prepare plan cache directory
     os.makedirs(FP.CACHE_PLAN_DIR, exist_ok=True)
 
-    # Prepare JSONified 009 (via hcl2json container)
-    # CLI_command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
-    command = (
-        f"docker run --rm -v {FP.ROOT}:/tmp ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:vendored"
-        f" /tmp/009_define_file_templates.tf > {FP.ROOT}/009_define_file_templates.json"
-    )
-    execute_subprocess(command)
+    # Prepare JSONified 009 via the shared hcl_to_json helper (Phase 1 of #352).
+    # On linux/amd64 with the binary extracted, this is a ~10-50ms in-process call; on
+    # unsupported hosts it falls back to the per-call vendored docker container.
+    data = hcl_to_json(f"{FP.ROOT}/009_define_file_templates.tf")
+    Path(f"{FP.ROOT}/009_define_file_templates.json").write_text(json.dumps(data))
 
     yield
 
