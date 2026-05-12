@@ -23,6 +23,15 @@ All tests are designed to run without requiring actual AWS resources for basic v
 
 Pytest markers are defined in [`tests/pytest.ini`](../../tests/pytest.ini) — that file is authoritative.
 
+## Fixtures
+
+| Fixture | Scope | Purpose |
+| ------- | ----- | ------- |
+| `session_setup` | session | Stages test tfvars, JSONifies `009_define_file_templates.tf`, sets up plan cache. Used by virtually every test. Does **not** include any AWS preflight — see `aws_preflight` below. |
+| `aws_preflight` | session | Opt-in. Confirms a valid AWS SSO token via `aws sts get-caller-identity`. Consume by adding `aws_preflight` to a test's fixture parameters. Tests under `tests/unit/` should not need this (they all use `var.use_mocks = true`); reserved for tests that genuinely interact with real AWS (e.g. future `tests/remote/`). |
+| `teardown_tf_state_all` | function | Destroys Terraform state on teardown. Use for tests that create real infrastructure. |
+| `config_baseline_settings_default` | session | Runs `terraform plan` on the default test tfvars and returns the cached plan output. |
+
 ## Running tests
 
 See [`testing_commands.md`](testing_commands.md).

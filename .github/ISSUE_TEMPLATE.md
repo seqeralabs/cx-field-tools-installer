@@ -6,6 +6,37 @@ labels: []
 assignees: []
 ---
 
+<!--
+Canonical labels — pick from this list; don't invent new ones.
+
+  Type (what kind of work):
+    bug             — Something isn't working
+    enhancement     — New feature or request
+    refactor        — Restructure without changing behavior
+    tech-debt       — Cleanup of historical accretion
+    chore           — Misc cleanup not better described above
+    deprecation     — Removing or warning about deprecated behavior
+    breaking-change — Behavior-changing edit users will notice
+    documentation   — Docs / README / CHANGELOG / inline docstrings
+
+  Domain (what part of the system):
+    validation      — Variable validation / configuration checking
+    testing         — Test infrastructure / fixtures / regression
+    dx              — Developer experience improvements
+    ux              — End-user / deployer experience improvements
+
+  Triage / lifecycle:
+    question        — Further information requested
+    help wanted     — Extra attention needed
+    duplicate / invalid / wontfix — lifecycle states
+
+  Release milestones (apply if targeted):
+    v1.8 Release    — Targeted for 1.8
+    v2 Release      — Targeted for v2
+    review_for_26.1 — Linked to Platform v26.1 review
+-->
+
+
 ## Summary
 
 <!--
@@ -27,9 +58,35 @@ specific file/line references welcome.
 ## Options
 
 <!--
-Approaches considered, with trade-offs (cost, risk, blast radius). Mark the
-preferred direction with **(proposed)** or 🟢 if you've landed on one.
-Skip this section if there's only one realistic path.
+Approaches considered, with trade-offs (cost, risk, blast radius).
+
+Use `### Recommended` for the proposed direction and `### Alternatives` for
+paths considered and rejected (with a one-line "Rejected because:" so future
+readers see the reasoning without re-running the analysis).
+
+Skip this whole section if there's only one realistic path.
+-->
+
+### Recommended
+
+<!--
+The proposed approach. Describe the architecture, sketch implementation,
+and list tradeoffs (Pros / Cons or "accepted tradeoffs").
+-->
+
+
+### Alternatives
+
+<!--
+Other paths considered. For each: brief description, pros, cons, and an
+explicit "Rejected because: …" line.
+
+e.g.
+  **Switch to library X**
+  Brief description.
+  Pros: …
+  Cons: …
+  Rejected because: …
 -->
 
 
@@ -43,11 +100,17 @@ validate before starting the work, or while it's in flight.
 
 ## Scope
 
+### In Scope
 <!--
-What's in. Sub-bullets OK ("Hard requirements" vs "Stretch"). What's
-explicitly *out* goes at the bottom in Out of Scope.
+What's in. Sub-bullets OK ("Hard requirements" vs "Stretch").
 -->
 
+### Out of Scope
+<!--
+Things this issue deliberately does *not* address. Link follow-up issues
+if they exist; otherwise just name the deferred concern so future-you
+knows it was intentional.
+-->
 
 ## Tasks
 
@@ -107,13 +170,4 @@ e.g.
 <!--
 Refs #..., Depends on #..., Blocks #..., Stacked on #...
 GitHub auto-links these and shows backreferences on the target issues.
--->
-
-
-## Out of Scope
-
-<!--
-Things this issue deliberately does *not* address. Link follow-up issues
-if they exist; otherwise just name the deferred concern so future-you
-knows it was intentional.
 -->
