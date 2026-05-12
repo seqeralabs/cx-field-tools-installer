@@ -267,3 +267,14 @@ In addition to the general design decisions noted above, there are a few decisio
     - **An NLB is provisioned as a second load balancer when `flag_create_load_balancer = true`.** It runs continuously once provisioned and incurs additional AWS cost. There is no option to share it with the ALB.
     - **The NLB uses the same subnets as the ALB (`subnet_ids_alb`).** The NLB needs to be reachable from wherever users connect to Platform, so it belongs in the same network.
     - **Route53 DNS must be managed within the same AWS account.** If DNS is managed externally, the `connect-ssh.*` A record must be created manually before SSH connections will resolve correctly.
+
+18. **Auto-skip adapters in `tests/conftest.py`**
+
+    Two pytest-collection adapters layer environment-aware skips on top of the existing marker filters defined in [`tests/pytest.ini`](../../tests/pytest.ini):
+
+    - **No Docker socket → skip `@pytest.mark.testcontainer`.** Detection checks `DOCKER_HOST=unix://...` (verifies the actual socket path exists, since the env var may point outside a sandbox mount), other `DOCKER_HOST` schemes (trust user intent), or falls back to `/var/run/docker.sock`.
+    - **`variables.tf` unchanged on this branch → skip `@pytest.mark.variable_validation`.** "Changed" is the union of committed-on-branch (vs `origin/master` / `origin/main` / `master` / `main`), staged, and unstaged. If no base ref can be resolved, no skip is applied — uncertainty fails open.
+
+    Both adapters defer to positive `-m` selection: invoking `make run_tests_variables_only` or `make run_tests_containers_only` bypasses the heuristic so explicit recipes always behave as the operator expects.
+
+    The motivation is LLM-driven verification loops that invoke `pytest` with no marker filter. Without these adapters, a Docker-less sandbox or a branch unrelated to `variables.tf` produces a wall of failures and errors that have nothing to do with the change under review — flooding the agent's context with red herrings and burning iteration budget. With them, the same indiscriminate invocation produces a clean log scoped to what's actually relevant. Contributors with Docker available and a `variables.tf`-touching branch see no change in behaviour.
