@@ -11,6 +11,7 @@ import pytest
 # if base_import_dir not in sys.path:
 #     sys.path.append(str(base_import_dir))
 from scripts.installer.utils.purge_folders import delete_pycache_folders
+
 from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 from tests.utils.preflight.preflight import check_aws_sso_token
@@ -43,11 +44,33 @@ complicated and unwieldy. Instead, simplified testing loop to:
 ## Helper Fixtures
 ## ------------------------------------------------------------------------------------
 @pytest.fixture(scope="session")
-def session_setup():
-    # Confirm the tester has a valid AWS SSO login token or else tests will fail.
-    # TODO - Fix -- this failed. My token was not valid but the STS call was returning successfully? Go figure.
+def aws_preflight():
+    """Confirm a valid AWS SSO token. Opt-in fixture for tests that interact with real AWS.
+
+    Use only on tests that genuinely need AWS credentials (e.g. anything in `tests/remote/`).
+    Tests in `tests/unit/` use `var.use_mocks = true` and do not need this fixture.
+
+    Consume by adding `aws_preflight` to the fixture parameter list:
+        def test_real_aws_thing(session_setup, aws_preflight): ...
+
+    Decoupling this from `session_setup` is what makes `tests/unit/` runnable in
+    sandboxed environments where the `aws` CLI is unavailable.
+    """
+    # TODO - Fix -- this previously failed where the token was not valid but the STS call returned successfully.
     check_aws_sso_token()
 
+
+@pytest.fixture(scope="session")
+def session_setup():
+    """Stage the test fixtures (tfvars, override tfvars, testing outputs, plan cache, 009 JSON).
+
+    Backs up the project's `terraform.tfvars`, copies in test-specific replacements, JSONifies
+    `009_define_file_templates.tf` via the vendored `hcl2json` container, and yields for the
+    test session. Cleanup restores the original `terraform.tfvars` on teardown.
+
+    AWS preflight is deliberately NOT part of this fixture — tests that need real AWS
+    consume the separate `aws_preflight` fixture instead. See issue #351.
+    """
     # Create a fresh copy of the base testing terraform.tfvars file.
     subprocess.run("make generate_test_data", shell=True, check=True)  # noqa: S602, S607  (intentional shell command; relies on PATH; standard for test env)
 
@@ -116,6 +139,7 @@ def config_baseline_settings_default():
 
 @pytest.fixture(scope="function")  # noqa: PT003  (explicit for documentation)
 def teardown_tf_state_all():
+    """Destroy all Terraform state on teardown. Use for tests that create real infrastructure."""
     print("This testcase will have all tf state destroyed.")
 
     yield
