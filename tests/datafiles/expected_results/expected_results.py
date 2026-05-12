@@ -143,6 +143,7 @@ def generate_tower_yml_entries_all_active(overrides=None):
             "tower.trustedEmails[0]": "'graham.wright@seqera.io,gwright99@hotmail.com'",
             "tower.trustedEmails[1]": "'*@abc.com,*@def.com'",
             "tower.trustedEmails[2]": "'123@abc.com,456@def.com'",
+            "tower.workflow-cleanup.enabled": True,
         },
         "omitted": {  # GET RID OF KEYS
             "tower.auth": "N/A",
@@ -418,6 +419,7 @@ def generate_tower_yml_entries_all_disabled(overrides=None):
             "tower.trustedEmails[0]": "'graham.wright@seqera.io,gwright99@hotmail.com'",
             "tower.trustedEmails[1]": "'*@abc.com,*@def.com'",
             "tower.trustedEmails[2]": "'123@abc.com,456@def.com'",
+            "tower.workflow-cleanup.enabled": False,
         },
         "omitted": {  # GET RID OF KEYS
             "tower.auth": "",
