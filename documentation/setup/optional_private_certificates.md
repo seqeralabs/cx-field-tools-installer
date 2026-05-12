@@ -133,8 +133,24 @@ When using private certificates with Studios, you must create custom container i
 - **Custom Image Configuration:** After creating your custom image, you'll need to configure Studios to use it. See the [Seqera Platform Enterprise documentation on custom containers](https://docs.seqera.io/platform-enterprise/25.1/studios/custom-envs#custom-containers) for detailed instructions.
 - **Multiple Image Types:** You may need to create custom images for different Studios environments (e.g., Jupyter, RStudio, VSCode) if you use multiple types.
 
-### Other Compute Assets
-- TODO: Bake cert into Nextflow worker nodes using Wave-Lite.
+### Wave Lite: Custom AMI for Nextflow Compute Workers
+
+When using Wave Lite (`flag_use_wave_lite = true`) with a private certificate, Nextflow compute workers on AWS Batch must pull Wave-augmented container images from your self-hosted Wave Lite server. Because Wave Lite is served over your private certificate, Docker on the compute worker must trust your root CA at the OS level — this cannot be handled by an entrypoint wrapper (which only affects JVM trust stores inside containers).
+
+The solution is to bake your `rootCA.crt` into the host OS trust store of a custom AMI and configure your Compute Environments to use that AMI.
+
+**Steps:**
+
+1. Start from the AWS-managed Amazon Linux 2 AMI (or whichever base AMI you normally use for Batch).
+2. Copy `rootCA.crt` onto the instance and add it to the OS trust store:
+   ```bash
+   sudo cp rootCA.crt /etc/pki/ca-trust/source/anchors/rootCA.crt
+   sudo update-ca-trust
+   ```
+3. Create an AMI from the instance.
+4. Set the AMI ID in each Compute Environment that will run Wave Lite workloads.
+
+**AMI creation method:** Any approach that produces an AMI with the rootCA baked in is valid. [Packer](https://developer.hashicorp.com/packer) is a commonly used option for automating this, but launching an EC2 instance manually, running the above commands, and creating an AMI via the console or CLI works equally well.
 
 
 ## Runtime

@@ -445,7 +445,8 @@ def verify_wave(data: SimpleNamespace):
     if data.flag_use_wave_lite == True:
         if data.flag_use_private_cacert:
             logger.warning(
-                "Please see documentation to understand how to make private certs work with Wave-Lite."
+                "`flag_use_wave_lite` with `flag_use_private_cacert`: a custom AMI is required for compute workers. "
+                "See documentation/setup/optional_private_certificates.md for details."
             )
 
 
@@ -507,7 +508,9 @@ def verify_pipeline_versioning(data: SimpleNamespace):
     """Conduct checks if pipeline versioning is active."""
     if data.tower_enable_pipeline_versioning:
         if data.tower_container_version < "v25.3.0":
-            logger.warning("Your Platform version is too old to support pipeline versioning. Must be >= v25.3.0.")
+            logger.warning(
+                "Your Platform version is too old to support pipeline versioning. Must be >= v25.3.0."
+            )
 
 
 # -------------------------------------------------------------------------------

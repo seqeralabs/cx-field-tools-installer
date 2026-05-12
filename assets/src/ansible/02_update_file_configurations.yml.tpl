@@ -145,8 +145,9 @@
 
         # Grab leaf cert and stash in target/ folder
         cd /home/ec2-user/target/customcerts
-        aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.crt ${tower_base_url}.crt 
+        aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.crt ${tower_base_url}.crt
         aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.key ${tower_base_url}.key
+        aws s3 cp ${private_cacert_bucket_prefix}/rootCA.crt rootCA.crt
 %{ endif ~}
 
 %{ if flag_enable_data_studio ~}

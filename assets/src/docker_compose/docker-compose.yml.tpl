@@ -87,6 +87,9 @@ services:
   cron:
     image: cr.seqera.io/private/nf-tower-enterprise/backend:${docker_version}
     command: -c "/tower.sh"
+%{ if flag_use_private_cacert == true ~}
+    entrypoint: ["/bin/sh", "/tmp/import-cert.sh"]
+%{ endif ~}
     networks:
       - frontend
       - backend
@@ -94,6 +97,10 @@ services:
       - $HOME/target/tower_config/tower.yml:/tower.yml
 %{ if flag_enable_data_studio == true ~}
       - $HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem
+%{ endif ~}
+%{ if flag_use_private_cacert == true ~}
+      - $HOME/target/customcerts/rootCA.crt:/tmp/rootCA.crt
+      - $HOME/target/docker_compose/import-cert.sh:/tmp/import-cert.sh
 %{ endif ~}
     env_file:
       # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
@@ -114,6 +121,9 @@ services:
 %{ else ~}
     command: -c "/tower.sh"
 %{ endif }
+%{ if flag_use_private_cacert == true ~}
+    entrypoint: ["/bin/sh", "/tmp/import-cert.sh"]
+%{ endif ~}
     networks:
       - frontend
       - backend
@@ -123,6 +133,10 @@ services:
       - $HOME/target/tower_config/tower.yml:/tower.yml
 %{ if flag_enable_data_studio == true ~}
       - $HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem
+%{ endif ~}
+%{ if flag_use_private_cacert == true ~}
+      - $HOME/target/customcerts/rootCA.crt:/tmp/rootCA.crt
+      - $HOME/target/docker_compose/import-cert.sh:/tmp/import-cert.sh
 %{ endif ~}
     env_file:
       - $HOME/target/tower_config/tower.env
@@ -241,8 +255,16 @@ services:
     #   - 9099:9090
     expose:
       - 9090
+%{ if flag_use_private_cacert == true ~}
+    entrypoint: ["/bin/sh", "/tmp/import-cert.sh"]
+    command: ["/launch.sh"]
+%{ endif ~}
     volumes:
       - $HOME/target/wave_lite_config/wave-lite.yml:/work/config.yml
+%{ if flag_use_private_cacert == true ~}
+      - $HOME/target/customcerts/rootCA.crt:/tmp/rootCA.crt
+      - $HOME/target/docker_compose/import-cert.sh:/tmp/import-cert.sh
+%{ endif ~}
     #env_file:
     #  - wave-lite.env
     environment:
