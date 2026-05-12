@@ -27,7 +27,7 @@ jobs:
         steps:
             - name: Check if actor is an org member
               id: check
-              uses: actions/github-script@v7
+              uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
               with:
                   script: |
                       const org = 'seqeralabs';
@@ -58,12 +58,12 @@ jobs:
 
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v4 # TODO: why not v6?
+              uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4 # TODO: why not v6?
               with:
                   fetch-depth: 1
 
             - name: Run Claude Code Action
-              uses: anthropics/claude-code-action@v1
+              uses: anthropics/claude-code-action@dde2242db6af13460b916652159b6ba19a598f30 # v1
               timeout-minutes: 60
               with:
                   anthropic_api_key: ${{ secrets.ENG_ANTHROPIC_API_KEY }}
