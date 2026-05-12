@@ -477,6 +477,7 @@ variable "flag_tower_enable_participant_auto_create_user" { type = bool }
 variable "flag_tower_enable_member_auto_create_user" { type = bool }
 
 variable "tower_audit_retention_days" { type = number }
+variable "tower_workflow_cleanup_enabled" { type = bool }
 
 variable "tower_enable_openapi" { type = bool }
 

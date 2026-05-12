@@ -24,6 +24,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Refactored `connection_strings` module to v2.0.0: streamlined module invocation (caller now resolves user-facing flags into mode strings — `platform_security_mode`, `platform_db_deployment`, `platform_redis_deployment`, `studio_mode`, `wave_mode` — before passing to the module, reducing input surface), and rationalized value generation (replaced interleaved flag ternaries with three logical sections: dispatch tables, single-step mode resolution, then composed final URLs). v1.0.0 deleted due to loss of supporting functions like `data "external"` (_see below_).
             - Removed the `data "external"` Python script for the DB connection-string suffix; logic now lives as a pure-HCL local conditional on engine version.
             - Migrated 12 single-variable validation checks from `scripts/installer/validation/check_configuration.py` to native Terraform `validation` blocks in `variables.tf` — `tower_server_url`, `tower_root_users`, `tower_db_url`, `tower_db_driver`, `tower_db_dialect`, `db_engine_version`, `db_container_engine_version`, `tower_container_version`, `data_studio_eligible_workspaces`, `data_studio_ssh_eligible_workspaces`, `pipeline_versioning_eligible_workspaces`, `private_cacert_bucket_prefix`. Errors now fire at plan time (earlier than the pre-plan Python script) and are co-located with each variable's declaration. Cross-variable and warning-only checks remain in the Python script.
+            - Added the Platform `workflow-cleanup` feature to `tower.yml` via new `tower_workflow_cleanup_enabled` flag (renders `tower.workflow-cleanup.enabled: true|false` unconditionally). Requires Platform >= v25.1.0 when set to `true`; enforcement remains in `scripts/installer/validation/check_configuration.py` because the check requires a cross-variable comparison with `tower_container_version` (not expressible as a single-variable `validation` block on Terraform 1.1.0).
             - TBD
         <br /><br />
 
@@ -55,6 +56,8 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 ||||
 | New | Tower Auth | `flag_tower_enable_participant_auto_create_user` | Controls Tower's `tower.participant.auto-create-user`. When `true`, allows a workspace participant to be auto-created when added by email. Defaults to `false`. [`#312`](https://github.com/seqeralabs/cx-field-tools-installer/issues/312) |
 | New | Tower Auth | `flag_tower_enable_member_auto_create_user` | Controls Tower's `tower.member.auto-create-user`. When `true`, allows the underlying User entity to be auto-created when an email is added as an Org Member. Defaults to `false`. [`#312`](https://github.com/seqeralabs/cx-field-tools-installer/issues/312) |
+||||
+| New | Tower | `tower_workflow_cleanup_enabled` | Toggles Platform's `tower.workflow-cleanup.enabled`. When `true`, AWS Batch workflow cleanup runs after job completion. Requires Platform >= v25.1.0; the value renders to `tower.yml` regardless of state. |
 ||||
 | Modified | Studios | `data_studio_container_version` | Updated from 0.9.0 to 0.11.0. Note: Studios SSH requires connect-proxy >= 0.10.0. |
 | Modified | Studios | `data_studio_options` | Removed 0.9.0 images and added 0.11.0 images. |

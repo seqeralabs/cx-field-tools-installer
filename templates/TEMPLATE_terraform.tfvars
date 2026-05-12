@@ -780,6 +780,7 @@ tower_smtp_host = "REPLACE_ME"
 tower_smtp_port = "REPLACE_ME"
 ## tower_smtp_user                      = "REPLACE_ME_IF_NEEDED"
 ## tower_smtp_password                  = "REPLACE_ME_IF_NEEDED"
+
 tower_smtp_auth              = true
 tower_smtp_starttls_enable   = true
 tower_smtp_starttls_required = true
@@ -804,6 +805,7 @@ flag_tower_enable_participant_auto_create_user = false
 flag_tower_enable_member_auto_create_user      = false
 
 tower_audit_retention_days = 1095 # 3 years (value in days)
+tower_workflow_cleanup_enabled          = true      # only applicable for AWS Batch
 
 tower_enable_openapi = true
 

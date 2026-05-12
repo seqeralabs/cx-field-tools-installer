@@ -187,6 +187,8 @@ tower_email_trusted_users = "123@abc.com, 456@def.com"
 flag_tower_enable_participant_auto_create_user = true
 flag_tower_enable_member_auto_create_user      = true
 
+tower_workflow_cleanup_enabled          = true 
+
 tower_enable_openapi = true
 
 tower_enable_pipeline_versioning        = true

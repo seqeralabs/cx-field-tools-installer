@@ -1,4 +1,4 @@
-# NOTE: 
+# NOTE:
 # - Fields with `###` comment/reference only. DO NOT enable (values come from other sources (i.e. tower.env and AWS SSM).
 # - Fields with `#` can be enabled as needed after Tower is installed.
 
@@ -73,7 +73,6 @@ micronaut:
 
 ### The tower scope is used for providing config for your Tower Enterprise installation
 tower:
-
 %{ if flag_disable_email_login == true }
   # As of Tower v23.4.5, the email login option can be disabled.
   # Note: There must be an active OIDC integration configured or else this flag will be ignored.
@@ -110,7 +109,7 @@ tower:
 %{ endif }
 
   # Tower exposes a unique 1-time-calleable API endpoint at the start of a pipeline run.
-  # Nextflow calls this endpoint to retrieve sensitive values / overly-large content that cant/shouldnt be added to a Job request API call. 
+  # Nextflow calls this endpoint to retrieve sensitive values / overly-large content that cant/shouldnt be added to a Job request API call.
   # Linked to `micronaut.token.jwt.generator` token values (api token duration & api endpoint duration).
   ephemeral:
     duration: 8h                                            # Example values: 1m, 8h, 1d. Default: 8h
@@ -119,7 +118,7 @@ tower:
   # verbose pipelines: `{"message":"ParamsText field too big - Max allowed size 20480 characters"}`
   #
   # Seqera Engineering recommends staying below 100KB for performance efficiency. If a larger
-  # payload is required, do not exceed 10MB (limited by HTTP request size; `max-requests-size` -- a 
+  # payload is required, do not exceed 10MB (limited by HTTP request size; `max-requests-size` -- a
   # non-configurable value).
   launch:
     params:
@@ -152,7 +151,7 @@ tower:
 
   # Key rotation feature available as of 25.2.0. For more details please see:
   #    1. Official Seqera documentation (TODO: Add official link)
-  #    2. How to (manually) engage this feature within the `cx-field-tools-installer` project: 
+  #    2. How to (manually) engage this feature within the `cx-field-tools-installer` project:
   #        documentation/setup/optional_crypto_secret_rotation.md
   # secret-rotation:
     # enabled:      "DO_NOT_UNCOMMENT. KEY MUST BE SET IN SSM."
@@ -163,7 +162,11 @@ tower:
     - "'${tower_email_trusted_orgs}'"
     - "'${tower_email_trusted_users}'"
 
-  ### Tower instance-wide configuration for authentication. 
+  # As of Tower v25.1.0, the workflow cleanup can be enabled for AWS Batch.
+  workflow-cleanup:
+    enabled: ${tower_workflow_cleanup_enabled}
+
+  ### Tower instance-wide configuration for authentication.
   # For further information, see https://help.tower.nf/latest/enterprise/configuration/authentication/
   # auth:
   #   google:
@@ -173,7 +176,7 @@ tower:
   #     allow-list:
   #       - "*@org.xyz"
 
-  ### Tower instance-wide configuration for SCM providers. 
+  ### Tower instance-wide configuration for SCM providers.
   # For further information, see https://help.tower.nf/latest/enterprise/configuration/overview
   # scm:
   #   providers:

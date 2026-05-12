@@ -1,7 +1,6 @@
 import sys
 
 import pytest
-
 from tests.datafiles.expected_results.expected_results import (
     assertion_modifiers_template,
     generate_assertions_all_active,
@@ -56,6 +55,7 @@ def test_baseline_alb_all_disabled(session_setup):
         tower_enable_pipeline_versioning    = false
         flag_tower_enable_participant_auto_create_user = false
         flag_tower_enable_member_auto_create_user      = false
+        tower_workflow_cleanup_enabled                 = false
     """
     plan = prepare_plan(tf_modifiers)
 
@@ -343,6 +343,7 @@ def test_new_db_all_disabled(session_setup):
         flag_allow_aws_instance_credentials = false
         flag_tower_enable_participant_auto_create_user = false
         flag_tower_enable_member_auto_create_user      = false
+        tower_workflow_cleanup_enabled                 = false
     """
     plan = prepare_plan(tf_modifiers)
 
@@ -446,6 +447,7 @@ def test_existing_db_all_disabled(session_setup):
         tower_enable_pipeline_versioning        = false
         flag_tower_enable_participant_auto_create_user = false
         flag_tower_enable_member_auto_create_user      = false
+        tower_workflow_cleanup_enabled                 = false
     """
     plan = prepare_plan(tf_modifiers)
 
@@ -554,6 +556,7 @@ def test_new_redis_all_disabled(session_setup):
         tower_enable_pipeline_versioning        = false
         flag_tower_enable_participant_auto_create_user = false
         flag_tower_enable_member_auto_create_user      = false
+        tower_workflow_cleanup_enabled                 = false
     """
     plan = prepare_plan(tf_modifiers)
 
@@ -612,6 +615,7 @@ def test_seqera_hosted_wave_active(session_setup):
         wave_server_url                     = "wave.seqera.io"
         flag_tower_enable_participant_auto_create_user = false
         flag_tower_enable_member_auto_create_user      = false
+        tower_workflow_cleanup_enabled                 = false
     """
     plan = prepare_plan(tf_modifiers)
 
