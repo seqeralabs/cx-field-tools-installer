@@ -1,7 +1,7 @@
 import os
+from pathlib import Path
 import subprocess
 import time
-from pathlib import Path
 
 import pytest
 
@@ -11,17 +11,19 @@ import pytest
 # if base_import_dir not in sys.path:
 #     sys.path.append(str(base_import_dir))
 from scripts.installer.utils.purge_folders import delete_pycache_folders
+
 from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 from tests.utils.preflight.preflight import check_aws_sso_token
 from tests.utils.pytest_logger import get_logger
 from tests.utils.terraform.executor import TF, execute_subprocess, prepare_plan
 
+
 """
 EXPLANATION
 =======================================
-Originally tried using [tftest](https://pypi.org/project/tftest/) package to test but this became complicated and unwieldy. Instead, simplified
-testing loop to:
+Originally tried using [tftest](https://pypi.org/project/tftest/) package to test but this became
+complicated and unwieldy. Instead, simplified testing loop to:
 
 1. Test in the project directory.
 2. Take a backup of the existing `terraform.tfvars` file.
@@ -29,7 +31,8 @@ testing loop to:
 4. Provide override values to test fixtures (which will generate a new `override.auto.tfvars` file in the project root).
     This file supercedes the same keys defined in the `terraform.tfvars` file.
 5. Run the tests:
-    1. For each fixture, run `terraform plan` based on the test tvars and override file. Results as cached to speed up n+1 test runs.
+    1. For each fixture, run `terraform plan` based on the test tvars and override file.
+       Results as cached to speed up n+1 test runs.
     2. Execute tests tied to that fixture.
     3. Repeat.
 6. Purge the test tfvars and override file.
@@ -41,13 +44,35 @@ testing loop to:
 ## Helper Fixtures
 ## ------------------------------------------------------------------------------------
 @pytest.fixture(scope="session")
-def session_setup():
-    # Confirm the tester has a valid AWS SSO login token or else tests will fail.
-    # TODO - Fix -- this failed. My token was not valid but the STS call was returning successfully? Go figure.
+def aws_preflight():
+    """Confirm a valid AWS SSO token. Opt-in fixture for tests that interact with real AWS.
+
+    Use only on tests that genuinely need AWS credentials (e.g. anything in `tests/remote/`).
+    Tests in `tests/unit/` use `var.use_mocks = true` and do not need this fixture.
+
+    Consume by adding `aws_preflight` to the fixture parameter list:
+        def test_real_aws_thing(session_setup, aws_preflight): ...
+
+    Decoupling this from `session_setup` is what makes `tests/unit/` runnable in
+    sandboxed environments where the `aws` CLI is unavailable.
+    """
+    # TODO - Fix -- this previously failed where the token was not valid but the STS call returned successfully.
     check_aws_sso_token()
 
+
+@pytest.fixture(scope="session")
+def session_setup():
+    """Stage the test fixtures (tfvars, override tfvars, testing outputs, plan cache, 009 JSON).
+
+    Backs up the project's `terraform.tfvars`, copies in test-specific replacements, JSONifies
+    `009_define_file_templates.tf` via the vendored `hcl2json` container, and yields for the
+    test session. Cleanup restores the original `terraform.tfvars` on teardown.
+
+    AWS preflight is deliberately NOT part of this fixture — tests that need real AWS
+    consume the separate `aws_preflight` fixture instead. See issue #351.
+    """
     # Create a fresh copy of the base testing terraform.tfvars file.
-    subprocess.run("make generate_test_data", shell=True, check=True)
+    subprocess.run("make generate_test_data", shell=True, check=True)  # noqa: S602, S607  (intentional shell command; relies on PATH; standard for test env)
 
     print("\nBacking up terraform.tfvars.")
     FileHelper.move_file(FP.TFVARS_BASE, FP.TFVARS_BACKUP)
@@ -67,7 +92,7 @@ def session_setup():
         f"docker run --rm -v {FP.ROOT}:/tmp ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:vendored"
         f" /tmp/009_define_file_templates.tf > {FP.ROOT}/009_define_file_templates.json"
     )
-    result = execute_subprocess(command)
+    execute_subprocess(command)
 
     yield
 
@@ -97,25 +122,24 @@ def session_setup():
 
 @pytest.fixture(scope="session")  # function
 def config_baseline_settings_default():
-    """
-    Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars.
+    """Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars.
+
     Plan with ALL resources rather than targeted, to get all outputs in plan document.
     """
-
     tf_modifiers = """#NONE"""
-    plan = prepare_plan(tf_modifiers)
 
     # DONT USE THESE - no longer needed since the new `terraform template` approach is used.
     # qualifier = "-target=null_resource.generate_independent_config_files"
     # run_terraform_apply(qualifier)
 
-    yield plan
+    return prepare_plan(tf_modifiers)
 
     # run_terraform_destroy()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="function")  # noqa: PT003  (explicit for documentation)
 def teardown_tf_state_all():
+    """Destroy all Terraform state on teardown. Use for tests that create real infrastructure."""
     print("This testcase will have all tf state destroyed.")
 
     yield
@@ -148,8 +172,10 @@ As per ChatGPT: Pytest Lifecycle (Simplified)
 
 Key Point:
 - Test collection happens after pytest_sessionstart.
-- The pytest_sessionstart hook is called before test collection, so you cannot reliably access the total number of tests at this point.
-- The correct place to access the number of collected tests is in the pytest_collection_finish hook, which runs after collection is complete.
+- The pytest_sessionstart hook is called before test collection, so you cannot reliably access the
+  total number of tests at this point.
+- The correct place to access the number of collected tests is in the pytest_collection_finish
+  hook, which runs after collection is complete.
 """
 global_marker_expression = []
 
@@ -169,7 +195,7 @@ def pytest_sessionstart(session):
             # This is a simplified approach - marker expressions can be complex
             markers = [marker_expr]  # Store as list with the full expression
 
-            global global_marker_expression
+            global global_marker_expression  # noqa: PLW0603  (legitimate module-level state assignment; TODO refactor)
             global_marker_expression = [marker_expr]
 
     logger.log_session_start(markers=markers)
@@ -190,13 +216,9 @@ def pytest_deselected(items):
     deselected_count = len(items)
 
     # Try to determine the reason for deselection
-    deselection_reasons = []
-    for item in items:
-        if hasattr(item, "deselected_reason"):
-            deselection_reasons.append(item.deselected_reason)
+    deselection_reasons = [item.deselected_reason for item in items if hasattr(item, "deselected_reason")]
 
     # Add identifier for the marker expression used to deselect tests.
-    global global_marker_expression
     if len(global_marker_expression) > 0:
         deselection_reasons.append(f"Presence of marker: {global_marker_expression[0]}")
 
@@ -263,7 +285,6 @@ def pytest_runtest_teardown(item, nextitem):
     #     duration = item.duration
 
     # logger.log_test_end(test_path=test_path, duration=duration)
-    pass
 
 
 def pytest_runtest_logreport(report):

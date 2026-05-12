@@ -3,6 +3,7 @@ import json
 import sys
 from types import SimpleNamespace
 
+
 # sys.dont_write_bytecode = True
 
 
@@ -12,11 +13,13 @@ v24plus_connstring = "permitMysqlScheme=true"
 
 
 def return_tf_payload(status: str, value: str):
+    """Emit a Terraform `external` data-source JSON payload to stdout."""
     payload = {"status": status, "value": value}
     print(json.dumps(payload))
 
 
 def generate_connection_string(mysql8: str, v24plus: str):
+    """Build a DB connection string with optional MySQL-8 and v24+ modifiers."""
     connection_string = ""
     add_mysql8 = False
     add_v24plus = False
@@ -38,7 +41,6 @@ def generate_connection_string(mysql8: str, v24plus: str):
 
 
 if __name__ == "__main__":
-
     # Much simpler way to get variable passed in (via Terraform sending to stdin)
     query = json.load(sys.stdin)
     data = SimpleNamespace(**query)
@@ -55,4 +57,4 @@ if __name__ == "__main__":
     # return_tf_payload("0", connection_string)
     return_tf_payload("0", json.dumps(query))
 
-    exit(0)
+    sys.exit(0)

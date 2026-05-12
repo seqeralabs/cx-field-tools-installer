@@ -44,12 +44,12 @@ locals {
       flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces,
       data_studio_eligible_workspaces           = var.data_studio_eligible_workspaces,
 
-      flag_enable_data_studio_ssh                       = var.flag_enable_data_studio_ssh,
-      data_studio_ssh_address                           = module.connection_strings.tower_connect_ssh_url,
-      flag_limit_data_studio_ssh_to_some_workspaces     = var.flag_limit_data_studio_ssh_to_some_workspaces,
-      data_studio_ssh_eligible_workspaces                = var.data_studio_ssh_eligible_workspaces,
-      connect_ssh_fingerprint                           = tls_private_key.connect_ssh_host_key.public_key_fingerprint_sha256,
-      
+      flag_enable_data_studio_ssh                   = var.flag_enable_data_studio_ssh,
+      data_studio_ssh_address                       = module.connection_strings.tower_connect_ssh_url,
+      flag_limit_data_studio_ssh_to_some_workspaces = var.flag_limit_data_studio_ssh_to_some_workspaces,
+      data_studio_ssh_eligible_workspaces           = var.data_studio_ssh_eligible_workspaces,
+      connect_ssh_fingerprint                       = tls_private_key.connect_ssh_host_key.public_key_fingerprint_sha256,
+
       data_studio_options             = var.data_studio_options,
       flag_studio_enable_path_routing = var.flag_studio_enable_path_routing,
 
@@ -86,7 +86,8 @@ locals {
 
       tower_audit_retention_days = var.tower_audit_retention_days,
 
-      flag_using_micronaut_4 = local.flag_using_micronaut_4,
+      flag_tower_enable_participant_auto_create_user = var.flag_tower_enable_participant_auto_create_user,
+      flag_tower_enable_member_auto_create_user      = var.flag_tower_enable_member_auto_create_user,
 
     }
   )
@@ -130,11 +131,10 @@ locals {
 
   data_studios_env = templatefile("assets/src/tower_config/data-studios.env.tpl",
     {
-      flag_enable_data_studio  = var.flag_enable_data_studio,
-      tower_server_url         = module.connection_strings.tower_server_url,
-      tower_redis_url          = module.connection_strings.tower_connect_redis_url,
-      tower_connect_server_url = module.connection_strings.tower_connect_server_url,
-      studio_uses_distroless   = local.studio_uses_distroless,
+      flag_enable_data_studio     = var.flag_enable_data_studio,
+      tower_server_url            = module.connection_strings.tower_server_url,
+      tower_redis_url             = module.connection_strings.tower_connect_redis_url,
+      tower_connect_server_url    = module.connection_strings.tower_connect_server_url,
       flag_enable_data_studio_ssh = var.flag_enable_data_studio_ssh,
       connect_ssh_key_path        = "/data/ssh-host-key",
     }
@@ -181,16 +181,12 @@ locals {
       flag_enable_groundswell = var.flag_enable_groundswell,
       swell_container_version = var.swell_container_version,
 
-      flag_new_enough_for_migrate_db = local.flag_new_enough_for_migrate_db,
-
       db_container_engine         = var.db_container_engine,
       db_container_engine_version = var.db_container_engine_version,
 
       flag_enable_data_studio       = var.flag_enable_data_studio,
       flag_enable_data_studio_ssh   = var.flag_enable_data_studio_ssh,
       data_studio_container_version = var.data_studio_container_version,
-      updated_redis_version         = tonumber(length(regexall("^v24.2.[0-9]", var.tower_container_version))) >= 1 || tonumber(length(regexall("^v2[5-9].[0-9].[0-9]", var.tower_container_version))) >= 1 ? true : false,
-      studio_uses_distroless        = local.studio_uses_distroless,
 
       flag_use_wave_lite          = var.flag_use_wave_lite,
       num_wave_lite_replicas      = var.num_wave_lite_replicas,
@@ -430,7 +426,7 @@ resource "tls_private_key" "connect_pem" {
 }
 
 resource "tls_private_key" "connect_ssh_host_key" {
-    algorithm = "ED25519"
+  algorithm = "ED25519"
 }
 
 

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Unit tests for comparing template JSON files with their testing equivalents.
+"""Unit tests for comparing template JSON files with their testing equivalents.
 
 This module tests that:
 1. Each template JSON file has a corresponding testing version
@@ -15,6 +14,7 @@ import pytest
 from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 
+
 templates_dir = Path(FP.ROOT) / "templates"
 test_data_dir = Path(FP.ROOT) / "tests" / "datafiles" / "secrets"
 json_files = list(templates_dir.glob("ssm_sensitive_values_*.json"))
@@ -24,10 +24,7 @@ json_files = list(templates_dir.glob("ssm_sensitive_values_*.json"))
 @pytest.mark.secrets
 @pytest.mark.quick
 def test_secret_keys_match():
-    """
-    Ensure that they SSM testing files have the same keys and count as template files.
-    """
-
+    """Ensure that they SSM testing files have the same keys and count as template files."""
     for json_file in json_files:
         template_data = FileHelper.read_json(json_file.as_posix())
         testing_data = FileHelper.read_json(

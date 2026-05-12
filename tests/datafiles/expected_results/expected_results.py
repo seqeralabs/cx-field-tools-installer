@@ -1,6 +1,7 @@
 from tests.utils.config import all_template_files, expected_sql_dir
 from tests.utils.filehandling import FileHelper
 
+
 """
 Generate two sets of baseline value sets.
   1. Settings when all features / assets activated.
@@ -24,7 +25,9 @@ Generate two sets of baseline value sets.
 ## ------------------------------------------------------------------------------------
 ## MARK: Config - All Active
 ## ------------------------------------------------------------------------------------
-def generate_tower_env_entries_all_active(overrides={}):
+def generate_tower_env_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         "present": {
             "TOWER_ENABLE_AWS_SSM": "true",
@@ -62,41 +65,41 @@ def generate_tower_env_entries_all_active(overrides={}):
             "TOWER_OIDC_PEM_PATH": "/data-studios-rsa.pem",
             "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN": "ipsemlorem",
             # ---
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_ICON": "jupyter",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.8.5",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_TOOL": "jupyter",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_STATUS": "deprecated",
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_ICON": "jupyter",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.9.0",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.9.0",  # noqa: E501  (Studios template URL)
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_TOOL": "jupyter",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_STATUS": "recommended",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_STATUS": "deprecated",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_ICON": "jupyter",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.11.0",  # noqa: E501  (Studios template URL)
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_TOOL": "jupyter",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_STATUS": "recommended",
             # ---
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_ICON": "rstudio",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_REPOSITORY": "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.8.5",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_TOOL": "rstudio",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_STATUS": "deprecated",
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_ICON": "rstudio",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.9.0",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.9.0",  # noqa: E501  (Studios template URL)
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_TOOL": "rstudio",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_STATUS": "recommended",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_STATUS": "deprecated",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_ICON": "rstudio",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.11.0",  # noqa: E501  (Studios template URL)
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_TOOL": "rstudio",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_STATUS": "recommended",
             # ---
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_ICON": "vscode",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.8.5",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_TOOL": "vscode",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_STATUS": "deprecated",
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_ICON": "vscode",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.9.0",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.9.0",  # noqa: E501  (Studios template URL)
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_TOOL": "vscode",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_STATUS": "recommended",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_STATUS": "deprecated",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_ICON": "vscode",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.11.0",  # noqa: E501  (Studios template URL)
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_TOOL": "vscode",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_STATUS": "recommended",
             # ---
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_ICON": "xpra",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_REPOSITORY": "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.8.5",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_TOOL": "xpra",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_STATUS": "deprecated",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_ICON": "xpra",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.9.0",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.9.0",  # noqa: E501  (Studios template URL)
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_TOOL": "xpra",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_STATUS": "recommended",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_STATUS": "deprecated",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_ICON": "xpra",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.11.0",  # noqa: E501  (Studios template URL)
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_TOOL": "xpra",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_STATUS": "recommended",
             # ---
             "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES": "DO_NOT_UNCOMMENT",
             # PIPELINE_VERSIONING
@@ -123,7 +126,9 @@ def generate_tower_env_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_tower_yml_entries_all_active(overrides={}):
+def generate_tower_yml_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         "present": {
             "mail.smtp.auth": True,
@@ -133,6 +138,8 @@ def generate_tower_yml_entries_all_active(overrides={}):
             "micronaut.application.name": "tower-testing",
             "tower.cron.audit-log.clean-up.time-offset": "1095d",
             "tower.data-studio.allowed-workspaces": None,
+            "tower.member.auto-create-user": True,
+            "tower.participant.auto-create-user": True,
             "tower.trustedEmails[0]": "'graham.wright@seqera.io,gwright99@hotmail.com'",
             "tower.trustedEmails[1]": "'*@abc.com,*@def.com'",
             "tower.trustedEmails[2]": "'123@abc.com,456@def.com'",
@@ -145,7 +152,9 @@ def generate_tower_yml_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_data_studios_env_entries_all_active(overrides={}):
+def generate_data_studios_env_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         "present": {
             "PLATFORM_URL": "https://autodc.dev-seqera.net",
@@ -164,7 +173,9 @@ def generate_data_studios_env_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_tower_sql_entries_all_active(overrides={}):
+def generate_tower_sql_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
     baseline = {
         "present": {
@@ -176,7 +187,9 @@ def generate_tower_sql_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_docker_compose_yml_entries_all_active(overrides={}):
+def generate_docker_compose_yml_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
     baseline = {
         "present": {
@@ -192,7 +205,9 @@ def generate_docker_compose_yml_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_wave_lite_yml_entries_all_active(overrides={}):
+def generate_wave_lite_yml_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
         "present": {
@@ -212,7 +227,9 @@ def generate_wave_lite_yml_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_wave_lite_rds_entries_all_active(overrides={}):
+def generate_wave_lite_rds_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
         "present": {
@@ -224,7 +241,9 @@ def generate_wave_lite_rds_entries_all_active(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_groundswell_env_entries_all_active(overrides={}):
+def generate_groundswell_env_entries_all_active(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         "present": {
             "TOWER_DB_URL": "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
@@ -241,7 +260,7 @@ def generate_groundswell_env_entries_all_active(overrides={}):
 
 
 def generate_assertions_all_active(template_files, overrides):
-    entries = {
+    return {
         "tower_env": generate_tower_env_entries_all_active(overrides["tower_env"]),
         "tower_yml": generate_tower_yml_entries_all_active(overrides["tower_yml"]),
         "data_studios_env": generate_data_studios_env_entries_all_active(overrides["data_studios_env"]),
@@ -261,7 +280,6 @@ def generate_assertions_all_active(template_files, overrides):
         "docker_logging": {"present": {}, "omitted": {}},
         "private_ca_conf": {"present": {}, "omitted": {}},
     }
-    return entries
 
 
 ## ------------------------------------------------------------------------------------
@@ -279,7 +297,9 @@ def generate_assertions_all_active(template_files, overrides):
 """
 
 
-def generate_tower_env_entries_all_disabled(overrides={}):
+def generate_tower_env_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         "present": {
             "TOWER_ENABLE_AWS_SSM": "true",
@@ -338,37 +358,37 @@ def generate_tower_env_entries_all_disabled(overrides={}):
             "TOWER_OIDC_PEM_PATH": "",
             "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN": "",
             # ---
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_ICON": "",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_REPOSITORY": "",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_TOOL": "",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-8-5_STATUS": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_ICON": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_REPOSITORY": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_TOOL": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_STATUS": "",
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_ICON": "",
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_REPOSITORY": "",
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_TOOL": "",
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_STATUS": "",
             # ---
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_ICON": "",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_REPOSITORY": "",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_TOOL": "",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-8-5_STATUS": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_ICON": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_REPOSITORY": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_TOOL": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_STATUS": "",
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_ICON": "",
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_REPOSITORY": "",
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_TOOL": "",
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_STATUS": "",
             # ---
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_ICON": "",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_REPOSITORY": "",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_TOOL": "",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-8-5_STATUS": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_ICON": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_REPOSITORY": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_TOOL": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_STATUS": "",
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_ICON": "",
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_REPOSITORY": "",
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_TOOL": "",
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_STATUS": "",
             # ---
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_ICON": "",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_REPOSITORY": "",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_TOOL": "",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-8-5_STATUS": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-11-0_ICON": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-11-0_REPOSITORY": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-11-0_TOOL": "",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-11-0_STATUS": "",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-0-9-0_ICON": "",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-0-9-0_REPOSITORY": "",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-0-9-0_TOOL": "",
@@ -381,7 +401,9 @@ def generate_tower_env_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_tower_yml_entries_all_disabled(overrides={}):
+def generate_tower_yml_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         # PROBLEM - Leftside will resolve to True multiple times. Earlier keys overwritten by later keys.
         "present": {
@@ -391,6 +413,8 @@ def generate_tower_yml_entries_all_disabled(overrides={}):
             "mail.smtp.ssl.protocols": "TLSv1.2",
             "micronaut.application.name": "tower-testing",
             "tower.cron.audit-log.clean-up.time-offset": "1095d",
+            "tower.member.auto-create-user": False,
+            "tower.participant.auto-create-user": False,
             "tower.trustedEmails[0]": "'graham.wright@seqera.io,gwright99@hotmail.com'",
             "tower.trustedEmails[1]": "'*@abc.com,*@def.com'",
             "tower.trustedEmails[2]": "'123@abc.com,456@def.com'",
@@ -404,7 +428,9 @@ def generate_tower_yml_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_data_studios_env_entries_all_disabled(overrides={}):
+def generate_data_studios_env_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         "present": {
             "# STUDIOS_NOT_ENABLED": "DO_NOT_UNCOMMENT",
@@ -423,7 +449,9 @@ def generate_data_studios_env_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_tower_sql_entries_all_disabled(overrides={}):
+def generate_tower_sql_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
     baseline = {
         "present": {
@@ -435,7 +463,9 @@ def generate_tower_sql_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_docker_compose_yml_entries_all_disabled(overrides={}):
+def generate_docker_compose_yml_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     # I know it's a bit dumb to have kv pairs here since we only care about keys buuut ... it helps consistency.
     baseline = {
         "present": {},
@@ -451,7 +481,9 @@ def generate_docker_compose_yml_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_wave_lite_yml_entries_all_disabled(overrides={}):
+def generate_wave_lite_yml_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
         # TODO: Aug 13 -- fix Wave-Lite file population so passwords dont end up in file when N/A
@@ -472,7 +504,9 @@ def generate_wave_lite_yml_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_wave_lite_rds_entries_all_disabled(overrides={}):
+def generate_wave_lite_rds_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     # Reminder: yaml file true/false must be declared as True/False in python dictionary.
     baseline = {
         "present": {
@@ -484,7 +518,9 @@ def generate_wave_lite_rds_entries_all_disabled(overrides={}):
     return {**baseline, **overrides}
 
 
-def generate_groundswell_env_entries_all_disabled(overrides={}):
+def generate_groundswell_env_entries_all_disabled(overrides=None):
+    if overrides is None:
+        overrides = {}
     baseline = {
         "present": {
             "SWELL_DB_URL": "N/A",
@@ -496,7 +532,7 @@ def generate_groundswell_env_entries_all_disabled(overrides={}):
 
 
 def generate_assertions_all_disabled(template_files, overrides):
-    entries = {
+    return {
         "tower_env": generate_tower_env_entries_all_disabled(overrides["tower_env"]),
         "tower_yml": generate_tower_yml_entries_all_disabled(overrides["tower_yml"]),
         "data_studios_env": generate_data_studios_env_entries_all_disabled(overrides["data_studios_env"]),
@@ -516,7 +552,6 @@ def generate_assertions_all_disabled(template_files, overrides):
         "docker_logging": {"present": {}, "omitted": {}},
         "private_ca_conf": {"present": {}, "omitted": {}},
     }
-    return entries
 
 
 ## ------------------------------------------------------------------------------------
@@ -526,13 +561,13 @@ def purge_baseline_of_specified_overrides(baseline, overrides):
     """Overrides could be inverse of baseline. Purge baseline of matches so subsequent merge is clean."""
     print(f"{overrides=}")
     if len(overrides.keys()) > 0:
-        for key in overrides["present"].keys():
+        for key in overrides["present"]:
             try:
                 baseline["omitted"].pop(key)
             except KeyError:
                 pass
 
-        for key in overrides["omitted"].keys():
+        for key in overrides["omitted"]:
             try:
                 baseline["present"].pop(key)
             except KeyError:
@@ -542,8 +577,8 @@ def purge_baseline_of_specified_overrides(baseline, overrides):
 
 
 def assertion_modifiers_template():
-    """
-    Generate a blank dict for each testcase file to attach test-specific assertion modifiers to.
+    """Generate a blank dict for each testcase file to attach test-specific assertion modifiers to.
+
     These are then reconciled with the core set of assertions in `expected_results.py` (via `generate_assertions_xxx`).
     """
     return {k: {} for k in all_template_files}

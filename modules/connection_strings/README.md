@@ -17,7 +17,7 @@ This module generates and manages connection strings for Tower, Groundswell, Con
 
 ```hcl
 module "connection_strings" {
-  source = "./modules/connection_strings/v1.0.0"
+  source = "./modules/connection_strings/v2.0.0"
 
   # Feature Flags
   flag_create_load_balancer = var.flag_create_load_balancer

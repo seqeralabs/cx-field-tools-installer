@@ -13,6 +13,7 @@ from tests.utils.filehandling import FileHelper
 from tests.utils.terraform.executor import prepare_plan
 from tests.utils.terraform.template_generator import generate_tc_files
 
+
 ## ------------------------------------------------------------------------------------
 ## MARK: Baseline ON/OFF
 ## ------------------------------------------------------------------------------------
@@ -25,7 +26,6 @@ from tests.utils.terraform.template_generator import generate_tc_files
 @pytest.mark.local
 def test_baseline_alb_all_enabled(session_setup):
     """Conduct baseline assertions when all SP services turned on."""
-
     tf_modifiers = """#NONE"""
     plan = prepare_plan(tf_modifiers)
 
@@ -42,7 +42,6 @@ def test_baseline_alb_all_enabled(session_setup):
 @pytest.mark.local
 def test_baseline_alb_all_disabled(session_setup):
     """Conduct baseline assertions when all SP services turned off."""
-
     # TODO: Get rid of email disabling. This should be a discrete check.
     tf_modifiers = """
         flag_use_aws_ses_iam_integration    = false
@@ -54,7 +53,9 @@ def test_baseline_alb_all_disabled(session_setup):
         flag_use_wave_lite                  = false
         flag_allow_aws_instance_credentials = false
         tower_enable_openapi                = false
-        tower_enable_pipeline_versioning        = false
+        tower_enable_pipeline_versioning    = false
+        flag_tower_enable_participant_auto_create_user = false
+        flag_tower_enable_member_auto_create_user      = false
     """
     plan = prepare_plan(tf_modifiers)
 
@@ -73,12 +74,11 @@ def test_baseline_alb_all_disabled(session_setup):
 @pytest.mark.local
 @pytest.mark.private_ca
 def test_private_ca_reverse_proxy_active(session_setup):
-    """
-    Scenario:
-        - Baseline all enabled.
-        - Reverseproxy with self-signed private CA active.
-    """
+    """Test scenario.
 
+    - Baseline all enabled.
+    - Reverseproxy with self-signed private CA active.
+    """
     tf_modifiers = """
         flag_create_load_balancer        = false
         flag_use_private_cacert          = true
@@ -105,12 +105,11 @@ def test_private_ca_reverse_proxy_active(session_setup):
 @pytest.mark.local
 @pytest.mark.studios
 def test_studio_path_routing_enabled(session_setup):
-    """
-    Scenario:
-        - Baseline all enabled.
-        - Studios path-routing enabled.
-    """
+    """Test scenario.
 
+    - Baseline all enabled.
+    - Studios path-routing enabled.
+    """
     tf_modifiers = """
         flag_enable_data_studio         = true
         flag_studio_enable_path_routing = true
@@ -145,12 +144,11 @@ def test_studio_path_routing_enabled(session_setup):
 @pytest.mark.local
 @pytest.mark.studios
 def test_studio_ssh_enabled(session_setup):
-    """
-    Scenario:
-        - Baseline all enabled.
-        - Studios SSH enabled.
-    """
+    """Test scenario.
 
+    - Baseline all enabled.
+    - Studios SSH enabled.
+    """
     tf_modifiers = """
         flag_enable_data_studio_ssh = true
         flag_limit_data_studio_ssh_to_some_workspaces = false
@@ -191,13 +189,12 @@ def test_studio_ssh_enabled(session_setup):
 @pytest.mark.local
 @pytest.mark.studios
 def test_studio_ssh_enabled_workspace_restriction(session_setup):
-    """
-    Scenario:
-        - Baseline all enabled.
-        - Studios SSH enabled.
-        - SSH restricted to specific workspaces.
-    """
+    """Test scenario.
 
+    - Baseline all enabled.
+    - Studios SSH enabled.
+    - SSH restricted to specific workspaces.
+    """
     tf_modifiers = """
         flag_enable_data_studio_ssh = true
         flag_limit_data_studio_ssh_to_some_workspaces = true
@@ -226,12 +223,11 @@ def test_studio_ssh_enabled_workspace_restriction(session_setup):
 @pytest.mark.local
 @pytest.mark.studios
 def test_studio_ssh_disabled(session_setup):
-    """
-    Scenario:
-        - Baseline all enabled.
-        - Studios on, SSH explicitly disabled.
-    """
+    """Test scenario.
 
+    - Baseline all enabled.
+    - Studios on, SSH explicitly disabled.
+    """
     tf_modifiers = """
         flag_enable_data_studio_ssh = false
     """
@@ -269,12 +265,11 @@ def test_studio_ssh_disabled(session_setup):
 @pytest.mark.local
 @pytest.mark.db_new
 def test_new_db_all_enabled(session_setup):
-    """
-    Scenario:
-        - Baseline all enabled.
-        - New RDS active.
-    """
+    """Test scenario.
 
+    - Baseline all enabled.
+    - New RDS active.
+    """
     tf_modifiers = """
         flag_create_external_db         = true
         flag_use_existing_external_db   = false
@@ -328,12 +323,11 @@ def test_new_db_all_enabled(session_setup):
 @pytest.mark.local
 @pytest.mark.db_new
 def test_new_db_all_disabled(session_setup):
-    """
-    Scenario:
-        - Baseline all disabled.
-        - New RDS active.
-    """
+    """Test scenario.
 
+    - Baseline all disabled.
+    - New RDS active.
+    """
     tf_modifiers = """
         flag_use_aws_ses_iam_integration    = false
         flag_use_existing_smtp              = true
@@ -347,6 +341,8 @@ def test_new_db_all_disabled(session_setup):
         flag_use_existing_external_db       = false
         flag_use_container_db               = false
         flag_allow_aws_instance_credentials = false
+        flag_tower_enable_participant_auto_create_user = false
+        flag_tower_enable_member_auto_create_user      = false
     """
     plan = prepare_plan(tf_modifiers)
 
@@ -377,12 +373,11 @@ def test_new_db_all_disabled(session_setup):
 @pytest.mark.local
 @pytest.mark.db_existing
 def test_existing_db_all_enabled(session_setup):
-    """
-    Scenario:
-        - Baseline all enabled.
-        - Existing RDS active.
-    """
+    """Test scenario.
 
+    - Baseline all enabled.
+    - Existing RDS active.
+    """
     tf_modifiers = """
         flag_create_external_db         = false
         flag_use_existing_external_db   = true
@@ -428,12 +423,11 @@ def test_existing_db_all_enabled(session_setup):
 @pytest.mark.local
 @pytest.mark.db_existing
 def test_existing_db_all_disabled(session_setup):
-    """
-    Scenario:
-        - Baseline all disabled.
-        - Existing RDS active.
-    """
+    """Test scenario.
 
+    - Baseline all disabled.
+    - Existing RDS active.
+    """
     tf_modifiers = """
         flag_use_aws_ses_iam_integration    = false
         flag_use_existing_smtp              = true
@@ -450,6 +444,8 @@ def test_existing_db_all_disabled(session_setup):
         flag_allow_aws_instance_credentials = false
         tower_enable_openapi                = false
         tower_enable_pipeline_versioning        = false
+        flag_tower_enable_participant_auto_create_user = false
+        flag_tower_enable_member_auto_create_user      = false
     """
     plan = prepare_plan(tf_modifiers)
 
@@ -480,12 +476,11 @@ def test_existing_db_all_disabled(session_setup):
 @pytest.mark.local
 @pytest.mark.redis_external
 def test_new_redis_all_enabled(session_setup):
-    """
-    Scenario:
-        - Baseline all enabled.
-        - Elasticache Redis active.
-    """
+    """Test scenario.
 
+    - Baseline all enabled.
+    - Elasticache Redis active.
+    """
     tf_modifiers = """
         flag_create_external_redis                      = true
         flag_use_container_redis                        = false
@@ -538,12 +533,11 @@ def test_new_redis_all_enabled(session_setup):
 @pytest.mark.local
 @pytest.mark.redis_external
 def test_new_redis_all_disabled(session_setup):
-    """
-    Scenario:
-        - Baseline all disabled.
-        - Elasticache Redis active.
-    """
+    """Test scenario.
 
+    - Baseline all disabled.
+    - Elasticache Redis active.
+    """
     tf_modifiers = """
         flag_use_aws_ses_iam_integration    = false
         flag_use_existing_smtp              = true
@@ -558,6 +552,8 @@ def test_new_redis_all_disabled(session_setup):
         flag_allow_aws_instance_credentials = false
         tower_enable_openapi                = false
         tower_enable_pipeline_versioning        = false
+        flag_tower_enable_participant_auto_create_user = false
+        flag_tower_enable_member_auto_create_user      = false
     """
     plan = prepare_plan(tf_modifiers)
 
@@ -598,12 +594,11 @@ def test_new_redis_all_disabled(session_setup):
 @pytest.mark.local
 @pytest.mark.wave
 def test_seqera_hosted_wave_active(session_setup):
-    """
-    Scenario:
-        - Baseline all disabled.
-        - Seqera-hosted Wave active.
-    """
+    """Test scenario.
 
+    - Baseline all disabled.
+    - Seqera-hosted Wave active.
+    """
     tf_modifiers = """
         flag_use_aws_ses_iam_integration    = false
         flag_use_existing_smtp              = true
@@ -615,6 +610,8 @@ def test_seqera_hosted_wave_active(session_setup):
 
         flag_use_wave                       = true
         wave_server_url                     = "wave.seqera.io"
+        flag_tower_enable_participant_auto_create_user = false
+        flag_tower_enable_member_auto_create_user      = false
     """
     plan = prepare_plan(tf_modifiers)
 
@@ -646,19 +643,17 @@ def test_seqera_hosted_wave_active(session_setup):
 @pytest.mark.local
 @pytest.mark.wave
 def test_wave_sql_file_content(session_setup):
-    """
-    Scenario:
-        - Use the SQL files generated by the baseline testcase.
-        - Compare against pre-generated result files in `tests/datafiles/expected_results/expected_sql`.
-    """
+    """Test scenario.
 
+    - Use the SQL files generated by the baseline testcase.
+    - Compare against pre-generated result files in `tests/datafiles/expected_results/expected_sql`.
+    """
     tf_modifiers = """#NONE"""
     ## SETUP
     ## ========================================================================================
     plan = prepare_plan(tf_modifiers)
 
     desired_files = ["wave_lite_rds"]
-    assertion_modifiers = assertion_modifiers_template()
     tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
 
     # No assertions for this since it's file-comparison based.

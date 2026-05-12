@@ -44,6 +44,7 @@ aws_account = "128997144437"
 aws_region  = "us-east-1"
 aws_profile = "development"
 
+# TODO(#332): bump to the v26.1.x GA tag; baselines in tests/datafiles/expected_results/ will need to be regenerated.
 tower_container_version                 = "v25.3.0"
 
 
@@ -183,6 +184,9 @@ tower_root_users          = "graham.wright@seqera.io,gwright99@hotmail.com"
 tower_email_trusted_orgs  = "*@abc.com, *@def.com"
 tower_email_trusted_users = "123@abc.com, 456@def.com"
 
+flag_tower_enable_participant_auto_create_user = true
+flag_tower_enable_member_auto_create_user      = true
+
 tower_enable_openapi = true
 
 tower_enable_pipeline_versioning        = true
@@ -266,22 +270,22 @@ python3 generate_testing_secrets.py
 update_ssm_parameter() {
     local param_name="$1"
     local local_file="$2"
-    
+
     echo "Processing parameter: $param_name"
-    
+
     # Try to get current value (single call)
     current_value=$(aws ssm get-parameter --name "$param_name" --with-decryption --query 'Parameter.Value' --output text 2>/dev/null)
-    
+
     if [ $? -eq 0 ]; then
         echo "Parameter $param_name exists, checking if update is needed..."
-        
+
         # Hash the current value
         current_hash=$(echo -n "$current_value" | sha256sum | cut -d' ' -f1)
-        
+
         # Get local file content and hash it
         local_content=$(cat "$local_file")
         local_hash=$(echo -n "$local_content" | sha256sum | cut -d' ' -f1)
-        
+
         # Compare hashes
         if [ "$current_hash" = "$local_hash" ]; then
             echo "Parameter $param_name is up to date (hash match)"
@@ -292,14 +296,14 @@ update_ssm_parameter() {
     else
         echo "Parameter $param_name does not exist, creating..."
     fi
-    
+
     # Create or update parameter
     aws ssm put-parameter \
         --name "$param_name" \
         --value "$(cat "$local_file")" \
         --type "SecureString" \
         --overwrite
-        
+
     echo "Parameter $param_name updated successfully"
 }
 
@@ -331,5 +335,5 @@ cat << 'EOF' > 012_testing_outputs.tf
 ## ------------------------------------------------------------------------------------
 output local_wave_enabled {
     value = local.wave_enabled
-} 
+}
 EOF

@@ -1,11 +1,10 @@
 import os
-import shutil
 from pathlib import Path
+import shutil
 
 
 def delete_pycache_folders(start_path: str | Path) -> int:
-    """
-    Recursively traverse a directory and delete all __pycache__ folders.
+    """Recursively traverse a directory and delete all __pycache__ folders.
 
     Args:
         start_path: The root directory to start the search from.

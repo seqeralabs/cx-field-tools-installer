@@ -1,10 +1,8 @@
-"""
-Tests for log formatting utilities.
-"""
+"""Tests for log formatting utilities."""
 
 import json
-import tempfile
 from pathlib import Path
+import tempfile
 
 import pytest
 
@@ -110,7 +108,7 @@ class TestPytestLogFormatter:
 
     def test_read_log_entries_valid_file(self):
         """Test reading valid log entries."""
-        sample_entries = self.create_sample_log_entries()
+        self.create_sample_log_entries()
         entries = self.formatter.read_log_entries()
 
         assert len(entries) == 6

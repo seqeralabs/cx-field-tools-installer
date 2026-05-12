@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 
 import json
-import sys
 from pathlib import Path
+import sys
+
 
 # Add the project root to Python path to avoid import conflicts
 project_root = Path(__file__).parent.parent.parent.resolve()
 sys.path.insert(0, str(project_root))
 
-from tests.utils.config import FP
+from tests.utils.config import FP  # noqa: E402  (sys.path manipulation above)
 
 
-def modify_all_ssm_json_for_testing():
+def modify_all_ssm_json_for_testing():  # noqa: PLR0915  (test data generation; refactor not in scope)
+    """Load SSM sensitive-values JSON files and rewrite for testing.
+
+    Modifies ssm_key paths for testing and provides a section to customize all values.
     """
-    Loads all SSM sensitive values JSON files, modifies ssm_key paths for testing,
-    and provides a section to customize all values.
-    """
-
     # Get the project root directory
     templates_dir = Path(FP.ROOT) / "templates"
     test_data_dir = Path(FP.ROOT) / "tests" / "datafiles" / "secrets"
@@ -27,7 +27,7 @@ def modify_all_ssm_json_for_testing():
 
     if not json_files:
         print("No SSM sensitive values JSON files found!")
-        return
+        return None
 
     print(f"{json_files=}")
 
@@ -38,7 +38,7 @@ def modify_all_ssm_json_for_testing():
         print("-" * 50)
 
         # Load the JSON file
-        with open(json_file, "r") as f:
+        with open(json_file) as f:
             data = json.load(f)
 
         # Step 1: Modify ssm_key values to replace "/tower-template" with "/tower-testing"

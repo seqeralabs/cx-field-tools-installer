@@ -1,8 +1,9 @@
 import logging
-import os
-import sys
 from logging import handlers
+import os
 from pathlib import Path
+import sys
+
 
 # Assumes structure: .. > scripts > installer > utils > logger.py; with logs folder peer to installer
 top_dir = Path(__file__).resolve().parents[2]
