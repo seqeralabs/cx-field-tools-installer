@@ -1,5 +1,7 @@
+import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import time
 
@@ -10,13 +12,14 @@ import pytest
 # print(f"{base_import_dir=}")
 # if base_import_dir not in sys.path:
 #     sys.path.append(str(base_import_dir))
+from scripts.installer.utils.extractors import hcl_to_json
 from scripts.installer.utils.purge_folders import delete_pycache_folders
 
 from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 from tests.utils.preflight.preflight import check_aws_sso_token
 from tests.utils.pytest_logger import get_logger
-from tests.utils.terraform.executor import TF, execute_subprocess, prepare_plan
+from tests.utils.terraform.executor import TF, prepare_plan
 
 
 """
@@ -65,8 +68,9 @@ def session_setup():
     """Stage the test fixtures (tfvars, override tfvars, testing outputs, plan cache, 009 JSON).
 
     Backs up the project's `terraform.tfvars`, copies in test-specific replacements, JSONifies
-    `009_define_file_templates.tf` via the vendored `hcl2json` container, and yields for the
-    test session. Cleanup restores the original `terraform.tfvars` on teardown.
+    `009_define_file_templates.tf` via the shared `hcl_to_json` helper (extracted binary on
+    supported hosts, docker fallback elsewhere — see `scripts/installer/utils/extractors.py`),
+    and yields for the test session. Cleanup restores the original `terraform.tfvars` on teardown.
 
     AWS preflight is deliberately NOT part of this fixture — tests that need real AWS
     consume the separate `aws_preflight` fixture instead. See issue #351.
@@ -86,13 +90,11 @@ def session_setup():
     # Prepare plan cache directory
     os.makedirs(FP.CACHE_PLAN_DIR, exist_ok=True)
 
-    # Prepare JSONified 009 (via hcl2json container)
-    # CLI_command = "./hcl2json 009_define_file_templates.tf > 009_define_file_templates.json"
-    command = (
-        f"docker run --rm -v {FP.ROOT}:/tmp ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:vendored"
-        f" /tmp/009_define_file_templates.tf > {FP.ROOT}/009_define_file_templates.json"
-    )
-    execute_subprocess(command)
+    # Prepare JSONified 009 via the shared hcl_to_json helper (Phase 1 of #352).
+    # On linux/amd64 with the binary extracted, this is a ~10-50ms in-process call; on
+    # unsupported hosts it falls back to the per-call vendored docker container.
+    data = hcl_to_json(f"{FP.ROOT}/009_define_file_templates.tf")
+    Path(f"{FP.ROOT}/009_define_file_templates.json").write_text(json.dumps(data))
 
     yield
 
@@ -201,8 +203,133 @@ def pytest_sessionstart(session):
     logger.log_session_start(markers=markers)
 
 
+## ------------------------------------------------------------------------------------
+## Auto-skip adapters
+##
+## Two environment-aware adapters that run at pytest collection time. They make the
+## suite well-behaved when invoked without a marker filter (e.g. the global Stop hook's
+## indiscriminate `pytest` call) while leaving explicit Makefile recipes (`make
+## run_tests_variables_only`, `make run_tests_containers_only`) untouched.
+##
+##   - testcontainer:        auto-skipped if no Docker socket is reachable.
+##   - variable_validation:  auto-skipped if `variables.tf` is unchanged on this branch.
+##
+## Both adapters defer to a positive `-m` selection: if the user explicitly names the
+## marker on the command line, the auto-skip is bypassed (so the explicit recipes
+## continue to work even when the heuristic would otherwise skip).
+## ------------------------------------------------------------------------------------
+def _docker_socket_available() -> bool:
+    """True iff a Docker (or Docker-API-compatible) socket appears reachable.
+
+    Handles three cases:
+      - `DOCKER_HOST=unix:///path` → verify the unix socket path exists. (Common with
+        rootless docker/podman; presence of the env var alone is not enough — the
+        socket may live outside a sandbox mount.)
+      - `DOCKER_HOST=tcp://...` / `ssh://...` / etc. → trust user intent (we'd need a
+        real connect to verify, and a failed connect surfaces as a test error anyway).
+      - No `DOCKER_HOST` → fall back to the canonical /var/run/docker.sock.
+    """
+    host = os.environ.get("DOCKER_HOST", "")
+    if host.startswith("unix://"):
+        return Path(host.removeprefix("unix://")).exists()
+    if host:
+        return True
+    return Path("/var/run/docker.sock").exists()
+
+
+_GIT_EXE = shutil.which("git")
+
+
+def _git_lines(args: list[str]) -> set[str]:
+    """Return the set of non-empty lines from `git <args>`, or empty if git isn't available."""
+    if _GIT_EXE is None:
+        return set()
+    try:
+        result = subprocess.run(  # noqa: S603  (executable resolved via shutil.which)
+            [_GIT_EXE, *args],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError:
+        return set()
+    return {line.strip() for line in result.stdout.splitlines() if line.strip()}
+
+
+def _git_ref_exists(ref: str) -> bool:
+    """True iff `git rev-parse --verify <ref>` succeeds."""
+    if _GIT_EXE is None:
+        return False
+    try:
+        subprocess.run(  # noqa: S603  (executable resolved via shutil.which)
+            [_GIT_EXE, "rev-parse", "--verify", "--quiet", ref],
+            check=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError:
+        return False
+    return True
+
+
+def _files_changed_on_branch() -> set[str] | None:
+    """Files changed on this branch (committed + staged + unstaged) vs the upstream master.
+
+    Returns None if no sensible base ref can be resolved (detached HEAD on a fresh clone
+    with no fetched remote, etc.); callers should interpret that as "don't auto-skip"
+    rather than silently skipping on uncertainty.
+    """
+    base = next(
+        (b for b in ("origin/master", "origin/main", "master", "main") if _git_ref_exists(b)),
+        None,
+    )
+    if base is None:
+        return None
+    committed = _git_lines(["diff", "--name-only", f"{base}...HEAD"])
+    staged = _git_lines(["diff", "--name-only", "--cached"])
+    unstaged = _git_lines(["diff", "--name-only", "HEAD"])
+    return committed | staged | unstaged
+
+
+def _user_explicitly_includes_marker(marker: str, marker_expr: str) -> bool:
+    """True if the user's -m expression positively selects `marker` (not behind `not`).
+
+    Token-based, no regex. Handles the six marker expressions used by this project's
+    Makefile (bare names, `not <name>`, and `and`-combined forms) and the empty-string
+    case (returns False).
+    """
+    if not marker_expr or marker not in marker_expr:
+        return False
+    tokens = marker_expr.replace("(", " ").replace(")", " ").split()
+    return any(tok == marker and (i == 0 or tokens[i - 1] != "not") for i, tok in enumerate(tokens))
+
+
+def _apply_auto_skips(config, items):
+    """Add `skip` markers to items the local environment can't / shouldn't run.
+
+    Bypassed for any marker the user explicitly positively-selects via `-m`.
+    """
+    marker_expr = config.getoption("-m") or ""
+
+    if not _user_explicitly_includes_marker("testcontainer", marker_expr) and not _docker_socket_available():
+        skip_no_docker = pytest.mark.skip(reason="No Docker socket reachable; skipped by tests/conftest.py auto-skip.")
+        for item in items:
+            if "testcontainer" in item.keywords:
+                item.add_marker(skip_no_docker)
+
+    if not _user_explicitly_includes_marker("variable_validation", marker_expr):
+        changed = _files_changed_on_branch()
+        if changed is not None and "variables.tf" not in changed:
+            skip_unchanged = pytest.mark.skip(
+                reason="variables.tf unchanged on this branch; skipped by tests/conftest.py auto-skip.",
+            )
+            for item in items:
+                if "variable_validation" in item.keywords:
+                    item.add_marker(skip_unchanged)
+
+
 def pytest_collection_modifyitems(session, config, items):
-    """Log number of tests found once collected."""
+    """Apply auto-skips, then log the collected count."""
+    _apply_auto_skips(config, items)
     logger = get_logger()
     total_tests = len(items)
     logger.log_collection_modifyitems(total_tests=total_tests)

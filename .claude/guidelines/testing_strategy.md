@@ -32,6 +32,22 @@ Pytest markers are defined in [`tests/pytest.ini`](../../tests/pytest.ini) — t
 | `teardown_tf_state_all` | function | Destroys Terraform state on teardown. Use for tests that create real infrastructure. |
 | `config_baseline_settings_default` | session | Runs `terraform plan` on the default test tfvars and returns the cached plan output. |
 
+## Auto-skip adapters
+
+[`tests/conftest.py`](../../tests/conftest.py) auto-skips two slices when they don't fit the environment or the change scope. Both fire at collection time and are bypassed by positive `-m` selection.
+
+| Slice | Skipped when… | Bypass |
+| ----- | -------------- | ------ |
+| `@pytest.mark.testcontainer` | No Docker socket is reachable. Detected via `DOCKER_HOST=unix://<path>` (socket-file presence check), other `DOCKER_HOST` schemes (trusted), or `/var/run/docker.sock`. | `-m testcontainer` (e.g. `make run_tests_containers_only`). |
+| `@pytest.mark.variable_validation` | `variables.tf` is unchanged on this branch — union of committed-vs-`origin/master`, staged, and unstaged. Failing open: no skip if no base ref can be resolved. | `-m variable_validation` (e.g. `make run_tests_variables_only`). |
+
+Skip reasons are explicit in pytest output so diagnostics stay clear:
+
+- `"No Docker socket reachable; skipped by tests/conftest.py auto-skip."`
+- `"variables.tf unchanged on this branch; skipped by tests/conftest.py auto-skip."`
+
+See [Design Decision #18](../../documentation/design_decisions.md) for motivation.
+
 ## Running tests
 
 See [`testing_commands.md`](testing_commands.md).
