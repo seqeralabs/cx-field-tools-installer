@@ -99,7 +99,11 @@ purge_cached_plans:
 purge_cached_templatefiles:
 	@cd tests/ && rm -rf .templatefile_cache
 
+purge_cached_console_outputs:
+	@cd tests/ && rm -rf .console_cache
+
 purge_cache:
 	@echo "Purging testing caches"
 	@$(MAKE) purge_cached_templatefiles
 	@$(MAKE) purge_cached_plans
+	@$(MAKE) purge_cached_console_outputs

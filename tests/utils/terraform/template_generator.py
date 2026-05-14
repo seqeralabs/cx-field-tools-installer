@@ -71,16 +71,18 @@ def prepare_templatefile_payload(key, tc: TCValues):
     r"""Extract the templatefile command from JSONified 009, then sub values as necessary.
 
     BACKGROUND:
-    A normal terraform plan/apply would have all the input values availabe at execution (this is SLOW).
+    Rendering happens through `terraform console`, which is the same evaluator `templatefile()`
+    uses in production. The substitutions below cover the values console can't resolve on its own:
+      - `module.connection_strings.*` outputs (resolved via plan-derived `tc.outputs`, or via
+        a separate `terraform console` call when running on the #353 fast path).
+      - `local.<...>_secrets[...]` — sourced from JSON fixtures since the secrets layer is
+        never produced by terraform at test time.
+      - `tls_private_key.*` attributes — mocked with deterministic dummy values.
 
-    Instead, using the much faster 'terraform console' approach.
-        - Console appears to have access to tfvars & locals, but not module outputs (emitted file
-          is "known after apply").
-        - As a result:
-            - 1) Must run 'terraform plan' (full) once to generate all outputs (including of module outputs),
-            - 2) Substitution in the templatefile string passed to 'terraform console'.
-            - 3) Must add '\n' at end to not break the 'terraform console' subprocess call.
-        - This feels Rube Goldberg-ish, but it gets test down from minutes to only seconds after first time cahcing.
+    Variables and other locals are left intact for `terraform console` to resolve at render time.
+
+    Note: '\n' is stripped from the payload because the trailing newline breaks the
+    `terraform console` subprocess input parsing.
     """
     templatefile_json = FileHelper.read_json("009_define_file_templates.json")
     # The hcl2json JSON conversion wraps the 'templatefile(...)' string we need with '${..}'.
@@ -145,7 +147,10 @@ def generate_tc_files(plan, desired_files, testcase_name):
     """Create templatefiles relevant to the testcase.
 
     Args:
-        plan: Terraform plan JSON used to extract config values.
+        plan: Terraform plan JSON used to extract config values. Pass `None` to take the
+            console-based fast path (no `terraform plan` invoked; module outputs resolved
+            via a single `terraform console` call). The caller must have staged tfvars
+            (e.g. via `stage_tfvars`) before invoking this function. See #353 addendum.
         desired_files: List of template file keys to generate (empty list = all).
         testcase_name: Name of the testcase, used as a sub-folder for cache output.
 

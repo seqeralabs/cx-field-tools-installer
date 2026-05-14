@@ -9,7 +9,7 @@ from tests.datafiles.expected_results.expected_results import (
 from tests.utils.assertions.verify_assertions import verify_all_assertions
 from tests.utils.config import expected_sql_dir
 from tests.utils.filehandling import FileHelper
-from tests.utils.terraform.executor import prepare_plan
+from tests.utils.terraform.executor import stage_tfvars
 from tests.utils.terraform.template_generator import generate_tc_files
 
 
@@ -26,13 +26,13 @@ from tests.utils.terraform.template_generator import generate_tc_files
 def test_baseline_alb_all_enabled(session_setup):
     """Conduct baseline assertions when all SP services turned on."""
     tf_modifiers = """#NONE"""
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     # Create all config files since this scenario is used often. Good bang-for-buck. No assertion_modifiers
     desired_files = []
     assertion_modifiers = assertion_modifiers_template()
 
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
     tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     verify_all_assertions(tc_files, tc_assertions)
@@ -57,12 +57,12 @@ def test_baseline_alb_all_disabled(session_setup):
         flag_tower_enable_member_auto_create_user      = false
         tower_workflow_cleanup_enabled                 = false
     """
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     # Create all config files since this scenario is used often. Good bang-for-buck. No assertion_modifiers
     desired_files = []
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
     tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     verify_all_assertions(tc_files, tc_assertions)
@@ -84,11 +84,11 @@ def test_private_ca_reverse_proxy_active(session_setup):
         flag_use_private_cacert          = true
         flag_do_not_use_https            = false
     """
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["docker_compose"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["docker_compose"] = {
         "present": {"services.reverseproxy.labels.seqera": "reverseproxy"},
@@ -115,11 +115,11 @@ def test_studio_path_routing_enabled(session_setup):
         flag_studio_enable_path_routing = true
         data_studio_path_routing_url    = "connect-example.com"
     """
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["tower_env", "data_studios_env"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -153,11 +153,11 @@ def test_studio_ssh_enabled(session_setup):
         flag_enable_data_studio_ssh = true
         flag_limit_data_studio_ssh_to_some_workspaces = false
     """
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["tower_env", "data_studios_env"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -200,11 +200,11 @@ def test_studio_ssh_enabled_workspace_restriction(session_setup):
         flag_limit_data_studio_ssh_to_some_workspaces = true
         data_studio_ssh_eligible_workspaces = "12,34"
     """
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["tower_env"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -231,11 +231,11 @@ def test_studio_ssh_disabled(session_setup):
     tf_modifiers = """
         flag_enable_data_studio_ssh = false
     """
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["tower_env", "data_studios_env"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {},
@@ -275,11 +275,11 @@ def test_new_db_all_enabled(session_setup):
         flag_use_existing_external_db   = false
         flag_use_container_db           = false
     """
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["tower_env", "groundswell_env", "wave_lite_yml", "docker_compose"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -345,11 +345,11 @@ def test_new_db_all_disabled(session_setup):
         flag_tower_enable_member_auto_create_user      = false
         tower_workflow_cleanup_enabled                 = false
     """
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["tower_env", "groundswell_env", "wave_lite_yml"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -385,11 +385,11 @@ def test_existing_db_all_enabled(session_setup):
         flag_use_container_db           = false
         tower_db_url                        = "existing.tower-db.com"
     """
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["tower_env", "groundswell_env", "wave_lite_yml"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -449,11 +449,11 @@ def test_existing_db_all_disabled(session_setup):
         flag_tower_enable_member_auto_create_user      = false
         tower_workflow_cleanup_enabled                 = false
     """
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["tower_env", "groundswell_env", "wave_lite_yml"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -487,11 +487,11 @@ def test_new_redis_all_enabled(session_setup):
         flag_create_external_redis                      = true
         flag_use_container_redis                        = false
     """
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["tower_env", "data_studios_env", "wave_lite_yml", "docker_compose"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -558,11 +558,11 @@ def test_new_redis_all_disabled(session_setup):
         flag_tower_enable_member_auto_create_user      = false
         tower_workflow_cleanup_enabled                 = false
     """
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["tower_env", "data_studios_env", "wave_lite_yml"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -617,11 +617,11 @@ def test_seqera_hosted_wave_active(session_setup):
         flag_tower_enable_member_auto_create_user      = false
         tower_workflow_cleanup_enabled                 = false
     """
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["tower_env", "data_studios_env", "wave_lite_yml"]
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -655,10 +655,10 @@ def test_wave_sql_file_content(session_setup):
     tf_modifiers = """#NONE"""
     ## SETUP
     ## ========================================================================================
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["wave_lite_rds"]
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     # No assertions for this since it's file-comparison based.
 

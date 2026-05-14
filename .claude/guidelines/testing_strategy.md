@@ -48,6 +48,24 @@ Skip reasons are explicit in pytest output so diagnostics stay clear:
 
 See [Design Decision #18](../../documentation/design_decisions.md) for motivation.
 
+## Templatefile test path: plan-less by default
+
+After [`#353`](https://github.com/seqeralabs/cx-field-tools-installer/issues/353), templatefile-rendering tests no longer require `terraform plan`. `module.connection_strings.*` outputs are resolved via a single `terraform console` call (~1-2 s) instead of a full plan (~30+ s on cold cache). Both call shapes coexist; tests pick what they need.
+
+| Test shape | Setup helper | `generate_tc_files` plan arg | When |
+| ---------- | ------------ | ---------------------------- | ---- |
+| Templatefile rendering only | `stage_tfvars(tf_modifiers)` | `None` | Default for `test_config_file_content.py`, `test_ansible_files.py`, `test_testcontainer_execution.py`. |
+| Plan-derived state validation | `plan = prepare_plan(tf_modifiers)` | `plan` (dict) | Use for tests that inspect plan outputs directly (`test_outputs.py`) or that need plan-time validation errors (`test_variable_validation.py`). |
+
+### Invariants the fast path depends on
+
+The console-based path works because two architectural rules hold across the repo:
+
+1. **Every `local.<name>` referenced from a `templatefile(...)` arg map in [`009_define_file_templates.tf`](../../009_define_file_templates.tf) must be a pure function of vars + module outputs.** No branch of any ternary may reference a resource attribute, even an unselected branch — HCL evaluates both branches eagerly, so a single resource ref in an "if false" branch collapses the whole local to `(known after apply)` under console-without-plan. The regression test at [`tests/unit/framework/test_console_locals_resolvability.py`](../../tests/unit/framework/test_console_locals_resolvability.py) walks every referenced local and asserts each resolves; it catches violations at PR time.
+2. **Every resource-attribute input to a module the test framework evaluates via console must use the two-layer defense pattern:** `var.use_mocks ? null : try(<resource_or_module_ref>, null)`. The `use_mocks` gate selects the safe `null` branch in tests; the `try()` wrapper neutralises the unsafe branch by catching the missing-resource evaluation error. Without both, the module's input is unknown → its outputs collapse to `(known after apply)` → the templatefile rendering silently corrupts. The pattern is documented in-line above the `module "connection_strings"` invocation in [`000_main.tf`](../../000_main.tf); apply it to any new module that becomes console-evaluated.
+
+If a new local naturally combines a tfvars-known branch with a resource-attribute branch (and refactoring isn't an option), the offending test can opt back into the plan path by reverting to `prepare_plan(...)` + `generate_tc_files(..., plan=plan)`. The slow path is preserved precisely for this case.
+
 ## Running tests
 
 See [`testing_commands.md`](testing_commands.md).
