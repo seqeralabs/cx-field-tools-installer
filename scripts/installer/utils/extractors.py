@@ -28,9 +28,10 @@ from installer.utils.logger import logger  # noqa: E402  (sys.path manipulation 
 ##     platforms (linux/amd64 and linux/arm64), eliminating ~1-2s of per-call Docker startup
 ##     overhead and letting `tests/unit/` run inside sandboxes that block runtime Docker.
 ##     Hosts that aren't covered yet (Darwin until Phase 3) keep the per-call `docker run`
-##     fallback. Phase 2 activation requires the vendored image to be a multi-arch manifest
-##     (mirror of upstream `tmccombs/hcl2json` via `docker buildx imagetools create`); the
-##     pinned digest is marked with a `TODO(#352-phase2)` comment until that republish lands.
+##     fallback. The vendored image is a multi-arch manifest published as
+##     `ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:0.6-vendored-multiarch`
+##     (mirror of upstream `tmccombs/hcl2json:0.6`, full blob copy via `skopeo copy
+##     --multi-arch all`).
 ## ------------------------------------------------------------------------------------
 
 HCL2JSON_BIN = "/tmp/cx-installer/hcl2json"  # noqa: S108  (matches Makefile HCL2JSON_BIN; project-namespaced so bwrap jails can mount it)
@@ -71,9 +72,7 @@ def _docker_run_hcl2json(path: str) -> dict:
         "1000:1000",
         "--network",
         "none",
-        # TODO(#352-phase2): replace with the multi-arch manifest digest produced by
-        # `docker buildx imagetools create` once the vendored image is republished.
-        "ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json@sha256:48af2029d19d824ba1bd1662c008e691c04d5adcb055464e07b2dc04980dcbf5",
+        "ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:0.6-vendored-multiarch@sha256:ef5c94eddaf8c364c171f50de7ff22477d68ab787d080e9c43d5c6e0be01af3c",
         "/tmp/input.hcl",  # noqa: S108  (container-internal mount target, not a host path)
     ]
 

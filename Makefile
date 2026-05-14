@@ -11,9 +11,7 @@
 # /tmp itself, which would hide the binary from pytest running inside the sandbox).
 HCL2JSON_DIR := /tmp/cx-installer
 HCL2JSON_BIN := $(HCL2JSON_DIR)/hcl2json
-# TODO(#352-phase2): replace with the multi-arch manifest digest produced by
-# `docker buildx imagetools create` once the vendored image is republished.
-HCL2JSON_IMAGE := ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json@sha256:48af2029d19d824ba1bd1662c008e691c04d5adcb055464e07b2dc04980dcbf5
+HCL2JSON_IMAGE := ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:0.6-vendored-multiarch@sha256:ef5c94eddaf8c364c171f50de7ff22477d68ab787d080e9c43d5c6e0be01af3c
 
 extract_hcl2json:
 	@arch="$$(uname -m)"; \
