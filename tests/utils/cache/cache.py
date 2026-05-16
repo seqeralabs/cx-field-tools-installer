@@ -45,11 +45,18 @@ def hash_tc_values(tc: TCValues) -> str:
 
 
 def create_templatefile_cache_folder(tc: TCValues) -> str:
-    """Create a folder to store generated templatefiles for reuse."""
+    """Create a folder to store generated templatefiles for reuse.
+
+    Cache folder is keyed solely on the hash of rendering inputs (vars + module outputs +
+    secrets). Two tests with byte-identical rendering inputs share the folder regardless
+    of which test populated it first — the cross-test cache-reuse this refactor's whole
+    purpose. `tc.testcase_name` is no longer part of the path; the field on TCValues is
+    kept for now and will be removed with the TCValues refactor.
+    """
     hashed_tc = hash_tc_values(tc)
 
     # Make cache folder if missing
-    cache_dir = f"{FP.CACHE_TEMPLATEFILE_DIR}/{tc.testcase_name}__{hashed_tc}"
+    cache_dir = f"{FP.CACHE_TEMPLATEFILE_DIR}/{hashed_tc}"
     folder_path = Path(cache_dir)
     folder_path.mkdir(parents=True, exist_ok=True)
 

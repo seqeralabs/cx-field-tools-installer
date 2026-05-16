@@ -19,7 +19,8 @@ from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 from tests.utils.preflight.preflight import check_aws_sso_token
 from tests.utils.pytest_logger import get_logger
-from tests.utils.terraform.executor import TF, prepare_plan
+from tests.utils.terraform.executor import TF, prepare_plan, stage_tfvars
+from tests.utils.terraform.template_generator import generate_tc_files
 
 
 """
@@ -137,6 +138,21 @@ def config_baseline_settings_default():
     return prepare_plan(tf_modifiers)
 
     # run_terraform_destroy()
+
+
+@pytest.fixture
+def staged_scenario(request, session_setup):
+    """Stage tfvars from `@pytest.mark.tfvars(...)` and return rendered templatefile bundle.
+
+    Per-test tfvars overrides are declared as a marker argument so they're discoverable at
+    pytest collection time (enabling future parallel precompute of resolved locals across
+    the whole suite). When no marker is present, falls back to `#NONE` — the same baseline
+    the original `tf_modifiers = "#NONE"` pattern produced.
+    """
+    marker = request.node.get_closest_marker("tfvars")
+    tf_modifiers = marker.args[0] if marker else "#NONE"
+    stage_tfvars(tf_modifiers)
+    return generate_tc_files(None, request.node.name)
 
 
 @pytest.fixture(scope="function")  # noqa: PT003  (explicit for documentation)
