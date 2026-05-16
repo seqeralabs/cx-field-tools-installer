@@ -1,9 +1,9 @@
-from datetime import UTC, datetime
+import functools
 import hashlib
 from pathlib import Path
 import re
 
-from tests.utils.config import FP, TCValues
+from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 
 
@@ -11,7 +11,12 @@ from tests.utils.filehandling import FileHelper
 ## Cache Utility Functions
 ## ------------------------------------------------------------------------------------
 def hash_cache_key(tf_modifiers: str, qualifier: str = "") -> str:
-    """Generate SHA-256 hash of override data and tfvars content for cache key."""
+    """Generate SHA-256 hash of override data and tfvars content for cache key.
+
+    Used by the legacy plan-based path (`prepare_plan`) for the per-scenario plan cache
+    under `tests/.plan_cache/`. The templatefile-rendering path uses
+    `hash_templatefile_cache_key` instead.
+    """
     tfvars_base = FileHelper.read_file(FP.TFVARS_BASE).strip()
     tfvars_override = FileHelper.read_file(FP.TFVARS_BASE_OVERRIDE_DST).strip()
     tf_modifiers = tf_modifiers.strip()
@@ -34,50 +39,49 @@ def normalize_whitespace(tf_modifiers: str) -> str:
 def hash_scenario(tf_modifiers: str) -> str:
     """SHA-256 of a single scenario's whitespace-normalized tf_modifiers string.
 
-    Used by the parallel-precompute mechanism to dedupe identical tfvars across tests and
-    to key the resolved-values disk cache. Independent from `hash_cache_key` which also
-    folds in the base tfvars files — those are constant across a test session, so a
-    scenario hash over just the modifiers is sufficient for cache reuse within a session.
+    Used to dedupe identical tfvars across tests at collection time. Independent from
+    `hash_templatefile_cache_key` which also folds in static disk state — that one is
+    the actual cache-directory key; this one is just for in-memory dedup.
     """
     normalized = normalize_whitespace(tf_modifiers).strip()
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:16]
 
 
-def hash_tc_values(tc: TCValues) -> str:
-    """Generate hash from TC values. Single responsibility."""
-    content = (
-        str(tc.vars)
-        + str(tc.outputs)
-        + str(tc.tower_secrets)
-        + str(tc.groundswell_secrets)
-        + str(tc.seqerakit_secrets)
-        + str(tc.wave_lite_secrets)
-    )
-    return hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
+@functools.lru_cache(maxsize=1)
+def _compute_static_hash_part() -> str:
+    """Hash of disk-resident inputs that affect rendered templatefile content.
 
+    Folds in:
+      - Project tfvars files (terraform.tfvars + base-overrides.auto.tfvars)
+      - The four secret JSON fixtures (tower / groundswell / seqerakit / wave_lite)
+      - Locals source (`000_main.tf`) and template source (`009_define_file_templates.tf`)
+      - Every `.tpl` file under `assets/src/`
 
-def create_templatefile_cache_folder(tc: TCValues) -> str:
-    """Create a folder to store generated templatefiles for reuse.
-
-    Cache folder is keyed solely on the hash of rendering inputs (vars + module outputs +
-    secrets). Two tests with byte-identical rendering inputs share the folder regardless
-    of which test populated it first — the cross-test cache-reuse this refactor's whole
-    purpose. `tc.testcase_name` is no longer part of the path; the field on TCValues is
-    kept for now and will be removed with the TCValues refactor.
+    Changing any of these invalidates every templatefile cache entry. Cached per-process
+    via lru_cache — these inputs are stable across a pytest session. Workers (separate
+    processes) compute this once each on first call.
     """
-    hashed_tc = hash_tc_values(tc)
+    parts = [
+        FileHelper.read_file(FP.TFVARS_BASE),
+        FileHelper.read_file(FP.TFVARS_BASE_OVERRIDE_DST),
+        FileHelper.read_file(FP.TOWER_SECRETS),
+        FileHelper.read_file(FP.GROUNDSWELL_SECRETS),
+        FileHelper.read_file(FP.SEQERAKIT_SECRETS),
+        FileHelper.read_file(FP.WAVE_LITE_SECRETS),
+        FileHelper.read_file(f"{FP.ROOT}/000_main.tf"),
+        FileHelper.read_file(f"{FP.ROOT}/009_define_file_templates.tf"),
+    ]
+    parts.extend(tpl.read_text() for tpl in sorted(Path(f"{FP.ROOT}/assets/src").rglob("*.tpl")))
+    return hashlib.sha256("".join(parts).encode("utf-8")).hexdigest()
 
-    # Make cache folder if missing
-    cache_dir = f"{FP.CACHE_TEMPLATEFILE_DIR}/{hashed_tc}"
-    folder_path = Path(cache_dir)
-    folder_path.mkdir(parents=True, exist_ok=True)
 
-    # Timestamp cant be in name -- will affect cache check in `generate_templatefile`.
-    # Write timestamp in the folder instead.
-    existing_timestamps = list(folder_path.glob(".timestamp*"))
-    if not existing_timestamps:
-        timestamp = datetime.now(tz=UTC).strftime("%Y-%m-%d--%H:%M:%S")
-        timestamp_file = folder_path / f".timestamp--{timestamp}"
-        timestamp_file.write_text(timestamp)
+def hash_templatefile_cache_key(tf_modifiers: str) -> str:
+    """Disk-only cache key for rendered templatefiles. No terraform console required.
 
-    return cache_dir
+    Combines the static-disk-state hash with the per-test tfvars modifiers. Both
+    precompute workers and runtime `generate_tc_files` compute this the same way →
+    same cache directory under `tests/.scenario_cache/` → cross-test reuse works
+    whenever two tests' tfvars match byte-for-byte.
+    """
+    normalized = normalize_whitespace(tf_modifiers).strip()
+    return hashlib.sha256((_compute_static_hash_part() + normalized).encode("utf-8")).hexdigest()[:16]

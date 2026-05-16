@@ -19,14 +19,19 @@ from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 from tests.utils.preflight.preflight import check_aws_sso_token
 from tests.utils.pytest_logger import get_logger
-from tests.utils.terraform.executor import TF, prepare_plan, stage_tfvars
-from tests.utils.terraform.precompute import collect_scenarios_from_items, precompute_in_parallel
+from tests.utils.terraform.executor import TF, prepare_plan
+from tests.utils.terraform.precompute import (
+    collect_scenarios_from_items,
+    precompute_in_parallel,
+    write_scenario_index,
+)
 from tests.utils.terraform.template_generator import generate_tc_files
 
 
 # Populated by `pytest_collection_modifyitems` from each test's `@pytest.mark.tfvars(...)` marker;
-# consumed by `session_setup` to drive the parallel precompute of resolved local values.
+# consumed by `session_setup` to drive the parallel precompute + INDEX.md generation.
 _collected_scenarios: dict[str, str] = {}
+_collected_items: list = []
 
 
 """
@@ -103,9 +108,10 @@ def session_setup():
     data = hcl_to_json(f"{FP.ROOT}/009_define_file_templates.tf")
     Path(f"{FP.ROOT}/009_define_file_templates.json").write_text(json.dumps(data))
 
-    # Parallel precompute of resolved `local.*` values for every collected scenario. Populated
-    # by `pytest_collection_modifyitems` below. Disk cache lives under FP.CACHE_SCENARIO_DIR;
-    # consumed by future per-template hashing work (issue `optimize-test-file-generation`).
+    # Parallel precompute of resolved locals + rendered templatefiles for every collected
+    # scenario. Each worker spawns one `terraform console` call per scenario and writes
+    # locals.json + every template into tests/.scenario_cache/{hash}/. Tests then read
+    # purely from disk — no console calls happen at test runtime.
     if _collected_scenarios:
         precompute_start = time.time()
         statuses = precompute_in_parallel(_collected_scenarios)
@@ -118,6 +124,10 @@ def session_setup():
             for h, s in list(statuses.items())[:3]:
                 if s.startswith("miss-err"):
                     print(f"  [{h[:8]}] {s[:300]}")
+
+        # Regenerate the human-readable scenario→folder mapping.
+        index_path = write_scenario_index(_collected_items)
+        print(f"Scenario index: {index_path}")
 
     yield
 
@@ -173,8 +183,7 @@ def staged_scenario(request, session_setup):
     """
     marker = request.node.get_closest_marker("tfvars")
     tf_modifiers = marker.args[0] if marker else "#NONE"
-    stage_tfvars(tf_modifiers)
-    return generate_tc_files(None, request.node.name)
+    return generate_tc_files(None, request.node.name, tf_modifiers)
 
 
 @pytest.fixture(scope="function")  # noqa: PT003  (explicit for documentation)
@@ -369,11 +378,11 @@ def pytest_collection_modifyitems(session, config, items):
     """Apply auto-skips, capture scenarios for parallel precompute, then log the collected count."""
     _apply_auto_skips(config, items)
 
-    # Capture {scenario_hash: tf_modifiers} for every collected test (deduped). `session_setup`
-    # reads this to drive the parallel `terraform console` precompute of resolved local values.
+    # Capture runnable items for both the parallel precompute and INDEX.md generation.
     # Filter to items NOT marked skip so we don't precompute for slices that won't run.
     runnable_items = [i for i in items if not any(m.name == "skip" for m in i.iter_markers())]
     _collected_scenarios.update(collect_scenarios_from_items(runnable_items))
+    _collected_items.extend(runnable_items)
 
     logger = get_logger()
     total_tests = len(items)
