@@ -22,20 +22,28 @@ from installer.utils.logger import logger  # noqa: E402  (sys.path manipulation 
 ## History:
 ##   - May 16, 2025: replaced the bespoke parser with a Docker-based call to the vendored
 ##     `tmccombs/hcl2json` image (origin: https://github.com/tmccombs/hcl2json).
-##   - Phase 1 of #352: the vendored container is now treated as a delivery vehicle for the
+##   - Phases 1+2 of #352: the vendored container is now treated as a delivery vehicle for the
 ##     Go binary. The Makefile `extract_hcl2json` recipe pulls the binary out once and
 ##     places it at HCL2JSON_BIN; this module execs the binary directly on supported
-##     platforms (linux/amd64), eliminating ~1-2s of per-call Docker startup overhead and
-##     letting `tests/unit/` run inside sandboxes that block runtime Docker. Hosts that
-##     aren't covered yet (Darwin until Phase 3) keep the per-call `docker run` fallback.
+##     platforms (linux/amd64 and linux/arm64), eliminating ~1-2s of per-call Docker startup
+##     overhead and letting `tests/unit/` run inside sandboxes that block runtime Docker.
+##     Hosts that aren't covered yet (Darwin until Phase 3) keep the per-call `docker run`
+##     fallback. The vendored image is a multi-arch manifest published as
+##     `ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:0.6-vendored-multiarch`
+##     (mirror of upstream `tmccombs/hcl2json:0.6`, full blob copy via `skopeo copy
+##     --multi-arch all`).
 ## ------------------------------------------------------------------------------------
 
 HCL2JSON_BIN = "/tmp/cx-installer/hcl2json"  # noqa: S108  (matches Makefile HCL2JSON_BIN; project-namespaced so bwrap jails can mount it)
 
 
 def _is_supported_extraction_platform() -> bool:
-    """Hosts where Phase 1 expects the extracted binary path (linux/amd64 only)."""
-    return platform.system() == "Linux" and platform.machine() == "x86_64"
+    """Hosts covered by the extracted-binary path (Phases 1+2 of #352: linux/amd64 and linux/arm64).
+
+    `aarch64` is the canonical Linux ARM64 kernel name (what `uname -m` returns); `arm64` is
+    accepted defensively in case a container runtime reports the Darwin string on Linux.
+    """
+    return platform.system() == "Linux" and platform.machine() in {"x86_64", "aarch64", "arm64"}
 
 
 def _can_use_binary() -> bool:
@@ -50,12 +58,12 @@ def _docker_run_hcl2json(path: str) -> dict:
     Per-call cost is ~1-2s of Docker startup overhead.
     """
     # Single local file mounted as read-only, non-root user, disabled network capabilities, and
-    # use of immutable container hash fingerprint over mutable tag.
+    # use of immutable container hash fingerprint over mutable tag. The hardcoded `--platform`
+    # flag was dropped in Phase 2 so the daemon can pick the matching arch from the multi-arch
+    # manifest; forcing amd64 would silently run under emulation on arm64 hosts.
     cmd = [
         "docker",
         "run",
-        "--platform",
-        "linux/amd64",
         "-i",
         "--rm",
         "-v",
@@ -64,7 +72,7 @@ def _docker_run_hcl2json(path: str) -> dict:
         "1000:1000",
         "--network",
         "none",
-        "ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json@sha256:48af2029d19d824ba1bd1662c008e691c04d5adcb055464e07b2dc04980dcbf5",
+        "ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:0.6-vendored-multiarch@sha256:ef5c94eddaf8c364c171f50de7ff22477d68ab787d080e9c43d5c6e0be01af3c",
         "/tmp/input.hcl",  # noqa: S108  (container-internal mount target, not a host path)
     ]
 

@@ -25,7 +25,7 @@ def test_tfvars_app_name(data):
 
 
 ## ------------------------------------------------------------------------------------
-## Phase 1 of #352: smoke tests for the extracted-binary dispatch path.
+## Phases 1+2 of #352: smoke tests for the extracted-binary dispatch path.
 ## ------------------------------------------------------------------------------------
 def test_supported_platform_predicate_returns_bool():
     """`_is_supported_extraction_platform()` must always answer True/False — never raise."""
@@ -33,11 +33,11 @@ def test_supported_platform_predicate_returns_bool():
 
 
 @pytest.mark.skipif(
-    not (platform.system() == "Linux" and platform.machine() == "x86_64"),
-    reason="Phase 1 of #352 only covers linux/amd64; other hosts use the docker fallback.",
+    not (platform.system() == "Linux" and platform.machine() in {"x86_64", "aarch64", "arm64"}),
+    reason="Phases 1-2 of #352 cover linux/amd64 and linux/arm64; other hosts use the docker fallback.",
 )
 def test_extracted_binary_is_used_on_supported_platform():
-    """On linux/amd64 after `make extract_hcl2json` has run, the binary path should be active.
+    """On linux/amd64 or linux/arm64 after `make extract_hcl2json` has run, the binary path should be active.
 
     Encodes the contract from #352: every `make run_tests_*` recipe pulls `extract_hcl2json`
     in first, so by the time pytest is collecting these tests the binary should exist at

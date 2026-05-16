@@ -1,28 +1,36 @@
 .PHONY: verify plan apply extract_hcl2json
 
-# Phase 1 of #352: extract the hcl2json Go binary from the vendored container once at
+# Phases 1+2 of #352: extract the hcl2json Go binary from the vendored container once at
 # setup time and place it at HCL2JSON_BIN. `scripts/installer/utils/extractors.py:hcl_to_json`
-# execs the binary directly on supported hosts (linux/amd64), avoiding ~1-2s of per-call
-# Docker startup. Unsupported hosts (Darwin until Phase 3) keep the runtime `docker run`
-# fallback, so this recipe is a no-op for them.
+# execs the binary directly on supported hosts (linux/amd64 + linux/arm64), avoiding ~1-2s of
+# per-call Docker startup. Unsupported hosts (Darwin until Phase 3) keep the runtime
+# `docker run` fallback, so this recipe is a no-op for them.
 #
 # HCL2JSON_DIR is a project-namespaced subdirectory under /tmp so that hosts running a
 # bwrap sandbox can mount it into the jail (the default sandbox configuration isolates
 # /tmp itself, which would hide the binary from pytest running inside the sandbox).
 HCL2JSON_DIR := /tmp/cx-installer
 HCL2JSON_BIN := $(HCL2JSON_DIR)/hcl2json
-HCL2JSON_IMAGE := ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json@sha256:48af2029d19d824ba1bd1662c008e691c04d5adcb055464e07b2dc04980dcbf5
+HCL2JSON_IMAGE := ghcr.io/seqeralabs/cx-field-tools-installer/hcl2json:0.6-vendored-multiarch@sha256:ef5c94eddaf8c364c171f50de7ff22477d68ab787d080e9c43d5c6e0be01af3c
 
 extract_hcl2json:
-	@if [ "$$(uname -s)" = "Linux" ] && [ "$$(uname -m)" = "x86_64" ]; then \
-		echo "Extracting hcl2json binary to $(HCL2JSON_BIN)."; \
-		mkdir -p $(HCL2JSON_DIR); \
-		cid=$$(docker create $(HCL2JSON_IMAGE)); \
-		docker cp $$cid:/hcl2json $(HCL2JSON_BIN) 2>/dev/null || docker cp $$cid:/usr/local/bin/hcl2json $(HCL2JSON_BIN); \
-		docker rm $$cid > /dev/null; \
-		chmod +x $(HCL2JSON_BIN); \
+	@arch="$$(uname -m)"; \
+	if [ "$$(uname -s)" = "Linux" ] && { [ "$$arch" = "x86_64" ] || [ "$$arch" = "aarch64" ] || [ "$$arch" = "arm64" ]; }; then \
+		if docker info >/dev/null 2>&1; then \
+			echo "Extracting hcl2json binary to $(HCL2JSON_BIN)."; \
+			mkdir -p $(HCL2JSON_DIR); \
+			cid=$$(docker create $(HCL2JSON_IMAGE)); \
+			docker cp $$cid:/hcl2json $(HCL2JSON_BIN) 2>/dev/null || docker cp $$cid:/usr/local/bin/hcl2json $(HCL2JSON_BIN); \
+			docker rm $$cid > /dev/null; \
+			chmod +x $(HCL2JSON_BIN); \
+		elif [ -x "$(HCL2JSON_BIN)" ]; then \
+			echo "extract_hcl2json: Docker unavailable; using existing binary at $(HCL2JSON_BIN)."; \
+		else \
+			echo "extract_hcl2json: Docker unavailable and no binary at $(HCL2JSON_BIN). Run 'make extract_hcl2json' from a host with Docker access first (the binary path can then be mounted into a sandbox)." >&2; \
+			exit 1; \
+		fi; \
 	else \
-		echo "extract_hcl2json: host $$(uname -s)/$$(uname -m) not covered by Phase 1; skipping (docker fallback will run at call time)."; \
+		echo "extract_hcl2json: host $$(uname -s)/$$arch not covered by Phases 1-2; skipping (docker fallback will run at call time)."; \
 	fi
 
 verify: extract_hcl2json

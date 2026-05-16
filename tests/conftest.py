@@ -90,9 +90,9 @@ def session_setup():
     # Prepare plan cache directory
     os.makedirs(FP.CACHE_PLAN_DIR, exist_ok=True)
 
-    # Prepare JSONified 009 via the shared hcl_to_json helper (Phase 1 of #352).
-    # On linux/amd64 with the binary extracted, this is a ~10-50ms in-process call; on
-    # unsupported hosts it falls back to the per-call vendored docker container.
+    # Prepare JSONified 009 via the shared hcl_to_json helper (Phases 1+2 of #352).
+    # On linux/amd64 or linux/arm64 with the binary extracted, this is a ~10-50ms in-process
+    # call; on unsupported hosts it falls back to the per-call vendored docker container.
     data = hcl_to_json(f"{FP.ROOT}/009_define_file_templates.tf")
     Path(f"{FP.ROOT}/009_define_file_templates.json").write_text(json.dumps(data))
 
