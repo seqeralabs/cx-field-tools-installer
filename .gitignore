@@ -35,6 +35,7 @@ tests/logs/*
 tests/datafiles/*.tfvars
 tests/datafiles/secrets/*.json
 tests/.templatefile_cache
+tests/.console_cache/
 
 .github/issue-drafts
 .github/pr-drafts

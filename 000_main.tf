@@ -265,7 +265,45 @@ locals {
 }
 
 
-# Add connection_strings module
+# Add connection_strings module.
+#
+# Two-layer defense on resource-attribute inputs (see #353 addendum)
+# -----------------------------------------------------------------------------
+# Every input below that references a resource or downstream module is wrapped in:
+#
+#     <input> = var.use_mocks ? null : try(<resource_or_module_ref>, null)
+#
+# This pattern is load-bearing for the test framework's "console-without-plan"
+# fast path. Specifically:
+#
+#   1. `var.use_mocks = true` is set by `tests/datafiles/generate_core_data.sh`
+#      for every test run. The ternary's selected branch becomes the literal
+#      `null` — fully resolvable under `terraform console` with no resources
+#      in state.
+#   2. HCL evaluates BOTH ternary branches eagerly. So the unselected branch
+#      (`try(<ref>, null)`) is also evaluated. The `try()` wrapper catches the
+#      evaluation error that occurs when the referenced module/resource has
+#      not been applied (and therefore doesn't exist in state) and substitutes
+#      `null`. Without `try()`, console would fail outright; without
+#      `var.use_mocks`, the unknown-resource value would propagate into the
+#      module and poison its outputs to "(known after apply)".
+#
+# The end result: `terraform console` can evaluate `module.connection_strings`
+# in test contexts without ever needing `terraform plan` — which is what makes
+# the ~30s-per-cold-cache speedup in the templatefile test path possible.
+#
+# MAINTENANCE RULE: any newly added resource-attribute input to this module
+# (or any module the test framework expects to evaluate via console) MUST follow
+# the same `var.use_mocks ? null : try(<ref>, null)` shape. Skipping either the
+# `use_mocks` gate or the `try()` wrapper reintroduces a "(known after apply)"
+# value into the module's input, which propagates to its outputs, which collapses
+# the console fast path for any consumer that touches the unguarded input. The
+# regression linter in tests/unit/framework/ catches this at PR time, but the
+# convention is what prevents the failure in the first place.
+#
+# See also: documentation/design_decisions.md (decision #18 in the addendum
+# under "console-based templatefile evaluation") and proj:testing_strategy.md
+# for the broader rationale and contributor guidance.
 module "connection_strings" {
   source = "./modules/connection_strings/v2.0.0"
 
@@ -289,7 +327,7 @@ module "connection_strings" {
   swell_database_name          = var.swell_database_name
   wave_server_url              = var.wave_server_url
 
-  # External resource references (TODO: replace with resolved address strings)
+  # External resource references — two-layer defense (see header comment above).
   rds_tower             = var.use_mocks ? null : try(module.rds[0], null)
   rds_wave_lite         = var.use_mocks ? null : try(module.rds-wave-lite[0], null)
   elasticache_tower     = var.use_mocks ? null : try(aws_elasticache_cluster.redis[0], null)

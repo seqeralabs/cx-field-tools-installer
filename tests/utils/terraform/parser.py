@@ -5,6 +5,7 @@ from tests.utils.config import (
     TCValues,
 )
 from tests.utils.filehandling import FileHelper
+from tests.utils.terraform.executor import extract_module_outputs_via_console
 
 
 def get_reconciled_tfvars() -> dict[str, Any]:
@@ -24,25 +25,37 @@ def get_reconciled_tfvars() -> dict[str, Any]:
     return tfvars
 
 
-def extract_config_values(plan: dict) -> TCValues:
-    """Extract and flatten JSON entities from various input sources. Used to generate templatefiles.
+def extract_config_values(plan: dict | None = None) -> TCValues:
+    """Build a TCValues bundle for templatefile substitutions.
 
-      1. 'terraform plan' variables & outputs.
-      2. testing secrets
+    Two modes:
+      - `plan` is a dict: derive `vars` and `outputs` from the plan JSON (legacy path,
+        required for tests that also validate plan-derived state).
+      - `plan` is None: derive `vars` from the reconciled on-disk tfvars and `outputs`
+        from a single `terraform console` call (fast path; saves ~30s on cold caches —
+        see #353 addendum). The caller is responsible for having staged the tfvars
+        (e.g. via `stage_tfvars`) before invoking this function.
+
+    The TCValues shape is identical in both modes; downstream substitution code is unchanged.
 
     WARNING: Plan booleans are Python True/False, not terraform "true"/"false".
     """
-    vars_dict = plan["variables"]
-    outputs_dict = plan["planned_values"]["outputs"]
+    if plan is not None:
+        # Flatten nested "value" keys: {"key": {"value": "val"}} -> {"key": "val"}
+        vars_extracted = {k: v.get("value", v) for k, v in plan["variables"].items()}
+        outputs_extracted = {k: v.get("value", v) for k, v in plan["planned_values"]["outputs"].items()}
+    else:
+        vars_extracted = get_reconciled_tfvars()
+        outputs_extracted = extract_module_outputs_via_console()
+
     tower_secrets = FileHelper.read_json(FP.TOWER_SECRETS)
     groundswell_secrets = FileHelper.read_json(FP.GROUNDSWELL_SECRETS)
     seqerakit_secrets = FileHelper.read_json(FP.SEQERAKIT_SECRETS)
     wave_lite_secrets = FileHelper.read_json(FP.WAVE_LITE_SECRETS)
 
-    # Flatten nested "value" keys: {"key": {"value": "val"}} -> {"key": "val"}
     tc = TCValues()
-    tc.vars = {k: v.get("value", v) for k, v in vars_dict.items()}
-    tc.outputs = {k: v.get("value", v) for k, v in outputs_dict.items()}
+    tc.vars = vars_extracted
+    tc.outputs = outputs_extracted
     tc.tower_secrets = {k: v.get("value", v) for k, v in tower_secrets.items()}
     tc.groundswell_secrets = {k: v.get("value", v) for k, v in groundswell_secrets.items()}
     tc.seqerakit_secrets = {k: v.get("value", v) for k, v in seqerakit_secrets.items()}

@@ -11,10 +11,9 @@ import pytest
 from testcontainers.compose import DockerCompose
 from testcontainers.mysql import MySqlContainer
 from testcontainers.postgres import PostgresContainer
-
 from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
-from tests.utils.terraform.executor import prepare_plan
+from tests.utils.terraform.executor import stage_tfvars
 from tests.utils.terraform.template_generator import generate_tc_files
 
 
@@ -38,10 +37,10 @@ def test_tower_sql_population(session_setup):
     ## SETUP
     ## =======================================================================================
     tf_modifiers = """#NONE"""
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["tower_sql"]
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     # Not required right now
     # assertion_modifiers = assertion_modifiers_template()
@@ -141,10 +140,10 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
     ## SETUP
     ## =======================================================================================
     tf_modifiers = """#NONE"""
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["docker_compose", "wave_lite_yml", "wave_lite_rds"]
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     # Not required right now
     # assertion_modifiers = assertion_modifiers_template()
@@ -281,10 +280,10 @@ def test_wave_containers(session_setup):
     ## SETUP
     ## =======================================================================================
     tf_modifiers = """#NONE"""
-    plan = prepare_plan(tf_modifiers)
+    stage_tfvars(tf_modifiers)
 
     desired_files = ["docker_compose", "wave_lite_yml", "wave_lite_rds"]
-    tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
 
     # Not required right now
     # assertion_modifiers = assertion_modifiers_template()
