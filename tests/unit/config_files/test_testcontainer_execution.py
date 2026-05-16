@@ -39,8 +39,7 @@ def test_tower_sql_population(session_setup):
     tf_modifiers = """#NONE"""
     stage_tfvars(tf_modifiers)
 
-    desired_files = ["tower_sql"]
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
 
     # Not required right now
     # assertion_modifiers = assertion_modifiers_template()
@@ -142,8 +141,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
     tf_modifiers = """#NONE"""
     stage_tfvars(tf_modifiers)
 
-    desired_files = ["docker_compose", "wave_lite_yml", "wave_lite_rds"]
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
 
     # Not required right now
     # assertion_modifiers = assertion_modifiers_template()
@@ -282,8 +280,7 @@ def test_wave_containers(session_setup):
     tf_modifiers = """#NONE"""
     stage_tfvars(tf_modifiers)
 
-    desired_files = ["docker_compose", "wave_lite_yml", "wave_lite_rds"]
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
 
     # Not required right now
     # assertion_modifiers = assertion_modifiers_template()

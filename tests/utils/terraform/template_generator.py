@@ -4,7 +4,6 @@ import re
 import shutil
 import subprocess
 
-from tests.utils.assertions.file_filters import filter_templates
 from tests.utils.cache.cache import create_templatefile_cache_folder
 from tests.utils.config import FP, TCValues, all_template_files
 from tests.utils.filehandling import FileHelper
@@ -131,10 +130,10 @@ def render_templatefiles_batched(payloads: dict[str, str]) -> dict[str, str]:
 
     Tradeoff: a single failed payload fails the whole batch. `terraform console`'s
     error names the offending expression in stdout/stderr, but the pytest traceback
-    points here rather than at the specific `desired_files` entry. To narrow blame,
-    grep the error output for the template key; for unit-level rendering of one
-    template, use `write_populated_templatefile` directly. A fail-then-retry-
-    individually fallback is intentionally not implemented (see #361).
+    points here rather than at the specific template key. To narrow blame, grep the
+    error output for the template key; for unit-level rendering of one template,
+    use `write_populated_templatefile` directly. A fail-then-retry-individually
+    fallback is intentionally not implemented (see #361).
     """
     if not payloads:
         return {}
@@ -192,7 +191,7 @@ def _is_wave_lite_rds(key: str) -> bool:
     return key in sql_exception_files
 
 
-def generate_tc_files(plan, desired_files, testcase_name):
+def generate_tc_files(plan, testcase_name):
     """Create templatefiles relevant to the testcase.
 
     Args:
@@ -200,23 +199,28 @@ def generate_tc_files(plan, desired_files, testcase_name):
             console-based fast path (no `terraform plan` invoked; module outputs resolved
             via a single `terraform console` call). The caller must have staged tfvars
             (e.g. via `stage_tfvars`) before invoking this function. See #353 addendum.
-        desired_files: List of template file keys to generate (empty list = all).
         testcase_name: Name of the testcase, used as a sub-folder for cache output.
 
     Returns:
         Updated template_files dict with content and filepath added.
 
     Implementation notes:
-        Two-pass loop. Pass 1 partitions every requested template into one of three
-        buckets: (a) wave-lite-rds SQL files (use sedalternative.py path), (b) cache
-        hits (read existing cache file), (c) cache misses (collect payload for batch).
+        Two-pass loop. Pass 1 partitions every template into one of three buckets:
+        (a) wave-lite-rds SQL files (use sedalternative.py path), (b) cache hits
+        (read existing cache file), (c) cache misses (collect payload for batch).
         Pass 2 issues a single `terraform console` call via `render_templatefiles_batched`
         for all cache-miss payloads, then writes each result to its per-key cache file.
         See #361 for the optimisation rationale.
+
+        Always renders the full `all_template_files` set: per-template filtering was
+        a pre-batching optimisation that became defunct once #361 collapsed N console
+        calls into one (rendering all templates costs ~1-2s more than rendering one).
+        Dropping the filter maximises cross-test cache reuse — see issue
+        `optimize-test-file-generation`.
     """
     tc: TCValues = extract_config_values(plan)
 
-    tc.all_template_files = filter_templates(desired_files)  # Master dictionary relevant to this testcase
+    tc.all_template_files = all_template_files  # Master dictionary relevant to this testcase
     tc.testcase_name = testcase_name
 
     cache_dir = create_templatefile_cache_folder(tc)

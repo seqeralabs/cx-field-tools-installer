@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-import os
 from pathlib import Path
 
 from tests.utils.filehandling import FileHelper
@@ -8,20 +7,10 @@ from tests.utils.filehandling import FileHelper
 ## ------------------------------------------------------------------------------------
 ## Universal Configuration
 ## ------------------------------------------------------------------------------------
-# Control how many files are generated for each testcase: every config file or just minimally necessary ones.
-# Use limited set by default, but make configurable from pytest invocation (e.g: `TEST_FULL=true pytest tests/unit`)
-def get_kitchen_sink_bool(key, default=False):
-    value = os.environ.get(key)
-    if value is None:
-        return default
-    return value.lower() in ("true", "1", "yes", "on")
-
-
-kitchen_sink = get_kitchen_sink_bool("TEST_FULL")
-
-
 @dataclass
 class FilePaths:
+    """Absolute paths to tfvars files, cache directories, plan artefacts, and secret JSON fixtures."""
+
     # NOTE: Assumes this file lives at 3rd layer of project (i.e. PROJECT_ROOT/tests/utils/local.py)
     ROOT: str = str(Path(__file__).parent.parent.parent.resolve())
 
@@ -71,6 +60,8 @@ class FilePaths:
 
 @dataclass
 class TCValues:
+    """Bundle of rendering inputs (vars, module outputs, secrets) and per-test working buffer (template files dict)."""
+
     # Convenience object for passing around the dictionary sets used to configure templatefiles
     vars: dict = field(default_factory=dict)
     outputs: dict = field(default_factory=dict)

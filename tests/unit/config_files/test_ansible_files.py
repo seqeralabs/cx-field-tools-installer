@@ -29,11 +29,10 @@ def test_002_all_present(session_setup):
     """
     stage_tfvars(tf_modifiers)
 
-    desired_files = ["ansible_02_update_file_configurations"]
     # Kept for consistency with config-file tests; ansible tests use inline string assertions.
     # assertion_modifiers = assertion_modifiers_template()
 
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
     # tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     ansible_file_02 = FileHelper.read_file(f"{tc_files['ansible_02_update_file_configurations']['filepath']}")
@@ -65,11 +64,10 @@ def test_002_none_present(session_setup):
     """
     stage_tfvars(tf_modifiers)
 
-    desired_files = ["ansible_02_update_file_configurations"]
     # Kept for consistency with config-file tests; ansible tests use inline string assertions.
     # assertion_modifiers = assertion_modifiers_template()
 
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
     # tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     ansible_file_02 = FileHelper.read_file(f"{tc_files['ansible_02_update_file_configurations']['filepath']}")
@@ -95,11 +93,10 @@ def test_005_all_present(session_setup):  # teardown_tf_state_all):
     """
     stage_tfvars(tf_modifiers)
 
-    desired_files = ["ansible_05_patch_groundswell"]
     # Kept for consistency with config-file tests; ansible tests use inline string assertions.
     # assertion_modifiers = assertion_modifiers_template()
 
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
     # tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     ansible_file_05 = FileHelper.read_file(f"{tc_files['ansible_05_patch_groundswell']['filepath']}")
@@ -118,11 +115,10 @@ def test_005_none_present(session_setup):
     """
     stage_tfvars(tf_modifiers)
 
-    desired_files = ["ansible_05_patch_groundswell"]
     # Kept for consistency with config-file tests; ansible tests use inline string assertions.
     # assertion_modifiers = assertion_modifiers_template()
 
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
     # tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     ansible_file_05 = FileHelper.read_file(f"{tc_files['ansible_05_patch_groundswell']['filepath']}")
@@ -142,11 +138,10 @@ def test_006_all_present(session_setup):
     """
     stage_tfvars(tf_modifiers)
 
-    desired_files = ["ansible_06_run_seqerakit"]
     # Kept for consistency with config-file tests; ansible tests use inline string assertions.
     # assertion_modifiers = assertion_modifiers_template()
 
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
     # tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
 
     ansible_file_06 = FileHelper.read_file(f"{tc_files['ansible_06_run_seqerakit']['filepath']}")
@@ -167,11 +162,10 @@ def test_006_none_present(session_setup):
     """
     stage_tfvars(tf_modifiers)
 
-    desired_files = ["ansible_06_run_seqerakit"]
     # Kept for consistency with config-file tests; ansible tests use inline string assertions.
     # assertion_modifiers = assertion_modifiers_template()
 
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
+    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
     # tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
 
     ansible_file_06 = FileHelper.read_file(f"{tc_files['ansible_06_run_seqerakit']['filepath']}")
