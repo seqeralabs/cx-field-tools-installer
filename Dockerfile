@@ -3,7 +3,7 @@
 #
 # NOTE: We do not intend/expect to make any modifications to this asset. 
 #       Dockerfile exists in repo for 1st-time push and documentation purposes.
-FROM tmccombs/hcl2json@sha256:312ac54d3418b87b2ad64f82027483cb8b7750db6458b7b9ebe42ec278696e96
+FROM tmccombs/hcl2json@sha256:b954dfe63a6b4b886cb191af6c6d5e5a9c5d520dfa097bb7cc2c432bc95fbfb4
 
 LABEL maintainer="graham.wright@seqera.io,sushma.chaluvadi@seqera.io"
 LABEL version="1.0"
