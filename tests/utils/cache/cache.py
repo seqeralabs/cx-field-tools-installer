@@ -31,6 +31,18 @@ def normalize_whitespace(tf_modifiers: str) -> str:
     return "\n".join(re.sub(r"\s+", " ", line) for line in tf_modifiers.splitlines())
 
 
+def hash_scenario(tf_modifiers: str) -> str:
+    """SHA-256 of a single scenario's whitespace-normalized tf_modifiers string.
+
+    Used by the parallel-precompute mechanism to dedupe identical tfvars across tests and
+    to key the resolved-values disk cache. Independent from `hash_cache_key` which also
+    folds in the base tfvars files — those are constant across a test session, so a
+    scenario hash over just the modifiers is sufficient for cache reuse within a session.
+    """
+    normalized = normalize_whitespace(tf_modifiers).strip()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:16]
+
+
 def hash_tc_values(tc: TCValues) -> str:
     """Generate hash from TC values. Single responsibility."""
     content = (

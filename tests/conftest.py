@@ -20,7 +20,13 @@ from tests.utils.filehandling import FileHelper
 from tests.utils.preflight.preflight import check_aws_sso_token
 from tests.utils.pytest_logger import get_logger
 from tests.utils.terraform.executor import TF, prepare_plan, stage_tfvars
+from tests.utils.terraform.precompute import collect_scenarios_from_items, precompute_in_parallel
 from tests.utils.terraform.template_generator import generate_tc_files
+
+
+# Populated by `pytest_collection_modifyitems` from each test's `@pytest.mark.tfvars(...)` marker;
+# consumed by `session_setup` to drive the parallel precompute of resolved local values.
+_collected_scenarios: dict[str, str] = {}
 
 
 """
@@ -96,6 +102,22 @@ def session_setup():
     # call; on unsupported hosts it falls back to the per-call vendored docker container.
     data = hcl_to_json(f"{FP.ROOT}/009_define_file_templates.tf")
     Path(f"{FP.ROOT}/009_define_file_templates.json").write_text(json.dumps(data))
+
+    # Parallel precompute of resolved `local.*` values for every collected scenario. Populated
+    # by `pytest_collection_modifyitems` below. Disk cache lives under FP.CACHE_SCENARIO_DIR;
+    # consumed by future per-template hashing work (issue `optimize-test-file-generation`).
+    if _collected_scenarios:
+        precompute_start = time.time()
+        statuses = precompute_in_parallel(_collected_scenarios)
+        elapsed = time.time() - precompute_start
+        hits = sum(1 for s in statuses.values() if s == "hit")
+        ok = sum(1 for s in statuses.values() if s == "miss-ok")
+        errs = sum(1 for s in statuses.values() if s.startswith("miss-err"))
+        print(f"\nPrecompute: {len(statuses)} scenarios ({hits} hit, {ok} miss-ok, {errs} miss-err) in {elapsed:.2f}s")
+        if errs:
+            for h, s in list(statuses.items())[:3]:
+                if s.startswith("miss-err"):
+                    print(f"  [{h[:8]}] {s[:300]}")
 
     yield
 
@@ -344,8 +366,15 @@ def _apply_auto_skips(config, items):
 
 
 def pytest_collection_modifyitems(session, config, items):
-    """Apply auto-skips, then log the collected count."""
+    """Apply auto-skips, capture scenarios for parallel precompute, then log the collected count."""
     _apply_auto_skips(config, items)
+
+    # Capture {scenario_hash: tf_modifiers} for every collected test (deduped). `session_setup`
+    # reads this to drive the parallel `terraform console` precompute of resolved local values.
+    # Filter to items NOT marked skip so we don't precompute for slices that won't run.
+    runnable_items = [i for i in items if not any(m.name == "skip" for m in i.iter_markers())]
+    _collected_scenarios.update(collect_scenarios_from_items(runnable_items))
+
     logger = get_logger()
     total_tests = len(items)
     logger.log_collection_modifyitems(total_tests=total_tests)
