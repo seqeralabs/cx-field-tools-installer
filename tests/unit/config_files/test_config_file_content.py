@@ -1,5 +1,3 @@
-import sys
-
 import pytest
 from tests.datafiles.expected_results.expected_results import (
     assertion_modifiers_template,
@@ -9,8 +7,6 @@ from tests.datafiles.expected_results.expected_results import (
 from tests.utils.assertions.verify_assertions import verify_all_assertions
 from tests.utils.config import expected_sql_dir
 from tests.utils.filehandling import FileHelper
-from tests.utils.terraform.executor import stage_tfvars
-from tests.utils.terraform.template_generator import generate_tc_files
 
 
 ## ------------------------------------------------------------------------------------
@@ -23,47 +19,37 @@ from tests.utils.terraform.template_generator import generate_tc_files
 
 
 @pytest.mark.local
-def test_baseline_alb_all_enabled(session_setup):
+def test_baseline_alb_all_enabled(staged_scenario):
     """Conduct baseline assertions when all SP services turned on."""
-    tf_modifiers = """#NONE"""
-    stage_tfvars(tf_modifiers)
-
-    # Create all config files since this scenario is used often. Good bang-for-buck. No assertion_modifiers
     assertion_modifiers = assertion_modifiers_template()
+    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
 
-    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-
-    verify_all_assertions(tc_files, tc_assertions)
+    verify_all_assertions(staged_scenario, tc_assertions)
 
 
 @pytest.mark.local
-def test_baseline_alb_all_disabled(session_setup):
+@pytest.mark.tfvars("""
+    flag_use_aws_ses_iam_integration    = false
+    flag_use_existing_smtp              = true
+    flag_enable_groundswell             = false
+    flag_data_explorer_enabled          = false
+    flag_enable_data_studio             = false
+    flag_use_wave                       = false
+    flag_use_wave_lite                  = false
+    flag_allow_aws_instance_credentials = false
+    tower_enable_openapi                = false
+    tower_enable_pipeline_versioning    = false
+    flag_tower_enable_participant_auto_create_user = false
+    flag_tower_enable_member_auto_create_user      = false
+    tower_workflow_cleanup_enabled                 = false
+""")
+def test_baseline_alb_all_disabled(staged_scenario):
     """Conduct baseline assertions when all SP services turned off."""
     # TODO: Get rid of email disabling. This should be a discrete check.
-    tf_modifiers = """
-        flag_use_aws_ses_iam_integration    = false
-        flag_use_existing_smtp              = true
-        flag_enable_groundswell             = false
-        flag_data_explorer_enabled          = false
-        flag_enable_data_studio             = false
-        flag_use_wave                       = false
-        flag_use_wave_lite                  = false
-        flag_allow_aws_instance_credentials = false
-        tower_enable_openapi                = false
-        tower_enable_pipeline_versioning    = false
-        flag_tower_enable_participant_auto_create_user = false
-        flag_tower_enable_member_auto_create_user      = false
-        tower_workflow_cleanup_enabled                 = false
-    """
-    stage_tfvars(tf_modifiers)
-
-    # Create all config files since this scenario is used often. Good bang-for-buck. No assertion_modifiers
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
-    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
+    tc_assertions = generate_assertions_all_disabled(staged_scenario, assertion_modifiers)
 
-    verify_all_assertions(tc_files, tc_assertions)
+    verify_all_assertions(staged_scenario, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -71,29 +57,25 @@ def test_baseline_alb_all_disabled(session_setup):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.private_ca
-def test_private_ca_reverse_proxy_active(session_setup):
+@pytest.mark.tfvars("""
+    flag_create_load_balancer        = false
+    flag_use_private_cacert          = true
+    flag_do_not_use_https            = false
+""")
+def test_private_ca_reverse_proxy_active(staged_scenario):
     """Test scenario.
 
     - Baseline all enabled.
     - Reverseproxy with self-signed private CA active.
     """
-    tf_modifiers = """
-        flag_create_load_balancer        = false
-        flag_use_private_cacert          = true
-        flag_do_not_use_https            = false
-    """
-    stage_tfvars(tf_modifiers)
-
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
-
     assertion_modifiers["docker_compose"] = {
         "present": {"services.reverseproxy.labels.seqera": "reverseproxy"},
         "omitted": {},
     }
 
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-    verify_all_assertions(tc_files, tc_assertions)
+    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
+    verify_all_assertions(staged_scenario, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -101,21 +83,18 @@ def test_private_ca_reverse_proxy_active(session_setup):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.studios
-def test_studio_path_routing_enabled(session_setup):
+@pytest.mark.tfvars("""
+    flag_enable_data_studio         = true
+    flag_studio_enable_path_routing = true
+    data_studio_path_routing_url    = "connect-example.com"
+""")
+def test_studio_path_routing_enabled(staged_scenario):
     """Test scenario.
 
     - Baseline all enabled.
     - Studios path-routing enabled.
     """
-    tf_modifiers = """
-        flag_enable_data_studio         = true
-        flag_studio_enable_path_routing = true
-        data_studio_path_routing_url    = "connect-example.com"
-    """
-    stage_tfvars(tf_modifiers)
-
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -129,9 +108,9 @@ def test_studio_path_routing_enabled(session_setup):
         "present": {"CONNECT_PROXY_URL": "https://connect-example.com"},
         "omitted": {},
     }
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
 
-    verify_all_assertions(tc_files, tc_assertions)
+    verify_all_assertions(staged_scenario, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -139,20 +118,17 @@ def test_studio_path_routing_enabled(session_setup):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.studios
-def test_studio_ssh_enabled(session_setup):
+@pytest.mark.tfvars("""
+    flag_enable_data_studio_ssh = true
+    flag_limit_data_studio_ssh_to_some_workspaces = false
+""")
+def test_studio_ssh_enabled(staged_scenario):
     """Test scenario.
 
     - Baseline all enabled.
     - Studios SSH enabled.
     """
-    tf_modifiers = """
-        flag_enable_data_studio_ssh = true
-        flag_limit_data_studio_ssh_to_some_workspaces = false
-    """
-    stage_tfvars(tf_modifiers)
-
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -174,8 +150,8 @@ def test_studio_ssh_enabled(session_setup):
         "omitted": {},
     }
 
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-    verify_all_assertions(tc_files, tc_assertions)
+    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
+    verify_all_assertions(staged_scenario, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -183,22 +159,19 @@ def test_studio_ssh_enabled(session_setup):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.studios
-def test_studio_ssh_enabled_workspace_restriction(session_setup):
+@pytest.mark.tfvars("""
+    flag_enable_data_studio_ssh = true
+    flag_limit_data_studio_ssh_to_some_workspaces = true
+    data_studio_ssh_eligible_workspaces = "12,34"
+""")
+def test_studio_ssh_enabled_workspace_restriction(staged_scenario):
     """Test scenario.
 
     - Baseline all enabled.
     - Studios SSH enabled.
     - SSH restricted to specific workspaces.
     """
-    tf_modifiers = """
-        flag_enable_data_studio_ssh = true
-        flag_limit_data_studio_ssh_to_some_workspaces = true
-        data_studio_ssh_eligible_workspaces = "12,34"
-    """
-    stage_tfvars(tf_modifiers)
-
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -207,8 +180,8 @@ def test_studio_ssh_enabled_workspace_restriction(session_setup):
         "omitted": {},
     }
 
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-    verify_all_assertions(tc_files, tc_assertions)
+    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
+    verify_all_assertions(staged_scenario, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -216,19 +189,16 @@ def test_studio_ssh_enabled_workspace_restriction(session_setup):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.studios
-def test_studio_ssh_disabled(session_setup):
+@pytest.mark.tfvars("""
+    flag_enable_data_studio_ssh = false
+""")
+def test_studio_ssh_disabled(staged_scenario):
     """Test scenario.
 
     - Baseline all enabled.
     - Studios on, SSH explicitly disabled.
     """
-    tf_modifiers = """
-        flag_enable_data_studio_ssh = false
-    """
-    stage_tfvars(tf_modifiers)
-
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {},
@@ -248,8 +218,8 @@ def test_studio_ssh_disabled(session_setup):
         },
     }
 
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-    verify_all_assertions(tc_files, tc_assertions)
+    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
+    verify_all_assertions(staged_scenario, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -257,21 +227,18 @@ def test_studio_ssh_disabled(session_setup):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.db_new
-def test_new_db_all_enabled(session_setup):
+@pytest.mark.tfvars("""
+    flag_create_external_db         = true
+    flag_use_existing_external_db   = false
+    flag_use_container_db           = false
+""")
+def test_new_db_all_enabled(staged_scenario):
     """Test scenario.
 
     - Baseline all enabled.
     - New RDS active.
     """
-    tf_modifiers = """
-        flag_create_external_db         = true
-        flag_use_existing_external_db   = false
-        flag_use_container_db           = false
-    """
-    stage_tfvars(tf_modifiers)
-
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -305,8 +272,8 @@ def test_new_db_all_enabled(session_setup):
         },
     }
 
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-    verify_all_assertions(tc_files, tc_assertions)
+    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
+    verify_all_assertions(staged_scenario, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -314,33 +281,30 @@ def test_new_db_all_enabled(session_setup):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.db_new
-def test_new_db_all_disabled(session_setup):
+@pytest.mark.tfvars("""
+    flag_use_aws_ses_iam_integration    = false
+    flag_use_existing_smtp              = true
+    flag_enable_groundswell             = false
+    flag_data_explorer_enabled          = false
+    flag_enable_data_studio             = false
+    flag_use_wave                       = false
+    flag_use_wave_lite                  = false
+
+    flag_create_external_db             = true
+    flag_use_existing_external_db       = false
+    flag_use_container_db               = false
+    flag_allow_aws_instance_credentials = false
+    flag_tower_enable_participant_auto_create_user = false
+    flag_tower_enable_member_auto_create_user      = false
+    tower_workflow_cleanup_enabled                 = false
+""")
+def test_new_db_all_disabled(staged_scenario):
     """Test scenario.
 
     - Baseline all disabled.
     - New RDS active.
     """
-    tf_modifiers = """
-        flag_use_aws_ses_iam_integration    = false
-        flag_use_existing_smtp              = true
-        flag_enable_groundswell             = false
-        flag_data_explorer_enabled          = false
-        flag_enable_data_studio             = false
-        flag_use_wave                       = false
-        flag_use_wave_lite                  = false
-
-        flag_create_external_db             = true
-        flag_use_existing_external_db       = false
-        flag_use_container_db               = false
-        flag_allow_aws_instance_credentials = false
-        flag_tower_enable_participant_auto_create_user = false
-        flag_tower_enable_member_auto_create_user      = false
-        tower_workflow_cleanup_enabled                 = false
-    """
-    stage_tfvars(tf_modifiers)
-
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -354,9 +318,9 @@ def test_new_db_all_disabled(session_setup):
 
     # No need for custom assertion_modifiers -- core testcase handles this one.
     assertion_modifiers["wave_lite_yml"] = {"present": {}, "omitted": {}}
-    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
+    tc_assertions = generate_assertions_all_disabled(staged_scenario, assertion_modifiers)
 
-    verify_all_assertions(tc_files, tc_assertions)
+    verify_all_assertions(staged_scenario, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -364,22 +328,19 @@ def test_new_db_all_disabled(session_setup):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.db_existing
-def test_existing_db_all_enabled(session_setup):
+@pytest.mark.tfvars("""
+    flag_create_external_db         = false
+    flag_use_existing_external_db   = true
+    flag_use_container_db           = false
+    tower_db_url                        = "existing.tower-db.com"
+""")
+def test_existing_db_all_enabled(staged_scenario):
     """Test scenario.
 
     - Baseline all enabled.
     - Existing RDS active.
     """
-    tf_modifiers = """
-        flag_create_external_db         = false
-        flag_use_existing_external_db   = true
-        flag_use_container_db           = false
-        tower_db_url                        = "existing.tower-db.com"
-    """
-    stage_tfvars(tf_modifiers)
-
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -403,9 +364,9 @@ def test_existing_db_all_enabled(session_setup):
         },
         "omitted": {},
     }
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
+    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
 
-    verify_all_assertions(tc_files, tc_assertions)
+    verify_all_assertions(staged_scenario, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -413,36 +374,33 @@ def test_existing_db_all_enabled(session_setup):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.db_existing
-def test_existing_db_all_disabled(session_setup):
+@pytest.mark.tfvars("""
+    flag_use_aws_ses_iam_integration    = false
+    flag_use_existing_smtp              = true
+    flag_enable_groundswell             = false
+    flag_data_explorer_enabled          = false
+    flag_enable_data_studio             = false
+    flag_use_wave                       = false
+    flag_use_wave_lite                  = false
+
+    flag_create_external_db             = false
+    flag_use_existing_external_db       = true
+    flag_use_container_db               = false
+    tower_db_url                        = "existing.tower-db.com"
+    flag_allow_aws_instance_credentials = false
+    tower_enable_openapi                = false
+    tower_enable_pipeline_versioning        = false
+    flag_tower_enable_participant_auto_create_user = false
+    flag_tower_enable_member_auto_create_user      = false
+    tower_workflow_cleanup_enabled                 = false
+""")
+def test_existing_db_all_disabled(staged_scenario):
     """Test scenario.
 
     - Baseline all disabled.
     - Existing RDS active.
     """
-    tf_modifiers = """
-        flag_use_aws_ses_iam_integration    = false
-        flag_use_existing_smtp              = true
-        flag_enable_groundswell             = false
-        flag_data_explorer_enabled          = false
-        flag_enable_data_studio             = false
-        flag_use_wave                       = false
-        flag_use_wave_lite                  = false
-
-        flag_create_external_db             = false
-        flag_use_existing_external_db       = true
-        flag_use_container_db               = false
-        tower_db_url                        = "existing.tower-db.com"
-        flag_allow_aws_instance_credentials = false
-        tower_enable_openapi                = false
-        tower_enable_pipeline_versioning        = false
-        flag_tower_enable_participant_auto_create_user = false
-        flag_tower_enable_member_auto_create_user      = false
-        tower_workflow_cleanup_enabled                 = false
-    """
-    stage_tfvars(tf_modifiers)
-
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -456,9 +414,9 @@ def test_existing_db_all_disabled(session_setup):
 
     # No need for custom assertion_modifiers -- core testcase handles this one.
     assertion_modifiers["wave_lite_yml"] = {"present": {}, "omitted": {}}
-    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
+    tc_assertions = generate_assertions_all_disabled(staged_scenario, assertion_modifiers)
 
-    verify_all_assertions(tc_files, tc_assertions)
+    verify_all_assertions(staged_scenario, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -466,20 +424,17 @@ def test_existing_db_all_disabled(session_setup):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.redis_external
-def test_new_redis_all_enabled(session_setup):
+@pytest.mark.tfvars("""
+    flag_create_external_redis                      = true
+    flag_use_container_redis                        = false
+""")
+def test_new_redis_all_enabled(staged_scenario):
     """Test scenario.
 
     - Baseline all enabled.
     - Elasticache Redis active.
     """
-    tf_modifiers = """
-        flag_create_external_redis                      = true
-        flag_use_container_redis                        = false
-    """
-    stage_tfvars(tf_modifiers)
-
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -513,8 +468,8 @@ def test_new_redis_all_enabled(session_setup):
         },
     }
 
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-    verify_all_assertions(tc_files, tc_assertions)
+    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
+    verify_all_assertions(staged_scenario, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -522,34 +477,31 @@ def test_new_redis_all_enabled(session_setup):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.redis_external
-def test_new_redis_all_disabled(session_setup):
+@pytest.mark.tfvars("""
+    flag_use_aws_ses_iam_integration    = false
+    flag_use_existing_smtp              = true
+    flag_enable_groundswell             = false
+    flag_data_explorer_enabled          = false
+    flag_enable_data_studio             = false
+    flag_use_wave                       = false
+    flag_use_wave_lite                  = false
+
+    flag_create_external_redis          = true
+    flag_use_container_redis            = false
+    flag_allow_aws_instance_credentials = false
+    tower_enable_openapi                = false
+    tower_enable_pipeline_versioning        = false
+    flag_tower_enable_participant_auto_create_user = false
+    flag_tower_enable_member_auto_create_user      = false
+    tower_workflow_cleanup_enabled                 = false
+""")
+def test_new_redis_all_disabled(staged_scenario):
     """Test scenario.
 
     - Baseline all disabled.
     - Elasticache Redis active.
     """
-    tf_modifiers = """
-        flag_use_aws_ses_iam_integration    = false
-        flag_use_existing_smtp              = true
-        flag_enable_groundswell             = false
-        flag_data_explorer_enabled          = false
-        flag_enable_data_studio             = false
-        flag_use_wave                       = false
-        flag_use_wave_lite                  = false
-
-        flag_create_external_redis          = true
-        flag_use_container_redis            = false
-        flag_allow_aws_instance_credentials = false
-        tower_enable_openapi                = false
-        tower_enable_pipeline_versioning        = false
-        flag_tower_enable_participant_auto_create_user = false
-        flag_tower_enable_member_auto_create_user      = false
-        tower_workflow_cleanup_enabled                 = false
-    """
-    stage_tfvars(tf_modifiers)
-
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -573,9 +525,9 @@ def test_new_redis_all_disabled(session_setup):
         },
         "omitted": {},
     }
-    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
+    tc_assertions = generate_assertions_all_disabled(staged_scenario, assertion_modifiers)
 
-    verify_all_assertions(tc_files, tc_assertions)
+    verify_all_assertions(staged_scenario, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -583,31 +535,28 @@ def test_new_redis_all_disabled(session_setup):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.wave
-def test_seqera_hosted_wave_active(session_setup):
+@pytest.mark.tfvars("""
+    flag_use_aws_ses_iam_integration    = false
+    flag_use_existing_smtp              = true
+    flag_enable_groundswell             = false
+    flag_data_explorer_enabled          = false
+    flag_enable_data_studio             = false
+    # flag_use_wave                     = false
+    flag_use_wave_lite                  = false
+
+    flag_use_wave                       = true
+    wave_server_url                     = "wave.seqera.io"
+    flag_tower_enable_participant_auto_create_user = false
+    flag_tower_enable_member_auto_create_user      = false
+    tower_workflow_cleanup_enabled                 = false
+""")
+def test_seqera_hosted_wave_active(staged_scenario):
     """Test scenario.
 
     - Baseline all disabled.
     - Seqera-hosted Wave active.
     """
-    tf_modifiers = """
-        flag_use_aws_ses_iam_integration    = false
-        flag_use_existing_smtp              = true
-        flag_enable_groundswell             = false
-        flag_data_explorer_enabled          = false
-        flag_enable_data_studio             = false
-        # flag_use_wave                     = false
-        flag_use_wave_lite                  = false
-
-        flag_use_wave                       = true
-        wave_server_url                     = "wave.seqera.io"
-        flag_tower_enable_participant_auto_create_user = false
-        flag_tower_enable_member_auto_create_user      = false
-        tower_workflow_cleanup_enabled                 = false
-    """
-    stage_tfvars(tf_modifiers)
-
     assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
 
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -622,9 +571,9 @@ def test_seqera_hosted_wave_active(session_setup):
         },
         "omitted": {},
     }
-    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
+    tc_assertions = generate_assertions_all_disabled(staged_scenario, assertion_modifiers)
 
-    verify_all_assertions(tc_files, tc_assertions)
+    verify_all_assertions(staged_scenario, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -632,24 +581,15 @@ def test_seqera_hosted_wave_active(session_setup):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.wave
-def test_wave_sql_file_content(session_setup):
+def test_wave_sql_file_content(staged_scenario):
     """Test scenario.
 
     - Use the SQL files generated by the baseline testcase.
     - Compare against pre-generated result files in `tests/datafiles/expected_results/expected_sql`.
     """
-    tf_modifiers = """#NONE"""
-    ## SETUP
-    ## ========================================================================================
-    stage_tfvars(tf_modifiers)
-
-    tc_files = generate_tc_files(None, sys._getframe().f_code.co_name)
-
-    # No assertions for this since it's file-comparison based.
-
     ## COMPARISON
     ## ========================================================================================
-    wave_lite_rds = FileHelper.read_file(f"{tc_files['wave_lite_rds']['filepath']}")
+    wave_lite_rds = FileHelper.read_file(f"{staged_scenario['wave_lite_rds']['filepath']}")
     ref_wave_lite_rds = FileHelper.read_file(f"{expected_sql_dir}/wave-lite-rds.sql")
 
     assert ref_wave_lite_rds == wave_lite_rds
