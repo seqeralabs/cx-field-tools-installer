@@ -50,7 +50,7 @@ Session start
 
 Test runtime
   │
-  ├─> staged_scenario fixture  →  generate_tc_files  →  reads {template}.{ext} files
+  ├─> generated_test_files fixture →  generate_tc_files  →  reads {template}.{ext} files
   └─> scenario_outputs fixture →  reads outputs.json
 ```
 
@@ -226,13 +226,199 @@ Slated for removal in a follow-up cleanup.
 
 ---
 
+## Writing a test (the consumer side)
+
+The sections above describe how data lands in `tests/.scenario_cache/{hash}/` during
+session setup. This section walks through how an individual test consumes that data —
+using `test_seqera_hosted_wave_active__retrofit` as the worked example.
+
+### The test
+
+```python
+@pytest.mark.local
+@pytest.mark.wave
+@pytest.mark.tfvars(OFF_BASELINE + SEQERA_HOSTED_WAVE_ON)
+def test_seqera_hosted_wave_active__retrofit(generated_test_files):
+    """Activating Seqera-hosted Wave from OFF baseline sets the wave URL in tower_env and wave_lite_yml."""
+    expected = merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS)
+    assert_kv_delta(
+        test_file_path=generated_test_files["tower_env"]["filepath"],
+        **expected["tower_env"],
+    )
+    assert_yaml_delta(
+        test_file_path=generated_test_files["wave_lite_yml"]["filepath"],
+        **expected["wave_lite_yml"],
+    )
+```
+
+### The marker decorators (input setup)
+
+```python
+@pytest.mark.local
+@pytest.mark.wave
+```
+
+Categorisation markers — let pytest filter via `-m`. Don't affect what the test does.
+
+```python
+@pytest.mark.tfvars(OFF_BASELINE + SEQERA_HOSTED_WAVE_ON)
+```
+
+The `tfvars` marker carries a **string** of terraform variable assignments. That string
+is what eventually lands in the per-scenario `.tfvars` file the precompute worker writes
+to a tempfile and passes to `terraform console`.
+
+Constants live in [tests/unit/config_files/expected_deltas.py](unit/config_files/expected_deltas.py)
+and come in **pairs** — one for each side of a test:
+
+- `OFF_BASELINE` (tfvars string) / `OFF_BASELINE_ASSERTIONS` (assertion dict)
+- `SEQERA_HOSTED_WAVE_ON` (tfvars string) / `SEQERA_HOSTED_WAVE_ON_ASSERTIONS` (assertion dict)
+
+The two halves describe the same scenario from different sides — what to configure
+(tfvars) and what should result (rendered file state). The naming convention makes drift
+obvious in code review.
+
+Net effect of the marker above: *"everything off, plus turn Wave on with this URL."*
+
+### What happens between marker and test body
+
+At pytest collection time, `tests/conftest.py:pytest_collection_modifyitems` walks every
+collected test, reads its `tfvars` marker, hashes it, and registers the scenario in
+`_collected_scenarios`. Then `session_setup` kicks off `precompute_in_parallel(...)` —
+one worker per unique scenario — which renders the templatefiles, outputs, and locals
+into `tests/.scenario_cache/{cache_key}/`.
+
+By the time the test body runs, the files are already on disk.
+
+### The fixture
+
+**`generated_test_files`** (function-scoped) reads the test's own `tfvars` marker, computes
+the same `hash_templatefile_cache_key`, looks up `tests/.scenario_cache/{hash}/`, and returns:
+
+```python
+{
+  "tower_env":      {"content": <parsed .env dict>, "filepath": ".../tower_env.env"},
+  "wave_lite_yml":  {"content": <parsed yaml>,      "filepath": ".../wave_lite_yml.yml"},
+  ...
+}
+```
+
+`generated_test_files["tower_env"]["content"]` is the rendered `.env` content for THIS
+scenario, already parsed into `{key: value}`.
+
+There is intentionally NO `off_baseline` fixture. The expected post-state for the OFF
+scenario lives as a declarative constant — `OFF_BASELINE_ASSERTIONS` in
+[tests/unit/config_files/expected_deltas.py](unit/config_files/expected_deltas.py) — and
+is overlaid with per-feature delta constants via `merge_deltas(...)`.
+
+### `merge_deltas` — composing the expected state
+
+```python
+expected = merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS)
+```
+
+`OFF_BASELINE_ASSERTIONS` declares the expected `present` / `omitted` for every template
+when only `OFF_BASELINE` is applied. `SEQERA_HOSTED_WAVE_ON_ASSERTIONS` declares the
+per-feature deltas (paired with the tfvars-side `SEQERA_HOSTED_WAVE_ON` used in the
+marker). `merge_deltas` walks both, per-template:
+
+- `present` dicts are merged via `dict.update` — later wins on collision (`TOWER_ENABLE_WAVE`
+  flips from `"false"` to `"true"`).
+- `omitted` sets are merged via union.
+
+Accepts any number of arguments — for tests that activate N features at once, pass them
+all and later args win on key collision. The result is the expected post-state for
+"OFF baseline + these features on" — fed to the assertion helpers via `**dict` spread.
+
+### The three assertion helpers — symmetric API
+
+All three helpers ([tests/utils/assertions/delta.py](utils/assertions/delta.py)) share the
+same input contract:
+
+- `test_file_path` — path to the rendered file on disk (the **standard** way to call them).
+- `test_file_content` — pre-loaded content (parsed dict for kv/yaml; raw string for text).
+  An escape hatch for tests that already have content in hand.
+
+Exactly one of the two must be provided. If both are set, `test_file_path` wins and a
+warning is issued. They differ only in what they assert about content:
+
+| Helper | Content shape | `present` is… | `omitted` is… |
+|---|---|---|---|
+| `assert_kv_delta` | parsed `.env` dict | `{key: value}` to match | `{key1, key2, …}` to be absent |
+| `assert_yaml_delta` | parsed YAML dict | `{yamlpath: value}` to match | `{yamlpath1, yamlpath2, …}` to be absent |
+| `assert_text_delta` | raw text string | `{substring1, substring2, …}` that must appear | `{substring1, substring2, …}` that must not |
+
+Standard call site:
+
+```python
+assert_kv_delta(test_file_path=generated_test_files["tower_env"]["filepath"], **expected["tower_env"])
+assert_yaml_delta(test_file_path=generated_test_files["wave_lite_yml"]["filepath"], **expected["wave_lite_yml"])
+assert_text_delta(test_file_path=generated_test_files["tower_sql"]["filepath"], **expected["tower_sql"])
+```
+
+`expected["tower_env"]` is `{"present": {...}, "omitted": {...}}` — Python's `**dict`
+expands that into keyword args alongside `test_file_path`.
+
+No baseline-dict comparison anywhere. Tests assert against the explicit merged expectation.
+"Everything else stayed the same" coverage comes from `OFF_BASELINE_ASSERTIONS` declaring
+the expected post-state for every key the project cares about. Broader regression coverage
+belongs in per-template **lock tests**.
+
+### Test pattern data flow
+
+```
+@pytest.mark.tfvars(OFF_BASELINE + <FEATURE>_ON)        # input side  (paired)
+                      │
+                      ▼  collection time
+              pytest_collection_modifyitems
+                      │  builds {hash: tfvars} from every test's marker
+                      ▼  session_setup
+              precompute_in_parallel
+                      │  one worker per unique scenario → terraform console → cache files
+                      ▼  test runtime
+              ┌──────────────────────┬─────────────────────────────────────────┐
+              │                      │                                         │
+       generated_test_files    OFF_BASELINE_ASSERTIONS    <FEATURE>_ON_ASSERTIONS  (output side, paired)
+       (this scenario's       (declared expected         (the expected feature delta)
+        rendered files)        OFF state)
+              │                      │                                         │
+              │                      └─────────────── merge_deltas ────────────┘
+              │                                  │
+              │                                  ▼
+              │                          expected = {template: {present, omitted}}
+              │                                  │
+              └──────────────┬───────────────────┘
+                             ▼
+              assert_kv_delta / assert_yaml_delta / assert_text_delta
+                             │
+                             ▼ pass / fail
+```
+
+### Minimum vocabulary
+
+To write a new test on this pattern you need:
+
+1. **`OFF_BASELINE`** / **`OFF_BASELINE_ASSERTIONS`** — paired tfvars-string + assertion dict for "everything off"
+2. **`<FEATURE>_ON`** / **`<FEATURE>_ON_ASSERTIONS`** — paired tfvars-string + assertion dict per feature
+3. **`generated_test_files`** — fixture giving you THIS scenario's rendered files (parsed)
+4. **`merge_deltas(OFF_BASELINE_ASSERTIONS, <FEATURE>_ON_ASSERTIONS, ...)`** — compose expected state
+5. **`assert_kv_delta(actual, present, omitted)`** — for `.env` files
+6. **`assert_yaml_delta(filepath, present, omitted)`** — for YAML files
+7. **`assert_text_delta(content, present, omitted)`** — for plain-text rendered files (substring checks)
+
+All paired constants live in
+[tests/unit/config_files/expected_deltas.py](unit/config_files/expected_deltas.py).
+That's the whole framework on the consumer side.
+
+---
+
 ## Cheat sheet
 
 If you need to know "where does this value come from at test time":
 
 | Want… | Source | Read it via |
 | --- | --- | --- |
-| A rendered template file's content | `tests/.scenario_cache/{hash}/{template}.{ext}` | `staged_scenario` fixture |
+| A rendered template file's content | `tests/.scenario_cache/{hash}/{template}.{ext}` | `generated_test_files` fixture |
 | A `module.connection_strings.*` output | `tests/.scenario_cache/{hash}/outputs.json` | `scenario_outputs` fixture |
 | Any output declared in `012_outputs.tf` | same `outputs.json` | same fixture |
 | A resolved local (debugging only) | `tests/.scenario_cache/{hash}/locals.json` | open the JSON manually |

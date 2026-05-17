@@ -4,6 +4,13 @@ from tests.datafiles.expected_results.expected_results import (
     generate_assertions_all_active,
     generate_assertions_all_disabled,
 )
+from tests.unit.config_files.expected_deltas import (
+    OFF_BASELINE,
+    OFF_BASELINE_ASSERTIONS,
+    SEQERA_HOSTED_WAVE_ON,
+    SEQERA_HOSTED_WAVE_ON_ASSERTIONS,
+)
+from tests.utils.assertions.delta import assert_all_deltas, merge_deltas
 from tests.utils.assertions.verify_assertions import verify_all_assertions
 from tests.utils.config import expected_sql_dir
 from tests.utils.filehandling import FileHelper
@@ -19,12 +26,12 @@ from tests.utils.filehandling import FileHelper
 
 
 @pytest.mark.local
-def test_baseline_alb_all_enabled(staged_scenario):
+def test_baseline_alb_all_enabled(generated_test_files):
     """Conduct baseline assertions when all SP services turned on."""
     assertion_modifiers = assertion_modifiers_template()
-    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
+    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
 
-    verify_all_assertions(staged_scenario, tc_assertions)
+    verify_all_assertions(generated_test_files, tc_assertions)
 
 
 @pytest.mark.local
@@ -43,13 +50,13 @@ def test_baseline_alb_all_enabled(staged_scenario):
     flag_tower_enable_member_auto_create_user      = false
     tower_workflow_cleanup_enabled                 = false
 """)
-def test_baseline_alb_all_disabled(staged_scenario):
+def test_baseline_alb_all_disabled(generated_test_files):
     """Conduct baseline assertions when all SP services turned off."""
     # TODO: Get rid of email disabling. This should be a discrete check.
     assertion_modifiers = assertion_modifiers_template()
-    tc_assertions = generate_assertions_all_disabled(staged_scenario, assertion_modifiers)
+    tc_assertions = generate_assertions_all_disabled(generated_test_files, assertion_modifiers)
 
-    verify_all_assertions(staged_scenario, tc_assertions)
+    verify_all_assertions(generated_test_files, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -62,7 +69,7 @@ def test_baseline_alb_all_disabled(staged_scenario):
     flag_use_private_cacert          = true
     flag_do_not_use_https            = false
 """)
-def test_private_ca_reverse_proxy_active(staged_scenario):
+def test_private_ca_reverse_proxy_active(generated_test_files):
     """Test scenario.
 
     - Baseline all enabled.
@@ -74,8 +81,8 @@ def test_private_ca_reverse_proxy_active(staged_scenario):
         "omitted": {},
     }
 
-    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
-    verify_all_assertions(staged_scenario, tc_assertions)
+    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
+    verify_all_assertions(generated_test_files, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -88,7 +95,7 @@ def test_private_ca_reverse_proxy_active(staged_scenario):
     flag_studio_enable_path_routing = true
     data_studio_path_routing_url    = "connect-example.com"
 """)
-def test_studio_path_routing_enabled(staged_scenario):
+def test_studio_path_routing_enabled(generated_test_files):
     """Test scenario.
 
     - Baseline all enabled.
@@ -108,9 +115,9 @@ def test_studio_path_routing_enabled(staged_scenario):
         "present": {"CONNECT_PROXY_URL": "https://connect-example.com"},
         "omitted": {},
     }
-    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
+    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
 
-    verify_all_assertions(staged_scenario, tc_assertions)
+    verify_all_assertions(generated_test_files, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -122,7 +129,7 @@ def test_studio_path_routing_enabled(staged_scenario):
     flag_enable_data_studio_ssh = true
     flag_limit_data_studio_ssh_to_some_workspaces = false
 """)
-def test_studio_ssh_enabled(staged_scenario):
+def test_studio_ssh_enabled(generated_test_files):
     """Test scenario.
 
     - Baseline all enabled.
@@ -150,8 +157,8 @@ def test_studio_ssh_enabled(staged_scenario):
         "omitted": {},
     }
 
-    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
-    verify_all_assertions(staged_scenario, tc_assertions)
+    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
+    verify_all_assertions(generated_test_files, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -164,7 +171,7 @@ def test_studio_ssh_enabled(staged_scenario):
     flag_limit_data_studio_ssh_to_some_workspaces = true
     data_studio_ssh_eligible_workspaces = "12,34"
 """)
-def test_studio_ssh_enabled_workspace_restriction(staged_scenario):
+def test_studio_ssh_enabled_workspace_restriction(generated_test_files):
     """Test scenario.
 
     - Baseline all enabled.
@@ -180,8 +187,8 @@ def test_studio_ssh_enabled_workspace_restriction(staged_scenario):
         "omitted": {},
     }
 
-    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
-    verify_all_assertions(staged_scenario, tc_assertions)
+    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
+    verify_all_assertions(generated_test_files, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -192,7 +199,7 @@ def test_studio_ssh_enabled_workspace_restriction(staged_scenario):
 @pytest.mark.tfvars("""
     flag_enable_data_studio_ssh = false
 """)
-def test_studio_ssh_disabled(staged_scenario):
+def test_studio_ssh_disabled(generated_test_files):
     """Test scenario.
 
     - Baseline all enabled.
@@ -218,8 +225,8 @@ def test_studio_ssh_disabled(staged_scenario):
         },
     }
 
-    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
-    verify_all_assertions(staged_scenario, tc_assertions)
+    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
+    verify_all_assertions(generated_test_files, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -232,7 +239,7 @@ def test_studio_ssh_disabled(staged_scenario):
     flag_use_existing_external_db   = false
     flag_use_container_db           = false
 """)
-def test_new_db_all_enabled(staged_scenario):
+def test_new_db_all_enabled(generated_test_files):
     """Test scenario.
 
     - Baseline all enabled.
@@ -272,8 +279,8 @@ def test_new_db_all_enabled(staged_scenario):
         },
     }
 
-    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
-    verify_all_assertions(staged_scenario, tc_assertions)
+    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
+    verify_all_assertions(generated_test_files, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -298,7 +305,7 @@ def test_new_db_all_enabled(staged_scenario):
     flag_tower_enable_member_auto_create_user      = false
     tower_workflow_cleanup_enabled                 = false
 """)
-def test_new_db_all_disabled(staged_scenario):
+def test_new_db_all_disabled(generated_test_files):
     """Test scenario.
 
     - Baseline all disabled.
@@ -318,9 +325,9 @@ def test_new_db_all_disabled(staged_scenario):
 
     # No need for custom assertion_modifiers -- core testcase handles this one.
     assertion_modifiers["wave_lite_yml"] = {"present": {}, "omitted": {}}
-    tc_assertions = generate_assertions_all_disabled(staged_scenario, assertion_modifiers)
+    tc_assertions = generate_assertions_all_disabled(generated_test_files, assertion_modifiers)
 
-    verify_all_assertions(staged_scenario, tc_assertions)
+    verify_all_assertions(generated_test_files, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -334,7 +341,7 @@ def test_new_db_all_disabled(staged_scenario):
     flag_use_container_db           = false
     tower_db_url                        = "existing.tower-db.com"
 """)
-def test_existing_db_all_enabled(staged_scenario):
+def test_existing_db_all_enabled(generated_test_files):
     """Test scenario.
 
     - Baseline all enabled.
@@ -364,9 +371,9 @@ def test_existing_db_all_enabled(staged_scenario):
         },
         "omitted": {},
     }
-    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
+    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
 
-    verify_all_assertions(staged_scenario, tc_assertions)
+    verify_all_assertions(generated_test_files, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -394,7 +401,7 @@ def test_existing_db_all_enabled(staged_scenario):
     flag_tower_enable_member_auto_create_user      = false
     tower_workflow_cleanup_enabled                 = false
 """)
-def test_existing_db_all_disabled(staged_scenario):
+def test_existing_db_all_disabled(generated_test_files):
     """Test scenario.
 
     - Baseline all disabled.
@@ -414,9 +421,9 @@ def test_existing_db_all_disabled(staged_scenario):
 
     # No need for custom assertion_modifiers -- core testcase handles this one.
     assertion_modifiers["wave_lite_yml"] = {"present": {}, "omitted": {}}
-    tc_assertions = generate_assertions_all_disabled(staged_scenario, assertion_modifiers)
+    tc_assertions = generate_assertions_all_disabled(generated_test_files, assertion_modifiers)
 
-    verify_all_assertions(staged_scenario, tc_assertions)
+    verify_all_assertions(generated_test_files, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -428,7 +435,7 @@ def test_existing_db_all_disabled(staged_scenario):
     flag_create_external_redis                      = true
     flag_use_container_redis                        = false
 """)
-def test_new_redis_all_enabled(staged_scenario):
+def test_new_redis_all_enabled(generated_test_files):
     """Test scenario.
 
     - Baseline all enabled.
@@ -468,8 +475,8 @@ def test_new_redis_all_enabled(staged_scenario):
         },
     }
 
-    tc_assertions = generate_assertions_all_active(staged_scenario, assertion_modifiers)
-    verify_all_assertions(staged_scenario, tc_assertions)
+    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
+    verify_all_assertions(generated_test_files, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -495,7 +502,7 @@ def test_new_redis_all_enabled(staged_scenario):
     flag_tower_enable_member_auto_create_user      = false
     tower_workflow_cleanup_enabled                 = false
 """)
-def test_new_redis_all_disabled(staged_scenario):
+def test_new_redis_all_disabled(generated_test_files):
     """Test scenario.
 
     - Baseline all disabled.
@@ -525,9 +532,9 @@ def test_new_redis_all_disabled(staged_scenario):
         },
         "omitted": {},
     }
-    tc_assertions = generate_assertions_all_disabled(staged_scenario, assertion_modifiers)
+    tc_assertions = generate_assertions_all_disabled(generated_test_files, assertion_modifiers)
 
-    verify_all_assertions(staged_scenario, tc_assertions)
+    verify_all_assertions(generated_test_files, tc_assertions)
 
 
 ## ------------------------------------------------------------------------------------
@@ -550,7 +557,7 @@ def test_new_redis_all_disabled(staged_scenario):
     flag_tower_enable_member_auto_create_user      = false
     tower_workflow_cleanup_enabled                 = false
 """)
-def test_seqera_hosted_wave_active(staged_scenario):
+def test_seqera_hosted_wave_active(generated_test_files):
     """Test scenario.
 
     - Baseline all disabled.
@@ -571,9 +578,46 @@ def test_seqera_hosted_wave_active(staged_scenario):
         },
         "omitted": {},
     }
-    tc_assertions = generate_assertions_all_disabled(staged_scenario, assertion_modifiers)
+    tc_assertions = generate_assertions_all_disabled(generated_test_files, assertion_modifiers)
 
-    verify_all_assertions(staged_scenario, tc_assertions)
+    verify_all_assertions(generated_test_files, tc_assertions)
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# RETROFIT of `test_seqera_hosted_wave_active` using OFF_BASELINE + delta helpers.
+# Kept alongside the original for visual comparison during the migration.
+# Uses `assert_all_deltas` — checks every generated file against the merged expectation
+# (strict mode: missing/extra template entries in OFF_BASELINE_ASSERTIONS raise).
+# ----------------------------------------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.wave
+@pytest.mark.tfvars(OFF_BASELINE + SEQERA_HOSTED_WAVE_ON)
+def test_seqera_hosted_wave_active__retrofit(generated_test_files):
+    """Activating Seqera-hosted Wave from OFF baseline: assert every generated file vs OFF + Wave delta."""
+    expected = merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# REFERENCE: targeted-assertion pattern (preserved for one-off testcases).
+# Use this shape when you want to check only specific templates instead of every
+# generated file. Copy the body into a new test and adjust template names as needed.
+#
+# @pytest.mark.local
+# @pytest.mark.wave
+# @pytest.mark.tfvars(OFF_BASELINE + SEQERA_HOSTED_WAVE_ON)
+# def test_seqera_hosted_wave_active__targeted(generated_test_files):
+#     """Activating Seqera-hosted Wave: targeted checks on tower_env and wave_lite_yml only."""
+#     expected = merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS)
+#     assert_kv_delta(
+#         test_file_path=generated_test_files["tower_env"]["filepath"],
+#         **expected["tower_env"],
+#     )
+#     assert_yaml_delta(
+#         test_file_path=generated_test_files["wave_lite_yml"]["filepath"],
+#         **expected["wave_lite_yml"],
+#     )
+# ----------------------------------------------------------------------------------------------------------------------
 
 
 ## ------------------------------------------------------------------------------------
@@ -581,7 +625,7 @@ def test_seqera_hosted_wave_active(staged_scenario):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.wave
-def test_wave_sql_file_content(staged_scenario):
+def test_wave_sql_file_content(generated_test_files):
     """Test scenario.
 
     - Use the SQL files generated by the baseline testcase.
@@ -589,7 +633,7 @@ def test_wave_sql_file_content(staged_scenario):
     """
     ## COMPARISON
     ## ========================================================================================
-    wave_lite_rds = FileHelper.read_file(f"{staged_scenario['wave_lite_rds']['filepath']}")
+    wave_lite_rds = FileHelper.read_file(f"{generated_test_files['wave_lite_rds']['filepath']}")
     ref_wave_lite_rds = FileHelper.read_file(f"{expected_sql_dir}/wave-lite-rds.sql")
 
     assert ref_wave_lite_rds == wave_lite_rds

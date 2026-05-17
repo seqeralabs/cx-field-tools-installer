@@ -15,9 +15,7 @@ import pytest
 from scripts.installer.utils.extractors import hcl_to_json
 from scripts.installer.utils.purge_folders import delete_pycache_folders
 
-from tests.unit.config_files.expected_deltas import OFF_BASELINE
-from tests.utils.cache.cache import hash_scenario, hash_templatefile_cache_key
-from tests.utils.config import FP, all_template_files
+from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 from tests.utils.preflight.preflight import check_aws_sso_token
 from tests.utils.pytest_logger import get_logger
@@ -164,7 +162,7 @@ def session_setup():
 
 
 @pytest.fixture
-def staged_scenario(request, session_setup):
+def generated_test_files(request, session_setup):
     """Stage tfvars from `@pytest.mark.tfvars(...)` and return rendered templatefile bundle.
 
     Per-test tfvars overrides are declared as a marker argument so they're discoverable at
@@ -189,27 +187,6 @@ def scenario_outputs(request, session_setup):
     marker = request.node.get_closest_marker("tfvars")
     tf_modifiers = marker.args[0] if marker else "#NONE"
     return read_scenario_outputs(tf_modifiers)
-
-
-@pytest.fixture(scope="session")
-def off_baseline(session_setup):
-    """Rendered `OFF_BASELINE` scenario, dict keyed by template name.
-
-    Each value mirrors the shape of `staged_scenario`: `{"content": <parsed>, "filepath": <str>}`.
-    Tests consume this as the reference for the OFF-baseline delta-assertion pattern via the
-    `assert_kv_delta` / `assert_yaml_delta` / `assert_text_delta` helpers.
-    """
-    cache_key = hash_templatefile_cache_key(OFF_BASELINE)
-    cache_dir = Path(FP.CACHE_SCENARIO_DIR) / cache_key
-    result: dict[str, dict] = {}
-    for key, meta in all_template_files.items():
-        filename = "wave-lite-rds.sql" if key == "wave_lite_rds" else f"{key}{meta['extension']}"
-        filepath = cache_dir / filename
-        result[key] = {
-            "content": meta["read_type"](str(filepath)),
-            "filepath": str(filepath),
-        }
-    return result
 
 
 @pytest.fixture(scope="function")  # noqa: PT003  (explicit for documentation)
@@ -409,10 +386,6 @@ def pytest_collection_modifyitems(session, config, items):
     runnable_items = [i for i in items if not any(m.name == "skip" for m in i.iter_markers())]
     _collected_scenarios.update(collect_scenarios_from_items(runnable_items))
     _collected_items.extend(runnable_items)
-
-    # Always register OFF_BASELINE so the `off_baseline` fixture has a guaranteed cache folder
-    # to read from, regardless of which tests the user explicitly selected via `-k` / `-m`.
-    _collected_scenarios[hash_scenario(OFF_BASELINE)] = OFF_BASELINE
 
     logger = get_logger()
     total_tests = len(items)

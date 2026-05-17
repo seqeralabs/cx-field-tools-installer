@@ -28,21 +28,49 @@ def hash_cache_key(tf_modifiers: str, qualifier: str = "") -> str:
 
 
 def normalize_whitespace(tf_modifiers: str) -> str:
-    r"""Collapse cosmetic whitespace so logically-identical tfvars produce the same hash.
+    r"""Canonicalise tfvars so logically-identical inputs produce the same hash.
 
-    Per line:
-      - Collapse runs of internal whitespace to a single space (handles column alignment).
-      - `.strip()` to drop leading indent and trailing trailing whitespace.
+    Also ensures the result is safe to write to a single tfvars file (terraform forbids
+    duplicate variable assignments within one file).
 
-    Newlines are preserved (HCL is line-oriented for simple `key = value` assignments).
-    `#` comments and blank lines are NOT stripped — they're content; collapsing them would
-    surprise anyone who documented a scenario deliberately.
+    Two passes:
 
-    Safe because terraform's HCL parser is whitespace-insensitive for simple assignments.
-    None of the project's `@pytest.mark.tfvars(...)` markers use heredocs / multi-line
-    strings where indentation would be load-bearing, so per-line strip is non-lossy.
+    1. **Whitespace normalize** — per line, collapse runs of internal whitespace to a
+       single space and `.strip()` leading/trailing whitespace.
+
+    2. **Dedup** — for any `key = value` assignment that appears more than once in the
+       input, keep only the LAST occurrence. Non-assignment lines (comments, blanks,
+       heredoc starters, complex syntax) are preserved in order.
+
+    The "last wins" rule is what enables the `OFF_BASELINE + scenario_modifier` pattern:
+    if `scenario_modifier` re-declares a key from `OFF_BASELINE`, the scenario's value
+    wins (matches the user's stated precedence rule).
+
+    Newlines are preserved. `#` comments and blank lines are NOT stripped — they're
+    content; collapsing them would surprise anyone who documented a scenario deliberately.
+
+    Safe because terraform's HCL parser is whitespace-insensitive for simple assignments
+    and none of the project's `@pytest.mark.tfvars(...)` markers use heredocs or
+    multi-line strings where indentation would be load-bearing.
     """
-    return "\n".join(re.sub(r"\s+", " ", line).strip() for line in tf_modifiers.splitlines())
+    # Pass 1: per-line whitespace normalize.
+    lines = [re.sub(r"\s+", " ", line).strip() for line in tf_modifiers.splitlines()]
+
+    # Pass 2: dedup — find last occurrence of each `key = …` line.
+    assignment_pattern = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=")
+    last_index: dict[str, int] = {}
+    for i, line in enumerate(lines):
+        m = assignment_pattern.match(line)
+        if m:
+            last_index[m.group(1)] = i
+
+    keep_indices = set(last_index.values())
+    result: list[str] = []
+    for i, line in enumerate(lines):
+        if assignment_pattern.match(line) and i not in keep_indices:
+            continue  # earlier duplicate, drop
+        result.append(line)
+    return "\n".join(result)
 
 
 def hash_scenario(tf_modifiers: str) -> str:

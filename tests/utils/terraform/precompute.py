@@ -25,7 +25,7 @@ import subprocess
 import tempfile
 import time
 
-from tests.utils.cache.cache import hash_scenario, hash_templatefile_cache_key
+from tests.utils.cache.cache import hash_scenario, hash_templatefile_cache_key, normalize_whitespace
 from tests.utils.config import FP, all_template_files
 from tests.utils.filehandling import FileHelper
 
@@ -133,7 +133,7 @@ def collect_scenarios_from_items(items) -> dict[str, str]:
     """Build `{scenario_hash: tf_modifiers}` from collected pytest items.
 
     Reads each item's `@pytest.mark.tfvars(...)` marker; falls back to `#NONE` for tests
-    without one (matching the `staged_scenario` fixture's default).
+    without one (matching the `generated_test_files` fixture's default).
     """
     scenarios: dict[str, str] = {}
     for item in items:
@@ -265,7 +265,10 @@ def _precompute_scenario(scenario_hash: str, tf_modifiers: str) -> tuple[str, fl
         prefix=f"precompute-{scenario_hash}-",
         delete=False,
     ) as tf:
-        tf.write(tf_modifiers)
+        # Canonicalise (whitespace-normalize + dedup): terraform rejects duplicate variable
+        # assignments within a single tfvars file. Dedup is "last wins", which gives the
+        # OFF_BASELINE + scenario_modifier precedence semantics.
+        tf.write(normalize_whitespace(tf_modifiers))
         tfvars_path = Path(tf.name)
     state_path = Path(tempfile.gettempdir()) / f"precompute-{scenario_hash}.tfstate"
 

@@ -1,19 +1,55 @@
 """OFF baseline + per-feature delta constants for the assertion retrofit.
 
+Constants come in **pairs**, one for each side of a test:
+
+  * `<NAME>`              — tfvars string (input side).        Consumed by `@pytest.mark.tfvars(...)`.
+  * `<NAME>_ASSERTIONS`   — nested assertion dict (output side). Consumed by `merge_deltas(...)`.
+
+The two halves of a pair describe the same scenario from different sides — what to
+configure (tfvars) and what should result (rendered file state) — and should be
+kept in sync. The naming convention makes drift obvious in code review.
+
+----------------------------------------------------------------------------------------
+Base baseline
+----------------------------------------------------------------------------------------
 `OFF_BASELINE` is a tfvars string that turns off every feature that
 `tests/datafiles/generate_core_data.sh` enables by default via
 `base-overrides.auto.tfvars`. Tests stage this directly to render the off-state,
-or concatenate `OFF_BASELINE + "flag_X = true"` to activate one feature on top.
+or concatenate `OFF_BASELINE + <FEATURE>_ON` to activate one feature on top.
 
-Per-feature delta constants (e.g. `STUDIOS_PATH_ROUTING_ON`) get added below as
-tests migrate to the new pattern. Each is a nested dict keyed by template name —
-`{template_name: {key_or_path: value}}` — consumable by the `present` parameter
-of `assert_kv_delta` / `assert_yaml_delta` / `assert_text_delta`.
+`OFF_BASELINE_ASSERTIONS` is the *expected post-state* of every generated file when
+only `OFF_BASELINE` is applied. Tests overlay one or more per-feature `_ASSERTIONS`
+constants on top via `merge_deltas(OFF_BASELINE_ASSERTIONS, <FEATURE>_ON_ASSERTIONS, ...)`
+to get the expected state for a given scenario, then call the appropriate
+`assert_*_delta` helper per template.
+
+----------------------------------------------------------------------------------------
+Per-feature deltas
+----------------------------------------------------------------------------------------
+`<FEATURE>_ON` is a tfvars string fragment that enables one feature. Concatenated onto
+`OFF_BASELINE` it produces a single-feature-on scenario.
+
+`<FEATURE>_ON_ASSERTIONS` is the nested-dict delta — `{template_name: {"present": {...},
+"omitted": {...}}}` — declaring only the keys that differ from `OFF_BASELINE_ASSERTIONS`
+when this feature is enabled.
+
+Canonical test shape:
+
+    @pytest.mark.tfvars(OFF_BASELINE + SEQERA_HOSTED_WAVE_ON)
+    def test_wave_on(generated_test_files):
+        expected = merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS)
+        assert_kv_delta(actual=generated_test_files["tower_env"]["content"], **expected["tower_env"])
+        assert_yaml_delta(filepath=generated_test_files["wave_lite_yml"]["filepath"], **expected["wave_lite_yml"])
 
 Co-located with `test_config_file_content.py` so the test file stays focused on
 test logic and the constants stay focused on expected-state declarations.
 """
 
+from tests.utils.config import expected_sql_dir
+from tests.utils.filehandling import FileHelper
+
+
+# MARK: BASE TFVARS
 OFF_BASELINE = """
     flag_use_aws_ses_iam_integration    = false
     flag_use_existing_smtp              = true
@@ -29,3 +65,221 @@ OFF_BASELINE = """
     flag_tower_enable_member_auto_create_user      = false
     tower_workflow_cleanup_enabled                 = false
 """
+
+SEQERA_HOSTED_WAVE_ON = """
+    flag_use_wave   = true
+    wave_server_url = "wave.seqera.io"
+"""
+
+
+## ------------------------------------------------------------------------------------
+## MARK: BASE TFVARS
+## OFF baseline expected post-state (per template)
+## ------------------------------------------------------------------------------------
+# Section comments (`# CREDENTIALS`, `# MAIL`, etc.) mirror the same section markers in
+# `tests/datafiles/expected_results/expected_results.py::generate_*_all_disabled` so the
+# port can be diffed against the source. The literal `"# XYZ_NOT_ENABLED"` dict keys are
+# actual key/value entries the rendered .env files contain (rendered with a leading `#`
+# as a commented-out marker line, but parsed as a regular `key=value` by `FileHelper.parse_kv`).
+OFF_BASELINE_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_ENABLE_AWS_SSM": "true",
+            "LICENSE_SERVER_URL": "https://licenses.seqera.io",
+            "TOWER_SERVER_URL": "https://autodc.dev-seqera.net",
+            "TOWER_CONTACT_EMAIL": "graham.wright@seqera.io",
+            "TOWER_ENABLE_PLATFORMS": "awsbatch-platform,slurm-platform",
+            "TOWER_ROOT_USERS": "graham.wright@seqera.io,gwright99@hotmail.com",
+            "TOWER_DB_URL": "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_DRIVER": "org.mariadb.jdbc.Driver",
+            "TOWER_DB_DIALECT": "io.seqera.util.MySQL55DialectCollateBin",
+            "TOWER_DB_MIN_POOL_SIZE": 5,
+            "TOWER_DB_MAX_POOL_SIZE": 10,
+            "TOWER_DB_MAX_LIFETIME": 18000000,
+            "TOWER_REDIS_URL": "redis://redis:6379",
+            "TOWER_ENABLE_UNSAFE_MODE": "false",
+            "TOWER_ENABLE_OPENAPI": "false",
+            # CREDENTIALS
+            "TOWER_ALLOW_INSTANCE_CREDENTIALS": "false",
+            # OIDC
+            # MAIL
+            "TOWER_ENABLE_AWS_SES": "false",
+            "TOWER_SMTP_HOST": "email-smtp.us-east-1.amazonaws.com",
+            "TOWER_SMTP_PORT": "587",
+            # WAVE
+            "TOWER_ENABLE_WAVE": "false",
+            "WAVE_SERVER_URL": "N/A",
+            # GROUNDSWELL
+            "TOWER_ENABLE_GROUNDSWELL": "false",
+            # DATA_EXPLORER
+            "TOWER_DATA_EXPLORER_ENABLED": "false",
+            # DATA_STUDIOS
+            "# STUDIOS_NOT_ENABLED": "DO_NOT_UNCOMMENT",
+            # PIPELINE_VERSIONING
+            "# TOWER_PIPELINE_VERSIONING_NOT_ENABLED": "DO_NOT_UNCOMMENT",
+        },
+        "omitted": {
+            # DB                      Never generated in file
+            "TOWER_DB_USER",
+            "TOWER_DB_PASSWORD",
+            # OIDC
+            # MAIL                    Not present if SES active
+            "TOWER_SMTP_USER",
+            "TOWER_SMTP_PASSWORD",
+            # GROUNDSWELL
+            "GROUNDSWELL_SERVER_URL",
+            # DATA_EXPLORER
+            "TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES",
+            # DATA_STUDIOS
+            "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING",
+            "TOWER_DATA_STUDIO_CONNECT_URL",
+            "TOWER_OIDC_PEM_PATH",
+            "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN",
+            # ---
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_ICON",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_REPOSITORY",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_TOOL",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_STATUS",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_ICON",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_REPOSITORY",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_TOOL",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_STATUS",
+            # ---
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_ICON",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_REPOSITORY",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_TOOL",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_STATUS",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_ICON",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_REPOSITORY",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_TOOL",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_STATUS",
+            # ---
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_ICON",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_REPOSITORY",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_TOOL",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_STATUS",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_ICON",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_REPOSITORY",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_TOOL",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_STATUS",
+            # ---
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-11-0_ICON",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-11-0_REPOSITORY",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-11-0_TOOL",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-11-0_STATUS",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-0-9-0_ICON",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-0-9-0_REPOSITORY",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-0-9-0_TOOL",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-0-9-0_STATUS",
+            # ---
+            "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES",
+        },
+    },
+    "tower_yml": {
+        "present": {
+            "mail.smtp.auth": True,
+            "mail.smtp.starttls.enable": True,
+            "mail.smtp.starttls.required": True,
+            "mail.smtp.ssl.protocols": "TLSv1.2",
+            "micronaut.application.name": "tower-testing",
+            "tower.cron.audit-log.clean-up.time-offset": "1095d",
+            "tower.member.auto-create-user": False,
+            "tower.participant.auto-create-user": False,
+            "tower.trustedEmails[0]": "'graham.wright@seqera.io,gwright99@hotmail.com'",
+            "tower.trustedEmails[1]": "'*@abc.com,*@def.com'",
+            "tower.trustedEmails[2]": "'123@abc.com,456@def.com'",
+            "tower.workflow-cleanup.enabled": False,
+        },
+        "omitted": {
+            "tower.auth",
+            "tower.data-studio",
+        },
+    },
+    "data_studios_env": {
+        "present": {
+            "# STUDIOS_NOT_ENABLED": "DO_NOT_UNCOMMENT",
+        },
+        "omitted": {
+            "PLATFORM_URL",
+            "CONNECT_HTTP_PORT",
+            "CONNECT_TUNNEL_URL",
+            "CONNECT_PROXY_URL",
+            "CONNECT_REDIS_ADDRESS",
+            "CONNECT_REDIS_DB",
+            "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN",
+        },
+    },
+    "tower_sql": {
+        # `payload` is a sentinel: the whole expected file content as a single substring.
+        # Consumed by `assert_text_delta`.
+        "present": {FileHelper.read_file(f"{expected_sql_dir}/tower.sql")},
+        "omitted": set(),
+    },
+    "docker_compose": {
+        "present": {},
+        "omitted": {
+            "services.reverseproxy",
+            "services.wave-lite",
+            "services.wave-lite-reverse-proxy",
+            "services.wave-db",
+            "services.wave-redis",
+        },
+    },
+    "wave_lite_yml": {
+        # TODO: Aug 13 — fix Wave-Lite file population so passwords don't end up in file when N/A.
+        "present": {
+            "wave.server.url": "N/A",
+            "wave.db.uri": "N/A",
+            "wave.db.user": "wave_lite_test_limited",
+            "wave.db.password": "wave_lite_test_limited_password",
+            "redis.uri": "N/A",
+            "redis.password": "wave_lite_test_redis_password",
+            "mail.from": "graham.wright@seqera.io",
+            "tower.endpoint.url": "https://autodc.dev-seqera.net/api",
+            "license.server.url": "https://licenses.seqera.io",
+        },
+        "omitted": set(),
+    },
+    "wave_lite_rds": {
+        "present": {FileHelper.read_file(f"{expected_sql_dir}/wave-lite-rds.sql")},
+        "omitted": set(),
+    },
+    "groundswell_env": {
+        "present": {
+            "SWELL_DB_URL": "N/A",
+        },
+        "omitted": set(),
+    },
+    # TODO: Build out stubs OR identify as not-in-scope due to other testing method.
+    "groundswell_sql": {"present": {}, "omitted": set()},
+    "seqerakit_yml": {"present": {}, "omitted": set()},
+    "cleanse_and_configure_host": {"present": {}, "omitted": set()},
+    "ansible_02_update_file_configurations": {"present": {}, "omitted": set()},
+    "ansible_03_pull_containers_and_run_tower": {"present": {}, "omitted": set()},
+    "ansible_05_patch_groundswell": {"present": {}, "omitted": set()},
+    "ansible_06_run_seqerakit": {"present": {}, "omitted": set()},
+    "docker_logging": {"present": {}, "omitted": set()},
+    "private_ca_conf": {"present": {}, "omitted": set()},
+}
+
+
+## ------------------------------------------------------------------------------------
+## Per-feature delta constants
+## ------------------------------------------------------------------------------------
+# MARK: Wave Hosted
+# Activates Seqera-hosted Wave (the SaaS endpoint, NOT Wave Lite). When enabled on top
+# of OFF_BASELINE with `flag_use_wave = true` and `wave_server_url = "wave.seqera.io"`,
+# the Tower and Wave-Lite configs both pick up the public Wave URL.
+SEQERA_HOSTED_WAVE_ON_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_ENABLE_WAVE": "true",
+            "WAVE_SERVER_URL": "https://wave.seqera.io",
+        },
+        "omitted": set(),
+    },
+    "wave_lite_yml": {
+        "present": {"wave.server.url": "https://wave.seqera.io"},
+        "omitted": set(),
+    },
+}

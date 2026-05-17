@@ -19,7 +19,7 @@ from tests.utils.filehandling import FileHelper
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.testcontainer
-def test_tower_sql_population(staged_scenario):
+def test_tower_sql_population(generated_test_files):
     """Test that tower.sql successfully populates a MySQL8 database as expected (via Testcontainer).
 
     Emulates execution of RDS prepping script in Ansible.
@@ -78,7 +78,7 @@ def test_tower_sql_population(staged_scenario):
     ) as mysql_container:  # noqa: F841  (kept for readability)
         # POPULATE
         # Run initial population script.
-        query = staged_scenario["tower_sql"]["content"]
+        query = generated_test_files["tower_sql"]["content"]
         db_result = run_mysql_query(query, master_user, master_password)
 
         # VERIFY
@@ -109,7 +109,7 @@ def test_tower_sql_population(staged_scenario):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.testcontainer
-def test_wave_sql_rds_population(staged_scenario):
+def test_wave_sql_rds_population(generated_test_files):
     """Test that wave-lite-rds.sql successfully populates a Postgres database as expected (via Testcontainer).
 
     Emulates execution of RDS prepping script in Ansible.
@@ -169,7 +169,7 @@ def test_wave_sql_rds_population(staged_scenario):
     ) as postgres_container:  # noqa: F841  (kept for readability)
         # POPULATE
         # Run initial population script.
-        query = staged_scenario["wave_lite_rds"]["content"]
+        query = generated_test_files["wave_lite_rds"]["content"]
         run_postgres_query(query, master_user, master_password, master_db_name)
 
         # VERIFY
@@ -196,7 +196,7 @@ def test_wave_sql_rds_population(staged_scenario):
     ## ==================================================================================
     ## SCENARIO3: Volume Mount RDS file to run on container init
     ## ==================================================================================
-    init_sql_rds_path = staged_scenario["wave_lite_rds"]["filepath"]
+    init_sql_rds_path = generated_test_files["wave_lite_rds"]["filepath"]
 
     with (
         # PostgresContainer("postgres:17.6", username="postgres", password="postgres", dbname="wave")
@@ -236,7 +236,7 @@ def test_wave_sql_rds_population(staged_scenario):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.testcontainer
-def test_wave_containers(staged_scenario):
+def test_wave_containers(generated_test_files):
     """Ensure the entire Wave containerized ecosystem can run.
 
     How it works:
@@ -250,7 +250,7 @@ def test_wave_containers(staged_scenario):
     """
 
     def prepare_wave_only_docker_compose():
-        docker_compose_data = FileHelper.read_yaml(staged_scenario["docker_compose"]["filepath"])
+        docker_compose_data = FileHelper.read_yaml(generated_test_files["docker_compose"]["filepath"])
 
         # Purge all containers except those tied to Wave Lite.
         desired_services = ["wave-lite", "wave-lite-reverse-proxy", "wave-db", "wave-redis"]
@@ -261,7 +261,7 @@ def test_wave_containers(staged_scenario):
             docker_compose_data["services"].pop(k)
 
         # Add generated Wave Lite YAML file
-        wave_lite_yaml_path = staged_scenario["wave_lite_yml"]["filepath"]
+        wave_lite_yaml_path = generated_test_files["wave_lite_yml"]["filepath"]
         volume_mount = f"{wave_lite_yaml_path}:/work/config.yml"
         docker_compose_data["services"]["wave-lite"]["volumes"] = []
         docker_compose_data["services"]["wave-lite"]["volumes"].append(volume_mount)
@@ -272,7 +272,7 @@ def test_wave_containers(staged_scenario):
         docker_compose_data["services"]["wave-lite-reverse-proxy"]["volumes"].append(volume_mount)
 
         # Add SQL & remove stateful storage from wave lite db
-        wave_lite_rds_path = staged_scenario["wave_lite_rds"]["filepath"]
+        wave_lite_rds_path = generated_test_files["wave_lite_rds"]["filepath"]
         volume_mount = f"{wave_lite_rds_path}:/docker-entrypoint-initdb.d/01-init.sql"
         docker_compose_data["services"]["wave-db"]["volumes"] = []
         docker_compose_data["services"]["wave-db"]["volumes"].append(volume_mount)
