@@ -470,11 +470,13 @@ We deliberately kept the legacy test names during the migration to keep each por
 change tightly scoped (one test = one port = one constant pair). Once all legacy
 tests have been ported, do a single rename sweep using this table.
 
-**Already renamed:**
+**Already renamed / restructured:**
 
-| Old name | New name | Status |
+| Old name | New name(s) | Status |
 |---|---|---|
 | `test_seqera_hosted_wave_active__retrofit` → `test_seqera_hosted_wave_active` | (replaced legacy `test_seqera_hosted_wave_active`) | ✅ Done |
+| `test_new_redis_all_disabled` | `test_external_redis_active` *(pending rename)* | Ported to delta pattern; name still legacy |
+| `test_new_redis_all_enabled` | `test_external_redis_with_studios` + `test_external_redis_with_wave_lite` | ✅ Split into two feature-pair tests (legacy deleted) |
 
 **To rename when their legacy versions are ported:**
 
@@ -486,7 +488,7 @@ tests have been ported, do a single rename sweep using this table.
 | `test_studio_ssh_disabled` | `test_studios_active_ssh_inactive` | **Edge case** — Studios is on, but SSH is explicitly off. The compound name reflects the two-state assertion. Reconsider if a cleaner constant decomposition emerges. |
 | `test_new_db_all_disabled` | `test_external_db_active` | `flag_create_external_db = true` ⇒ "external_db" matches the feature; drop `new_` (temporal) |
 | `test_existing_db_all_disabled` | `test_existing_external_db_active` | `flag_use_existing_external_db = true` ⇒ explicit "existing_external_db" |
-| `test_new_redis_all_disabled` | `test_external_redis_active` | Already follows `EXTERNAL_REDIS_ON` constant naming |
+| `test_new_redis_all_disabled` | `test_external_redis_active` | Already ported; follows `EXTERNAL_REDIS_ON` constant naming |
 
 **Pending design decision (all-on-baseline tests):**
 
@@ -498,9 +500,16 @@ follows whichever path we pick.
 
 | Current name | Status |
 |---|---|
-| `test_new_db_all_enabled` | TBD — needs all-on baseline pattern |
-| `test_existing_db_all_enabled` | TBD — needs all-on baseline pattern |
-| `test_new_redis_all_enabled` | TBD — needs all-on baseline pattern |
+| `test_new_db_all_enabled` | TBD — needs all-on baseline pattern, OR split into feature-pair tests like Redis was |
+| `test_existing_db_all_enabled` | TBD — same |
+| ~~`test_new_redis_all_enabled`~~ | ✅ Split — see "already renamed / restructured" |
+
+**Note on the feature-pair-split precedent:** when porting an `_all_enabled` test, prefer
+splitting into focused feature-pair tests (each composing OFF baseline + 2 feature deltas
++ inline cross-feature delta) over defining an `ALL_ON_BASELINE_ASSERTIONS` constant.
+The split surfaces feature interactions explicitly and avoids a ~90-entry catch-all
+constant. Pattern set by `test_external_redis_with_studios` /
+`test_external_redis_with_wave_lite`.
 
 **Keep as-is (not delta-pattern tests):**
 

@@ -76,6 +76,14 @@ EXTERNAL_REDIS_ON = """
     flag_use_container_redis   = false
 """
 
+STUDIOS_ON_BASE = """
+    flag_enable_data_studio = true
+"""
+
+WAVE_LITE_ON_BASE = """
+    flag_use_wave_lite = true
+"""
+
 
 ## ------------------------------------------------------------------------------------
 ## MARK: BASE TFVARS
@@ -294,11 +302,121 @@ SEQERA_HOSTED_WAVE_ON_ASSERTIONS = {
 # Activates Elasticache Redis instead of the containerised default. When enabled on top
 # of OFF_BASELINE with `flag_create_external_redis = true`, `TOWER_REDIS_URL` switches
 # to the mock external endpoint. Studios/Wave-Lite-aware Redis paths only differ when
-# their own features are also on — those deltas belong in their respective `_ON_ASSERTIONS`
-# constants and merge cleanly here when stacked.
+# their own features are also on — those interactions are declared inline at the test
+# site as a cross-feature delta passed to `merge_deltas`.
 EXTERNAL_REDIS_ON_ASSERTIONS = {
     "tower_env": {
         "present": {"TOWER_REDIS_URL": "redis://mock.tower-redis.com:6379"},
+        "omitted": set(),
+    },
+}
+
+
+# MARK: Studios
+# Activates Data Studios on top of OFF_BASELINE. Brings the entire Studios config online —
+# `data_studios_env` populates, `# STUDIOS_NOT_ENABLED` markers flip out, the matrix of
+# `TOWER_DATA_STUDIO_TEMPLATES_*` entries appears in `tower_env`, and `tower.data-studio.*`
+# becomes a real sub-tree in `tower_yml`.
+STUDIOS_ON_BASE_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING": "false",
+            "TOWER_DATA_STUDIO_CONNECT_URL": "https://connect.autodc.dev-seqera.net",
+            "TOWER_OIDC_PEM_PATH": "/data-studios-rsa.pem",
+            "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN": "ipsemlorem",
+            # Templates: JUPYTER
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_ICON": "jupyter",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.9.0",  # noqa: E501
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_TOOL": "jupyter",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_STATUS": "deprecated",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_ICON": "jupyter",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.11.0",  # noqa: E501
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_TOOL": "jupyter",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_STATUS": "recommended",
+            # Templates: RIDE (RStudio)
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_ICON": "rstudio",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.9.0",  # noqa: E501
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_TOOL": "rstudio",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_STATUS": "deprecated",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_ICON": "rstudio",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.11.0",  # noqa: E501
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_TOOL": "rstudio",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_STATUS": "recommended",
+            # Templates: VSCODE
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_ICON": "vscode",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.9.0",  # noqa: E501
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_TOOL": "vscode",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_STATUS": "deprecated",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_ICON": "vscode",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.11.0",  # noqa: E501
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_TOOL": "vscode",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_STATUS": "recommended",
+            # Templates: XPRA
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_ICON": "xpra",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.9.0",  # noqa: E501
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_TOOL": "xpra",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_STATUS": "deprecated",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_ICON": "xpra",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.11.0",  # noqa: E501
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_TOOL": "xpra",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_STATUS": "recommended",
+            "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES": "DO_NOT_UNCOMMENT",
+        },
+        "omitted": {"# STUDIOS_NOT_ENABLED"},
+    },
+    "data_studios_env": {
+        "present": {
+            "PLATFORM_URL": "https://autodc.dev-seqera.net",
+            "CONNECT_HTTP_PORT": 9090,
+            "CONNECT_TUNNEL_URL": "connect-server:7070",
+            "CONNECT_PROXY_URL": "https://connect.autodc.dev-seqera.net",
+            "CONNECT_REDIS_ADDRESS": "redis:6379",
+            "CONNECT_REDIS_DB": 1,
+            "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN": "ipsemlorem",
+        },
+        "omitted": {"# STUDIOS_NOT_ENABLED"},
+    },
+    "tower_yml": {
+        # Specific sub-key from the `tower.data-studio` sub-tree — its mere presence
+        # clears the parent `tower.data-studio` from OFF's omitted via prefix-aware merge.
+        "present": {"tower.data-studio.allowed-workspaces": None},
+        "omitted": set(),
+    },
+}
+
+
+# MARK: Wave Lite (self-hosted Wave)
+# Activates the self-hosted Wave-Lite stack on top of OFF_BASELINE. Brings the four
+# Wave-Lite containers into `docker_compose` and populates `wave_lite_yml`'s redis/db/wave
+# URLs (vs the `N/A` defaults the OFF baseline asserts when Wave-Lite is off). Also flips
+# `TOWER_ENABLE_WAVE` true and points `WAVE_SERVER_URL` at the local Wave-Lite endpoint
+# (the same env vars Seqera-hosted Wave uses — Tower treats them generically).
+WAVE_LITE_ON_BASE_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_ENABLE_WAVE": "true",
+            "WAVE_SERVER_URL": "https://wave.autodc.dev-seqera.net",
+        },
+        "omitted": set(),
+    },
+    "wave_lite_yml": {
+        "present": {
+            "wave.server.url": "https://wave.autodc.dev-seqera.net",
+            "wave.db.uri": "jdbc:postgresql://wave-db:5432/wave",
+            "redis.uri": "redis://wave-redis:6379",
+        },
+        "omitted": set(),
+    },
+    "docker_compose": {
+        # Each `services.<name>.labels.seqera` clears the matching parent path
+        # (`services.<name>`) from OFF's omitted via prefix-aware merge.
+        "present": {
+            "services.wave-lite.labels.seqera": "wave-lite",
+            "services.wave-lite.image": "cr.seqera.io/private/nf-tower-enterprise/wave:v1.29.1",
+            "services.wave-lite-reverse-proxy.labels.seqera": "wave-lite-reverse-proxy",
+            "services.wave-db.labels.seqera": "wave-db",
+            "services.wave-redis.labels.seqera": "wave-redis",
+        },
         "omitted": set(),
     },
 }

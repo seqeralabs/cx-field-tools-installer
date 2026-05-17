@@ -11,6 +11,10 @@ from tests.unit.config_files.expected_deltas import (
     OFF_BASELINE_ASSERTIONS,
     SEQERA_HOSTED_WAVE_ON,
     SEQERA_HOSTED_WAVE_ON_ASSERTIONS,
+    STUDIOS_ON_BASE,
+    STUDIOS_ON_BASE_ASSERTIONS,
+    WAVE_LITE_ON_BASE,
+    WAVE_LITE_ON_BASE_ASSERTIONS,
 )
 from tests.utils.assertions.delta import assert_all_deltas, merge_deltas
 from tests.utils.assertions.verify_assertions import verify_all_assertions
@@ -429,56 +433,45 @@ def test_existing_db_all_disabled(generated_test_files):
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: New Redis: All Active
+## MARK: External Redis + Studios (feature pair)
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.redis_external
-@pytest.mark.tfvars("""
-    flag_create_external_redis                      = true
-    flag_use_container_redis                        = false
-""")
-def test_new_redis_all_enabled(generated_test_files):
-    """Test scenario.
+@pytest.mark.studios
+@pytest.mark.tfvars(OFF_BASELINE + STUDIOS_ON_BASE + EXTERNAL_REDIS_ON)
+def test_external_redis_with_studios(generated_test_files):
+    """External Redis + Studios on: Studios's CONNECT_REDIS_ADDRESS flips to the external endpoint."""
+    expected = merge_deltas(
+        OFF_BASELINE_ASSERTIONS,
+        EXTERNAL_REDIS_ON_ASSERTIONS,
+        STUDIOS_ON_BASE_ASSERTIONS,
+        # External Redis flips Studios's redis endpoint.
+        {"data_studios_env": {"present": {"CONNECT_REDIS_ADDRESS": "mock.tower-redis.com:6379"}}},
+    )
+    assert_all_deltas(generated_test_files, expected)
 
-    - Baseline all enabled.
-    - Elasticache Redis active.
-    """
-    assertion_modifiers = assertion_modifiers_template()
 
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_REDIS_URL": "redis://mock.tower-redis.com:6379",
+## ------------------------------------------------------------------------------------
+## MARK: External Redis + Wave-Lite (feature pair)
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.redis_external
+@pytest.mark.wave
+@pytest.mark.tfvars(OFF_BASELINE + WAVE_LITE_ON_BASE + EXTERNAL_REDIS_ON)
+def test_external_redis_with_wave_lite(generated_test_files):
+    """External Redis + Wave-Lite on."""
+    expected = merge_deltas(
+        OFF_BASELINE_ASSERTIONS,
+        EXTERNAL_REDIS_ON_ASSERTIONS,
+        WAVE_LITE_ON_BASE_ASSERTIONS,
+        # External Redis flips Wave-Lite's redis endpoint and removes the
+        # `wave-redis` container from docker_compose (no container Redis when external).
+        {
+            "wave_lite_yml": {"present": {"redis.uri": "rediss://mock.wave-redis.com:6379"}},
+            "docker_compose": {"omitted": {"services.wave-redis"}},
         },
-        "omitted": {},
-    }
-
-    assertion_modifiers["data_studios_env"] = {
-        "present": {
-            "CONNECT_REDIS_ADDRESS": "mock.tower-redis.com:6379",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["wave_lite_yml"] = {
-        "present": {
-            "redis.uri": "rediss://mock.wave-redis.com:6379",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["docker_compose"] = {
-        "present": {
-            "services.wave-lite.labels.seqera": "wave-lite",
-            "services.wave-lite-reverse-proxy.labels.seqera": "wave-lite-reverse-proxy",
-            "services.wave-db.labels.seqera": "wave-db",
-        },
-        "omitted": {
-            "services.wave-redis": "",
-        },
-    }
-
-    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
-    verify_all_assertions(generated_test_files, tc_assertions)
+    )
+    assert_all_deltas(generated_test_files, expected)
 
 
 ## ------------------------------------------------------------------------------------

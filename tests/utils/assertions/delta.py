@@ -264,36 +264,81 @@ def assert_all_deltas(generated_test_files: dict, expected: dict) -> None:
 ## ------------------------------------------------------------------------------------
 ## Composition helper
 ## ------------------------------------------------------------------------------------
+def _is_dotted_prefix(prefix: str, full: str) -> bool:
+    """True if `prefix` equals `full`, or is a dotted-path ancestor of `full`.
+
+    Used to handle YAMLPath transitions: adding `services.wave-lite.image` to `present`
+    should clear `services.wave-lite` from `omitted` (the parent path can't be both
+    absent and have children present). For flat kv keys (no dots), this degenerates
+    to exact-equality, so kv deltas behave identically.
+    """
+    if prefix == full:
+        return True
+    pseg = prefix.split(".")
+    fseg = full.split(".")
+    return len(pseg) < len(fseg) and fseg[: len(pseg)] == pseg
+
+
+def _apply_present_to_dict_slot(slot: dict, present_in: dict) -> None:
+    """Add `present_in` keys to the slot's `present` dict, clearing prefix matches from `omitted`."""
+    for pkey in present_in:
+        slot["omitted"] -= {okey for okey in slot["omitted"] if _is_dotted_prefix(okey, pkey)}
+    slot["present"].update(present_in)
+
+
+def _apply_omitted_to_dict_slot(slot: dict, omitted_in: set) -> None:
+    """Add `omitted_in` to the slot's `omitted` set, clearing prefix matches from `present` dict."""
+    for okey in omitted_in:
+        slot["present"] = {pkey: v for pkey, v in slot["present"].items() if not _is_dotted_prefix(okey, pkey)}
+    slot["omitted"] |= omitted_in
+
+
 def merge_deltas(*deltas: dict[str, dict]) -> dict[str, dict]:
     """Merge feature-delta constants keyed by template name.
 
-    Each input has the shape `{template: {"present": <dict|set>, "omitted": <set>}}`. Output
-    is the same shape, with `omitted` always merged via set union, and `present` merged
-    based on its type per-template:
-      - `dict` (kv / yaml templates) — `dict.update` (later inputs win on key collision)
-      - `set`  (text templates)      — set union (substring presence)
+    Each input has the shape `{template: {"present": <dict|set>, "omitted": <set>}}`. Later
+    deltas win on collision — both for value overrides (`present`) and for present↔omitted
+    transitions:
+
+      - For dict-shaped `present` (kv / yaml templates): adding a key to `present` removes
+        it (and any YAMLPath-ancestor entries) from `omitted`. Adding a key to `omitted`
+        removes it (and any descendant entries) from `present`.
+      - For set-shaped `present` (text templates): adding to one removes exact matches
+        from the other.
+
+    The YAMLPath prefix semantics matter for cases like `OFF_BASELINE_ASSERTIONS` declaring
+    `services.wave-lite` in `omitted` (parent absent) while `WAVE_LITE_ON_BASE_ASSERTIONS`
+    declares `services.wave-lite.labels.seqera` in `present` — the parent must be cleared
+    from `omitted` to avoid contradictory assertions.
 
     Example:
-        merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON) → a single nested dict
-        whose `tower_env` entry contains both inputs' `present` keys (Wave's win on
-        collision) + the union of their `omitted` keys.
+        merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS) → a single
+        nested dict whose `tower_env` entry contains both inputs' `present` keys (Wave's
+        wins on collision) + the union of their `omitted` keys (with conflicts resolved).
     """
     out: dict[str, dict] = {}
     for delta in deltas:
         for template, parts in delta.items():
             present_in = parts.get("present")
-            omitted_in = parts.get("omitted", set())
+            omitted_in = parts.get("omitted") or set()
             if template not in out:
                 if isinstance(present_in, set):
                     out[template] = {"present": set(present_in), "omitted": set(omitted_in)}
                 else:
                     out[template] = {"present": dict(present_in or {}), "omitted": set(omitted_in)}
-            else:
-                slot = out[template]
-                if present_in is not None:
-                    if isinstance(slot["present"], dict):
-                        slot["present"].update(present_in)
-                    else:
-                        slot["present"] |= present_in
-                slot["omitted"] |= omitted_in
+                continue
+
+            slot = out[template]
+            if present_in:
+                if isinstance(slot["present"], dict):
+                    _apply_present_to_dict_slot(slot, present_in)
+                else:
+                    slot["present"] |= present_in
+                    slot["omitted"] -= present_in
+            if omitted_in:
+                if isinstance(slot["present"], dict):
+                    _apply_omitted_to_dict_slot(slot, omitted_in)
+                else:
+                    slot["present"] -= omitted_in
+                    slot["omitted"] |= omitted_in
     return out
