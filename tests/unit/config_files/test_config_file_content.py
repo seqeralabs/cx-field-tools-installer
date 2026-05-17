@@ -5,6 +5,8 @@ from tests.datafiles.expected_results.expected_results import (
     generate_assertions_all_disabled,
 )
 from tests.unit.config_files.expected_deltas import (
+    EXTERNAL_REDIS_ON,
+    EXTERNAL_REDIS_ON_ASSERTIONS,
     OFF_BASELINE,
     OFF_BASELINE_ASSERTIONS,
     SEQERA_HOSTED_WAVE_ON,
@@ -484,57 +486,11 @@ def test_new_redis_all_enabled(generated_test_files):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.redis_external
-@pytest.mark.tfvars("""
-    flag_use_aws_ses_iam_integration    = false
-    flag_use_existing_smtp              = true
-    flag_enable_groundswell             = false
-    flag_data_explorer_enabled          = false
-    flag_enable_data_studio             = false
-    flag_use_wave                       = false
-    flag_use_wave_lite                  = false
-
-    flag_create_external_redis          = true
-    flag_use_container_redis            = false
-    flag_allow_aws_instance_credentials = false
-    tower_enable_openapi                = false
-    tower_enable_pipeline_versioning        = false
-    flag_tower_enable_participant_auto_create_user = false
-    flag_tower_enable_member_auto_create_user      = false
-    tower_workflow_cleanup_enabled                 = false
-""")
+@pytest.mark.tfvars(OFF_BASELINE + EXTERNAL_REDIS_ON)
 def test_new_redis_all_disabled(generated_test_files):
-    """Test scenario.
-
-    - Baseline all disabled.
-    - Elasticache Redis active.
-    """
-    assertion_modifiers = assertion_modifiers_template()
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_REDIS_URL": "redis://mock.tower-redis.com:6379",
-        },
-        "omitted": {},
-    }
-
-    # When disabled, none of the settings are present other than comment explaining why.
-    # TODO: Harmonize behaviour with other files like Groundswell / Wave-Lite.
-    assertion_modifiers["data_studios_env"] = {
-        "present": {},
-        "omitted": {
-            "CONNECT_REDIS_ADDRESS": "N/A",
-        },
-    }
-
-    assertion_modifiers["wave_lite_yml"] = {
-        "present": {
-            "redis.uri": "N/A",
-        },
-        "omitted": {},
-    }
-    tc_assertions = generate_assertions_all_disabled(generated_test_files, assertion_modifiers)
-
-    verify_all_assertions(generated_test_files, tc_assertions)
+    """External Redis on top of OFF baseline: TOWER_REDIS_URL points to the external endpoint."""
+    expected = merge_deltas(OFF_BASELINE_ASSERTIONS, EXTERNAL_REDIS_ON_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
 
 
 ## ------------------------------------------------------------------------------------
@@ -542,86 +498,15 @@ def test_new_redis_all_disabled(generated_test_files):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.wave
-@pytest.mark.tfvars("""
-    flag_use_aws_ses_iam_integration    = false
-    flag_use_existing_smtp              = true
-    flag_enable_groundswell             = false
-    flag_data_explorer_enabled          = false
-    flag_enable_data_studio             = false
-    # flag_use_wave                     = false
-    flag_use_wave_lite                  = false
-
-    flag_use_wave                       = true
-    wave_server_url                     = "wave.seqera.io"
-    flag_tower_enable_participant_auto_create_user = false
-    flag_tower_enable_member_auto_create_user      = false
-    tower_workflow_cleanup_enabled                 = false
-""")
-def test_seqera_hosted_wave_active(generated_test_files):
-    """Test scenario.
-
-    - Baseline all disabled.
-    - Seqera-hosted Wave active.
-    """
-    assertion_modifiers = assertion_modifiers_template()
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "WAVE_SERVER_URL": "https://wave.seqera.io",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["wave_lite_yml"] = {
-        "present": {
-            "wave.server.url": "https://wave.seqera.io",
-        },
-        "omitted": {},
-    }
-    tc_assertions = generate_assertions_all_disabled(generated_test_files, assertion_modifiers)
-
-    verify_all_assertions(generated_test_files, tc_assertions)
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-# RETROFIT of `test_seqera_hosted_wave_active` using OFF_BASELINE + delta helpers.
-# Kept alongside the original for visual comparison during the migration.
-# Uses `assert_all_deltas` — checks every generated file against the merged expectation
-# (strict mode: missing/extra template entries in OFF_BASELINE_ASSERTIONS raise).
-# ----------------------------------------------------------------------------------------------------------------------
-@pytest.mark.local
-@pytest.mark.wave
 @pytest.mark.tfvars(OFF_BASELINE + SEQERA_HOSTED_WAVE_ON)
-def test_seqera_hosted_wave_active__retrofit(generated_test_files):
+def test_seqera_hosted_wave_active(generated_test_files):
     """Activating Seqera-hosted Wave from OFF baseline: assert every generated file vs OFF + Wave delta."""
     expected = merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
 
-# ----------------------------------------------------------------------------------------------------------------------
-# REFERENCE: targeted-assertion pattern (preserved for one-off testcases).
-# Use this shape when you want to check only specific templates instead of every
-# generated file. Copy the body into a new test and adjust template names as needed.
-#
-# @pytest.mark.local
-# @pytest.mark.wave
-# @pytest.mark.tfvars(OFF_BASELINE + SEQERA_HOSTED_WAVE_ON)
-# def test_seqera_hosted_wave_active__targeted(generated_test_files):
-#     """Activating Seqera-hosted Wave: targeted checks on tower_env and wave_lite_yml only."""
-#     expected = merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS)
-#     assert_kv_delta(
-#         test_file_path=generated_test_files["tower_env"]["filepath"],
-#         **expected["tower_env"],
-#     )
-#     assert_yaml_delta(
-#         test_file_path=generated_test_files["wave_lite_yml"]["filepath"],
-#         **expected["wave_lite_yml"],
-#     )
-# ----------------------------------------------------------------------------------------------------------------------
-
-
 ## ------------------------------------------------------------------------------------
-## MARK: Wave-Lite SQL
+## MARK: TODO: Wave-Lite SQL
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.wave

@@ -238,17 +238,10 @@ using `test_seqera_hosted_wave_active__retrofit` as the worked example.
 @pytest.mark.local
 @pytest.mark.wave
 @pytest.mark.tfvars(OFF_BASELINE + SEQERA_HOSTED_WAVE_ON)
-def test_seqera_hosted_wave_active__retrofit(generated_test_files):
-    """Activating Seqera-hosted Wave from OFF baseline sets the wave URL in tower_env and wave_lite_yml."""
+def test_seqera_hosted_wave_active(generated_test_files):
+    """Activating Seqera-hosted Wave from OFF baseline: assert every generated file vs OFF + Wave delta."""
     expected = merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS)
-    assert_kv_delta(
-        test_file_path=generated_test_files["tower_env"]["filepath"],
-        **expected["tower_env"],
-    )
-    assert_yaml_delta(
-        test_file_path=generated_test_files["wave_lite_yml"]["filepath"],
-        **expected["wave_lite_yml"],
-    )
+    assert_all_deltas(generated_test_files, expected)
 ```
 
 ### The marker decorators (input setup)
@@ -330,31 +323,62 @@ Accepts any number of arguments — for tests that activate N features at once, 
 all and later args win on key collision. The result is the expected post-state for
 "OFF baseline + these features on" — fed to the assertion helpers via `**dict` spread.
 
-### The three assertion helpers — symmetric API
+### `assert_all_deltas` — the standard dispatcher
 
-All three helpers ([tests/utils/assertions/delta.py](utils/assertions/delta.py)) share the
-same input contract:
+```python
+assert_all_deltas(generated_test_files, expected)
+```
+
+Iterates every template in `expected`, looks up its `validation_type` from
+`tests.utils.config.all_template_files`, and dispatches to the right per-shape helper
+(`assert_kv_delta` / `assert_yaml_delta` / `assert_text_delta`).
+
+**Strict mode.** Every template generated must have a matching entry in `expected`,
+and vice versa. Missing on either side raises — test authors are forced to state
+intent for every generated file. Templates whose entry has empty `present` AND empty
+`omitted` are skipped (the explicit "not in scope" signal).
+
+This is what almost every test should use — it catches drift in every generated file,
+not just the ones the test author thought to check.
+
+### Targeted assertions — direct per-shape helper calls
+
+For the rare scenario where you genuinely want to check only specific templates
+(narrow regression test, edge case where most files aren't meaningfully in scope),
+call the per-shape helpers directly instead of going through `assert_all_deltas`:
+
+```python
+@pytest.mark.local
+@pytest.mark.wave
+@pytest.mark.tfvars(OFF_BASELINE + SEQERA_HOSTED_WAVE_ON)
+def test_seqera_hosted_wave_active__targeted(generated_test_files):
+    """Activating Seqera-hosted Wave: targeted checks on tower_env and wave_lite_yml only."""
+    expected = merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS)
+    assert_kv_delta(
+        test_file_path=generated_test_files["tower_env"]["filepath"],
+        **expected["tower_env"],
+    )
+    assert_yaml_delta(
+        test_file_path=generated_test_files["wave_lite_yml"]["filepath"],
+        **expected["wave_lite_yml"],
+    )
+```
+
+All three per-shape helpers ([tests/utils/assertions/delta.py](utils/assertions/delta.py))
+share the same input contract:
 
 - `test_file_path` — path to the rendered file on disk (the **standard** way to call them).
 - `test_file_content` — pre-loaded content (parsed dict for kv/yaml; raw string for text).
   An escape hatch for tests that already have content in hand.
 
 Exactly one of the two must be provided. If both are set, `test_file_path` wins and a
-warning is issued. They differ only in what they assert about content:
+warning is issued.
 
 | Helper | Content shape | `present` is… | `omitted` is… |
 |---|---|---|---|
 | `assert_kv_delta` | parsed `.env` dict | `{key: value}` to match | `{key1, key2, …}` to be absent |
 | `assert_yaml_delta` | parsed YAML dict | `{yamlpath: value}` to match | `{yamlpath1, yamlpath2, …}` to be absent |
 | `assert_text_delta` | raw text string | `{substring1, substring2, …}` that must appear | `{substring1, substring2, …}` that must not |
-
-Standard call site:
-
-```python
-assert_kv_delta(test_file_path=generated_test_files["tower_env"]["filepath"], **expected["tower_env"])
-assert_yaml_delta(test_file_path=generated_test_files["wave_lite_yml"]["filepath"], **expected["wave_lite_yml"])
-assert_text_delta(test_file_path=generated_test_files["tower_sql"]["filepath"], **expected["tower_sql"])
-```
 
 `expected["tower_env"]` is `{"present": {...}, "omitted": {...}}` — Python's `**dict`
 expands that into keyword args alongside `test_file_path`.
@@ -433,3 +457,56 @@ If you need to know "how did this value get there":
 | `locals.json` schema (which keys are present) | references to `local.*` from [`009_define_file_templates.tf`](../009_define_file_templates.tf), minus the allowlist in [`tests/unit/framework/test_console_locals_resolvability.py`](unit/framework/test_console_locals_resolvability.py) |
 | Per-scenario folder name (the `{hash}`) | [`tests/utils/cache/cache.py:hash_templatefile_cache_key`](utils/cache/cache.py) |
 | The `{hash}` → test name mapping | [`tests/.scenario_cache/INDEX.md`](../tests/.scenario_cache/INDEX.md) (regenerated every session) |
+
+---
+
+## TODO: Test rename sweep (post-migration)
+
+The Wave port set a naming precedent: when a test follows the pattern
+`OFF_BASELINE + <FEATURE>_ON`, the test name should be `test_<feature>_active`
+(verb "active" matches the per-feature semantic — Wave / Studios / Redis are *on*).
+
+We deliberately kept the legacy test names during the migration to keep each port
+change tightly scoped (one test = one port = one constant pair). Once all legacy
+tests have been ported, do a single rename sweep using this table.
+
+**Already renamed:**
+
+| Old name | New name | Status |
+|---|---|---|
+| `test_seqera_hosted_wave_active__retrofit` → `test_seqera_hosted_wave_active` | (replaced legacy `test_seqera_hosted_wave_active`) | ✅ Done |
+
+**To rename when their legacy versions are ported:**
+
+| Current name | Proposed new name | Notes |
+|---|---|---|
+| `test_studio_path_routing_enabled` | `test_studios_path_routing_active` | `_enabled` → `_active`; pluralise `studio` → `studios` to match the marker |
+| `test_studio_ssh_enabled` | `test_studios_ssh_active` | Same convention |
+| `test_studio_ssh_enabled_workspace_restriction` | `test_studios_ssh_workspace_restriction_active` | Same convention |
+| `test_studio_ssh_disabled` | `test_studios_active_ssh_inactive` | **Edge case** — Studios is on, but SSH is explicitly off. The compound name reflects the two-state assertion. Reconsider if a cleaner constant decomposition emerges. |
+| `test_new_db_all_disabled` | `test_external_db_active` | `flag_create_external_db = true` ⇒ "external_db" matches the feature; drop `new_` (temporal) |
+| `test_existing_db_all_disabled` | `test_existing_external_db_active` | `flag_use_existing_external_db = true` ⇒ explicit "existing_external_db" |
+| `test_new_redis_all_disabled` | `test_external_redis_active` | Already follows `EXTERNAL_REDIS_ON` constant naming |
+
+**Pending design decision (all-on-baseline tests):**
+
+The `_all_enabled` variants test "all features on baseline + this one feature variant".
+There's no `ALL_ON_BASELINE` constant yet. Either we (a) define one and rename to
+`test_<feature>_active__on_all_baseline`, or (b) treat the all-on baseline as
+`merge_deltas(OFF, FEATURE_ON_1, FEATURE_ON_2, ...)` at the test site. The naming
+follows whichever path we pick.
+
+| Current name | Status |
+|---|---|
+| `test_new_db_all_enabled` | TBD — needs all-on baseline pattern |
+| `test_existing_db_all_enabled` | TBD — needs all-on baseline pattern |
+| `test_new_redis_all_enabled` | TBD — needs all-on baseline pattern |
+
+**Keep as-is (not delta-pattern tests):**
+
+| Test | Why it stays |
+|---|---|
+| `test_baseline_alb_all_enabled` | Baseline regression test — its name describes the baseline itself, not a feature delta |
+| `test_baseline_alb_all_disabled` | Same |
+| `test_private_ca_reverse_proxy_active` | Already follows the `_active` convention |
+| `test_wave_sql_file_content` | Lock-test pattern (full-file equality), not a delta test |

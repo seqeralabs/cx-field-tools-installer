@@ -71,6 +71,11 @@ SEQERA_HOSTED_WAVE_ON = """
     wave_server_url = "wave.seqera.io"
 """
 
+EXTERNAL_REDIS_ON = """
+    flag_create_external_redis = true
+    flag_use_container_redis   = false
+"""
+
 
 ## ------------------------------------------------------------------------------------
 ## MARK: BASE TFVARS
@@ -280,6 +285,20 @@ SEQERA_HOSTED_WAVE_ON_ASSERTIONS = {
     },
     "wave_lite_yml": {
         "present": {"wave.server.url": "https://wave.seqera.io"},
+        "omitted": set(),
+    },
+}
+
+
+# MARK: External Redis (Elasticache)
+# Activates Elasticache Redis instead of the containerised default. When enabled on top
+# of OFF_BASELINE with `flag_create_external_redis = true`, `TOWER_REDIS_URL` switches
+# to the mock external endpoint. Studios/Wave-Lite-aware Redis paths only differ when
+# their own features are also on — those deltas belong in their respective `_ON_ASSERTIONS`
+# constants and merge cleanly here when stacked.
+EXTERNAL_REDIS_ON_ASSERTIONS = {
+    "tower_env": {
+        "present": {"TOWER_REDIS_URL": "redis://mock.tower-redis.com:6379"},
         "omitted": set(),
     },
 }

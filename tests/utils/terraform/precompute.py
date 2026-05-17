@@ -14,15 +14,18 @@ occur.
 single-quote literals break `terraform console`'s stdin input parsing.
 """
 
+import ast
 from collections import defaultdict
 import concurrent.futures
 from datetime import UTC, datetime
+import inspect
 import json
 from pathlib import Path
 import re
 import shutil
 import subprocess
 import tempfile
+import textwrap
 import time
 
 from tests.utils.cache.cache import hash_scenario, hash_templatefile_cache_key, normalize_whitespace
@@ -344,6 +347,82 @@ def precompute_in_parallel(scenarios: dict[str, str], max_workers: int = 8) -> d
 ## ------------------------------------------------------------------------------------
 ## INDEX.md generation
 ## ------------------------------------------------------------------------------------
+_BASELINE_CONST_NAMES = {"OFF_BASELINE_ASSERTIONS"}
+
+
+def _parse_function_ast(func) -> ast.Module | None:
+    """Return the parsed AST of `func`'s source, or `None` if it can't be obtained."""
+    try:
+        source = textwrap.dedent(inspect.getsource(func))
+    except (OSError, TypeError):
+        return None
+    try:
+        return ast.parse(source)
+    except SyntaxError:
+        return None
+
+
+def _called_name(call: ast.Call) -> str | None:
+    """Return the simple/attribute callee name of a `Call` node, or `None`."""
+    func_node = call.func
+    if isinstance(func_node, ast.Attribute):
+        return func_node.attr
+    if isinstance(func_node, ast.Name):
+        return func_node.id
+    return None
+
+
+def _collect_delta_constant_names(tree: ast.AST) -> set[str]:
+    """Names of constants passed to `merge_deltas(...)`, excluding the OFF baseline."""
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or _called_name(node) != "merge_deltas":
+            continue
+        for arg in node.args:
+            if isinstance(arg, ast.Name) and arg.id not in _BASELINE_CONST_NAMES:
+                names.add(arg.id)
+    return names
+
+
+def _templates_from_delta_constant(const: object) -> set[str]:
+    """Template keys with non-empty present/omitted in a single delta-constant dict."""
+    if not isinstance(const, dict):
+        return set()
+    templates: set[str] = set()
+    for template, parts in const.items():
+        if not isinstance(parts, dict):
+            continue
+        if (parts.get("present") or {}) or (parts.get("omitted") or set()):
+            templates.add(template)
+    return templates
+
+
+def _compute_required_templates(item) -> list[str]:
+    """Static analysis: derive the minimum file set a test asserts on.
+
+    Walks the test function's AST for `merge_deltas(...)` calls, collects the `Name` args
+    that aren't `OFF_BASELINE_ASSERTIONS`, resolves each name against the test module's
+    globals, and unions the template keys of every resolved delta dict.
+
+    Returns sorted template names, or `[]` if the test doesn't follow the merge_deltas
+    pattern (legacy or non-delta tests).
+    """
+    func = getattr(item, "function", None)
+    if func is None:
+        return []
+    tree = _parse_function_ast(func)
+    if tree is None:
+        return []
+    constant_names = _collect_delta_constant_names(tree)
+    if not constant_names:
+        return []
+    globals_ = getattr(func, "__globals__", {})
+    templates: set[str] = set()
+    for name in constant_names:
+        templates |= _templates_from_delta_constant(globals_.get(name))
+    return sorted(templates)
+
+
 def write_scenario_index(items) -> Path:
     """Write `tests/.scenario_cache/INDEX.md` mapping each collected test to its cache folder.
 
@@ -379,6 +458,39 @@ def write_scenario_index(items) -> Path:
             suffix = "" if folder_exists else " ⚠️ precompute failed"
             lines.append(f"| `{test_name}` | [`{h}`](./{h}/){suffix} |")
         lines.append("")
+
+    # Minimum file set per test — derived from each test's `merge_deltas(...)` arg names,
+    # excluding `OFF_BASELINE_ASSERTIONS`. Tests not following the delta pattern (legacy
+    # `generate_assertions_all_*` flow, or tests with no delta assertions at all) are
+    # omitted from this section.
+    by_file_min: dict[str, list[tuple[str, list[str]]]] = defaultdict(list)
+    for item in items:
+        required = _compute_required_templates(item)
+        if not required:
+            continue
+        rel_file = str(Path(str(item.fspath)).relative_to(FP.ROOT))
+        by_file_min[rel_file].append((item.name, required))
+
+    if by_file_min:
+        lines.append("---")
+        lines.append("")
+        lines.append("## Minimum file set per test")
+        lines.append("")
+        lines.append(
+            "_Files each test explicitly asserts on, derived from `merge_deltas(...)` call sites "
+            "(excluding `OFF_BASELINE_ASSERTIONS`). Tests using the legacy "
+            "`generate_assertions_all_*` pattern are not listed here._",
+        )
+        lines.append("")
+        for fpath in sorted(by_file_min):
+            lines.append(f"### {fpath}")
+            lines.append("")
+            lines.append("| Test | Required Templates |")
+            lines.append("|------|--------------------|")
+            for test_name, templates in sorted(by_file_min[fpath]):
+                joined = ", ".join(f"`{t}`" for t in templates)
+                lines.append(f"| `{test_name}` | {joined} |")
+            lines.append("")
 
     index_path = cache_root / "INDEX.md"
     index_path.write_text("\n".join(lines))
