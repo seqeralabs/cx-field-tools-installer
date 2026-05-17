@@ -42,8 +42,8 @@ def normalize_whitespace(tf_modifiers: str) -> str:
        input, keep only the LAST occurrence. Non-assignment lines (comments, blanks,
        heredoc starters, complex syntax) are preserved in order.
 
-    The "last wins" rule is what enables the `OFF_BASELINE + scenario_modifier` pattern:
-    if `scenario_modifier` re-declares a key from `OFF_BASELINE`, the scenario's value
+    The "last wins" rule is what enables the `BASELINE + scenario_modifier` pattern:
+    if `scenario_modifier` re-declares a key from `BASELINE`, the scenario's value
     wins (matches the user's stated precedence rule).
 
     Newlines are preserved. `#` comments and blank lines are NOT stripped — they're

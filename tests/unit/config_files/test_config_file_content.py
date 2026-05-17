@@ -5,16 +5,20 @@ from tests.datafiles.expected_results.expected_results import (
     generate_assertions_all_disabled,
 )
 from tests.unit.config_files.expected_deltas import (
-    EXTERNAL_REDIS_ON,
-    EXTERNAL_REDIS_ON_ASSERTIONS,
-    OFF_BASELINE,
-    OFF_BASELINE_ASSERTIONS,
-    SEQERA_HOSTED_WAVE_ON,
-    SEQERA_HOSTED_WAVE_ON_ASSERTIONS,
-    STUDIOS_ON_BASE,
-    STUDIOS_ON_BASE_ASSERTIONS,
-    WAVE_LITE_ON_BASE,
-    WAVE_LITE_ON_BASE_ASSERTIONS,
+    BASELINE,
+    BASELINE_ASSERTIONS,
+    DB_EXTERNAL_EXISTING_DB_ON,
+    DB_EXTERNAL_EXISTING_DB_ON_ASSERTIONS,
+    REDIS_EXTERNAL_ON,
+    REDIS_EXTERNAL_ON_ASSERTIONS,
+    GROUNDSWELL_ON,
+    GROUNDSWELL_ON_ASSERTIONS,
+    STUDIOS_ON,
+    STUDIOS_ON_ASSERTIONS,
+    WAVE_LITE_ON,
+    WAVE_LITE_ON_ASSERTIONS,
+    WAVE_SEQERA_HOSTED_ON,
+    WAVE_SEQERA_HOSTED_ON_ASSERTIONS,
 )
 from tests.utils.assertions.delta import assert_all_deltas, merge_deltas
 from tests.utils.assertions.verify_assertions import verify_all_assertions
@@ -337,133 +341,99 @@ def test_new_db_all_disabled(generated_test_files):
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Existing DB: All Active
+## MARK: DB Existing
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.db_existing
-@pytest.mark.tfvars("""
-    flag_create_external_db         = false
-    flag_use_existing_external_db   = true
-    flag_use_container_db           = false
-    tower_db_url                        = "existing.tower-db.com"
-""")
-def test_existing_db_all_enabled(generated_test_files):
-    """Test scenario.
-
-    - Baseline all enabled.
-    - Existing RDS active.
-    """
-    assertion_modifiers = assertion_modifiers_template()
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["groundswell_env"] = {
-        "present": {
-            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
-        },
-        "omitted": {},
-    }
-
-    # NOTE: Current as of Aug 13/2025, Wave-Lite does not support existing db flow.
-    # TODO: Extend functionality.
-    assertion_modifiers["wave_lite_yml"] = {
-        "present": {
-            "wave.db.uri": "jdbc:postgresql://wave-db:5432/wave",
-        },
-        "omitted": {},
-    }
-    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
-
-    verify_all_assertions(generated_test_files, tc_assertions)
+@pytest.mark.tfvars(BASELINE + DB_EXTERNAL_EXISTING_DB_ON)
+def test_db_external_existing_active(generated_test_files):
+    """Existing external DB on top of OFF baseline: TOWER_DB_URL points to the existing endpoint."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, DB_EXTERNAL_EXISTING_DB_ON_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
 
 
-## ------------------------------------------------------------------------------------
-## MARK: Existing DB: All Disabled
-## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.db_existing
-@pytest.mark.tfvars("""
-    flag_use_aws_ses_iam_integration    = false
-    flag_use_existing_smtp              = true
-    flag_enable_groundswell             = false
-    flag_data_explorer_enabled          = false
-    flag_enable_data_studio             = false
-    flag_use_wave                       = false
-    flag_use_wave_lite                  = false
-
-    flag_create_external_db             = false
-    flag_use_existing_external_db       = true
-    flag_use_container_db               = false
-    tower_db_url                        = "existing.tower-db.com"
-    flag_allow_aws_instance_credentials = false
-    tower_enable_openapi                = false
-    tower_enable_pipeline_versioning        = false
-    flag_tower_enable_participant_auto_create_user = false
-    flag_tower_enable_member_auto_create_user      = false
-    tower_workflow_cleanup_enabled                 = false
-""")
-def test_existing_db_all_disabled(generated_test_files):
-    """Test scenario.
-
-    - Baseline all disabled.
-    - Existing RDS active.
-    """
-    assertion_modifiers = assertion_modifiers_template()
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+@pytest.mark.groundswell
+@pytest.mark.tfvars(BASELINE + GROUNDSWELL_ON + DB_EXTERNAL_EXISTING_DB_ON)
+def test_db_external_existing_with_groundswell(generated_test_files):
+    """Existing external DB + Groundswell on: Groundswell's TOWER_DB_URL also flips to the existing endpoint."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        GROUNDSWELL_ON_ASSERTIONS,
+        DB_EXTERNAL_EXISTING_DB_ON_ASSERTIONS,
+        # Cross-feature: existing DB flips Groundswell's TOWER_DB_URL and SWELL_DB_URL.
+        {
+            "groundswell_env": {
+                "present": {
+                    "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+                    "SWELL_DB_URL": "mysql://existing.tower-db.com:3306/swell",
+                },
+            },
         },
-        "omitted": {},
-    }
+    )
+    assert_all_deltas(generated_test_files, expected)
 
-    # No need for custom assertion_modifiers -- core testcase handles this one.
-    assertion_modifiers["groundswell_env"] = {"present": {}, "omitted": {}}
 
-    # No need for custom assertion_modifiers -- core testcase handles this one.
-    assertion_modifiers["wave_lite_yml"] = {"present": {}, "omitted": {}}
-    tc_assertions = generate_assertions_all_disabled(generated_test_files, assertion_modifiers)
+@pytest.mark.local
+@pytest.mark.db_existing
+@pytest.mark.wave
+@pytest.mark.tfvars(BASELINE + WAVE_LITE_ON + DB_EXTERNAL_EXISTING_DB_ON)
+def test_db_external_existing_with_wave_lite(generated_test_files):
+    """Existing external DB + Wave-Lite on: Wave-Lite ignores existing-DB.
 
-    verify_all_assertions(generated_test_files, tc_assertions)
+    Documented limitation as of Aug 2025: Wave-Lite always uses its container DB
+    regardless of the existing-DB flag. This test serves as a regression guard — if
+    Wave-Lite ever grows existing-DB support, `wave_lite_yml.wave.db.uri` will flip
+    and break this assertion, forcing a constants update.
+    """
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        WAVE_LITE_ON_ASSERTIONS,
+        DB_EXTERNAL_EXISTING_DB_ON_ASSERTIONS,
+        # No cross-feature delta — Wave-Lite's wave.db.uri stays at container DB.
+    )
+    assert_all_deltas(generated_test_files, expected)
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: External Redis + Studios (feature pair)
+## MARK: Redis External
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.redis_external
+@pytest.mark.tfvars(BASELINE + REDIS_EXTERNAL_ON)
+def test_new_redis_all_disabled(generated_test_files):
+    """External Redis on top of OFF baseline: TOWER_REDIS_URL points to the external endpoint."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, REDIS_EXTERNAL_ON_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+@pytest.mark.local
+@pytest.mark.redis_external
 @pytest.mark.studios
-@pytest.mark.tfvars(OFF_BASELINE + STUDIOS_ON_BASE + EXTERNAL_REDIS_ON)
-def test_external_redis_with_studios(generated_test_files):
+@pytest.mark.tfvars(BASELINE + STUDIOS_ON + REDIS_EXTERNAL_ON)
+def test_redis_external_with_studios(generated_test_files):
     """External Redis + Studios on: Studios's CONNECT_REDIS_ADDRESS flips to the external endpoint."""
     expected = merge_deltas(
-        OFF_BASELINE_ASSERTIONS,
-        EXTERNAL_REDIS_ON_ASSERTIONS,
-        STUDIOS_ON_BASE_ASSERTIONS,
+        BASELINE_ASSERTIONS,
+        REDIS_EXTERNAL_ON_ASSERTIONS,
+        STUDIOS_ON_ASSERTIONS,
         # External Redis flips Studios's redis endpoint.
         {"data_studios_env": {"present": {"CONNECT_REDIS_ADDRESS": "mock.tower-redis.com:6379"}}},
     )
     assert_all_deltas(generated_test_files, expected)
 
 
-## ------------------------------------------------------------------------------------
-## MARK: External Redis + Wave-Lite (feature pair)
-## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.redis_external
 @pytest.mark.wave
-@pytest.mark.tfvars(OFF_BASELINE + WAVE_LITE_ON_BASE + EXTERNAL_REDIS_ON)
-def test_external_redis_with_wave_lite(generated_test_files):
+@pytest.mark.tfvars(BASELINE + WAVE_LITE_ON + REDIS_EXTERNAL_ON)
+def test_redis_external_with_wave_lite(generated_test_files):
     """External Redis + Wave-Lite on."""
     expected = merge_deltas(
-        OFF_BASELINE_ASSERTIONS,
-        EXTERNAL_REDIS_ON_ASSERTIONS,
-        WAVE_LITE_ON_BASE_ASSERTIONS,
+        BASELINE_ASSERTIONS,
+        REDIS_EXTERNAL_ON_ASSERTIONS,
+        WAVE_LITE_ON_ASSERTIONS,
         # External Redis flips Wave-Lite's redis endpoint and removes the
         # `wave-redis` container from docker_compose (no container Redis when external).
         {
@@ -475,26 +445,14 @@ def test_external_redis_with_wave_lite(generated_test_files):
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: New Redis: All Disabled
-## ------------------------------------------------------------------------------------
-@pytest.mark.local
-@pytest.mark.redis_external
-@pytest.mark.tfvars(OFF_BASELINE + EXTERNAL_REDIS_ON)
-def test_new_redis_all_disabled(generated_test_files):
-    """External Redis on top of OFF baseline: TOWER_REDIS_URL points to the external endpoint."""
-    expected = merge_deltas(OFF_BASELINE_ASSERTIONS, EXTERNAL_REDIS_ON_ASSERTIONS)
-    assert_all_deltas(generated_test_files, expected)
-
-
-## ------------------------------------------------------------------------------------
 ## MARK: Seqera Wave: Active
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.wave
-@pytest.mark.tfvars(OFF_BASELINE + SEQERA_HOSTED_WAVE_ON)
+@pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ON)
 def test_seqera_hosted_wave_active(generated_test_files):
     """Activating Seqera-hosted Wave from OFF baseline: assert every generated file vs OFF + Wave delta."""
-    expected = merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS)
+    expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ON_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
 

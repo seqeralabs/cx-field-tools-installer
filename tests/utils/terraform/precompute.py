@@ -270,7 +270,7 @@ def _precompute_scenario(scenario_hash: str, tf_modifiers: str) -> tuple[str, fl
     ) as tf:
         # Canonicalise (whitespace-normalize + dedup): terraform rejects duplicate variable
         # assignments within a single tfvars file. Dedup is "last wins", which gives the
-        # OFF_BASELINE + scenario_modifier precedence semantics.
+        # BASELINE + scenario_modifier precedence semantics.
         tf.write(normalize_whitespace(tf_modifiers))
         tfvars_path = Path(tf.name)
     state_path = Path(tempfile.gettempdir()) / f"precompute-{scenario_hash}.tfstate"
@@ -347,7 +347,7 @@ def precompute_in_parallel(scenarios: dict[str, str], max_workers: int = 8) -> d
 ## ------------------------------------------------------------------------------------
 ## INDEX.md generation
 ## ------------------------------------------------------------------------------------
-_BASELINE_CONST_NAMES = {"OFF_BASELINE_ASSERTIONS"}
+_BASELINE_CONST_NAMES = {"BASELINE_ASSERTIONS"}
 
 
 def _parse_function_ast(func) -> ast.Module | None:
@@ -401,7 +401,7 @@ def _compute_required_templates(item) -> list[str]:
     """Static analysis: derive the minimum file set a test asserts on.
 
     Walks the test function's AST for `merge_deltas(...)` calls, collects the `Name` args
-    that aren't `OFF_BASELINE_ASSERTIONS`, resolves each name against the test module's
+    that aren't `BASELINE_ASSERTIONS`, resolves each name against the test module's
     globals, and unions the template keys of every resolved delta dict.
 
     Returns sorted template names, or `[]` if the test doesn't follow the merge_deltas
@@ -460,7 +460,7 @@ def write_scenario_index(items) -> Path:
         lines.append("")
 
     # Minimum file set per test — derived from each test's `merge_deltas(...)` arg names,
-    # excluding `OFF_BASELINE_ASSERTIONS`. Tests not following the delta pattern (legacy
+    # excluding `BASELINE_ASSERTIONS`. Tests not following the delta pattern (legacy
     # `generate_assertions_all_*` flow, or tests with no delta assertions at all) are
     # omitted from this section.
     by_file_min: dict[str, list[tuple[str, list[str]]]] = defaultdict(list)
@@ -478,7 +478,7 @@ def write_scenario_index(items) -> Path:
         lines.append("")
         lines.append(
             "_Files each test explicitly asserts on, derived from `merge_deltas(...)` call sites "
-            "(excluding `OFF_BASELINE_ASSERTIONS`). Tests using the legacy "
+            "(excluding `BASELINE_ASSERTIONS`). Tests using the legacy "
             "`generate_assertions_all_*` pattern are not listed here._",
         )
         lines.append("")

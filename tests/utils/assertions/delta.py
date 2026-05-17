@@ -14,7 +14,7 @@ file. Whether a key was in the OFF baseline with a different value or absent ent
 irrelevant to the assertion.
 
 No baseline-dict comparison anywhere. Tests declare the expected post-state by merging
-`OFF_BASELINE_ASSERTIONS` with one or more per-feature delta constants via `merge_deltas`,
+`BASELINE_ASSERTIONS` with one or more per-feature delta constants via `merge_deltas`,
 then call the right helper per template. Broader regression coverage belongs in per-template
 lock tests.
 """
@@ -218,7 +218,7 @@ def assert_all_deltas(generated_test_files: dict, expected: dict) -> None:
     Typical use:
 
         def test_x(generated_test_files):
-            expected = merge_deltas(OFF_BASELINE_ASSERTIONS, FEATURE_ON_ASSERTIONS)
+            expected = merge_deltas(BASELINE_ASSERTIONS, FEATURE_ON_ASSERTIONS)
             assert_all_deltas(generated_test_files, expected)
 
     For one-off targeted assertions against a subset of templates, call the per-shape
@@ -231,7 +231,7 @@ def assert_all_deltas(generated_test_files: dict, expected: dict) -> None:
     if missing_from_expected:
         raise AssertionError(
             f"assert_all_deltas: no expectations declared for templates {sorted(missing_from_expected)}. "
-            "Add an entry to OFF_BASELINE_ASSERTIONS (use empty present/omitted for explicit opt-out).",
+            "Add an entry to BASELINE_ASSERTIONS (use empty present/omitted for explicit opt-out).",
         )
     missing_from_generated = expected_set - generated_set
     if missing_from_generated:
@@ -306,13 +306,13 @@ def merge_deltas(*deltas: dict[str, dict]) -> dict[str, dict]:
       - For set-shaped `present` (text templates): adding to one removes exact matches
         from the other.
 
-    The YAMLPath prefix semantics matter for cases like `OFF_BASELINE_ASSERTIONS` declaring
-    `services.wave-lite` in `omitted` (parent absent) while `WAVE_LITE_ON_BASE_ASSERTIONS`
+    The YAMLPath prefix semantics matter for cases like `BASELINE_ASSERTIONS` declaring
+    `services.wave-lite` in `omitted` (parent absent) while `WAVE_LITE_ON_ASSERTIONS`
     declares `services.wave-lite.labels.seqera` in `present` — the parent must be cleared
     from `omitted` to avoid contradictory assertions.
 
     Example:
-        merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS) → a single
+        merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ON_ASSERTIONS) → a single
         nested dict whose `tower_env` entry contains both inputs' `present` keys (Wave's
         wins on collision) + the union of their `omitted` keys (with conflicts resolved).
     """

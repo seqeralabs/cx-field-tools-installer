@@ -237,10 +237,10 @@ using `test_seqera_hosted_wave_active__retrofit` as the worked example.
 ```python
 @pytest.mark.local
 @pytest.mark.wave
-@pytest.mark.tfvars(OFF_BASELINE + SEQERA_HOSTED_WAVE_ON)
+@pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ON)
 def test_seqera_hosted_wave_active(generated_test_files):
     """Activating Seqera-hosted Wave from OFF baseline: assert every generated file vs OFF + Wave delta."""
-    expected = merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS)
+    expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ON_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 ```
 
@@ -254,7 +254,7 @@ def test_seqera_hosted_wave_active(generated_test_files):
 Categorisation markers — let pytest filter via `-m`. Don't affect what the test does.
 
 ```python
-@pytest.mark.tfvars(OFF_BASELINE + SEQERA_HOSTED_WAVE_ON)
+@pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ON)
 ```
 
 The `tfvars` marker carries a **string** of terraform variable assignments. That string
@@ -264,8 +264,8 @@ to a tempfile and passes to `terraform console`.
 Constants live in [tests/unit/config_files/expected_deltas.py](unit/config_files/expected_deltas.py)
 and come in **pairs** — one for each side of a test:
 
-- `OFF_BASELINE` (tfvars string) / `OFF_BASELINE_ASSERTIONS` (assertion dict)
-- `SEQERA_HOSTED_WAVE_ON` (tfvars string) / `SEQERA_HOSTED_WAVE_ON_ASSERTIONS` (assertion dict)
+- `BASELINE` (tfvars string) / `BASELINE_ASSERTIONS` (assertion dict)
+- `WAVE_SEQERA_HOSTED_ON` (tfvars string) / `WAVE_SEQERA_HOSTED_ON_ASSERTIONS` (assertion dict)
 
 The two halves describe the same scenario from different sides — what to configure
 (tfvars) and what should result (rendered file state). The naming convention makes drift
@@ -299,20 +299,20 @@ the same `hash_templatefile_cache_key`, looks up `tests/.scenario_cache/{hash}/`
 `generated_test_files["tower_env"]["content"]` is the rendered `.env` content for THIS
 scenario, already parsed into `{key: value}`.
 
-There is intentionally NO `off_baseline` fixture. The expected post-state for the OFF
-scenario lives as a declarative constant — `OFF_BASELINE_ASSERTIONS` in
+There is intentionally NO `BASELINE` fixture. The expected post-state for the OFF
+scenario lives as a declarative constant — `BASELINE_ASSERTIONS` in
 [tests/unit/config_files/expected_deltas.py](unit/config_files/expected_deltas.py) — and
 is overlaid with per-feature delta constants via `merge_deltas(...)`.
 
 ### `merge_deltas` — composing the expected state
 
 ```python
-expected = merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS)
+expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ON_ASSERTIONS)
 ```
 
-`OFF_BASELINE_ASSERTIONS` declares the expected `present` / `omitted` for every template
-when only `OFF_BASELINE` is applied. `SEQERA_HOSTED_WAVE_ON_ASSERTIONS` declares the
-per-feature deltas (paired with the tfvars-side `SEQERA_HOSTED_WAVE_ON` used in the
+`BASELINE_ASSERTIONS` declares the expected `present` / `omitted` for every template
+when only `BASELINE` is applied. `WAVE_SEQERA_HOSTED_ON_ASSERTIONS` declares the
+per-feature deltas (paired with the tfvars-side `WAVE_SEQERA_HOSTED_ON` used in the
 marker). `merge_deltas` walks both, per-template:
 
 - `present` dicts are merged via `dict.update` — later wins on collision (`TOWER_ENABLE_WAVE`
@@ -322,6 +322,26 @@ marker). `merge_deltas` walks both, per-template:
 Accepts any number of arguments — for tests that activate N features at once, pass them
 all and later args win on key collision. The result is the expected post-state for
 "OFF baseline + these features on" — fed to the assertion helpers via `**dict` spread.
+
+**Convention for `<FEATURE>_ON_ASSERTIONS` constants.** Each captures the feature's
+effects **assuming containerised defaults for every other knob** (container DB,
+container Redis, etc.). Cross-feature interactions — e.g. external Redis flipping
+Studios's `CONNECT_REDIS_ADDRESS`, or Wave-Lite + external Redis removing the
+`wave-redis` container — are NOT baked into individual feature constants. Declare
+them inline at the test site as an additional dict passed to `merge_deltas(...)`:
+
+```python
+expected = merge_deltas(
+    BASELINE_ASSERTIONS,
+    STUDIOS_ON_ASSERTIONS,
+    REDIS_EXTERNAL_ON_ASSERTIONS,
+    # Cross-feature: external Redis flips Studios's redis endpoint
+    {"data_studios_env": {"present": {"CONNECT_REDIS_ADDRESS": "mock.tower-redis.com:6379"}}},
+)
+```
+
+This keeps each feature constant composable — it produces the same effects whether
+stacked with one feature or three.
 
 ### `assert_all_deltas` — the standard dispatcher
 
@@ -350,10 +370,10 @@ call the per-shape helpers directly instead of going through `assert_all_deltas`
 ```python
 @pytest.mark.local
 @pytest.mark.wave
-@pytest.mark.tfvars(OFF_BASELINE + SEQERA_HOSTED_WAVE_ON)
+@pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ON)
 def test_seqera_hosted_wave_active__targeted(generated_test_files):
     """Activating Seqera-hosted Wave: targeted checks on tower_env and wave_lite_yml only."""
-    expected = merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS)
+    expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ON_ASSERTIONS)
     assert_kv_delta(
         test_file_path=generated_test_files["tower_env"]["filepath"],
         **expected["tower_env"],
@@ -384,14 +404,14 @@ warning is issued.
 expands that into keyword args alongside `test_file_path`.
 
 No baseline-dict comparison anywhere. Tests assert against the explicit merged expectation.
-"Everything else stayed the same" coverage comes from `OFF_BASELINE_ASSERTIONS` declaring
+"Everything else stayed the same" coverage comes from `BASELINE_ASSERTIONS` declaring
 the expected post-state for every key the project cares about. Broader regression coverage
 belongs in per-template **lock tests**.
 
 ### Test pattern data flow
 
 ```
-@pytest.mark.tfvars(OFF_BASELINE + <FEATURE>_ON)        # input side  (paired)
+@pytest.mark.tfvars(BASELINE + <FEATURE>_ON)        # input side  (paired)
                       │
                       ▼  collection time
               pytest_collection_modifyitems
@@ -402,7 +422,7 @@ belongs in per-template **lock tests**.
                       ▼  test runtime
               ┌──────────────────────┬─────────────────────────────────────────┐
               │                      │                                         │
-       generated_test_files    OFF_BASELINE_ASSERTIONS    <FEATURE>_ON_ASSERTIONS  (output side, paired)
+       generated_test_files    BASELINE_ASSERTIONS    <FEATURE>_ON_ASSERTIONS  (output side, paired)
        (this scenario's       (declared expected         (the expected feature delta)
         rendered files)        OFF state)
               │                      │                                         │
@@ -422,10 +442,10 @@ belongs in per-template **lock tests**.
 
 To write a new test on this pattern you need:
 
-1. **`OFF_BASELINE`** / **`OFF_BASELINE_ASSERTIONS`** — paired tfvars-string + assertion dict for "everything off"
+1. **`BASELINE`** / **`BASELINE_ASSERTIONS`** — paired tfvars-string + assertion dict for "everything off"
 2. **`<FEATURE>_ON`** / **`<FEATURE>_ON_ASSERTIONS`** — paired tfvars-string + assertion dict per feature
 3. **`generated_test_files`** — fixture giving you THIS scenario's rendered files (parsed)
-4. **`merge_deltas(OFF_BASELINE_ASSERTIONS, <FEATURE>_ON_ASSERTIONS, ...)`** — compose expected state
+4. **`merge_deltas(BASELINE_ASSERTIONS, <FEATURE>_ON_ASSERTIONS, ...)`** — compose expected state
 5. **`assert_kv_delta(actual, present, omitted)`** — for `.env` files
 6. **`assert_yaml_delta(filepath, present, omitted)`** — for YAML files
 7. **`assert_text_delta(content, present, omitted)`** — for plain-text rendered files (substring checks)
@@ -463,7 +483,7 @@ If you need to know "how did this value get there":
 ## TODO: Test rename sweep (post-migration)
 
 The Wave port set a naming precedent: when a test follows the pattern
-`OFF_BASELINE + <FEATURE>_ON`, the test name should be `test_<feature>_active`
+`BASELINE + <FEATURE>_ON`, the test name should be `test_<feature>_active`
 (verb "active" matches the per-feature semantic — Wave / Studios / Redis are *on*).
 
 We deliberately kept the legacy test names during the migration to keep each port
@@ -475,8 +495,10 @@ tests have been ported, do a single rename sweep using this table.
 | Old name | New name(s) | Status |
 |---|---|---|
 | `test_seqera_hosted_wave_active__retrofit` → `test_seqera_hosted_wave_active` | (replaced legacy `test_seqera_hosted_wave_active`) | ✅ Done |
-| `test_new_redis_all_disabled` | `test_external_redis_active` *(pending rename)* | Ported to delta pattern; name still legacy |
-| `test_new_redis_all_enabled` | `test_external_redis_with_studios` + `test_external_redis_with_wave_lite` | ✅ Split into two feature-pair tests (legacy deleted) |
+| `test_new_redis_all_disabled` | `test_redis_external_active` *(pending rename)* | Ported to delta pattern; name still legacy |
+| `test_new_redis_all_enabled` | `test_redis_external_with_studios` + `test_redis_external_with_wave_lite` | ✅ Split into two feature-pair tests (legacy deleted) |
+| `test_existing_db_all_disabled` → `test_db_external_existing_active` | (renamed inline during port) | ✅ Done |
+| `test_existing_db_all_enabled` | `test_db_external_existing_with_groundswell` + `test_db_external_existing_with_wave_lite` | ✅ Split into one feature-pair test + one documented non-interaction guard (legacy deleted) |
 
 **To rename when their legacy versions are ported:**
 
@@ -487,8 +509,8 @@ tests have been ported, do a single rename sweep using this table.
 | `test_studio_ssh_enabled_workspace_restriction` | `test_studios_ssh_workspace_restriction_active` | Same convention |
 | `test_studio_ssh_disabled` | `test_studios_active_ssh_inactive` | **Edge case** — Studios is on, but SSH is explicitly off. The compound name reflects the two-state assertion. Reconsider if a cleaner constant decomposition emerges. |
 | `test_new_db_all_disabled` | `test_external_db_active` | `flag_create_external_db = true` ⇒ "external_db" matches the feature; drop `new_` (temporal) |
-| `test_existing_db_all_disabled` | `test_existing_external_db_active` | `flag_use_existing_external_db = true` ⇒ explicit "existing_external_db" |
-| `test_new_redis_all_disabled` | `test_external_redis_active` | Already ported; follows `EXTERNAL_REDIS_ON` constant naming |
+| ~~`test_existing_db_all_disabled`~~ | `test_db_external_existing_active` | ✅ Already ported + renamed |
+| `test_new_redis_all_disabled` | `test_redis_external_active` | Already ported; follows `REDIS_EXTERNAL_ON` constant naming |
 
 **Pending design decision (all-on-baseline tests):**
 
@@ -501,15 +523,15 @@ follows whichever path we pick.
 | Current name | Status |
 |---|---|
 | `test_new_db_all_enabled` | TBD — needs all-on baseline pattern, OR split into feature-pair tests like Redis was |
-| `test_existing_db_all_enabled` | TBD — same |
+| ~~`test_existing_db_all_enabled`~~ | ✅ Split — see "already renamed / restructured" |
 | ~~`test_new_redis_all_enabled`~~ | ✅ Split — see "already renamed / restructured" |
 
 **Note on the feature-pair-split precedent:** when porting an `_all_enabled` test, prefer
 splitting into focused feature-pair tests (each composing OFF baseline + 2 feature deltas
 + inline cross-feature delta) over defining an `ALL_ON_BASELINE_ASSERTIONS` constant.
 The split surfaces feature interactions explicitly and avoids a ~90-entry catch-all
-constant. Pattern set by `test_external_redis_with_studios` /
-`test_external_redis_with_wave_lite`.
+constant. Pattern set by `test_redis_external_with_studios` /
+`test_redis_external_with_wave_lite`.
 
 **Keep as-is (not delta-pattern tests):**
 

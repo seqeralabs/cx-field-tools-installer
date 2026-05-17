@@ -20,9 +20,9 @@ the test body, share a single baseline, and cover multiple file types with a uni
 
 | Concept | What it is |
 |---|---|
-| `OFF_BASELINE` | A single module-level tfvars string that turns off every default-on flag. Every test stages this + its own activations. |
-| `off_baseline` (fixture) | Parsed rendered outputs from the OFF scenario, keyed by template name. Auto-derived from `tests/.scenario_cache/{hash}/`. |
-| `assert_kv_delta` | Helper for `.env`-shaped files. Diffs against `off_baseline` using `present` / `omitted`. |
+| `BASELINE` | A single module-level tfvars string that turns off every default-on flag. Every test stages this + its own activations. |
+| `BASELINE` (fixture) | Parsed rendered outputs from the OFF scenario, keyed by template name. Auto-derived from `tests/.scenario_cache/{hash}/`. |
+| `assert_kv_delta` | Helper for `.env`-shaped files. Diffs against `BASELINE` using `present` / `omitted`. |
 | `assert_yaml_delta` | Helper for `.yml` / `.json` files. Per-path assertions (no full baseline diff — covered by template lock test). |
 | `assert_text_delta` | Helper for plain-text files (`.sh`, `.sql`, `.conf`). Substring `present` / `omitted`. |
 | Feature-delta constants | Per-feature dicts (one per template the feature touches) capturing what `present` / `omitted` mean when that feature is activated. Tests compose via `{**A, **B}`. |
@@ -77,23 +77,23 @@ EXTERNAL_DB_DOCKER_COMPOSE_OMITTED = {
 ```python
 # tests/unit/config_files/test_config_file_content.py
 
-@pytest.mark.tfvars(OFF_BASELINE + "flag_do_not_use_https = true")
-def test_no_https_changes_urls(staged_scenario, off_baseline):
+@pytest.mark.tfvars(BASELINE + "flag_do_not_use_https = true")
+def test_no_https_changes_urls(staged_scenario, BASELINE):
     assert_kv_delta(
         actual=staged_scenario["tower_env"]["content"],
-        baseline=off_baseline["tower_env"],
+        baseline=BASELINE["tower_env"],
         present=NO_HTTPS_TOWER_ENV,
     )
 
 
-@pytest.mark.tfvars(OFF_BASELINE + """
+@pytest.mark.tfvars(BASELINE + """
     flag_create_external_db = true
     flag_use_container_db   = false
 """)
-def test_external_db_replaces_container(staged_scenario, off_baseline):
+def test_external_db_replaces_container(staged_scenario, BASELINE):
     assert_kv_delta(
         actual=staged_scenario["tower_env"]["content"],
-        baseline=off_baseline["tower_env"],
+        baseline=BASELINE["tower_env"],
         present=EXTERNAL_DB_TOWER_ENV,
     )
     assert_yaml_delta(
@@ -121,13 +121,13 @@ GROUNDSWELL_ON = {
 Tests loop or pick by template:
 
 ```python
-def test_groundswell_only(staged_scenario, off_baseline):
+def test_groundswell_only(staged_scenario, BASELINE):
     for tpl, additions in GROUNDSWELL_ON.items():
         if tpl == "docker_compose":
             assert_yaml_delta(filepath=staged_scenario[tpl]["filepath"], present=additions)
         else:
             assert_kv_delta(actual=staged_scenario[tpl]["content"],
-                            baseline=off_baseline[tpl],
+                            baseline=BASELINE[tpl],
                             present=additions)
 ```
 
@@ -156,7 +156,7 @@ tests/utils/assertions/
   merge.py            ← merge_deltas helper
 
 tests/unit/config_files/
-  expected_deltas.py  ← OFF_BASELINE constant + feature-delta constants
+  expected_deltas.py  ← BASELINE constant + feature-delta constants
   test_baseline.py    ← per-template OFF-baseline lock tests
   test_config_file_content.py   ← per-feature tests, granular
   test_ansible_files.py         ← unchanged in shape; uses assert_text_delta
@@ -166,8 +166,8 @@ tests/unit/config_files/
 
 ## Migration order
 
-1. Land helpers + `OFF_BASELINE` constant + `off_baseline` fixture. Don't touch tests yet.
-2. Write the lock test for `tower_env` against `OFF_BASELINE`. Sanity-check.
+1. Land helpers + `BASELINE` constant + `BASELINE` fixture. Don't touch tests yet.
+2. Write the lock test for `tower_env` against `BASELINE`. Sanity-check.
 3. Migrate ONE existing test (e.g., `test_studio_path_routing_enabled`) end-to-end.
    Confirm the shape feels right.
 4. Sweep the rest of `test_config_file_content.py` (~15 tests). Mechanical.

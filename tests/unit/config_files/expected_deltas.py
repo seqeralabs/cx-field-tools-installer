@@ -12,14 +12,14 @@ kept in sync. The naming convention makes drift obvious in code review.
 ----------------------------------------------------------------------------------------
 Base baseline
 ----------------------------------------------------------------------------------------
-`OFF_BASELINE` is a tfvars string that turns off every feature that
+`BASELINE` is a tfvars string that turns off every feature that
 `tests/datafiles/generate_core_data.sh` enables by default via
 `base-overrides.auto.tfvars`. Tests stage this directly to render the off-state,
-or concatenate `OFF_BASELINE + <FEATURE>_ON` to activate one feature on top.
+or concatenate `BASELINE + <FEATURE>_ON` to activate one feature on top.
 
-`OFF_BASELINE_ASSERTIONS` is the *expected post-state* of every generated file when
-only `OFF_BASELINE` is applied. Tests overlay one or more per-feature `_ASSERTIONS`
-constants on top via `merge_deltas(OFF_BASELINE_ASSERTIONS, <FEATURE>_ON_ASSERTIONS, ...)`
+`BASELINE_ASSERTIONS` is the *expected post-state* of every generated file when
+only `BASELINE` is applied. Tests overlay one or more per-feature `_ASSERTIONS`
+constants on top via `merge_deltas(BASELINE_ASSERTIONS, <FEATURE>_ON_ASSERTIONS, ...)`
 to get the expected state for a given scenario, then call the appropriate
 `assert_*_delta` helper per template.
 
@@ -27,19 +27,27 @@ to get the expected state for a given scenario, then call the appropriate
 Per-feature deltas
 ----------------------------------------------------------------------------------------
 `<FEATURE>_ON` is a tfvars string fragment that enables one feature. Concatenated onto
-`OFF_BASELINE` it produces a single-feature-on scenario.
+`BASELINE` it produces a single-feature-on scenario.
 
 `<FEATURE>_ON_ASSERTIONS` is the nested-dict delta — `{template_name: {"present": {...},
-"omitted": {...}}}` — declaring only the keys that differ from `OFF_BASELINE_ASSERTIONS`
+"omitted": {...}}}` — declaring only the keys that differ from `BASELINE_ASSERTIONS`
 when this feature is enabled.
+
+**Convention: each `<FEATURE>_ON_ASSERTIONS` captures the feature's effects assuming
+containerised defaults for every other knob** (container DB, container Redis, etc.).
+Cross-feature interactions — e.g. external Redis flipping Studios's
+`CONNECT_REDIS_ADDRESS`, or Wave-Lite + external Redis removing the `wave-redis`
+container — are NOT baked into individual `<FEATURE>_ON_ASSERTIONS` constants. They're
+declared inline at the test site as an additional dict passed to `merge_deltas(...)`.
+This keeps each feature constant composable: it produces the same effects whether
+stacked with one feature or three.
 
 Canonical test shape:
 
-    @pytest.mark.tfvars(OFF_BASELINE + SEQERA_HOSTED_WAVE_ON)
+    @pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ON)
     def test_wave_on(generated_test_files):
-        expected = merge_deltas(OFF_BASELINE_ASSERTIONS, SEQERA_HOSTED_WAVE_ON_ASSERTIONS)
-        assert_kv_delta(actual=generated_test_files["tower_env"]["content"], **expected["tower_env"])
-        assert_yaml_delta(filepath=generated_test_files["wave_lite_yml"]["filepath"], **expected["wave_lite_yml"])
+        expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ON_ASSERTIONS)
+        assert_all_deltas(generated_test_files, expected)
 
 Co-located with `test_config_file_content.py` so the test file stays focused on
 test logic and the constants stay focused on expected-state declarations.
@@ -50,7 +58,7 @@ from tests.utils.filehandling import FileHelper
 
 
 # MARK: BASE TFVARS
-OFF_BASELINE = """
+BASELINE = """
     flag_use_aws_ses_iam_integration    = false
     flag_use_existing_smtp              = true
     flag_enable_groundswell             = false
@@ -66,22 +74,32 @@ OFF_BASELINE = """
     tower_workflow_cleanup_enabled                 = false
 """
 
-SEQERA_HOSTED_WAVE_ON = """
+WAVE_SEQERA_HOSTED_ON = """
     flag_use_wave   = true
     wave_server_url = "wave.seqera.io"
 """
 
-EXTERNAL_REDIS_ON = """
+REDIS_EXTERNAL_ON = """
     flag_create_external_redis = true
     flag_use_container_redis   = false
 """
 
-STUDIOS_ON_BASE = """
+DB_EXTERNAL_EXISTING_DB_ON = """
+    flag_use_existing_external_db = true
+    flag_use_container_db         = false
+    tower_db_url                  = "existing.tower-db.com"
+"""
+
+STUDIOS_ON = """
     flag_enable_data_studio = true
 """
 
-WAVE_LITE_ON_BASE = """
+WAVE_LITE_ON = """
     flag_use_wave_lite = true
+"""
+
+GROUNDSWELL_ON = """
+    flag_enable_groundswell = true
 """
 
 
@@ -94,7 +112,7 @@ WAVE_LITE_ON_BASE = """
 # port can be diffed against the source. The literal `"# XYZ_NOT_ENABLED"` dict keys are
 # actual key/value entries the rendered .env files contain (rendered with a leading `#`
 # as a commented-out marker line, but parsed as a regular `key=value` by `FileHelper.parse_kv`).
-OFF_BASELINE_ASSERTIONS = {
+BASELINE_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_ENABLE_AWS_SSM": "true",
@@ -279,20 +297,20 @@ OFF_BASELINE_ASSERTIONS = {
 ## ------------------------------------------------------------------------------------
 ## Per-feature delta constants
 ## ------------------------------------------------------------------------------------
-# MARK: Wave Hosted
-# Activates Seqera-hosted Wave (the SaaS endpoint, NOT Wave Lite). When enabled on top
-# of OFF_BASELINE with `flag_use_wave = true` and `wave_server_url = "wave.seqera.io"`,
-# the Tower and Wave-Lite configs both pick up the public Wave URL.
-SEQERA_HOSTED_WAVE_ON_ASSERTIONS = {
+
+
+# MARK: Existing External DB
+# Activates an existing external RDS instance instead of the containerised default. When
+# enabled on top of BASELINE with `flag_use_existing_external_db = true`, `TOWER_DB_URL`
+# points at the supplied `tower_db_url` host. Groundswell-aware DB paths only differ when
+# Groundswell is also on; that interaction is declared inline at the test site.
+# Wave-Lite does NOT support the existing-DB flow (documented limitation as of Aug 2025) —
+# `wave_lite_yml.wave.db.uri` stays at the container DB URL when both are on.
+DB_EXTERNAL_EXISTING_DB_ON_ASSERTIONS = {
     "tower_env": {
         "present": {
-            "TOWER_ENABLE_WAVE": "true",
-            "WAVE_SERVER_URL": "https://wave.seqera.io",
+            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
         },
-        "omitted": set(),
-    },
-    "wave_lite_yml": {
-        "present": {"wave.server.url": "https://wave.seqera.io"},
         "omitted": set(),
     },
 }
@@ -300,11 +318,11 @@ SEQERA_HOSTED_WAVE_ON_ASSERTIONS = {
 
 # MARK: External Redis (Elasticache)
 # Activates Elasticache Redis instead of the containerised default. When enabled on top
-# of OFF_BASELINE with `flag_create_external_redis = true`, `TOWER_REDIS_URL` switches
+# of BASELINE with `flag_create_external_redis = true`, `TOWER_REDIS_URL` switches
 # to the mock external endpoint. Studios/Wave-Lite-aware Redis paths only differ when
 # their own features are also on — those interactions are declared inline at the test
 # site as a cross-feature delta passed to `merge_deltas`.
-EXTERNAL_REDIS_ON_ASSERTIONS = {
+REDIS_EXTERNAL_ON_ASSERTIONS = {
     "tower_env": {
         "present": {"TOWER_REDIS_URL": "redis://mock.tower-redis.com:6379"},
         "omitted": set(),
@@ -313,11 +331,11 @@ EXTERNAL_REDIS_ON_ASSERTIONS = {
 
 
 # MARK: Studios
-# Activates Data Studios on top of OFF_BASELINE. Brings the entire Studios config online —
+# Activates Data Studios on top of BASELINE. Brings the entire Studios config online —
 # `data_studios_env` populates, `# STUDIOS_NOT_ENABLED` markers flip out, the matrix of
 # `TOWER_DATA_STUDIO_TEMPLATES_*` entries appears in `tower_env`, and `tower.data-studio.*`
 # becomes a real sub-tree in `tower_yml`.
-STUDIOS_ON_BASE_ASSERTIONS = {
+STUDIOS_ON_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING": "false",
@@ -385,13 +403,34 @@ STUDIOS_ON_BASE_ASSERTIONS = {
 }
 
 
+# MARK: Wave Hosted
+# Activates Seqera-hosted Wave (the SaaS endpoint, NOT Wave Lite). When enabled on top
+# of BASELINE with `flag_use_wave = true` and `wave_server_url = "wave.seqera.io"`,
+# the Tower and Wave-Lite configs both pick up the public Wave URL.
+WAVE_SEQERA_HOSTED_ON_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_ENABLE_WAVE": "true",
+            "WAVE_SERVER_URL": "https://wave.seqera.io",
+        },
+        "omitted": set(),
+    },
+    "wave_lite_yml": {
+        "present": {
+            "wave.server.url": "https://wave.seqera.io",
+        },
+        "omitted": set(),
+    },
+}
+
+
 # MARK: Wave Lite (self-hosted Wave)
-# Activates the self-hosted Wave-Lite stack on top of OFF_BASELINE. Brings the four
+# Activates the self-hosted Wave-Lite stack on top of BASELINE. Brings the four
 # Wave-Lite containers into `docker_compose` and populates `wave_lite_yml`'s redis/db/wave
 # URLs (vs the `N/A` defaults the OFF baseline asserts when Wave-Lite is off). Also flips
 # `TOWER_ENABLE_WAVE` true and points `WAVE_SERVER_URL` at the local Wave-Lite endpoint
 # (the same env vars Seqera-hosted Wave uses — Tower treats them generically).
-WAVE_LITE_ON_BASE_ASSERTIONS = {
+WAVE_LITE_ON_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_ENABLE_WAVE": "true",
@@ -416,6 +455,32 @@ WAVE_LITE_ON_BASE_ASSERTIONS = {
             "services.wave-lite-reverse-proxy.labels.seqera": "wave-lite-reverse-proxy",
             "services.wave-db.labels.seqera": "wave-db",
             "services.wave-redis.labels.seqera": "wave-redis",
+        },
+        "omitted": set(),
+    },
+}
+
+
+# MARK: Groundswell
+# Activates Groundswell on top of BASELINE. Flips `TOWER_ENABLE_GROUNDSWELL` to true,
+# adds the in-cluster `GROUNDSWELL_SERVER_URL`, and populates `groundswell_env` with
+# the DB / SWELL connection strings (assuming container DB per the convention).
+GROUNDSWELL_ON_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_ENABLE_GROUNDSWELL": "true",
+            "GROUNDSWELL_SERVER_URL": "http://groundswell:8090",
+        },
+        "omitted": set(),
+    },
+    "groundswell_env": {
+        "present": {
+            "TOWER_DB_URL": "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_USER": "tower_test_user",
+            "TOWER_DB_PASSWORD": "tower_test_password",
+            "SWELL_DB_URL": "mysql://db:3306/swell",
+            "SWELL_DB_USER": "swell_test_user",
+            "SWELL_DB_PASSWORD": "swell_test_password",
         },
         "omitted": set(),
     },
