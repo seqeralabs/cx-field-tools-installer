@@ -501,12 +501,12 @@ tests have been ported, do a single rename sweep using this table.
 | `test_existing_db_all_enabled` | `test_db_existing_with_groundswell` + `test_db_existing_with_wave_lite` | ✅ Split into one feature-pair test + one documented non-interaction guard (legacy deleted) |
 | `test_new_db_all_disabled` → `test_db_new_active` | (renamed inline during port) | ✅ Done |
 | `test_new_db_all_enabled` | `test_db_new_with_groundswell` + `test_db_new_with_wave_lite` | ✅ Split into two feature-pair tests (legacy deleted) — note the asymmetry: new-DB × Wave-Lite IS a real interaction (RDS replaces container wave-db), unlike existing-DB × Wave-Lite which is documented as a non-interaction |
+| `test_studio_path_routing_enabled` → `test_studios_path_routing_active` | (renamed inline during port) | ✅ Done. Modelled as a Studios sub-feature: `STUDIOS_ON + STUDIOS_PATH_ROUTING_ON`. Basic "Studios on with default URL" stays implicit in `test_baseline_alb_all_enabled`. |
 
 **To rename when their legacy versions are ported:**
 
 | Current name | Proposed new name | Notes |
 |---|---|---|
-| `test_studio_path_routing_enabled` | `test_studios_path_routing_active` | `_enabled` → `_active`; pluralise `studio` → `studios` to match the marker |
 | `test_studio_ssh_enabled` | `test_studios_ssh_active` | Same convention |
 | `test_studio_ssh_enabled_workspace_restriction` | `test_studios_ssh_workspace_restriction_active` | Same convention |
 | `test_studio_ssh_disabled` | `test_studios_active_ssh_inactive` | **Edge case** — Studios is on, but SSH is explicitly off. The compound name reflects the two-state assertion. Reconsider if a cleaner constant decomposition emerges. |

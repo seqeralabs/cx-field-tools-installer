@@ -100,6 +100,11 @@ STUDIOS_ON = """
     flag_enable_data_studio = true
 """
 
+STUDIOS_PATH_ROUTING_ON = """
+    flag_studio_enable_path_routing = true
+    data_studio_path_routing_url    = "connect-example.com"
+"""
+
 WAVE_LITE_ON = """
     flag_use_wave_lite = true
 """
@@ -420,6 +425,27 @@ STUDIOS_ON_ASSERTIONS = {
         # Specific sub-key from the `tower.data-studio` sub-tree — its mere presence
         # clears the parent `tower.data-studio` from OFF's omitted via prefix-aware merge.
         "present": {"tower.data-studio.allowed-workspaces": None},
+        "omitted": set(),
+    },
+}
+
+
+# MARK: Studios Path Routing
+# Sub-feature of Studios — requires `STUDIOS_ON` to be stacked first. Flips Studios's
+# path-routing flag on and replaces the default Connect URL with the supplied custom URL.
+# When merged on top of `STUDIOS_ON_ASSERTIONS` via `merge_deltas`, the three URL/flag
+# keys get overridden; the rest of Studios's footprint (templates matrix, data_studios_env
+# defaults) flows through unchanged.
+STUDIOS_PATH_ROUTING_ON_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING": "true",
+            "TOWER_DATA_STUDIO_CONNECT_URL": "https://connect-example.com",
+        },
+        "omitted": set(),
+    },
+    "data_studios_env": {
+        "present": {"CONNECT_PROXY_URL": "https://connect-example.com"},
         "omitted": set(),
     },
 }

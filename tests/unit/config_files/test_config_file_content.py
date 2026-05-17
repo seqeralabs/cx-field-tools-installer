@@ -17,6 +17,8 @@ from tests.unit.config_files.expected_deltas import (
     REDIS_EXTERNAL_ON_ASSERTIONS,
     STUDIOS_ON,
     STUDIOS_ON_ASSERTIONS,
+    STUDIOS_PATH_ROUTING_ON,
+    STUDIOS_PATH_ROUTING_ON_ASSERTIONS,
     WAVE_LITE_ON,
     WAVE_LITE_ON_ASSERTIONS,
     WAVE_SEQERA_HOSTED_ON,
@@ -98,38 +100,31 @@ def test_private_ca_reverse_proxy_active(generated_test_files):
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Studios: Path Routing
+## MARK: Studios Path Routing: Active
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.studios
-@pytest.mark.tfvars("""
-    flag_enable_data_studio         = true
-    flag_studio_enable_path_routing = true
-    data_studio_path_routing_url    = "connect-example.com"
-""")
-def test_studio_path_routing_enabled(generated_test_files):
-    """Test scenario.
+@pytest.mark.tfvars(BASELINE + STUDIOS_ON)
+def test_studios_active(generated_test_files):
+    """Studios: Confirm TOWER_DATA_STUDIO_CONNECT_URL and CONNECT_PROXY_URL."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        STUDIOS_ON_ASSERTIONS,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
-    - Baseline all enabled.
-    - Studios path-routing enabled.
-    """
-    assertion_modifiers = assertion_modifiers_template()
 
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING": "true",
-            "TOWER_DATA_STUDIO_CONNECT_URL": "https://connect-example.com",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["data_studios_env"] = {
-        "present": {"CONNECT_PROXY_URL": "https://connect-example.com"},
-        "omitted": {},
-    }
-    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
-
-    verify_all_assertions(generated_test_files, tc_assertions)
+@pytest.mark.local
+@pytest.mark.studios
+@pytest.mark.tfvars(BASELINE + STUDIOS_ON + STUDIOS_PATH_ROUTING_ON)
+def test_studios_path_routing_active(generated_test_files):
+    """Studios + path routing on: TOWER_DATA_STUDIO_CONNECT_URL and CONNECT_PROXY_URL flip to the custom path-routing URL."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        STUDIOS_ON_ASSERTIONS,
+        STUDIOS_PATH_ROUTING_ON_ASSERTIONS,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
 
 ## ------------------------------------------------------------------------------------
