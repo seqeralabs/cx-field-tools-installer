@@ -505,6 +505,7 @@ tests have been ported, do a single rename sweep using this table.
 | `test_studio_ssh_enabled` → `test_studios_ssh_active` | (renamed inline during port) | ✅ Done. Studios sub-feature: `STUDIOS_ON + STUDIOS_SSH_ON`. |
 | `test_studio_ssh_enabled_workspace_restriction` → `test_studios_ssh_workspace_restriction_active` | (renamed inline during port) | ✅ Done. Sub-sub-feature: `STUDIOS_ON + STUDIOS_SSH_ON + STUDIOS_SSH_WORKSPACE_RESTRICTION_ON`. |
 | `test_studio_ssh_disabled` | (deleted — coverage absorbed) | ✅ Done. `STUDIOS_ON_ASSERTIONS.omitted` now declares the 6 SSH-off-default keys, so `test_studios_active` strict-mode-asserts them. Separate test would be redundant. |
+| `test_private_ca_reverse_proxy_active` | (ported in place, no rename) | ✅ Done. Single `PRIVATE_CA_REVERSE_PROXY_ON` constant bundles 3 tfvars (no ALB + private cert + HTTPS) as one deployment topology. Only delta: `services.reverseproxy` container appears. |
 
 **To rename when their legacy versions are ported:**
 
@@ -541,5 +542,4 @@ constant. Pattern set by `test_redis_external_with_studios` /
 |---|---|
 | `test_baseline_alb_all_enabled` | Baseline regression test — its name describes the baseline itself, not a feature delta |
 | `test_baseline_alb_all_disabled` | Same |
-| `test_private_ca_reverse_proxy_active` | Already follows the `_active` convention |
 | `test_wave_sql_file_content` | Lock-test pattern (full-file equality), not a delta test |

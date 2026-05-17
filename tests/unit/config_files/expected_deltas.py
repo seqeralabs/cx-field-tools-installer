@@ -123,6 +123,12 @@ GROUNDSWELL_ON = """
     flag_enable_groundswell = true
 """
 
+PRIVATE_CA_REVERSE_PROXY_ON = """
+    flag_create_load_balancer = false
+    flag_use_private_cacert   = true
+    flag_do_not_use_https     = false
+"""
+
 
 ## ------------------------------------------------------------------------------------
 ## MARK: BASE TFVARS
@@ -594,6 +600,19 @@ GROUNDSWELL_ON_ASSERTIONS = {
             "SWELL_DB_USER": "swell_test_user",
             "SWELL_DB_PASSWORD": "swell_test_password",
         },
+        "omitted": set(),
+    },
+}
+
+
+# MARK: Private CA Reverse Proxy
+# Activates a self-hosted reverseproxy + private CA cert as the TLS termination point,
+# in lieu of an ALB. Three tfvars together describe a deployment topology, not three
+# independent features. Brings up the `services.reverseproxy` container in docker_compose;
+# `services.reverseproxy` is cleared from BASELINE.omitted via the prefix-aware merge.
+PRIVATE_CA_REVERSE_PROXY_ON_ASSERTIONS = {
+    "docker_compose": {
+        "present": {"services.reverseproxy.labels.seqera": "reverseproxy"},
         "omitted": set(),
     },
 }

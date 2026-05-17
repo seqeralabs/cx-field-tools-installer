@@ -13,6 +13,8 @@ from tests.unit.config_files.expected_deltas import (
     DB_EXTERNAL_NEW_ON_ASSERTIONS,
     GROUNDSWELL_ON,
     GROUNDSWELL_ON_ASSERTIONS,
+    PRIVATE_CA_REVERSE_PROXY_ON,
+    PRIVATE_CA_REVERSE_PROXY_ON_ASSERTIONS,
     REDIS_EXTERNAL_ON,
     REDIS_EXTERNAL_ON_ASSERTIONS,
     STUDIOS_ON,
@@ -78,29 +80,18 @@ def test_baseline_alb_all_disabled(generated_test_files):
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Private CA: Active
+## MARK: Private CA Reverse Proxy: Active
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.private_ca
-@pytest.mark.tfvars("""
-    flag_create_load_balancer        = false
-    flag_use_private_cacert          = true
-    flag_do_not_use_https            = false
-""")
+@pytest.mark.tfvars(BASELINE + PRIVATE_CA_REVERSE_PROXY_ON)
 def test_private_ca_reverse_proxy_active(generated_test_files):
-    """Test scenario.
-
-    - Baseline all enabled.
-    - Reverseproxy with self-signed private CA active.
-    """
-    assertion_modifiers = assertion_modifiers_template()
-    assertion_modifiers["docker_compose"] = {
-        "present": {"services.reverseproxy.labels.seqera": "reverseproxy"},
-        "omitted": {},
-    }
-
-    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
-    verify_all_assertions(generated_test_files, tc_assertions)
+    """Private CA reverse-proxy active: ALB skipped, reverseproxy container terminates TLS with the self-signed cert."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        PRIVATE_CA_REVERSE_PROXY_ON_ASSERTIONS,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
 
 ## ------------------------------------------------------------------------------------
@@ -225,7 +216,7 @@ def test_db_new_with_wave_lite(generated_test_files):
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: DB Existing
+## MARK: DB (Existing)
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.db_existing
@@ -281,7 +272,7 @@ def test_db_existing_with_wave_lite(generated_test_files):
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Redis External
+## MARK: Redis (New))
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.redis_external
