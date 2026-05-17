@@ -502,14 +502,14 @@ tests have been ported, do a single rename sweep using this table.
 | `test_new_db_all_disabled` → `test_db_new_active` | (renamed inline during port) | ✅ Done |
 | `test_new_db_all_enabled` | `test_db_new_with_groundswell` + `test_db_new_with_wave_lite` | ✅ Split into two feature-pair tests (legacy deleted) — note the asymmetry: new-DB × Wave-Lite IS a real interaction (RDS replaces container wave-db), unlike existing-DB × Wave-Lite which is documented as a non-interaction |
 | `test_studio_path_routing_enabled` → `test_studios_path_routing_active` | (renamed inline during port) | ✅ Done. Modelled as a Studios sub-feature: `STUDIOS_ON + STUDIOS_PATH_ROUTING_ON`. Basic "Studios on with default URL" stays implicit in `test_baseline_alb_all_enabled`. |
+| `test_studio_ssh_enabled` → `test_studios_ssh_active` | (renamed inline during port) | ✅ Done. Studios sub-feature: `STUDIOS_ON + STUDIOS_SSH_ON`. |
+| `test_studio_ssh_enabled_workspace_restriction` → `test_studios_ssh_workspace_restriction_active` | (renamed inline during port) | ✅ Done. Sub-sub-feature: `STUDIOS_ON + STUDIOS_SSH_ON + STUDIOS_SSH_WORKSPACE_RESTRICTION_ON`. |
+| `test_studio_ssh_disabled` | (deleted — coverage absorbed) | ✅ Done. `STUDIOS_ON_ASSERTIONS.omitted` now declares the 6 SSH-off-default keys, so `test_studios_active` strict-mode-asserts them. Separate test would be redundant. |
 
 **To rename when their legacy versions are ported:**
 
 | Current name | Proposed new name | Notes |
 |---|---|---|
-| `test_studio_ssh_enabled` | `test_studios_ssh_active` | Same convention |
-| `test_studio_ssh_enabled_workspace_restriction` | `test_studios_ssh_workspace_restriction_active` | Same convention |
-| `test_studio_ssh_disabled` | `test_studios_active_ssh_inactive` | **Edge case** — Studios is on, but SSH is explicitly off. The compound name reflects the two-state assertion. Reconsider if a cleaner constant decomposition emerges. |
 | ~~`test_new_db_all_disabled`~~ | `test_db_new_active` | ✅ Already ported + renamed |
 | ~~`test_existing_db_all_disabled`~~ | `test_db_existing_active` | ✅ Already ported + renamed |
 | `test_redis_external_active` | `test_redis_external_active` | Already ported; follows `REDIS_EXTERNAL_ON` constant naming |

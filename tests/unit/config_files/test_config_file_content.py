@@ -7,8 +7,8 @@ from tests.datafiles.expected_results.expected_results import (
 from tests.unit.config_files.expected_deltas import (
     BASELINE,
     BASELINE_ASSERTIONS,
-    DB_EXTERNAL_EXISTING_DB_ON,
-    DB_EXTERNAL_EXISTING_DB_ON_ASSERTIONS,
+    DB_EXTERNAL_EXISTING_ON,
+    DB_EXTERNAL_EXISTING_ON_ASSERTIONS,
     DB_EXTERNAL_NEW_ON,
     DB_EXTERNAL_NEW_ON_ASSERTIONS,
     GROUNDSWELL_ON,
@@ -19,6 +19,10 @@ from tests.unit.config_files.expected_deltas import (
     STUDIOS_ON_ASSERTIONS,
     STUDIOS_PATH_ROUTING_ON,
     STUDIOS_PATH_ROUTING_ON_ASSERTIONS,
+    STUDIOS_SSH_ON,
+    STUDIOS_SSH_ON_ASSERTIONS,
+    STUDIOS_SSH_WORKSPACE_RESTRICTION_ON,
+    STUDIOS_SSH_WORKSPACE_RESTRICTION_ON_ASSERTIONS,
     WAVE_LITE_ON,
     WAVE_LITE_ON_ASSERTIONS,
     WAVE_SEQERA_HOSTED_ON,
@@ -100,7 +104,7 @@ def test_private_ca_reverse_proxy_active(generated_test_files):
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Studios Path Routing: Active
+## MARK: Studios
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.studios
@@ -118,7 +122,7 @@ def test_studios_active(generated_test_files):
 @pytest.mark.studios
 @pytest.mark.tfvars(BASELINE + STUDIOS_ON + STUDIOS_PATH_ROUTING_ON)
 def test_studios_path_routing_active(generated_test_files):
-    """Studios + path routing on: TOWER_DATA_STUDIO_CONNECT_URL and CONNECT_PROXY_URL flip to the custom path-routing URL."""
+    """Studios + path routing on: TOWER_DATA_STUDIO_CONNECT_URL and CONNECT_PROXY_URL use the custom URL."""
     expected = merge_deltas(
         BASELINE_ASSERTIONS,
         STUDIOS_ON_ASSERTIONS,
@@ -128,112 +132,33 @@ def test_studios_path_routing_active(generated_test_files):
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Studios SSH: Enabled
+## MARK: Studios SSH
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.studios
-@pytest.mark.tfvars("""
-    flag_enable_data_studio_ssh = true
-    flag_limit_data_studio_ssh_to_some_workspaces = false
-""")
-def test_studio_ssh_enabled(generated_test_files):
-    """Test scenario.
-
-    - Baseline all enabled.
-    - Studios SSH enabled.
-    """
-    assertion_modifiers = assertion_modifiers_template()
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_SSH_KEYS_MANAGEMENT_ENABLED": "true",
-            "CONNECT_SSH_ENABLED": "true",
-            "TOWER_DATA_STUDIO_CONNECT_SSH_PORT": "2222",
-            "TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES": "",
-            "TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS": "https://connect-ssh.autodc.dev-seqera.net",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["data_studios_env"] = {
-        "present": {
-            "CONNECT_SSH_ENABLED": "true",
-            "CONNECT_SSH_ADDR": ":2222",
-            "CONNECT_SSH_KEY_PATH": "/data/ssh-host-key",
-        },
-        "omitted": {},
-    }
-
-    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
-    verify_all_assertions(generated_test_files, tc_assertions)
+@pytest.mark.tfvars(BASELINE + STUDIOS_ON + STUDIOS_SSH_ON)
+def test_studios_ssh_active(generated_test_files):
+    """Studios + SSH on: 5 SSH-related keys appear in tower_env, 3 in data_studios_env."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        STUDIOS_ON_ASSERTIONS,
+        STUDIOS_SSH_ON_ASSERTIONS,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
 
-## ------------------------------------------------------------------------------------
-## MARK: Studios SSH: Enabled — workspace restriction active
-## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.studios
-@pytest.mark.tfvars("""
-    flag_enable_data_studio_ssh = true
-    flag_limit_data_studio_ssh_to_some_workspaces = true
-    data_studio_ssh_eligible_workspaces = "12,34"
-""")
-def test_studio_ssh_enabled_workspace_restriction(generated_test_files):
-    """Test scenario.
-
-    - Baseline all enabled.
-    - Studios SSH enabled.
-    - SSH restricted to specific workspaces.
-    """
-    assertion_modifiers = assertion_modifiers_template()
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES": "12,34",
-        },
-        "omitted": {},
-    }
-
-    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
-    verify_all_assertions(generated_test_files, tc_assertions)
-
-
-## ------------------------------------------------------------------------------------
-## MARK: Studios SSH: Disabled
-## ------------------------------------------------------------------------------------
-@pytest.mark.local
-@pytest.mark.studios
-@pytest.mark.tfvars("""
-    flag_enable_data_studio_ssh = false
-""")
-def test_studio_ssh_disabled(generated_test_files):
-    """Test scenario.
-
-    - Baseline all enabled.
-    - Studios on, SSH explicitly disabled.
-    """
-    assertion_modifiers = assertion_modifiers_template()
-
-    assertion_modifiers["tower_env"] = {
-        "present": {},
-        "omitted": {
-            "TOWER_SSH_KEYS_MANAGEMENT_ENABLED": "",
-            "TOWER_DATA_STUDIO_CONNECT_SSH_PORT": "",
-            "TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS": "",
-        },
-    }
-
-    assertion_modifiers["data_studios_env"] = {
-        "present": {},
-        "omitted": {
-            "CONNECT_SSH_ENABLED": "",
-            "CONNECT_SSH_ADDR": "",
-            "CONNECT_SSH_KEY_PATH": "",
-        },
-    }
-
-    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
-    verify_all_assertions(generated_test_files, tc_assertions)
+@pytest.mark.tfvars(BASELINE + STUDIOS_ON + STUDIOS_SSH_ON + STUDIOS_SSH_WORKSPACE_RESTRICTION_ON)
+def test_studios_ssh_workspace_restriction_active(generated_test_files):
+    """Studios + SSH + workspace restriction: TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES flips to the configured CSV."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        STUDIOS_ON_ASSERTIONS,
+        STUDIOS_SSH_ON_ASSERTIONS,
+        STUDIOS_SSH_WORKSPACE_RESTRICTION_ON_ASSERTIONS,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
 
 ## ------------------------------------------------------------------------------------
@@ -304,23 +229,23 @@ def test_db_new_with_wave_lite(generated_test_files):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.db_existing
-@pytest.mark.tfvars(BASELINE + DB_EXTERNAL_EXISTING_DB_ON)
+@pytest.mark.tfvars(BASELINE + DB_EXTERNAL_EXISTING_ON)
 def test_db_existing_active(generated_test_files):
     """Existing external DB on top of OFF baseline: TOWER_DB_URL points to the existing endpoint."""
-    expected = merge_deltas(BASELINE_ASSERTIONS, DB_EXTERNAL_EXISTING_DB_ON_ASSERTIONS)
+    expected = merge_deltas(BASELINE_ASSERTIONS, DB_EXTERNAL_EXISTING_ON_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
 
 @pytest.mark.local
 @pytest.mark.db_existing
 @pytest.mark.groundswell
-@pytest.mark.tfvars(BASELINE + GROUNDSWELL_ON + DB_EXTERNAL_EXISTING_DB_ON)
+@pytest.mark.tfvars(BASELINE + GROUNDSWELL_ON + DB_EXTERNAL_EXISTING_ON)
 def test_db_existing_with_groundswell(generated_test_files):
     """Existing external DB + Groundswell on: Groundswell's TOWER_DB_URL also flips to the existing endpoint."""
     expected = merge_deltas(
         BASELINE_ASSERTIONS,
         GROUNDSWELL_ON_ASSERTIONS,
-        DB_EXTERNAL_EXISTING_DB_ON_ASSERTIONS,
+        DB_EXTERNAL_EXISTING_ON_ASSERTIONS,
         # Cross-feature: existing DB flips Groundswell's TOWER_DB_URL and SWELL_DB_URL.
         {
             "groundswell_env": {
@@ -337,7 +262,7 @@ def test_db_existing_with_groundswell(generated_test_files):
 @pytest.mark.local
 @pytest.mark.db_existing
 @pytest.mark.wave
-@pytest.mark.tfvars(BASELINE + WAVE_LITE_ON + DB_EXTERNAL_EXISTING_DB_ON)
+@pytest.mark.tfvars(BASELINE + WAVE_LITE_ON + DB_EXTERNAL_EXISTING_ON)
 def test_db_existing_with_wave_lite(generated_test_files):
     """Existing external DB + Wave-Lite on: Wave-Lite ignores existing-DB.
 
@@ -349,7 +274,7 @@ def test_db_existing_with_wave_lite(generated_test_files):
     expected = merge_deltas(
         BASELINE_ASSERTIONS,
         WAVE_LITE_ON_ASSERTIONS,
-        DB_EXTERNAL_EXISTING_DB_ON_ASSERTIONS,
+        DB_EXTERNAL_EXISTING_ON_ASSERTIONS,
         # No cross-feature delta — Wave-Lite's wave.db.uri stays at container DB.
     )
     assert_all_deltas(generated_test_files, expected)

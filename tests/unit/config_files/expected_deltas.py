@@ -74,26 +74,21 @@ BASELINE = """
     tower_workflow_cleanup_enabled                 = false
 """
 
-WAVE_SEQERA_HOSTED_ON = """
-    flag_use_wave   = true
-    wave_server_url = "wave.seqera.io"
-"""
-
 REDIS_EXTERNAL_ON = """
     flag_create_external_redis = true
     flag_use_container_redis   = false
-"""
-
-DB_EXTERNAL_EXISTING_DB_ON = """
-    flag_use_existing_external_db = true
-    flag_use_container_db         = false
-    tower_db_url                  = "existing.tower-db.com"
 """
 
 DB_EXTERNAL_NEW_ON = """
     flag_create_external_db       = true
     flag_use_existing_external_db = false
     flag_use_container_db         = false
+"""
+
+DB_EXTERNAL_EXISTING_ON = """
+    flag_use_existing_external_db = true
+    flag_use_container_db         = false
+    tower_db_url                  = "existing.tower-db.com"
 """
 
 STUDIOS_ON = """
@@ -103,6 +98,21 @@ STUDIOS_ON = """
 STUDIOS_PATH_ROUTING_ON = """
     flag_studio_enable_path_routing = true
     data_studio_path_routing_url    = "connect-example.com"
+"""
+
+STUDIOS_SSH_ON = """
+    flag_enable_data_studio_ssh                   = true
+    flag_limit_data_studio_ssh_to_some_workspaces = false
+"""
+
+STUDIOS_SSH_WORKSPACE_RESTRICTION_ON = """
+    flag_limit_data_studio_ssh_to_some_workspaces = true
+    data_studio_ssh_eligible_workspaces           = "12,34"
+"""
+
+WAVE_SEQERA_HOSTED_ON = """
+    flag_use_wave   = true
+    wave_server_url = "wave.seqera.io"
 """
 
 WAVE_LITE_ON = """
@@ -333,7 +343,7 @@ DB_EXTERNAL_NEW_ON_ASSERTIONS = {
 # Groundswell is also on; that interaction is declared inline at the test site.
 # Wave-Lite does NOT support the existing-DB flow (documented limitation as of Aug 2025) —
 # `wave_lite_yml.wave.db.uri` stays at the container DB URL when both are on.
-DB_EXTERNAL_EXISTING_DB_ON_ASSERTIONS = {
+DB_EXTERNAL_EXISTING_ON_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
@@ -407,7 +417,15 @@ STUDIOS_ON_ASSERTIONS = {
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_STATUS": "recommended",
             "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES": "DO_NOT_UNCOMMENT",
         },
-        "omitted": {"# STUDIOS_NOT_ENABLED"},
+        "omitted": {
+            "# STUDIOS_NOT_ENABLED",
+            # SSH off by default — explicit assertion that these keys aren't rendered.
+            # `STUDIOS_SSH_ON_ASSERTIONS` transitions them into `present` via the
+            # prefix-aware merge.
+            "TOWER_SSH_KEYS_MANAGEMENT_ENABLED",
+            "TOWER_DATA_STUDIO_CONNECT_SSH_PORT",
+            "TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS",
+        },
     },
     "data_studios_env": {
         "present": {
@@ -419,7 +437,13 @@ STUDIOS_ON_ASSERTIONS = {
             "CONNECT_REDIS_DB": 1,
             "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN": "ipsemlorem",
         },
-        "omitted": {"# STUDIOS_NOT_ENABLED"},
+        "omitted": {
+            "# STUDIOS_NOT_ENABLED",
+            # SSH off by default — see tower_env note above.
+            "CONNECT_SSH_ENABLED",
+            "CONNECT_SSH_ADDR",
+            "CONNECT_SSH_KEY_PATH",
+        },
     },
     "tower_yml": {
         # Specific sub-key from the `tower.data-studio` sub-tree — its mere presence
@@ -446,6 +470,46 @@ STUDIOS_PATH_ROUTING_ON_ASSERTIONS = {
     },
     "data_studios_env": {
         "present": {"CONNECT_PROXY_URL": "https://connect-example.com"},
+        "omitted": set(),
+    },
+}
+
+
+# MARK: Studios SSH
+# Sub-feature of Studios — requires `STUDIOS_ON` to be stacked first. Brings the SSH
+# stanza online: 5 keys appear in `tower_env`, 3 in `data_studios_env`. The SSH-off
+# defaults declared in `STUDIOS_ON_ASSERTIONS.omitted` get transitioned into `present`
+# via the prefix-aware merge. Workspace restriction stays off by default
+# (`TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES = ""`); turn it on with
+# `STUDIOS_SSH_WORKSPACE_RESTRICTION_ON_ASSERTIONS`.
+STUDIOS_SSH_ON_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_SSH_KEYS_MANAGEMENT_ENABLED": "true",
+            "CONNECT_SSH_ENABLED": "true",
+            "TOWER_DATA_STUDIO_CONNECT_SSH_PORT": "2222",
+            "TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES": "",
+            "TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS": "https://connect-ssh.autodc.dev-seqera.net",
+        },
+        "omitted": set(),
+    },
+    "data_studios_env": {
+        "present": {
+            "CONNECT_SSH_ENABLED": "true",
+            "CONNECT_SSH_ADDR": ":2222",
+            "CONNECT_SSH_KEY_PATH": "/data/ssh-host-key",
+        },
+        "omitted": set(),
+    },
+}
+
+
+# MARK: Studios SSH Workspace Restriction
+# Sub-feature of Studios SSH — requires both `STUDIOS_ON` and `STUDIOS_SSH_ON` stacked
+# first. Replaces SSH's empty workspace allowlist with the supplied CSV.
+STUDIOS_SSH_WORKSPACE_RESTRICTION_ON_ASSERTIONS = {
+    "tower_env": {
+        "present": {"TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES": "12,34"},
         "omitted": set(),
     },
 }
