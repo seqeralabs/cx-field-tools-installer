@@ -127,6 +127,11 @@ DATA_EXPLORER_ON = """
     flag_data_explorer_enabled = true
 """
 
+AWS_SES_ON = """
+    flag_use_aws_ses_iam_integration = true
+    flag_use_existing_smtp           = false
+"""
+
 TOWER_OPT_IN_FLAGS_ON = """
     flag_allow_aws_instance_credentials            = true
     tower_enable_openapi                           = true
@@ -629,6 +634,19 @@ DATA_EXPLORER_ON_ASSERTIONS = {
             "TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES": "",
         },
         "omitted": set(),
+    },
+}
+
+
+# MARK: AWS SES (IAM-based)
+# Switches Tower from container SMTP to AWS SES (IAM-authenticated). Two complementary
+# tfvars: SES on, existing-SMTP off. Tower_env-only feature — flips `TOWER_ENABLE_AWS_SES`
+# true and removes the SMTP host/port keys (TOWER_SMTP_USER/PASSWORD stay absent from
+# BASELINE regardless of SES state).
+AWS_SES_ON_ASSERTIONS = {
+    "tower_env": {
+        "present": {"TOWER_ENABLE_AWS_SES": "true"},
+        "omitted": {"TOWER_SMTP_HOST", "TOWER_SMTP_PORT"},
     },
 }
 

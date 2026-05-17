@@ -1,9 +1,7 @@
 import pytest
-from tests.datafiles.expected_results.expected_results import (
-    assertion_modifiers_template,
-    generate_assertions_all_active,
-)
 from tests.unit.config_files.expected_deltas import (
+    AWS_SES_ON,
+    AWS_SES_ON_ASSERTIONS,
     BASELINE,
     BASELINE_ASSERTIONS,
     DATA_EXPLORER_ON,
@@ -34,52 +32,33 @@ from tests.unit.config_files.expected_deltas import (
     WAVE_SEQERA_HOSTED_ON_ASSERTIONS,
 )
 from tests.utils.assertions.delta import assert_all_deltas, merge_deltas
-from tests.utils.assertions.verify_assertions import verify_all_assertions
 from tests.utils.config import expected_sql_dir
 from tests.utils.filehandling import FileHelper
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Baseline ON/OFF
+## MARK: Baseline
 ## ------------------------------------------------------------------------------------
-## This establishes a baseline set of files using testing defaults:
-##    - ALB is active,
-##    - Containerized DB / Redis
-##    - Wave Lite & Groundswell & Data Explorer are active / inactive.
+## Confirms `BASELINE_ASSERTIONS` accurately describes the rendered output when only
+## `BASELINE` tfvars are applied — every other delta test in this file stacks features
+## on top of `BASELINE_ASSERTIONS` via `merge_deltas`, so drift here would cascade.
 
 
 @pytest.mark.local
-def test_baseline_alb_all_enabled(generated_test_files):
-    """Conduct baseline assertions when all SP services turned on."""
-    assertion_modifiers = assertion_modifiers_template()
-    tc_assertions = generate_assertions_all_active(generated_test_files, assertion_modifiers)
-
-    verify_all_assertions(generated_test_files, tc_assertions)
-
-
-# @pytest.mark.local
-# @pytest.mark.tfvars("""
-     flag_use_aws_ses_iam_integration    = false
-     flag_use_existing_smtp              = true
-
-# """)
-# def test_baseline_alb_all_disabled(generated_test_files):
-#     """Conduct baseline assertions when all SP services turned off."""
-#     # TODO: Get rid of email disabling. This should be a discrete check.
-#     assertion_modifiers = assertion_modifiers_template()
-#     tc_assertions = generate_assertions_all_disabled(generated_test_files, assertion_modifiers)
-
-#     verify_all_assertions(generated_test_files, tc_assertions)
+@pytest.mark.tfvars(BASELINE)
+def test_confirm_baseline(generated_test_files):
+    """Confirm BASELINE_ASSERTIONS matches the rendered state under BASELINE tfvars (no feature deltas)."""
+    assert_all_deltas(generated_test_files, BASELINE_ASSERTIONS)
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Tower Opt-In Flags: Active (bundled)
+## MARK: Tower Flags
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.tower
 @pytest.mark.tfvars(BASELINE + TOWER_OPT_IN_FLAGS_ON)
 def test_tower_opt_in_flags_active(generated_test_files):
-    """Six Tower-level config flags all on: instance creds, OpenAPI, pipeline versioning, auto-create users, workflow cleanup.
+    """Six Tower-level config flags all on: instance creds, OpenAPI, pipeline versioning, auto-create users, cleanup.
 
     Grouped as a single test for compactness — these are independent knobs with no
     cross-feature interactions. If any one grows complex (e.g. pipeline versioning gets
@@ -92,6 +71,8 @@ def test_tower_opt_in_flags_active(generated_test_files):
 ## ------------------------------------------------------------------------------------
 ## MARK: Private CA Reverse Proxy: Active
 ## ------------------------------------------------------------------------------------
+# TODO: Add tests that cover URLs when ALB not active.
+
 @pytest.mark.local
 @pytest.mark.private_ca
 @pytest.mark.tfvars(BASELINE + PRIVATE_CA_REVERSE_PROXY_ON)
@@ -171,6 +152,18 @@ def test_studios_ssh_workspace_restriction_active(generated_test_files):
 def test_data_explorer_active(generated_test_files):
     """Data Explorer on: TOWER_DATA_EXPLORER_ENABLED flips true, CLOUD_DISABLED_WORKSPACES surfaces empty."""
     expected = merge_deltas(BASELINE_ASSERTIONS, DATA_EXPLORER_ON_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: AWS SES: Active
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.tower
+@pytest.mark.tfvars(BASELINE + AWS_SES_ON)
+def test_aws_ses_active(generated_test_files):
+    """AWS SES (IAM) on: TOWER_ENABLE_AWS_SES flips true, container SMTP host/port keys disappear."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, AWS_SES_ON_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
 
