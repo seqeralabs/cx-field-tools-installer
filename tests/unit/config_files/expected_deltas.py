@@ -123,6 +123,19 @@ GROUNDSWELL_ON = """
     flag_enable_groundswell = true
 """
 
+DATA_EXPLORER_ON = """
+    flag_data_explorer_enabled = true
+"""
+
+TOWER_OPT_IN_FLAGS_ON = """
+    flag_allow_aws_instance_credentials            = true
+    tower_enable_openapi                           = true
+    tower_enable_pipeline_versioning               = true
+    flag_tower_enable_participant_auto_create_user = true
+    flag_tower_enable_member_auto_create_user      = true
+    tower_workflow_cleanup_enabled                 = true
+"""
+
 PRIVATE_CA_REVERSE_PROXY_ON = """
     flag_create_load_balancer = false
     flag_use_private_cacert   = true
@@ -599,6 +612,46 @@ GROUNDSWELL_ON_ASSERTIONS = {
             "SWELL_DB_URL": "mysql://db:3306/swell",
             "SWELL_DB_USER": "swell_test_user",
             "SWELL_DB_PASSWORD": "swell_test_password",
+        },
+        "omitted": set(),
+    },
+}
+
+
+# MARK: Data Explorer
+# Activates Tower's Data Explorer feature on top of BASELINE. Flips
+# `TOWER_DATA_EXPLORER_ENABLED` to true and surfaces
+# `TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES` (empty string = no workspace restrictions).
+DATA_EXPLORER_ON_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_DATA_EXPLORER_ENABLED": "true",
+            "TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES": "",
+        },
+        "omitted": set(),
+    },
+}
+
+
+# MARK: Tower Opt-In Flags (bundled Tower-side config knobs)
+# Six Tower-level config flags grouped together for compactness — they're independent
+# knobs that all happen to live in tower_env and tower_yml. If any one of them grows
+# complex enough (e.g., pipeline versioning gaining a workspace-restriction sub-feature
+# similar to Studios SSH), break it out into its own `<FEATURE>_ON` constant + test.
+TOWER_OPT_IN_FLAGS_ON_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_ALLOW_INSTANCE_CREDENTIALS": "true",
+            "TOWER_ENABLE_OPENAPI": "true",
+            "TOWER_PIPELINE_VERSIONING_ALLOWED_WORKSPACES": "",
+        },
+        "omitted": {"# TOWER_PIPELINE_VERSIONING_NOT_ENABLED"},
+    },
+    "tower_yml": {
+        "present": {
+            "tower.member.auto-create-user": True,
+            "tower.participant.auto-create-user": True,
+            "tower.workflow-cleanup.enabled": True,
         },
         "omitted": set(),
     },

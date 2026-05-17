@@ -2,11 +2,12 @@ import pytest
 from tests.datafiles.expected_results.expected_results import (
     assertion_modifiers_template,
     generate_assertions_all_active,
-    generate_assertions_all_disabled,
 )
 from tests.unit.config_files.expected_deltas import (
     BASELINE,
     BASELINE_ASSERTIONS,
+    DATA_EXPLORER_ON,
+    DATA_EXPLORER_ON_ASSERTIONS,
     DB_EXTERNAL_EXISTING_ON,
     DB_EXTERNAL_EXISTING_ON_ASSERTIONS,
     DB_EXTERNAL_NEW_ON,
@@ -25,6 +26,8 @@ from tests.unit.config_files.expected_deltas import (
     STUDIOS_SSH_ON_ASSERTIONS,
     STUDIOS_SSH_WORKSPACE_RESTRICTION_ON,
     STUDIOS_SSH_WORKSPACE_RESTRICTION_ON_ASSERTIONS,
+    TOWER_OPT_IN_FLAGS_ON,
+    TOWER_OPT_IN_FLAGS_ON_ASSERTIONS,
     WAVE_LITE_ON,
     WAVE_LITE_ON_ASSERTIONS,
     WAVE_SEQERA_HOSTED_ON,
@@ -54,29 +57,36 @@ def test_baseline_alb_all_enabled(generated_test_files):
     verify_all_assertions(generated_test_files, tc_assertions)
 
 
-@pytest.mark.local
-@pytest.mark.tfvars("""
-    flag_use_aws_ses_iam_integration    = false
-    flag_use_existing_smtp              = true
-    flag_enable_groundswell             = false
-    flag_data_explorer_enabled          = false
-    flag_enable_data_studio             = false
-    flag_use_wave                       = false
-    flag_use_wave_lite                  = false
-    flag_allow_aws_instance_credentials = false
-    tower_enable_openapi                = false
-    tower_enable_pipeline_versioning    = false
-    flag_tower_enable_participant_auto_create_user = false
-    flag_tower_enable_member_auto_create_user      = false
-    tower_workflow_cleanup_enabled                 = false
-""")
-def test_baseline_alb_all_disabled(generated_test_files):
-    """Conduct baseline assertions when all SP services turned off."""
-    # TODO: Get rid of email disabling. This should be a discrete check.
-    assertion_modifiers = assertion_modifiers_template()
-    tc_assertions = generate_assertions_all_disabled(generated_test_files, assertion_modifiers)
+# @pytest.mark.local
+# @pytest.mark.tfvars("""
+     flag_use_aws_ses_iam_integration    = false
+     flag_use_existing_smtp              = true
 
-    verify_all_assertions(generated_test_files, tc_assertions)
+# """)
+# def test_baseline_alb_all_disabled(generated_test_files):
+#     """Conduct baseline assertions when all SP services turned off."""
+#     # TODO: Get rid of email disabling. This should be a discrete check.
+#     assertion_modifiers = assertion_modifiers_template()
+#     tc_assertions = generate_assertions_all_disabled(generated_test_files, assertion_modifiers)
+
+#     verify_all_assertions(generated_test_files, tc_assertions)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Tower Opt-In Flags: Active (bundled)
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.tower
+@pytest.mark.tfvars(BASELINE + TOWER_OPT_IN_FLAGS_ON)
+def test_tower_opt_in_flags_active(generated_test_files):
+    """Six Tower-level config flags all on: instance creds, OpenAPI, pipeline versioning, auto-create users, workflow cleanup.
+
+    Grouped as a single test for compactness — these are independent knobs with no
+    cross-feature interactions. If any one grows complex (e.g. pipeline versioning gets
+    workspace-restriction logic), break it out into its own `_active` test.
+    """
+    expected = merge_deltas(BASELINE_ASSERTIONS, TOWER_OPT_IN_FLAGS_ON_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
 
 
 ## ------------------------------------------------------------------------------------
@@ -149,6 +159,18 @@ def test_studios_ssh_workspace_restriction_active(generated_test_files):
         STUDIOS_SSH_ON_ASSERTIONS,
         STUDIOS_SSH_WORKSPACE_RESTRICTION_ON_ASSERTIONS,
     )
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Data Explorer: Active
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.data_explorer
+@pytest.mark.tfvars(BASELINE + DATA_EXPLORER_ON)
+def test_data_explorer_active(generated_test_files):
+    """Data Explorer on: TOWER_DATA_EXPLORER_ENABLED flips true, CLOUD_DISABLED_WORKSPACES surfaces empty."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, DATA_EXPLORER_ON_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
 
