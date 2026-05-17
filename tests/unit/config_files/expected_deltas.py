@@ -90,6 +90,12 @@ DB_EXTERNAL_EXISTING_DB_ON = """
     tower_db_url                  = "existing.tower-db.com"
 """
 
+DB_EXTERNAL_NEW_ON = """
+    flag_create_external_db       = true
+    flag_use_existing_external_db = false
+    flag_use_container_db         = false
+"""
+
 STUDIOS_ON = """
     flag_enable_data_studio = true
 """
@@ -299,7 +305,23 @@ BASELINE_ASSERTIONS = {
 ## ------------------------------------------------------------------------------------
 
 
-# MARK: Existing External DB
+# MARK: DB (New)
+# Activates a Terraform-provisioned new RDS instance on top of BASELINE. Universal effect:
+# `TOWER_DB_URL` points at the mock new-RDS host. Groundswell-aware and Wave-Lite-aware DB
+# paths only differ when those features are also on; declared inline at the test site.
+# Unlike existing-DB, Wave-Lite DOES integrate with new-DB (uses the same RDS infra) — see
+# `test_new_external_db_with_wave_lite` for the real cross-feature interaction.
+DB_EXTERNAL_NEW_ON_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+        },
+        "omitted": set(),
+    },
+}
+
+
+# MARK: DB (Existing)
 # Activates an existing external RDS instance instead of the containerised default. When
 # enabled on top of BASELINE with `flag_use_existing_external_db = true`, `TOWER_DB_URL`
 # points at the supplied `tower_db_url` host. Groundswell-aware DB paths only differ when
@@ -316,7 +338,7 @@ DB_EXTERNAL_EXISTING_DB_ON_ASSERTIONS = {
 }
 
 
-# MARK: External Redis (Elasticache)
+# MARK: Redis (External)
 # Activates Elasticache Redis instead of the containerised default. When enabled on top
 # of BASELINE with `flag_create_external_redis = true`, `TOWER_REDIS_URL` switches
 # to the mock external endpoint. Studios/Wave-Lite-aware Redis paths only differ when
@@ -403,7 +425,7 @@ STUDIOS_ON_ASSERTIONS = {
 }
 
 
-# MARK: Wave Hosted
+# MARK: Wave (Hosted)
 # Activates Seqera-hosted Wave (the SaaS endpoint, NOT Wave Lite). When enabled on top
 # of BASELINE with `flag_use_wave = true` and `wave_server_url = "wave.seqera.io"`,
 # the Tower and Wave-Lite configs both pick up the public Wave URL.
@@ -424,7 +446,7 @@ WAVE_SEQERA_HOSTED_ON_ASSERTIONS = {
 }
 
 
-# MARK: Wave Lite (self-hosted Wave)
+# MARK: Wave-Lite
 # Activates the self-hosted Wave-Lite stack on top of BASELINE. Brings the four
 # Wave-Lite containers into `docker_compose` and populates `wave_lite_yml`'s redis/db/wave
 # URLs (vs the `N/A` defaults the OFF baseline asserts when Wave-Lite is off). Also flips

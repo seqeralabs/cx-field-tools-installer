@@ -495,10 +495,12 @@ tests have been ported, do a single rename sweep using this table.
 | Old name | New name(s) | Status |
 |---|---|---|
 | `test_seqera_hosted_wave_active__retrofit` → `test_seqera_hosted_wave_active` | (replaced legacy `test_seqera_hosted_wave_active`) | ✅ Done |
-| `test_new_redis_all_disabled` | `test_redis_external_active` *(pending rename)* | Ported to delta pattern; name still legacy |
+| `test_redis_external_active` | `test_redis_external_active` *(pending rename)* | Ported to delta pattern; name still legacy |
 | `test_new_redis_all_enabled` | `test_redis_external_with_studios` + `test_redis_external_with_wave_lite` | ✅ Split into two feature-pair tests (legacy deleted) |
-| `test_existing_db_all_disabled` → `test_db_external_existing_active` | (renamed inline during port) | ✅ Done |
-| `test_existing_db_all_enabled` | `test_db_external_existing_with_groundswell` + `test_db_external_existing_with_wave_lite` | ✅ Split into one feature-pair test + one documented non-interaction guard (legacy deleted) |
+| `test_existing_db_all_disabled` → `test_db_existing_active` | (renamed inline during port) | ✅ Done |
+| `test_existing_db_all_enabled` | `test_db_existing_with_groundswell` + `test_db_existing_with_wave_lite` | ✅ Split into one feature-pair test + one documented non-interaction guard (legacy deleted) |
+| `test_new_db_all_disabled` → `test_db_new_active` | (renamed inline during port) | ✅ Done |
+| `test_new_db_all_enabled` | `test_db_new_with_groundswell` + `test_db_new_with_wave_lite` | ✅ Split into two feature-pair tests (legacy deleted) — note the asymmetry: new-DB × Wave-Lite IS a real interaction (RDS replaces container wave-db), unlike existing-DB × Wave-Lite which is documented as a non-interaction |
 
 **To rename when their legacy versions are ported:**
 
@@ -508,9 +510,9 @@ tests have been ported, do a single rename sweep using this table.
 | `test_studio_ssh_enabled` | `test_studios_ssh_active` | Same convention |
 | `test_studio_ssh_enabled_workspace_restriction` | `test_studios_ssh_workspace_restriction_active` | Same convention |
 | `test_studio_ssh_disabled` | `test_studios_active_ssh_inactive` | **Edge case** — Studios is on, but SSH is explicitly off. The compound name reflects the two-state assertion. Reconsider if a cleaner constant decomposition emerges. |
-| `test_new_db_all_disabled` | `test_external_db_active` | `flag_create_external_db = true` ⇒ "external_db" matches the feature; drop `new_` (temporal) |
-| ~~`test_existing_db_all_disabled`~~ | `test_db_external_existing_active` | ✅ Already ported + renamed |
-| `test_new_redis_all_disabled` | `test_redis_external_active` | Already ported; follows `REDIS_EXTERNAL_ON` constant naming |
+| ~~`test_new_db_all_disabled`~~ | `test_db_new_active` | ✅ Already ported + renamed |
+| ~~`test_existing_db_all_disabled`~~ | `test_db_existing_active` | ✅ Already ported + renamed |
+| `test_redis_external_active` | `test_redis_external_active` | Already ported; follows `REDIS_EXTERNAL_ON` constant naming |
 
 **Pending design decision (all-on-baseline tests):**
 
@@ -522,7 +524,7 @@ follows whichever path we pick.
 
 | Current name | Status |
 |---|---|
-| `test_new_db_all_enabled` | TBD — needs all-on baseline pattern, OR split into feature-pair tests like Redis was |
+| ~~`test_new_db_all_enabled`~~ | ✅ Split — see "already renamed / restructured" |
 | ~~`test_existing_db_all_enabled`~~ | ✅ Split — see "already renamed / restructured" |
 | ~~`test_new_redis_all_enabled`~~ | ✅ Split — see "already renamed / restructured" |
 
