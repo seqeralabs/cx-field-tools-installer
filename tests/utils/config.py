@@ -25,8 +25,6 @@ class FilePaths:
     OUTPUTS_DST: str = ""
 
     CACHE_PLAN_DIR: str = ""
-    CACHE_TEMPLATEFILE_DIR: str = ""
-    CACHE_CONSOLE_DIR: str = ""
     CACHE_SCENARIO_DIR: str = ""
     TFPLAN_FILE_LOCATION: str = ""
     TFPLAN_JSON_LOCATION: str = ""
@@ -48,8 +46,6 @@ class FilePaths:
         self.OUTPUTS_DST = f"{self.ROOT}/012_testing_outputs.tf"
 
         self.CACHE_PLAN_DIR = f"{self.ROOT}/tests/.plan_cache"
-        self.CACHE_TEMPLATEFILE_DIR = f"{self.ROOT}/tests/.templatefile_cache"
-        self.CACHE_CONSOLE_DIR = f"{self.ROOT}/tests/.console_cache"
         self.CACHE_SCENARIO_DIR = f"{self.ROOT}/tests/.scenario_cache"
         self.TFPLAN_FILE_LOCATION = f"{self.ROOT}/tfplan"
         self.TFPLAN_JSON_LOCATION = f"{self.ROOT}/tfplan.json"

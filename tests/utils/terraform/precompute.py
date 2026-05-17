@@ -31,6 +31,7 @@ from tests.utils.filehandling import FileHelper
 
 
 JSON_009_PATH = "009_define_file_templates.json"
+JSON_012_PATH = "012_outputs.json"
 
 # Locals we can't or shouldn't ask `terraform console` to resolve. Source of truth is
 # `tests/unit/framework/test_console_locals_resolvability.py`; keep in sync.
@@ -104,6 +105,30 @@ def discover_referenced_locals() -> set[str]:
     return set(re.findall(r"local\.(\w+)", content)) - _LOCALS_TO_SKIP
 
 
+def discover_output_expressions() -> dict[str, str]:
+    """Map every output declared in 012_outputs.tf to its HCL value expression.
+
+    Reads `012_outputs.json` (JSONified at session_setup via the same `hcl_to_json`
+    pipeline used for 009). hcl2json wraps each value with `${...}` — strip that so the
+    expression embeds cleanly back into a downstream `terraform console` call.
+
+    Outputs whose `value` references unguarded resources (caller_identity, EC2 IPs, etc.)
+    have been refactored in `012_outputs.tf` to be passthroughs of `local.<name>` defined
+    with the two-layer-defense pattern in `locals.tf`. Console can evaluate every value
+    expression that this function returns.
+    """
+    path = Path(FP.ROOT) / JSON_012_PATH
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text())
+    expressions: dict[str, str] = {}
+    for name, blocks in data.get("output", {}).items():
+        raw = blocks[0]["value"]
+        # Strip the hcl2json `${...}` interpolation wrapper.
+        expressions[name] = raw[2:-1] if raw.startswith("${") and raw.endswith("}") else raw
+    return expressions
+
+
 def collect_scenarios_from_items(items) -> dict[str, str]:
     """Build `{scenario_hash: tf_modifiers}` from collected pytest items.
 
@@ -118,12 +143,24 @@ def collect_scenarios_from_items(items) -> dict[str, str]:
     return scenarios
 
 
+def read_scenario_outputs(tf_modifiers: str) -> dict:
+    """Read the resolved `module.connection_strings` outputs for one scenario from disk.
+
+    Consumed by the `scenario_outputs` fixture in `tests/conftest.py`. The values were
+    written by `_precompute_scenario` during `session_setup` via a single
+    `terraform console` call per scenario.
+    """
+    cache_key = hash_templatefile_cache_key(tf_modifiers)
+    outputs_path = Path(FP.CACHE_SCENARIO_DIR) / cache_key / "outputs.json"
+    return json.loads(outputs_path.read_text())
+
+
 ## ------------------------------------------------------------------------------------
 ## Worker helpers
 ## ------------------------------------------------------------------------------------
 def _expected_filenames() -> set[str]:
     """The full set of filenames a complete scenario cache directory should contain."""
-    names = {"locals.json"}
+    names = {"locals.json", "outputs.json"}
     for key, meta in all_template_files.items():
         names.add(_WAVE_LITE_RDS_FILENAME if key == _WAVE_LITE_RDS_KEY else f"{key}{meta['extension']}")
     return names
@@ -204,11 +241,22 @@ def _precompute_scenario(scenario_hash: str, tf_modifiers: str) -> tuple[str, fl
         if key != _WAVE_LITE_RDS_KEY and key in raw_locals
     }
 
-    # Mega-expression: locals + every templatefile in one jsonencode round trip.
+    # Mega-expression: locals + every output from 012_outputs.tf + every templatefile,
+    # all in one jsonencode round trip. Each output's value expression is enumerated from
+    # 012_outputs.json and embedded directly — `test_outputs.py` reads the resulting map
+    # from `outputs.json` to validate per-scenario output behaviour.
     locals_to_resolve = discover_referenced_locals()
+    output_expressions = discover_output_expressions()
     locals_body = ", ".join(f"{n} = try(local.{n}, null)" for n in sorted(locals_to_resolve))
+    outputs_body = ", ".join(f"{name} = {value_expr}" for name, value_expr in sorted(output_expressions.items()))
     templates_body = ", ".join(f"{k} = {p}" for k, p in template_payloads.items())
-    expr = f"jsonencode({{ locals = {{ {locals_body} }}, templates = {{ {templates_body} }} }})"
+    expr = (
+        f"jsonencode({{ "
+        f"locals = {{ {locals_body} }}, "
+        f"outputs = {{ {outputs_body} }}, "
+        f"templates = {{ {templates_body} }} "
+        f"}})"
+    )
 
     # Per-worker tfvars + state paths so parallel processes don't fight over the default state lock.
     with tempfile.NamedTemporaryFile(
@@ -248,6 +296,9 @@ def _precompute_scenario(scenario_hash: str, tf_modifiers: str) -> tuple[str, fl
 
         # Persist resolved locals (useful for debugging; not consumed by tests today).
         (cache_dir / "locals.json").write_text(json.dumps(parsed["locals"], indent=2))
+
+        # Persist resolved `module.connection_strings` outputs — consumed by `test_outputs.py`.
+        (cache_dir / "outputs.json").write_text(json.dumps(parsed["outputs"], indent=2))
 
         # Persist rendered templates.
         for key, content in parsed["templates"].items():

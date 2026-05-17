@@ -96,14 +96,10 @@ run_tests_core_and_variables: extract_hcl2json
 purge_cached_plans:
 	@cd tests/ && rm -rf .plan_cache
 
-purge_cached_templatefiles:
-	@cd tests/ && rm -rf .templatefile_cache
-
-purge_cached_console_outputs:
-	@cd tests/ && rm -rf .console_cache
+purge_cached_scenarios:
+	@cd tests/ && rm -rf .scenario_cache
 
 purge_cache:
 	@echo "Purging testing caches"
-	@$(MAKE) purge_cached_templatefiles
+	@$(MAKE) purge_cached_scenarios
 	@$(MAKE) purge_cached_plans
-	@$(MAKE) purge_cached_console_outputs

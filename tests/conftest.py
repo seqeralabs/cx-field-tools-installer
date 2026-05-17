@@ -19,10 +19,11 @@ from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
 from tests.utils.preflight.preflight import check_aws_sso_token
 from tests.utils.pytest_logger import get_logger
-from tests.utils.terraform.executor import TF, prepare_plan
+from tests.utils.terraform.executor import TF
 from tests.utils.terraform.precompute import (
     collect_scenarios_from_items,
     precompute_in_parallel,
+    read_scenario_outputs,
     write_scenario_index,
 )
 from tests.utils.terraform.template_generator import generate_tc_files
@@ -102,11 +103,15 @@ def session_setup():
     # Prepare plan cache directory
     os.makedirs(FP.CACHE_PLAN_DIR, exist_ok=True)
 
-    # Prepare JSONified 009 via the shared hcl_to_json helper (Phases 1+2 of #352).
+    # Prepare JSONified 009 + 012 via the shared hcl_to_json helper (Phases 1+2 of #352).
     # On linux/amd64 or linux/arm64 with the binary extracted, this is a ~10-50ms in-process
     # call; on unsupported hosts it falls back to the per-call vendored docker container.
-    data = hcl_to_json(f"{FP.ROOT}/009_define_file_templates.tf")
-    Path(f"{FP.ROOT}/009_define_file_templates.json").write_text(json.dumps(data))
+    # 009 supplies the templatefile() expression source; 012 supplies the output-name →
+    # value-expression map that the parallel precompute resolves per scenario.
+    data_009 = hcl_to_json(f"{FP.ROOT}/009_define_file_templates.tf")
+    Path(f"{FP.ROOT}/009_define_file_templates.json").write_text(json.dumps(data_009))
+    data_012 = hcl_to_json(f"{FP.ROOT}/012_outputs.tf")
+    Path(f"{FP.ROOT}/012_outputs.json").write_text(json.dumps(data_012))
 
     # Parallel precompute of resolved locals + rendered templatefiles for every collected
     # scenario. Each worker spawns one `terraform console` call per scenario and writes
@@ -144,6 +149,7 @@ def session_setup():
         FP.TFVARS_BASE_OVERRIDE_DST,
         FP.OUTPUTS_DST,
         "009_define_file_templates.json",
+        "012_outputs.json",
     ]
 
     for file in files_to_purge:
@@ -153,23 +159,6 @@ def session_setup():
 
     # Restore original tfvars
     FileHelper.move_file(FP.TFVARS_BACKUP, FP.TFVARS_BASE)
-
-
-@pytest.fixture(scope="session")  # function
-def config_baseline_settings_default():
-    """Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars.
-
-    Plan with ALL resources rather than targeted, to get all outputs in plan document.
-    """
-    tf_modifiers = """#NONE"""
-
-    # DONT USE THESE - no longer needed since the new `terraform template` approach is used.
-    # qualifier = "-target=null_resource.generate_independent_config_files"
-    # run_terraform_apply(qualifier)
-
-    return prepare_plan(tf_modifiers)
-
-    # run_terraform_destroy()
 
 
 @pytest.fixture
@@ -184,6 +173,20 @@ def staged_scenario(request, session_setup):
     marker = request.node.get_closest_marker("tfvars")
     tf_modifiers = marker.args[0] if marker else "#NONE"
     return generate_tc_files(None, request.node.name, tf_modifiers)
+
+
+@pytest.fixture
+def scenario_outputs(request, session_setup):
+    """Load the `module.connection_strings` outputs for this scenario from the precompute cache.
+
+    Reads `tests/.scenario_cache/{hash}/outputs.json`, populated by the parallel precompute
+    worker via a single `terraform console` call per scenario. Tests use this in place of the
+    old `prepare_plan(...)` + `extract_config_values(plan)` pattern, which required a real
+    `terraform plan` (and therefore valid AWS credentials).
+    """
+    marker = request.node.get_closest_marker("tfvars")
+    tf_modifiers = marker.args[0] if marker else "#NONE"
+    return read_scenario_outputs(tf_modifiers)
 
 
 @pytest.fixture(scope="function")  # noqa: PT003  (explicit for documentation)
