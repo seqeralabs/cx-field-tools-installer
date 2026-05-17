@@ -9,8 +9,17 @@ under console-without-plan (HCL evaluates both ternary branches eagerly) — and
 rendered template would silently contain the literal text `(known after apply)`.
 
 This test scans the raw source of `009_define_file_templates.tf` for every `local.<name>`
-reference, evaluates each via `terraform console`, and fails on any result of
-`(known after apply)`. Catches the silent-corruption failure mode at PR time.
+reference and verifies — using the resolved values written to each scenario's
+`tests/.scenario_cache/{hash}/locals.json` by the parallel precompute (see
+`tests/utils/terraform/precompute.py`) — that the local resolved to a non-null value
+in EVERY collected scenario. Because the precompute wraps each lookup in
+`try(local.X, null)`, a `null` in `locals.json` is exactly the silent-corruption case
+the check guards against.
+
+Checking every scenario rather than just one catches the case where a local resolves
+fine under tfvars combo A but fails under combo B. Disk reads are ~ms scale, so the
+extra coverage is essentially free relative to the prior implementation (which paid
+one ~1.5 s `terraform console` startup per parametrized case).
 
 If this test fails:
   1. Find the offending local's definition (likely in `000_main.tf`).
@@ -18,15 +27,13 @@ If this test fails:
   3. Wrap resource refs in `var.use_mocks ? null : try(<ref>, null)` (see #353 addendum).
 """
 
+import json
+from pathlib import Path
 import re
 
 import pytest
 from tests.utils.config import FP
 from tests.utils.filehandling import FileHelper
-from tests.utils.terraform.executor import (
-    TF_CONSOLE_UNKNOWN_MARKER,
-    console_evaluate_local,
-)
 
 
 # Locals the test framework substitutes in Python *before* the templatefile payload reaches
@@ -67,17 +74,35 @@ def _locals_to_check() -> set[str]:
 @pytest.mark.framework
 @pytest.mark.parametrize("local_name", sorted(_locals_to_check()))
 def test_local_resolves_via_console(session_setup, local_name):
-    """Every non-allowlisted local referenced from 009 must evaluate to a concrete value under console-without-plan."""
-    result = console_evaluate_local(local_name)
-    assert result != TF_CONSOLE_UNKNOWN_MARKER, (
-        f"local.{local_name} resolves to {TF_CONSOLE_UNKNOWN_MARKER!r} under `terraform console`.\n"
-        f"This means any templatefile that references it via the fast path (#353) would silently\n"
-        f"render the literal text {TF_CONSOLE_UNKNOWN_MARKER!r} into the generated config file.\n\n"
-        f"Likely cause: local.{local_name}'s definition contains a ternary where at least one branch\n"
-        f"references a resource or downstream module that doesn't exist without `terraform apply`.\n"
-        f"Fix by refactoring the local so no branch touches a resource attribute, OR by wrapping the\n"
-        f"resource ref in `var.use_mocks ? null : try(<ref>, null)` (the two-layer defense pattern\n"
-        f'documented at 000_main.tf:module "connection_strings").\n\n'
+    """Every non-allowlisted local from 009 must resolve to a non-null value in every scenario's `locals.json`."""
+    cache_root = Path(FP.CACHE_SCENARIO_DIR)
+    scenario_dirs = sorted(d for d in cache_root.iterdir() if d.is_dir())
+    assert scenario_dirs, (
+        f"No scenario cache folders found under {cache_root}. Precompute may not have run — check session_setup output."
+    )
+
+    failures: list[str] = []
+    for scenario_dir in scenario_dirs:
+        locals_path = scenario_dir / "locals.json"
+        if not locals_path.exists():
+            failures.append(f"  - {scenario_dir.name}: locals.json missing")
+            continue
+        locals_map = json.loads(locals_path.read_text())
+        if local_name not in locals_map:
+            failures.append(f"  - {scenario_dir.name}: key absent (precompute didn't request it?)")
+            continue
+        if locals_map[local_name] is None:
+            failures.append(f"  - {scenario_dir.name}: value is null (precompute's try() fallback fired)")
+
+    assert not failures, (
+        f"local.{local_name} failed to resolve in {len(failures)} of {len(scenario_dirs)} scenarios:\n"
+        f"{chr(10).join(failures[:5])}\n"
+        f"{'  ... (more)' if len(failures) > 5 else ''}\n\n"
+        f"A null value means the precompute's `try(local.{local_name}, null)` fell back — the local's\n"
+        f"definition contains a ternary where at least one branch references a resource or downstream\n"
+        f"module that doesn't exist without `terraform apply`. Fix by refactoring the local so no branch\n"
+        f"touches a resource attribute, OR by wrapping the resource ref in `var.use_mocks ? null : try(<ref>, null)`\n"
+        f'(the two-layer defense pattern documented at 000_main.tf:module "connection_strings" and locals.tf).\n\n'
         f"If this is a deliberate known-gap rather than a new violation, add `{local_name}` to the\n"
         f"appropriate allowlist set at the top of this test file with a comment explaining why."
     )
