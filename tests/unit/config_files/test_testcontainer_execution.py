@@ -109,7 +109,7 @@ def test_tower_sql_population(staged_scenario):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.testcontainer
-def test_wave_sql_rds_population(staged_scenario, config_baseline_settings_default):
+def test_wave_sql_rds_population(staged_scenario):
     """Test that wave-lite-rds.sql successfully populates a Postgres database as expected (via Testcontainer).
 
     Emulates execution of RDS prepping script in Ansible.

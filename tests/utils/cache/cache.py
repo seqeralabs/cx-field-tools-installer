@@ -28,12 +28,21 @@ def hash_cache_key(tf_modifiers: str, qualifier: str = "") -> str:
 
 
 def normalize_whitespace(tf_modifiers: str) -> str:
-    r"""Purge intermediate whitespace (extra space makes same keys hash to different values).
+    r"""Collapse cosmetic whitespace so logically-identical tfvars produce the same hash.
 
-    Convert multiple spaces to single space (ASSUMPTION: Python tabs insert spaces!)
-    NOTE: Need to keep `\n` to not break HCL formatting expectations.
+    Per line:
+      - Collapse runs of internal whitespace to a single space (handles column alignment).
+      - `.strip()` to drop leading indent and trailing trailing whitespace.
+
+    Newlines are preserved (HCL is line-oriented for simple `key = value` assignments).
+    `#` comments and blank lines are NOT stripped — they're content; collapsing them would
+    surprise anyone who documented a scenario deliberately.
+
+    Safe because terraform's HCL parser is whitespace-insensitive for simple assignments.
+    None of the project's `@pytest.mark.tfvars(...)` markers use heredocs / multi-line
+    strings where indentation would be load-bearing, so per-line strip is non-lossy.
     """
-    return "\n".join(re.sub(r"\s+", " ", line) for line in tf_modifiers.splitlines())
+    return "\n".join(re.sub(r"\s+", " ", line).strip() for line in tf_modifiers.splitlines())
 
 
 def hash_scenario(tf_modifiers: str) -> str:
