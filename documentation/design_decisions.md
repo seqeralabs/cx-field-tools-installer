@@ -266,15 +266,13 @@ In addition to the general design decisions noted above, there are a few decisio
     - **The NLB uses the same subnets as the ALB (`subnet_ids_alb`).** The NLB needs to be reachable from wherever users connect to Platform, so it belongs in the same network.
     - **Route53 DNS must be managed within the same AWS account.** If DNS is managed externally, the `connect-ssh.*` A record must be created manually before SSH connections will resolve correctly.
 
-18. **rootCA.crt is mounted into backend and cron containers whenever `flag_use_private_cacert = true`**
+18. **rootCA.crt is mounted into backend, cron, and wave-lite (optional) containers whenever `flag_use_private_cacert = true`**
 
     When a private/self-signed certificate is in use, the rootCA is unconditionally volume-mounted into the `backend` and `cron` containers and imported into their JVM trust stores at startup via the `import-cert.sh` entrypoint wrapper. This applies regardless of whether Wave is enabled.
 
-    Per [Seqera documentation](https://docs.seqera.io/platform-enterprise/enterprise/configuration/ssl_tls#configure-seqera-to-trust-your-private-certificate):
-
-    > "If you secure related infrastructure (such as private Git repositories) with certificates issued by a private Certificate Authority (CA), you may need to configure Seqera to trust those certificates."
-
     The JVM inside each container maintains its own trust store, independent of the host OS. Even if the host OS trusts the private CA (via `update-ca-trust`), Java processes in the containers will still reject TLS connections to any service using that CA unless the rootCA is explicitly imported into the container JVM's cacerts.
+
+    To learn more, see [Seqera documentation](https://docs.seqera.io/platform-enterprise/enterprise/configuration/ssl_tls#configure-seqera-to-trust-your-private-certificate).
 
     Mounting the rootCA into backend/cron whenever a private cert is in use is the safe, forward-compatible default — it covers the case where Wave is later enabled, or where other private-CA-secured infrastructure is being called from within the Platform JVM. The marginal cost (a volume mount + a single `keytool` call at container start) is negligible.
 

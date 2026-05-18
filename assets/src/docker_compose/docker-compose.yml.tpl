@@ -255,9 +255,9 @@ services:
     #   - 9099:9090
     expose:
       - 9090
+    command: ["/launch.sh"]
 %{ if flag_use_private_cacert == true ~}
     entrypoint: ["/bin/sh", "/tmp/import-cert.sh"]
-    command: ["/launch.sh"]
 %{ endif ~}
     volumes:
       - $HOME/target/wave_lite_config/wave-lite.yml:/work/config.yml

@@ -77,11 +77,7 @@ resource "null_resource" "generate_independent_config_files" {
 
       if [[ "${var.flag_use_private_cacert}" == "true" ]]; then
 
-        cat > ${path.module}/assets/target/docker_compose/import-cert.sh << 'EOF'
-#!/bin/sh
-keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias seqera-rootca -file /tmp/rootCA.crt >/dev/null 2>&1 || true
-exec /bin/sh "$@"
-EOF
+        cp ${path.module}/assets/src/docker_compose/import-cert.sh ${path.module}/assets/target/docker_compose/import-cert.sh
         chmod +x ${path.module}/assets/target/docker_compose/import-cert.sh
 
       fi

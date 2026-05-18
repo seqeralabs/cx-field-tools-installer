@@ -141,8 +141,11 @@ The solution is to bake your `rootCA.crt` into the host OS trust store of a cust
 
 **Steps:**
 
-1. Start from the AWS-managed Amazon Linux 2 AMI (or whichever base AMI you normally use for Batch).
-2. Copy `rootCA.crt` onto the instance and add it to the OS trust store:
+1. Start from the AWS-managed Amazon Linux 2023 (AL2023) AMI (or whichever base AMI you normally use for Batch).
+2. Copy `rootCA.crt` onto the instance and add it to the OS trust store.
+
+   > **Note:** The paths and commands below are specific to AL2023. If you are using a different base OS (e.g. Ubuntu/Debian), the trust store paths and update command will differ.
+
    ```bash
    sudo cp rootCA.crt /etc/pki/ca-trust/source/anchors/rootCA.crt
    sudo update-ca-trust
