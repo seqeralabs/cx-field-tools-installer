@@ -30,7 +30,7 @@ resource "aws_db_subnet_group" "wave_lite_db" {
 ## ------------------------------------------------------------------------------------
 module "rds" {
   source  = "terraform-aws-modules/rds/aws"
-  version = "6.1.1"
+  version = "7.2.0"
 
   count = var.flag_create_external_db && !var.use_mocks == true ? 1 : 0
 
@@ -79,7 +79,7 @@ module "rds" {
 
 module "rds-wave-lite" {
   source  = "terraform-aws-modules/rds/aws"
-  version = "6.1.1"
+  version = "7.2.0"
 
   count = (var.flag_create_external_db == true && var.flag_use_wave_lite == true && !var.use_mocks) ? 1 : 0
 
