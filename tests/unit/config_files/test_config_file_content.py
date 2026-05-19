@@ -8,14 +8,19 @@ from tests.unit.config_files.expected_deltas import (
     DATA_EXPLORER_ON_ASSERTIONS,
     DB_EXTERNAL_EXISTING_ON,
     DB_EXTERNAL_EXISTING_ON_ASSERTIONS,
+    DB_EXTERNAL_EXISTING_X_GROUNDSWELL_DELTA,
     DB_EXTERNAL_NEW_ON,
     DB_EXTERNAL_NEW_ON_ASSERTIONS,
+    DB_EXTERNAL_NEW_X_GROUNDSWELL_DELTA,
+    DB_EXTERNAL_NEW_X_WAVE_LITE_DELTA,
     GROUNDSWELL_ON,
     GROUNDSWELL_ON_ASSERTIONS,
     PRIVATE_CA_REVERSE_PROXY_ON,
     PRIVATE_CA_REVERSE_PROXY_ON_ASSERTIONS,
     REDIS_EXTERNAL_ON,
     REDIS_EXTERNAL_ON_ASSERTIONS,
+    REDIS_EXTERNAL_X_STUDIOS_DELTA,
+    REDIS_EXTERNAL_X_WAVE_LITE_DELTA,
     STUDIOS_ON,
     STUDIOS_ON_ASSERTIONS,
     STUDIOS_PATH_ROUTING_ON,
@@ -72,6 +77,7 @@ def test_tower_opt_in_flags_active(generated_test_files):
 ## MARK: Private CA Reverse Proxy: Active
 ## ------------------------------------------------------------------------------------
 # TODO: Add tests that cover URLs when ALB not active.
+
 
 @pytest.mark.local
 @pytest.mark.private_ca
@@ -168,6 +174,21 @@ def test_aws_ses_active(generated_test_files):
 
 
 ## ------------------------------------------------------------------------------------
+## MARK: Groundswell: Active
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.groundswell
+@pytest.mark.tfvars(BASELINE + GROUNDSWELL_ON)
+def test_groundswell_active(generated_test_files):
+    """Groundswell on top of OFF baseline: tower_env Groundswell keys flip, groundswell_env populates, and the container-DB patching script renders in ansible_05."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, GROUNDSWELL_ON_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+# NOTE: Interactions with DB settings are tested in cross-features section.
+
+
+## ------------------------------------------------------------------------------------
 ## MARK: DB (New)
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
@@ -179,6 +200,55 @@ def test_db_new_active(generated_test_files):
     assert_all_deltas(generated_test_files, expected)
 
 
+## ------------------------------------------------------------------------------------
+## MARK: DB (Existing)
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.db_existing
+@pytest.mark.tfvars(BASELINE + DB_EXTERNAL_EXISTING_ON)
+def test_db_existing_active(generated_test_files):
+    """Existing external DB on top of OFF baseline: TOWER_DB_URL points to the existing endpoint."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, DB_EXTERNAL_EXISTING_ON_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Redis (New))
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.redis_external
+@pytest.mark.tfvars(BASELINE + REDIS_EXTERNAL_ON)
+def test_redis_external_active(generated_test_files):
+    """External Redis on top of OFF baseline: TOWER_REDIS_URL points to the external endpoint."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, REDIS_EXTERNAL_ON_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Seqera Wave: Active
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.wave
+@pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ON)
+def test_seqera_hosted_wave_active(generated_test_files):
+    """Activating Seqera-hosted Wave from OFF baseline: assert every generated file vs OFF + Wave delta."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ON_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Multi-Service Interactions
+##
+## Cross-feature tests: scenarios where two features stacked together produce extra
+## effects beyond what each feature delivers in isolation. Each test merges:
+##   BASELINE_ASSERTIONS + <FEATURE_A>_ON_ASSERTIONS + <FEATURE_B>_ON_ASSERTIONS
+##                       + <FEATURE_A>_X_<FEATURE_B>_DELTA   (the cross-feature piece)
+##
+## Cross-feature delta constants live in `expected_deltas.py` under `## MARK: Cross-feature
+## deltas` and are only valid when both component features are stacked. Use the existing
+## `_X_` constants where they exist; declare new ones there (not inline) when a new
+## interaction emerges.
+## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.db_new
 @pytest.mark.groundswell
@@ -189,15 +259,7 @@ def test_db_new_with_groundswell(generated_test_files):
         BASELINE_ASSERTIONS,
         GROUNDSWELL_ON_ASSERTIONS,
         DB_EXTERNAL_NEW_ON_ASSERTIONS,
-        # Cross-feature: new DB flips Groundswell's TOWER_DB_URL and SWELL_DB_URL.
-        {
-            "groundswell_env": {
-                "present": {
-                    "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
-                    "SWELL_DB_URL": "mysql://mock.tower-db.com:3306/swell",
-                },
-            },
-        },
+        DB_EXTERNAL_NEW_X_GROUNDSWELL_DELTA,
     )
     assert_all_deltas(generated_test_files, expected)
 
@@ -218,27 +280,8 @@ def test_db_new_with_wave_lite(generated_test_files):
         BASELINE_ASSERTIONS,
         WAVE_LITE_ON_ASSERTIONS,
         DB_EXTERNAL_NEW_ON_ASSERTIONS,
-        # Cross-feature: new DB flips Wave-Lite's wave.db.uri to the new RDS host
-        # and removes the container wave-db from docker_compose.
-        {
-            "wave_lite_yml": {
-                "present": {"wave.db.uri": "jdbc:postgresql://mock.wave-db.com:5432/wave"},
-            },
-            "docker_compose": {"omitted": {"services.wave-db"}},
-        },
+        DB_EXTERNAL_NEW_X_WAVE_LITE_DELTA,
     )
-    assert_all_deltas(generated_test_files, expected)
-
-
-## ------------------------------------------------------------------------------------
-## MARK: DB (Existing)
-## ------------------------------------------------------------------------------------
-@pytest.mark.local
-@pytest.mark.db_existing
-@pytest.mark.tfvars(BASELINE + DB_EXTERNAL_EXISTING_ON)
-def test_db_existing_active(generated_test_files):
-    """Existing external DB on top of OFF baseline: TOWER_DB_URL points to the existing endpoint."""
-    expected = merge_deltas(BASELINE_ASSERTIONS, DB_EXTERNAL_EXISTING_ON_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
 
@@ -252,15 +295,7 @@ def test_db_existing_with_groundswell(generated_test_files):
         BASELINE_ASSERTIONS,
         GROUNDSWELL_ON_ASSERTIONS,
         DB_EXTERNAL_EXISTING_ON_ASSERTIONS,
-        # Cross-feature: existing DB flips Groundswell's TOWER_DB_URL and SWELL_DB_URL.
-        {
-            "groundswell_env": {
-                "present": {
-                    "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
-                    "SWELL_DB_URL": "mysql://existing.tower-db.com:3306/swell",
-                },
-            },
-        },
+        DB_EXTERNAL_EXISTING_X_GROUNDSWELL_DELTA,
     )
     assert_all_deltas(generated_test_files, expected)
 
@@ -275,26 +310,14 @@ def test_db_existing_with_wave_lite(generated_test_files):
     Documented limitation as of Aug 2025: Wave-Lite always uses its container DB
     regardless of the existing-DB flag. This test serves as a regression guard — if
     Wave-Lite ever grows existing-DB support, `wave_lite_yml.wave.db.uri` will flip
-    and break this assertion, forcing a constants update.
+    and break this assertion, forcing a constants update. No cross-feature delta —
+    Wave-Lite's `wave.db.uri` stays at the container DB value.
     """
     expected = merge_deltas(
         BASELINE_ASSERTIONS,
         WAVE_LITE_ON_ASSERTIONS,
         DB_EXTERNAL_EXISTING_ON_ASSERTIONS,
-        # No cross-feature delta — Wave-Lite's wave.db.uri stays at container DB.
     )
-    assert_all_deltas(generated_test_files, expected)
-
-
-## ------------------------------------------------------------------------------------
-## MARK: Redis (New))
-## ------------------------------------------------------------------------------------
-@pytest.mark.local
-@pytest.mark.redis_external
-@pytest.mark.tfvars(BASELINE + REDIS_EXTERNAL_ON)
-def test_redis_external_active(generated_test_files):
-    """External Redis on top of OFF baseline: TOWER_REDIS_URL points to the external endpoint."""
-    expected = merge_deltas(BASELINE_ASSERTIONS, REDIS_EXTERNAL_ON_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
 
@@ -308,8 +331,7 @@ def test_redis_external_with_studios(generated_test_files):
         BASELINE_ASSERTIONS,
         REDIS_EXTERNAL_ON_ASSERTIONS,
         STUDIOS_ON_ASSERTIONS,
-        # External Redis flips Studios's redis endpoint.
-        {"data_studios_env": {"present": {"CONNECT_REDIS_ADDRESS": "mock.tower-redis.com:6379"}}},
+        REDIS_EXTERNAL_X_STUDIOS_DELTA,
     )
     assert_all_deltas(generated_test_files, expected)
 
@@ -319,30 +341,13 @@ def test_redis_external_with_studios(generated_test_files):
 @pytest.mark.wave
 @pytest.mark.tfvars(BASELINE + WAVE_LITE_ON + REDIS_EXTERNAL_ON)
 def test_redis_external_with_wave_lite(generated_test_files):
-    """External Redis + Wave-Lite on."""
+    """External Redis + Wave-Lite on: Wave-Lite's redis endpoint flips and the container wave-redis is removed."""
     expected = merge_deltas(
         BASELINE_ASSERTIONS,
         REDIS_EXTERNAL_ON_ASSERTIONS,
         WAVE_LITE_ON_ASSERTIONS,
-        # External Redis flips Wave-Lite's redis endpoint and removes the
-        # `wave-redis` container from docker_compose (no container Redis when external).
-        {
-            "wave_lite_yml": {"present": {"redis.uri": "rediss://mock.wave-redis.com:6379"}},
-            "docker_compose": {"omitted": {"services.wave-redis"}},
-        },
+        REDIS_EXTERNAL_X_WAVE_LITE_DELTA,
     )
-    assert_all_deltas(generated_test_files, expected)
-
-
-## ------------------------------------------------------------------------------------
-## MARK: Seqera Wave: Active
-## ------------------------------------------------------------------------------------
-@pytest.mark.local
-@pytest.mark.wave
-@pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ON)
-def test_seqera_hosted_wave_active(generated_test_files):
-    """Activating Seqera-hosted Wave from OFF baseline: assert every generated file vs OFF + Wave delta."""
-    expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ON_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
 

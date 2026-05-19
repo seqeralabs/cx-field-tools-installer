@@ -164,6 +164,13 @@ all_template_files = {
         "filepath": "",
         "validation_type": "TBD",
     },
+    # Ansible playbooks are structurally YAML but the only assertions we make on them
+    # are substring checks (per the legacy `assert "<task name>" in content` pattern).
+    # `validation_type = "TBD"` routes them to `assert_text_delta` in `assert_all_deltas`.
+    # `read_type` stays as `read_yaml` so any consumer that wants the parsed structure
+    # still gets it.
+    #
+    # Templates still on `"yml"` are scheduled for migration in the test_002/003/006 round.
     "ansible_02_update_file_configurations": {
         "extension": ".yml",
         "read_type": FileHelper.read_yaml,
@@ -183,7 +190,7 @@ all_template_files = {
         "read_type": FileHelper.read_yaml,
         "content": "",
         "filepath": "",
-        "validation_type": "yml",
+        "validation_type": "TBD",
     },
     "ansible_06_run_seqerakit": {
         "extension": ".yml",

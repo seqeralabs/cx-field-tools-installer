@@ -59,8 +59,8 @@ from tests.utils.filehandling import FileHelper
 
 # MARK: TFVARS
 BASELINE = """
-    flag_use_aws_ses_iam_integration    = false
     flag_use_existing_smtp              = true
+    flag_use_aws_ses_iam_integration    = false
     flag_enable_groundswell             = false
     flag_data_explorer_enabled          = false
     flag_enable_data_studio             = false
@@ -330,9 +330,28 @@ BASELINE_ASSERTIONS = {
     "groundswell_sql": {"present": {}, "omitted": set()},
     "seqerakit_yml": {"present": {}, "omitted": set()},
     "cleanse_and_configure_host": {"present": {}, "omitted": set()},
-    "ansible_02_update_file_configurations": {"present": {}, "omitted": set()},
+    "ansible_02_update_file_configurations": {
+        "present": set(),
+        # Conditional blocks that only appear when the gating features are on.
+        # As each feature's `_ON_ASSERTIONS` adds its substring to `present`, the
+        # prefix-aware merge clears it from `omitted` automatically.
+        "omitted": {
+            "Populating external Platform DB.",
+            "Populating Wave Lite Postgres.",
+            "Populating external DB with Groundswell.",
+            "Configuring private certificates.",
+            "Creating data directory on host for Studios.",
+        },
+    },
     "ansible_03_pull_containers_and_run_tower": {"present": {}, "omitted": set()},
-    "ansible_05_patch_groundswell": {"present": {}, "omitted": set()},
+    "ansible_05_patch_groundswell": {
+        "present": set(),
+        # Triggered by container DB × Groundswell. Under BASELINE neither prerequisite is on
+        # (Groundswell off); under e.g. `BASELINE + GROUNDSWELL_ON` both prerequisites are on
+        # (container DB is BASELINE default); under `BASELINE + DB_EXTERNAL_* + GROUNDSWELL_ON`
+        # container DB is off and the block doesn't render (cleared inline at those test sites).
+        "omitted": {"Patching container db with groundswell init script."},
+    },
     "ansible_06_run_seqerakit": {"present": {}, "omitted": set()},
     "docker_logging": {"present": {}, "omitted": set()},
     "private_ca_conf": {"present": {}, "omitted": set()},
@@ -620,6 +639,13 @@ GROUNDSWELL_ON_ASSERTIONS = {
         },
         "omitted": set(),
     },
+    "ansible_05_patch_groundswell": {
+        # Assumes containerised default DB (per convention). When `DB_EXTERNAL_*_ON` is
+        # also stacked, container DB is off and this block doesn't render — cleared
+        # inline at those test sites via cross-feature delta.
+        "present": {"Patching container db with groundswell init script."},
+        "omitted": set(),
+    },
 }
 
 
@@ -686,4 +712,78 @@ PRIVATE_CA_REVERSE_PROXY_ON_ASSERTIONS = {
         "present": {"services.reverseproxy.labels.seqera": "reverseproxy"},
         "omitted": set(),
     },
+}
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Cross-feature deltas
+##
+## Constants below describe the *additional* deltas that emerge when two features are
+## stacked together — effects that aren't part of either feature's standalone
+## `_ON_ASSERTIONS` (per the "containerised defaults for unrelated features" convention).
+##
+## **Only meaningful when BOTH component features are stacked.** Using a cross-feature
+## delta without its two component `_ON_ASSERTIONS` constants will produce nonsense.
+## Naming follows `<FEATURE_A>_X_<FEATURE_B>_DELTA` (alphabetical to keep order
+## deterministic) with the `_DELTA` suffix distinguishing these from the tfvars-paired
+## `_ON_ASSERTIONS` constants.
+## ------------------------------------------------------------------------------------
+
+
+# When external new-DB is paired with Groundswell, Groundswell's `groundswell_env` URLs
+# flip to the new RDS host, and the ansible_05 container-DB patching block doesn't render
+# (container DB is off).
+DB_EXTERNAL_NEW_X_GROUNDSWELL_DELTA = {
+    "groundswell_env": {
+        "present": {
+            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "SWELL_DB_URL": "mysql://mock.tower-db.com:3306/swell",
+        },
+    },
+    "ansible_05_patch_groundswell": {
+        "omitted": {"Patching container db with groundswell init script."},
+    },
+}
+
+
+# When existing external-DB is paired with Groundswell, Groundswell's `groundswell_env`
+# URLs flip to the existing host, and the ansible_05 container-DB patching block doesn't
+# render (container DB is off).
+DB_EXTERNAL_EXISTING_X_GROUNDSWELL_DELTA = {
+    "groundswell_env": {
+        "present": {
+            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "SWELL_DB_URL": "mysql://existing.tower-db.com:3306/swell",
+        },
+    },
+    "ansible_05_patch_groundswell": {
+        "omitted": {"Patching container db with groundswell init script."},
+    },
+}
+
+
+# When external new-DB is paired with Wave-Lite, Wave-Lite uses the new RDS for its
+# wave-db, and the container wave-db is removed from docker_compose. (No analogous
+# existing-DB × Wave-Lite delta — Wave-Lite ignores the existing-DB flag; that
+# non-interaction is asserted in `test_db_existing_with_wave_lite` with no inline delta.)
+DB_EXTERNAL_NEW_X_WAVE_LITE_DELTA = {
+    "wave_lite_yml": {
+        "present": {"wave.db.uri": "jdbc:postgresql://mock.wave-db.com:5432/wave"},
+    },
+    "docker_compose": {"omitted": {"services.wave-db"}},
+}
+
+
+# When external Redis is paired with Studios, Studios's Redis endpoint flips to the
+# external host.
+REDIS_EXTERNAL_X_STUDIOS_DELTA = {
+    "data_studios_env": {"present": {"CONNECT_REDIS_ADDRESS": "mock.tower-redis.com:6379"}},
+}
+
+
+# When external Redis is paired with Wave-Lite, Wave-Lite's Redis endpoint flips
+# (note the `rediss://` TLS scheme) and the container wave-redis service is removed.
+REDIS_EXTERNAL_X_WAVE_LITE_DELTA = {
+    "wave_lite_yml": {"present": {"redis.uri": "rediss://mock.wave-redis.com:6379"}},
+    "docker_compose": {"omitted": {"services.wave-redis"}},
 }

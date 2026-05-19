@@ -33,65 +33,6 @@ def test_002_all_present(generated_test_files):
     assert "Creating data directory on host for Studios." in ansible_file_02
 
 
-@pytest.mark.local
-@pytest.mark.ansible
-@pytest.mark.tfvars("""
-    flag_create_external_db       = false
-    flag_use_container_db         = true
-
-    flag_create_external_redis    = false
-    flag_use_container_redis      = true
-
-    flag_create_load_balancer     = true
-    flag_use_private_cacert       = false
-
-    flag_enable_data_studio       = false
-    flag_enable_groundswell       = false
-    flag_use_wave_lite            = false
-""")
-def test_002_none_present(generated_test_files):
-    """Confirm that no conditional blocks are present."""
-    ansible_file_02 = FileHelper.read_file(
-        f"{generated_test_files['ansible_02_update_file_configurations']['filepath']}"
-    )
-    assert "Populating external Platform DB." not in ansible_file_02
-    assert "Populating Wave Lite Postgres." not in ansible_file_02
-    assert "Populating external DB with Groundswell." not in ansible_file_02
-    assert "Configuring private certificates." not in ansible_file_02
-    assert "Creating data directory on host for Studios." not in ansible_file_02
-
-
-## ------------------------------------------------------------------------------------
-## MARK: File 005
-## ------------------------------------------------------------------------------------
-@pytest.mark.local
-@pytest.mark.ansible
-@pytest.mark.tfvars("""
-    flag_create_external_db       = false
-    flag_use_container_db         = true
-
-    flag_enable_groundswell       = true
-""")
-def test_005_all_present(generated_test_files):
-    """Confirm that all conditional blocks are present."""
-    ansible_file_05 = FileHelper.read_file(f"{generated_test_files['ansible_05_patch_groundswell']['filepath']}")
-    assert "Patching container db with groundswell init script." in ansible_file_05
-
-
-@pytest.mark.local
-@pytest.mark.ansible
-@pytest.mark.tfvars("""
-    flag_create_external_db       = false
-    flag_use_container_db         = true
-
-    flag_enable_groundswell       = false
-""")
-def test_005_none_present(generated_test_files):
-    """Confirm that no conditional blocks are present."""
-    ansible_file_05 = FileHelper.read_file(f"{generated_test_files['ansible_05_patch_groundswell']['filepath']}")
-    assert "Patching container db with groundswell init script." not in ansible_file_05
-
-
 ## ------------------------------------------------------------------------------------
 ## MARK: File 006
 ## ------------------------------------------------------------------------------------
