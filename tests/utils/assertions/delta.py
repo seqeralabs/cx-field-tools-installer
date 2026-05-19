@@ -307,12 +307,12 @@ def merge_deltas(*deltas: dict[str, dict]) -> dict[str, dict]:
         from the other.
 
     The YAMLPath prefix semantics matter for cases like `BASELINE_ASSERTIONS` declaring
-    `services.wave-lite` in `omitted` (parent absent) while `WAVE_LITE_ON_ASSERTIONS`
+    `services.wave-lite` in `omitted` (parent absent) while `WAVE_LITE_ACTIVE_ASSERTIONS`
     declares `services.wave-lite.labels.seqera` in `present` — the parent must be cleared
     from `omitted` to avoid contradictory assertions.
 
     Example:
-        merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ON_ASSERTIONS) → a single
+        merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ACTIVE_ASSERTIONS) → a single
         nested dict whose `tower_env` entry contains both inputs' `present` keys (Wave's
         wins on collision) + the union of their `omitted` keys (with conflicts resolved).
     """

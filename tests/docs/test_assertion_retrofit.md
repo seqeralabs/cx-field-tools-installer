@@ -112,7 +112,7 @@ def test_external_db_replaces_container(staged_scenario, BASELINE):
 When a feature touches multiple files, nest the constant by template name:
 
 ```python
-GROUNDSWELL_ON = {
+GROUNDSWELL_ACTIVE = {
     "tower_env": {
         "TOWER_ENABLE_GROUNDSWELL": "true",
         "GROUNDSWELL_SERVER_URL":   "http://groundswell:8090",
@@ -126,8 +126,8 @@ GROUNDSWELL_ON = {
 Tests loop or pick by template:
 
 ```python
-def test_groundswell_only(staged_scenario, BASELINE):
-    for tpl, additions in GROUNDSWELL_ON.items():
+def test_GROUNDSWELL_ACTIVEly(staged_scenario, BASELINE):
+    for tpl, additions in GROUNDSWELL_ACTIVE.items():
         if tpl == "docker_compose":
             assert_yaml_delta(filepath=staged_scenario[tpl]["filepath"], present=additions)
         else:

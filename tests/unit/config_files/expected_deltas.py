@@ -44,9 +44,9 @@ stacked with one feature or three.
 
 Canonical test shape:
 
-    @pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ON)
+    @pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ACTIVE)
     def test_wave_on(generated_test_files):
-        expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ON_ASSERTIONS)
+        expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ACTIVE_ASSERTIONS)
         assert_all_deltas(generated_test_files, expected)
 
 Co-located with `test_config_file_content.py` so the test file stays focused on
@@ -74,65 +74,65 @@ BASELINE = """
     tower_workflow_cleanup_enabled                 = false
 """
 
-REDIS_EXTERNAL_ON = """
+REDIS_EXTERNAL_ACTIVE = """
     flag_create_external_redis = true
     flag_use_container_redis   = false
 """
 
-DB_EXTERNAL_NEW_ON = """
+DB_EXTERNAL_NEW_ACTIVE = """
     flag_create_external_db       = true
     flag_use_existing_external_db = false
     flag_use_container_db         = false
 """
 
-DB_EXTERNAL_EXISTING_ON = """
+DB_EXTERNAL_EXISTING_ACTIVE = """
     flag_use_existing_external_db = true
     flag_use_container_db         = false
     tower_db_url                  = "existing.tower-db.com"
 """
 
-STUDIOS_ON = """
+STUDIOS_ACTIVE = """
     flag_enable_data_studio = true
 """
 
-STUDIOS_PATH_ROUTING_ON = """
+STUDIOS_PATH_ROUTING_ACTIVE = """
     flag_studio_enable_path_routing = true
     data_studio_path_routing_url    = "connect-example.com"
 """
 
-STUDIOS_SSH_ON = """
+STUDIOS_SSH_ACTIVE = """
     flag_enable_data_studio_ssh                   = true
     flag_limit_data_studio_ssh_to_some_workspaces = false
 """
 
-STUDIOS_SSH_WORKSPACE_RESTRICTION_ON = """
+STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE = """
     flag_limit_data_studio_ssh_to_some_workspaces = true
     data_studio_ssh_eligible_workspaces           = "12,34"
 """
 
-WAVE_SEQERA_HOSTED_ON = """
+WAVE_SEQERA_HOSTED_ACTIVE = """
     flag_use_wave   = true
     wave_server_url = "wave.seqera.io"
 """
 
-WAVE_LITE_ON = """
+WAVE_LITE_ACTIVE = """
     flag_use_wave_lite = true
 """
 
-GROUNDSWELL_ON = """
+GROUNDSWELL_ACTIVE = """
     flag_enable_groundswell = true
 """
 
-DATA_EXPLORER_ON = """
+DATA_EXPLORER_ACTIVE = """
     flag_data_explorer_enabled = true
 """
 
-AWS_SES_ON = """
+AWS_SES_ACTIVE = """
     flag_use_aws_ses_iam_integration = true
     flag_use_existing_smtp           = false
 """
 
-TOWER_OPT_IN_FLAGS_ON = """
+TOWER_OPT_IN_FLAGS_ACTIVE = """
     flag_allow_aws_instance_credentials            = true
     tower_enable_openapi                           = true
     tower_enable_pipeline_versioning               = true
@@ -141,17 +141,17 @@ TOWER_OPT_IN_FLAGS_ON = """
     tower_workflow_cleanup_enabled                 = true
 """
 
-PRIVATE_CA_REVERSE_PROXY_ON = """
+PRIVATE_CA_REVERSE_PROXY_ACTIVE = """
     flag_create_load_balancer = false
     flag_use_private_cacert   = true
     flag_do_not_use_https     = false
 """
 
-HOSTS_FILE_ENTRY_ON = """
+HOSTS_FILE_ENTRY_ACTIVE = """
     flag_create_hosts_file_entry = true
 """
 
-INSECURE_HTTP_ON = """
+INSECURE_HTTP_ACTIVE = """
     flag_do_not_use_https = true
 """
 
@@ -355,8 +355,8 @@ BASELINE_ASSERTIONS = {
     "ansible_05_patch_groundswell": {
         "present": set(),
         # Triggered by container DB x Groundswell. Under BASELINE neither prerequisite is on
-        # (Groundswell off); under e.g. `BASELINE + GROUNDSWELL_ON` both prerequisites are on
-        # (container DB is BASELINE default); under `BASELINE + DB_EXTERNAL_* + GROUNDSWELL_ON`
+        # (Groundswell off); under e.g. `BASELINE + GROUNDSWELL_ACTIVE` both prerequisites are on
+        # (container DB is BASELINE default); under `BASELINE + DB_EXTERNAL_* + GROUNDSWELL_ACTIVE`
         # container DB is off and the block doesn't render (cleared inline at those test sites).
         "omitted": {"Patching container db with groundswell init script."},
     },
@@ -384,7 +384,7 @@ BASELINE_ASSERTIONS = {
 # paths only differ when those features are also on; declared inline at the test site.
 # Unlike existing-DB, Wave-Lite DOES integrate with new-DB (uses the same RDS infra) — see
 # `test_new_external_db_with_wave_lite` for the real cross-feature interaction.
-DB_EXTERNAL_NEW_ON_ASSERTIONS = {
+DB_EXTERNAL_NEW_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
@@ -405,7 +405,7 @@ DB_EXTERNAL_NEW_ON_ASSERTIONS = {
 # Groundswell is also on; that interaction is declared inline at the test site.
 # Wave-Lite does NOT support the existing-DB flow (documented limitation as of Aug 2025) —
 # `wave_lite_yml.wave.db.uri` stays at the container DB URL when both are on.
-DB_EXTERNAL_EXISTING_ON_ASSERTIONS = {
+DB_EXTERNAL_EXISTING_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
@@ -425,7 +425,7 @@ DB_EXTERNAL_EXISTING_ON_ASSERTIONS = {
 # to the mock external endpoint. Studios/Wave-Lite-aware Redis paths only differ when
 # their own features are also on — those interactions are declared inline at the test
 # site as a cross-feature delta passed to `merge_deltas`.
-REDIS_EXTERNAL_ON_ASSERTIONS = {
+REDIS_EXTERNAL_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {"TOWER_REDIS_URL": "redis://mock.tower-redis.com:6379"},
         "omitted": set(),
@@ -438,7 +438,7 @@ REDIS_EXTERNAL_ON_ASSERTIONS = {
 # `data_studios_env` populates, `# STUDIOS_NOT_ENABLED` markers flip out, the matrix of
 # `TOWER_DATA_STUDIO_TEMPLATES_*` entries appears in `tower_env`, and `tower.data-studio.*`
 # becomes a real sub-tree in `tower_yml`.
-STUDIOS_ON_ASSERTIONS = {
+STUDIOS_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING": "false",
@@ -486,7 +486,7 @@ STUDIOS_ON_ASSERTIONS = {
         "omitted": {
             "# STUDIOS_NOT_ENABLED",
             # SSH off by default — explicit assertion that these keys aren't rendered.
-            # `STUDIOS_SSH_ON_ASSERTIONS` transitions them into `present` via the
+            # `STUDIOS_SSH_ACTIVE_ASSERTIONS` transitions them into `present` via the
             # prefix-aware merge.
             "TOWER_SSH_KEYS_MANAGEMENT_ENABLED",
             "TOWER_DATA_STUDIO_CONNECT_SSH_PORT",
@@ -525,12 +525,12 @@ STUDIOS_ON_ASSERTIONS = {
 
 
 # MARK: Studios Path Routing
-# Sub-feature of Studios — requires `STUDIOS_ON` to be stacked first. Flips Studios's
+# Sub-feature of Studios — requires `STUDIOS_ACTIVE` to be stacked first. Flips Studios's
 # path-routing flag on and replaces the default Connect URL with the supplied custom URL.
-# When merged on top of `STUDIOS_ON_ASSERTIONS` via `merge_deltas`, the three URL/flag
+# When merged on top of `STUDIOS_ACTIVE_ASSERTIONS` via `merge_deltas`, the three URL/flag
 # keys get overridden; the rest of Studios's footprint (templates matrix, data_studios_env
 # defaults) flows through unchanged.
-STUDIOS_PATH_ROUTING_ON_ASSERTIONS = {
+STUDIOS_PATH_ROUTING_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING": "true",
@@ -546,13 +546,13 @@ STUDIOS_PATH_ROUTING_ON_ASSERTIONS = {
 
 
 # MARK: Studios SSH
-# Sub-feature of Studios — requires `STUDIOS_ON` to be stacked first. Brings the SSH
+# Sub-feature of Studios — requires `STUDIOS_ACTIVE` to be stacked first. Brings the SSH
 # stanza online: 5 keys appear in `tower_env`, 3 in `data_studios_env`. The SSH-off
-# defaults declared in `STUDIOS_ON_ASSERTIONS.omitted` get transitioned into `present`
+# defaults declared in `STUDIOS_ACTIVE_ASSERTIONS.omitted` get transitioned into `present`
 # via the prefix-aware merge. Workspace restriction stays off by default
 # (`TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES = ""`); turn it on with
-# `STUDIOS_SSH_WORKSPACE_RESTRICTION_ON_ASSERTIONS`.
-STUDIOS_SSH_ON_ASSERTIONS = {
+# `STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS`.
+STUDIOS_SSH_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_SSH_KEYS_MANAGEMENT_ENABLED": "true",
@@ -575,9 +575,9 @@ STUDIOS_SSH_ON_ASSERTIONS = {
 
 
 # MARK: Studios SSH Workspace Restriction
-# Sub-feature of Studios SSH — requires both `STUDIOS_ON` and `STUDIOS_SSH_ON` stacked
+# Sub-feature of Studios SSH — requires both `STUDIOS_ACTIVE` and `STUDIOS_SSH_ACTIVE` stacked
 # first. Replaces SSH's empty workspace allowlist with the supplied CSV.
-STUDIOS_SSH_WORKSPACE_RESTRICTION_ON_ASSERTIONS = {
+STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {"TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES": "12,34"},
         "omitted": set(),
@@ -589,7 +589,7 @@ STUDIOS_SSH_WORKSPACE_RESTRICTION_ON_ASSERTIONS = {
 # Activates Seqera-hosted Wave (the SaaS endpoint, NOT Wave Lite). When enabled on top
 # of BASELINE with `flag_use_wave = true` and `wave_server_url = "wave.seqera.io"`,
 # the Tower and Wave-Lite configs both pick up the public Wave URL.
-WAVE_SEQERA_HOSTED_ON_ASSERTIONS = {
+WAVE_SEQERA_HOSTED_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_ENABLE_WAVE": "true",
@@ -612,7 +612,7 @@ WAVE_SEQERA_HOSTED_ON_ASSERTIONS = {
 # URLs (vs the `N/A` defaults the OFF baseline asserts when Wave-Lite is off). Also flips
 # `TOWER_ENABLE_WAVE` true and points `WAVE_SERVER_URL` at the local Wave-Lite endpoint
 # (the same env vars Seqera-hosted Wave uses — Tower treats them generically).
-WAVE_LITE_ON_ASSERTIONS = {
+WAVE_LITE_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_ENABLE_WAVE": "true",
@@ -652,7 +652,7 @@ WAVE_LITE_ON_ASSERTIONS = {
 # Activates Groundswell on top of BASELINE. Flips `TOWER_ENABLE_GROUNDSWELL` to true,
 # adds the in-cluster `GROUNDSWELL_SERVER_URL`, and populates `groundswell_env` with
 # the DB / SWELL connection strings (assuming container DB per the convention).
-GROUNDSWELL_ON_ASSERTIONS = {
+GROUNDSWELL_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_ENABLE_GROUNDSWELL": "true",
@@ -685,7 +685,7 @@ GROUNDSWELL_ON_ASSERTIONS = {
 # Activates Tower's Data Explorer feature on top of BASELINE. Flips
 # `TOWER_DATA_EXPLORER_ENABLED` to true and surfaces
 # `TOWER_DATA_EXPLORER_CLOUD_DISABLED_WORKSPACES` (empty string = no workspace restrictions).
-DATA_EXPLORER_ON_ASSERTIONS = {
+DATA_EXPLORER_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_DATA_EXPLORER_ENABLED": "true",
@@ -701,7 +701,7 @@ DATA_EXPLORER_ON_ASSERTIONS = {
 # tfvars: SES on, existing-SMTP off. Tower_env-only feature — flips `TOWER_ENABLE_AWS_SES`
 # true and removes the SMTP host/port keys (TOWER_SMTP_USER/PASSWORD stay absent from
 # BASELINE regardless of SES state).
-AWS_SES_ON_ASSERTIONS = {
+AWS_SES_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {"TOWER_ENABLE_AWS_SES": "true"},
         "omitted": {"TOWER_SMTP_HOST", "TOWER_SMTP_PORT"},
@@ -714,7 +714,7 @@ AWS_SES_ON_ASSERTIONS = {
 # knobs that all happen to live in tower_env and tower_yml. If any one of them grows
 # complex enough (e.g., pipeline versioning gaining a workspace-restriction sub-feature
 # similar to Studios SSH), break it out into its own `<FEATURE>_ON` constant + test.
-TOWER_OPT_IN_FLAGS_ON_ASSERTIONS = {
+TOWER_OPT_IN_FLAGS_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_ALLOW_INSTANCE_CREDENTIALS": "true",
@@ -739,7 +739,7 @@ TOWER_OPT_IN_FLAGS_ON_ASSERTIONS = {
 # in lieu of an ALB. Three tfvars together describe a deployment topology, not three
 # independent features. Brings up the `services.reverseproxy` container in docker_compose;
 # `services.reverseproxy` is cleared from BASELINE.omitted via the prefix-aware merge.
-PRIVATE_CA_REVERSE_PROXY_ON_ASSERTIONS = {
+PRIVATE_CA_REVERSE_PROXY_ACTIVE_ASSERTIONS = {
     "docker_compose": {
         "present": {"services.reverseproxy.labels.seqera": "reverseproxy"},
         "omitted": set(),
@@ -757,7 +757,7 @@ PRIVATE_CA_REVERSE_PROXY_ON_ASSERTIONS = {
 # hosts-file substring (the truststore branch is gated by
 # `!flag_create_hosts_file_entry && !flag_do_not_use_https`, so either flag flipping
 # on removes it).
-HOSTS_FILE_ENTRY_ON_ASSERTIONS = {
+HOSTS_FILE_ENTRY_ACTIVE_ASSERTIONS = {
     "ansible_06_run_seqerakit": {
         "present": {"Seqerakit - Using hosts file."},
         "omitted": {"Seqerakit - Using truststore."},
@@ -775,9 +775,9 @@ HOSTS_FILE_ENTRY_ON_ASSERTIONS = {
 #     `!flag_create_hosts_file_entry && !flag_do_not_use_https`).
 # Studios and Wave-Lite are also force-disabled under insecure mode, but BASELINE has
 # both off already so no extra delta is needed here. If a future test stacks
-# `INSECURE_HTTP_ON` with `STUDIOS_ON` or `WAVE_LITE_ON`, a cross-feature delta will
+# `INSECURE_HTTP_ACTIVE` with `STUDIOS_ACTIVE` or `WAVE_LITE_ACTIVE`, a cross-feature delta will
 # be required (Studios → disabled, Wave-Lite → disabled).
-INSECURE_HTTP_ON_ASSERTIONS = {
+INSECURE_HTTP_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_SERVER_URL": "http://autodc.dev-seqera.net:8000",

@@ -237,10 +237,10 @@ using `test_seqera_hosted_wave_active__retrofit` as the worked example.
 ```python
 @pytest.mark.local
 @pytest.mark.wave
-@pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ON)
+@pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ACTIVE)
 def test_seqera_hosted_wave_active(generated_test_files):
     """Activating Seqera-hosted Wave from OFF baseline: assert every generated file vs OFF + Wave delta."""
-    expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ON_ASSERTIONS)
+    expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ACTIVE_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 ```
 
@@ -254,7 +254,7 @@ def test_seqera_hosted_wave_active(generated_test_files):
 Categorisation markers — let pytest filter via `-m`. Don't affect what the test does.
 
 ```python
-@pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ON)
+@pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ACTIVE)
 ```
 
 The `tfvars` marker carries a **string** of terraform variable assignments. That string
@@ -265,7 +265,7 @@ Constants live in [tests/unit/config_files/expected_deltas.py](unit/config_files
 and come in **pairs** — one for each side of a test:
 
 - `BASELINE` (tfvars string) / `BASELINE_ASSERTIONS` (assertion dict)
-- `WAVE_SEQERA_HOSTED_ON` (tfvars string) / `WAVE_SEQERA_HOSTED_ON_ASSERTIONS` (assertion dict)
+- `WAVE_SEQERA_HOSTED_ACTIVE` (tfvars string) / `WAVE_SEQERA_HOSTED_ACTIVE_ASSERTIONS` (assertion dict)
 
 The two halves describe the same scenario from different sides — what to configure
 (tfvars) and what should result (rendered file state). The naming convention makes drift
@@ -307,12 +307,12 @@ is overlaid with per-feature delta constants via `merge_deltas(...)`.
 ### `merge_deltas` — composing the expected state
 
 ```python
-expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ON_ASSERTIONS)
+expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ACTIVE_ASSERTIONS)
 ```
 
 `BASELINE_ASSERTIONS` declares the expected `present` / `omitted` for every template
-when only `BASELINE` is applied. `WAVE_SEQERA_HOSTED_ON_ASSERTIONS` declares the
-per-feature deltas (paired with the tfvars-side `WAVE_SEQERA_HOSTED_ON` used in the
+when only `BASELINE` is applied. `WAVE_SEQERA_HOSTED_ACTIVE_ASSERTIONS` declares the
+per-feature deltas (paired with the tfvars-side `WAVE_SEQERA_HOSTED_ACTIVE` used in the
 marker). `merge_deltas` walks both, per-template:
 
 - `present` dicts are merged via `dict.update` — later wins on collision (`TOWER_ENABLE_WAVE`
@@ -333,8 +333,8 @@ them inline at the test site as an additional dict passed to `merge_deltas(...)`
 ```python
 expected = merge_deltas(
     BASELINE_ASSERTIONS,
-    STUDIOS_ON_ASSERTIONS,
-    REDIS_EXTERNAL_ON_ASSERTIONS,
+    STUDIOS_ACTIVE_ASSERTIONS,
+    REDIS_EXTERNAL_ACTIVE_ASSERTIONS,
     # Cross-feature: external Redis flips Studios's redis endpoint
     {"data_studios_env": {"present": {"CONNECT_REDIS_ADDRESS": "mock.tower-redis.com:6379"}}},
 )
@@ -370,10 +370,10 @@ call the per-shape helpers directly instead of going through `assert_all_deltas`
 ```python
 @pytest.mark.local
 @pytest.mark.wave
-@pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ON)
+@pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ACTIVE)
 def test_seqera_hosted_wave_active__targeted(generated_test_files):
     """Activating Seqera-hosted Wave: targeted checks on tower_env and wave_lite_yml only."""
-    expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ON_ASSERTIONS)
+    expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ACTIVE_ASSERTIONS)
     assert_kv_delta(
         test_file_path=generated_test_files["tower_env"]["filepath"],
         **expected["tower_env"],
@@ -501,11 +501,11 @@ tests have been ported, do a single rename sweep using this table.
 | `test_existing_db_all_enabled` | `test_db_existing_with_groundswell` + `test_db_existing_with_wave_lite` | ✅ Split into one feature-pair test + one documented non-interaction guard (legacy deleted) |
 | `test_new_db_all_disabled` → `test_db_new_active` | (renamed inline during port) | ✅ Done |
 | `test_new_db_all_enabled` | `test_db_new_with_groundswell` + `test_db_new_with_wave_lite` | ✅ Split into two feature-pair tests (legacy deleted) — note the asymmetry: new-DB × Wave-Lite IS a real interaction (RDS replaces container wave-db), unlike existing-DB × Wave-Lite which is documented as a non-interaction |
-| `test_studio_path_routing_enabled` → `test_studios_path_routing_active` | (renamed inline during port) | ✅ Done. Modelled as a Studios sub-feature: `STUDIOS_ON + STUDIOS_PATH_ROUTING_ON`. Basic "Studios on with default URL" stays implicit in `test_baseline_alb_all_enabled`. |
-| `test_studio_ssh_enabled` → `test_studios_ssh_active` | (renamed inline during port) | ✅ Done. Studios sub-feature: `STUDIOS_ON + STUDIOS_SSH_ON`. |
-| `test_studio_ssh_enabled_workspace_restriction` → `test_studios_ssh_workspace_restriction_active` | (renamed inline during port) | ✅ Done. Sub-sub-feature: `STUDIOS_ON + STUDIOS_SSH_ON + STUDIOS_SSH_WORKSPACE_RESTRICTION_ON`. |
-| `test_studio_ssh_disabled` | (deleted — coverage absorbed) | ✅ Done. `STUDIOS_ON_ASSERTIONS.omitted` now declares the 6 SSH-off-default keys, so `test_studios_active` strict-mode-asserts them. Separate test would be redundant. |
-| `test_private_ca_reverse_proxy_active` | (ported in place, no rename) | ✅ Done. Single `PRIVATE_CA_REVERSE_PROXY_ON` constant bundles 3 tfvars (no ALB + private cert + HTTPS) as one deployment topology. Only delta: `services.reverseproxy` container appears. |
+| `test_studio_path_routing_enabled` → `test_studios_path_routing_active` | (renamed inline during port) | ✅ Done. Modelled as a Studios sub-feature: `STUDIOS_ACTIVE + STUDIOS_PATH_ROUTING_ACTIVE`. Basic "Studios on with default URL" stays implicit in `test_baseline_alb_all_enabled`. |
+| `test_studio_ssh_enabled` → `test_studios_ssh_active` | (renamed inline during port) | ✅ Done. Studios sub-feature: `STUDIOS_ACTIVE + STUDIOS_SSH_ACTIVE`. |
+| `test_studio_ssh_enabled_workspace_restriction` → `test_studios_ssh_workspace_restriction_active` | (renamed inline during port) | ✅ Done. Sub-sub-feature: `STUDIOS_ACTIVE + STUDIOS_SSH_ACTIVE + STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE`. |
+| `test_studio_ssh_disabled` | (deleted — coverage absorbed) | ✅ Done. `STUDIOS_ACTIVE_ASSERTIONS.omitted` now declares the 6 SSH-off-default keys, so `test_studios_active` strict-mode-asserts them. Separate test would be redundant. |
+| `test_private_ca_reverse_proxy_active` | (ported in place, no rename) | ✅ Done. Single `PRIVATE_CA_REVERSE_PROXY_ACTIVE` constant bundles 3 tfvars (no ALB + private cert + HTTPS) as one deployment topology. Only delta: `services.reverseproxy` container appears. |
 
 **To rename when their legacy versions are ported:**
 
@@ -513,7 +513,7 @@ tests have been ported, do a single rename sweep using this table.
 |---|---|---|
 | ~~`test_new_db_all_disabled`~~ | `test_db_new_active` | ✅ Already ported + renamed |
 | ~~`test_existing_db_all_disabled`~~ | `test_db_existing_active` | ✅ Already ported + renamed |
-| `test_redis_external_active` | `test_redis_external_active` | Already ported; follows `REDIS_EXTERNAL_ON` constant naming |
+| `test_redis_external_active` | `test_redis_external_active` | Already ported; follows `REDIS_EXTERNAL_ACTIVE` constant naming |
 
 **Pending design decision (all-on-baseline tests):**
 
