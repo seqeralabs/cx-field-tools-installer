@@ -1,5 +1,18 @@
 # Test Case Architecture Documentation
 
+> **⚠️ Superseded — kept for historical reference.**
+>
+> This document describes the **pre-retrofit** architecture (terraform-plan-based,
+> `prepare_plan` / `assertion_modifiers_template` / `generate_assertions_all_*` /
+> `verify_all_assertions`). Those helpers and the supporting `expected_results.py`
+> module have been deleted.
+>
+> **Canonical architecture is now in [`tests/new_implementation.md`](../new_implementation.md).**
+> Migration plan and as-built deltas: [`test_assertion_retrofit.md`](./test_assertion_retrofit.md).
+>
+> Read this only if you need to understand the historical setup (e.g. archaeology on
+> an old branch or PR).
+
 ## Overview
 
 These tests exist to validate that the resources (_configuration & AWS resources_) produced by Terraform align to expected behaviours, in two ways:
@@ -19,7 +32,7 @@ Assets are produced via Terraform commands: `terraform plan` and `terraform cons
 
 - **Terraform outputs** are extracted from the JSONified plan and compared against hardcoded values.
 - **Seqera Platform configuration files** are produced and compared against baseline and test-specific assertions.
-- **Testcontainers** are used to run a subset of SP configuration files (e.g. `.sql` files) to validate successful execution. 
+- **Testcontainers** are used to run a subset of SP configuration files (e.g. `.sql` files) to validate successful execution.
 
 
 ### 2. Test Case Inputs
@@ -60,7 +73,7 @@ To speed up `n+1` testing, a caching mechanism is used (_fulsome details in the 
 #### Secrets
 The `tests/datafiles/generate_core_data.sh` also generates secrets via `tests/datafiles/generate_testing_secrets.sh`. Results are written to `tests/datafiles/secrets/*.json`files.
 
-The scripts have the ability to push secrets to the appropriate SSM location, but this has been disabled to speed up unit testing (_more on this below in the performance section_). If / when secrets are needed for local tests, the SSM sourcing can be emulated by simply reading the appropriate key from the appropriate secrets file. 
+The scripts have the ability to push secrets to the appropriate SSM location, but this has been disabled to speed up unit testing (_more on this below in the performance section_). If / when secrets are needed for local tests, the SSM sourcing can be emulated by simply reading the appropriate key from the appropriate secrets file.
 
 
 ### 2. Expected Results (`tests/datafiles/expected_results/`)
@@ -68,18 +81,18 @@ Establishes a baseline for expected end state against which the tests can be com
 
 1. **Pre-generated end state files** (e.g `tests/datafiles/expected_results/expected_sql/*.sql`)
 
-    These are fully rendered reference files used for page-to-page comparison. 
-    
+    These are fully rendered reference files used for page-to-page comparison.
+
     Given the dynamic permutations possible within this solution and required upkeep of file accuracy, I prefer targeted line-by-line assertions and over full-page comparisons. However, some configuration files (_`.sql` files in particular_) are much easier to validate via full page comparions.
 
-    Testcases that use this methodology share the same starting logic but differ within the assertion phase (_loading reference document content rather than granular key-value assertions_). 
+    Testcases that use this methodology share the same starting logic but differ within the assertion phase (_loading reference document content rather than granular key-value assertions_).
 
 2. **Per configuration file key-value expectations** (`tests/datafiles/expected_results/expected_results.py`)
 
     This implementation is more complicated than the standard key-value assertion, but meant to be modular and extensible. Here's how it works:
 
-    - Each configuration file has two associated functions: 
-        - One covers expected content when all Seqera Platform services are active; 
+    - Each configuration file has two associated functions:
+        - One covers expected content when all Seqera Platform services are active;
         - The other covers expected content when the services are inactive (_i.e. only the core SP is active_).
 
     - Each function contains a dictionary with 2 sub-keys, containing baseline expectations:
@@ -137,7 +150,7 @@ Each testcase function is responsible for:
 
 
 #### 2. Configuration (`tests/utils/config.py`)
-This is a centralized source for making filepaths and core structures as DRY as possible. 
+This is a centralized source for making filepaths and core structures as DRY as possible.
 
 - Defines file paths for test data, cache directories, secrets, etc.
 - Defines core data structures used to store testcase file content and assertions.
@@ -153,12 +166,12 @@ Two settings in particular require call out:
         - The utility helper function to use to read the content of the generated file (e.g. plain text, YAML, JSON).
         - The content of the source file (_this key likely to be phased out now that there is a `filepath` key_).
         - The location of the cached file on the filesystem.
-        - The validation technique that should be used to execution assertions (e.g. granular kv, full-page comparison, YAMLPath). 
+        - The validation technique that should be used to execution assertions (e.g. granular kv, full-page comparison, YAMLPath).
 
     ```python
     all_template_files = {
         "tower_env": {
-            "extension"         : ".env", 
+            "extension"         : ".env",
             "read_type"         : FileHelper.parse_kv,
             "content"           : "",
             "filepath"          : "",
@@ -180,7 +193,7 @@ Two settings in particular require call out:
     # Generates a full set of configuration files using the testcase-specific tfvars overrides, and runs a full set of assertions
     # including the specific Wave assertion modifiers identified in this testcase.
     TEST_FULL=true pytest tests/unit/config_files/test_config_file_content.py::test_seqera_hosted_wave_active
-    ``` 
+    ```
 
 
 #### 3. Utility Functions (`tests/utils/`)
@@ -194,7 +207,7 @@ All other utility functions reside in `tests/utils/local.py`), including higher-
 
 For better-or-worse, a heavy dependency chain existing within this file. The higher-order functions make a set of cascading calls to lower-level functions for things like cache-checking, file generation, scope reduction / expansion, and individual testcase assertion execution.
 
-I will try to document this further over time to make it easier for the casual reader, but for now I suggest you approach the file with the following in mind: 
+I will try to document this further over time to make it easier for the casual reader, but for now I suggest you approach the file with the following in mind:
 
 > The functions at the bottom of the file tend to be the most abstract and written as Graham attempted to make the `tests/unit/config_files` files very DRY. Reading the file in reverse order, which not a perfect journey, provides a rough map for deconstructing the dependency chain.
 >
@@ -296,7 +309,7 @@ def test_external_smtp_with_studios(session_setup):
         - External SMTP configuration
         - Data Studios enabled with custom templates
     """
-    
+
     tf_modifiers = """
         flag_use_aws_ses_iam_integration = false
         flag_use_existing_smtp           = true
@@ -306,11 +319,11 @@ def test_external_smtp_with_studios(session_setup):
         data_studio_custom_templates     = true                    # Example of a new key added to tfvars.
     """
     plan = prepare_plan(tf_modifiers)
-    
+
     desired_files = ["tower_env", "data_studios_env"]
     assertion_modifiers = assertion_modifiers_template()
     tc_files = generate_tc_files(plan, desired_files, sys._getframe().f_code.co_name)
-    
+
     # Define custom assertions
     assertion_modifiers["tower_env"] = {
         "present": {
@@ -320,14 +333,14 @@ def test_external_smtp_with_studios(session_setup):
         },
         "omitted": {}
     }
-    
+
     assertion_modifiers["data_studios_env"] = {
         "present": {
             "CUSTOM_TEMPLATES_ENABLED": "true"                    # Validation of new key.
         },
         "omitted": {}
     }
-    
+
     tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
     verify_all_assertions(tc_files, tc_assertions)
 ```
@@ -396,7 +409,7 @@ This amounts to a ~95%+ reduction in test execution time after the first-time ex
     In such a case, you must delete the cache and conduct a first-time generation again:
 
     ```bash
-    rm -rf tests/.plan_cache 
+    rm -rf tests/.plan_cache
     rm -rf tests/.templatefile_cache
     ```
 
@@ -404,7 +417,7 @@ This amounts to a ~95%+ reduction in test execution time after the first-time ex
     The local testing solution must be able to make authenticated calls to the target AWS account. The framework automatically detects and prompts for re-authentication in the event of token expiration. This will cause the test run to fail (_but it can be re-executed once you have a new valid token_).
 
 3. **Assertion Failures**
-    The nested nature of the solution can sometimes make it hard to figure out why an assertion failed. 
+    The nested nature of the solution can sometimes make it hard to figure out why an assertion failed.
     TODO: Provide better guidance for troubleshooting.
 
 
@@ -442,7 +455,7 @@ pytest -m 'local'
 Seqera testers should discuss how / if they want to track cached test scenarios in `git`:
 
 - Files are (relatively) small, so it could make sense to save a variety of already-first-time generated files to make it to the much speedier test-with-available-cache phase.
-- Unfortunately, I'm not aware of a super-easy way to tell if the cached files still align to the underlying `.tf` file logic, so there is no guarantee the speedy testing will actually be validating the right things. 
+- Unfortunately, I'm not aware of a super-easy way to tell if the cached files still align to the underlying `.tf` file logic, so there is no guarantee the speedy testing will actually be validating the right things.
 - As of August 23/25, it is probably safer for individual testers to nuke their caches as required and pay the regeneration time tax, but remain mindful of opportunities to identify / keep test scenarios that are unlikely to change.
 
 

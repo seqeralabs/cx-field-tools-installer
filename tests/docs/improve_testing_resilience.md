@@ -1,5 +1,16 @@
 # Test Framework Simplification Options
 
+> **⚠️ Historical planning doc — kept for context.**
+>
+> This document was written before the assertion-retrofit work. It outlined several
+> options (A/B/C/etc.) for simplifying the test framework. The actually-implemented
+> architecture is documented in [`tests/new_implementation.md`](../new_implementation.md)
+> and the migration journey in [`test_assertion_retrofit.md`](./test_assertion_retrofit.md).
+>
+> Code examples in this doc that reference `generate_assertions_all_active` /
+> `verify_all_assertions` describe pre-retrofit shapes that no longer exist. Read for
+> design rationale only.
+
 **Context**: The current test framework is complex and difficult to debug, particularly when `terraform console` subprocess calls fail. This document outlines simplification strategies that preserve speed and flexibility while improving maintainability.
 
 **Key Requirements**:

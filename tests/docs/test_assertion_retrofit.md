@@ -1,5 +1,10 @@
 # Test Assertion Retrofit — One-Pager
 
+> **Status:** ✅ Complete. This was the planning doc that drove the migration. Kept for
+> historical reference. Canonical architecture description is now
+> [`tests/new_implementation.md`](../new_implementation.md). Specific differences between
+> the original plan and the as-built result are called out inline below.
+
 Plan for flattening the test assertion machinery so per-test verifications live close to
 the test body, share a single baseline, and cover multiple file types with a uniform API.
 
@@ -166,14 +171,36 @@ tests/unit/config_files/
 
 ## Migration order
 
-1. Land helpers + `BASELINE` constant + `BASELINE` fixture. Don't touch tests yet.
-2. Write the lock test for `tower_env` against `BASELINE`. Sanity-check.
-3. Migrate ONE existing test (e.g., `test_studio_path_routing_enabled`) end-to-end.
-   Confirm the shape feels right.
-4. Sweep the rest of `test_config_file_content.py` (~15 tests). Mechanical.
-5. Migrate `test_ansible_files.py` to `assert_text_delta` (already substring-based, low risk).
-6. Delete `expected_results.py` once nothing references it.
-7. Run full suite, commit.
+1. ✅ Land helpers + `BASELINE` constant + `generated_test_files` fixture.
+2. ✅ ~~Write the lock test for `tower_env` against `BASELINE`.~~ Replaced by
+   `test_confirm_baseline` — strict-mode `assert_all_deltas(generated_test_files,
+   BASELINE_ASSERTIONS)` covers the same ground without a separate lock-test file.
+3. ✅ Migrate ONE existing test (`test_seqera_hosted_wave_active`) end-to-end.
+4. ✅ Sweep the rest of `test_config_file_content.py` — every test in the file now
+   uses the delta pattern.
+5. ⏭️ Migrate `test_ansible_files.py` — pending; tracked in the next round of pattern
+   porting.
+6. ✅ Deleted `expected_results.py` (586 lines) and `verify_all_assertions.py` (133 lines).
+7. ✅ Full suite green (89 passing as of the migration completion).
 
-Step 3 is the decision gate — if the shape doesn't feel right after one real conversion,
-back out cheaply.
+## Notable as-built differences vs the plan
+
+- **`baseline` fixture became a constant, not a fixture.** The plan called for a
+  session-scoped `BASELINE` fixture that read the rendered OFF state from disk. As-built,
+  `BASELINE_ASSERTIONS` is a declarative Python constant — easier to reason about, no
+  cache dependency, makes drift explicit.
+- **`assert_kv_delta` doesn't take a `baseline` parameter.** All three helpers now share
+  the same API (`test_file_path` / `test_file_content` + `present` / `omitted`). The
+  "everything else still matches baseline" coverage comes from `assert_all_deltas`
+  dispatching against the merged expected state, not from a baseline-diff inside the
+  helper.
+- **`assert_all_deltas` dispatcher added.** Strict-mode iterator that checks every
+  template in `generated_test_files` against `expected`. Wasn't in the original plan; emerged
+  as the right abstraction once `BASELINE_ASSERTIONS` was comprehensive.
+- **`merge_deltas` is YAMLPath-prefix-aware.** Required to handle `services.wave-lite`
+  (parent omitted) + `services.wave-lite.image` (child present) transitions cleanly.
+- **Cross-feature interactions stay inline at test sites**, not extracted into
+  cross-product constants. Convention documented in [expected_deltas.py module docstring](../unit/config_files/expected_deltas.py).
+- **Feature-pair split precedent** instead of an `ALL_ON_BASELINE` mega-constant.
+  Tests for "all-on + feature" scenarios got split into focused feature-pair tests
+  (e.g. `test_db_new_with_groundswell`, `test_db_new_with_wave_lite`).

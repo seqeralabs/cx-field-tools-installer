@@ -460,9 +460,9 @@ def write_scenario_index(items) -> Path:
         lines.append("")
 
     # Minimum file set per test — derived from each test's `merge_deltas(...)` arg names,
-    # excluding `BASELINE_ASSERTIONS`. Tests not following the delta pattern (legacy
-    # `generate_assertions_all_*` flow, or tests with no delta assertions at all) are
-    # omitted from this section.
+    # excluding `BASELINE_ASSERTIONS`. Tests with no delta assertions at all
+    # (e.g. testcontainer integration tests, output-only tests) are omitted from this
+    # section.
     by_file_min: dict[str, list[tuple[str, list[str]]]] = defaultdict(list)
     for item in items:
         required = _compute_required_templates(item)
@@ -478,8 +478,8 @@ def write_scenario_index(items) -> Path:
         lines.append("")
         lines.append(
             "_Files each test explicitly asserts on, derived from `merge_deltas(...)` call sites "
-            "(excluding `BASELINE_ASSERTIONS`). Tests using the legacy "
-            "`generate_assertions_all_*` pattern are not listed here._",
+            "(excluding `BASELINE_ASSERTIONS`). Tests without delta assertions (testcontainer, "
+            "output-only) are not listed here._",
         )
         lines.append("")
         for fpath in sorted(by_file_min):

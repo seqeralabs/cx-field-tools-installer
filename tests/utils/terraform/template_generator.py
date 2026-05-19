@@ -40,7 +40,7 @@ def generate_tc_files(plan, testcase_name, tf_modifiers):
 
     Returns:
         `{template_key: {extension, read_type, content, filepath, validation_type}}` —
-        the shape `verify_all_assertions` and the testcontainer tests expect.
+        the shape `assert_all_deltas` and the testcontainer tests expect.
 
     Raises:
         FileNotFoundError: a cache file is missing. Means precompute failed for this

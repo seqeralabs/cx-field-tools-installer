@@ -57,7 +57,7 @@ from tests.utils.config import expected_sql_dir
 from tests.utils.filehandling import FileHelper
 
 
-# MARK: BASE TFVARS
+# MARK: TFVARS
 BASELINE = """
     flag_use_aws_ses_iam_integration    = false
     flag_use_existing_smtp              = true
@@ -149,12 +149,12 @@ PRIVATE_CA_REVERSE_PROXY_ON = """
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: BASE TFVARS
+## MARK: Assertions
 ## OFF baseline expected post-state (per template)
 ## ------------------------------------------------------------------------------------
-# Section comments (`# CREDENTIALS`, `# MAIL`, etc.) mirror the same section markers in
-# `tests/datafiles/expected_results/expected_results.py::generate_*_all_disabled` so the
-# port can be diffed against the source. The literal `"# XYZ_NOT_ENABLED"` dict keys are
+# Section comments (`# CREDENTIALS`, `# MAIL`, etc.) group related keys for readability —
+# they were originally ported from the deleted `generate_*_all_disabled` functions and the
+# grouping is preserved as a navigation aid. The literal `"# XYZ_NOT_ENABLED"` dict keys are
 # actual key/value entries the rendered .env files contain (rendered with a leading `#`
 # as a commented-out marker line, but parsed as a regular `key=value` by `FileHelper.parse_kv`).
 BASELINE_ASSERTIONS = {

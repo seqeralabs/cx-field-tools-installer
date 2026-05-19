@@ -48,9 +48,8 @@ _LOCALS_SUBSTITUTED_BY_PYTHON = {
 
 # Locals known to be resource-dependent (their definition is a ternary whose branches reference
 # resources/data sources that don't exist under console-without-plan). Currently silent because
-# every templatefile that references one of these carries a stub `{}` assertion block in
-# `tests/datafiles/expected_results/expected_results.py` — the corrupt rendering isn't checked.
-# Deferred for the defensive-refactor work tracked in
+# the templatefiles that reference them aren't covered by any delta test — the corrupt rendering
+# slips through. Deferred for the defensive-refactor work tracked in
 # `.github/issue-drafts/in-review/make_locals_more_defensive.md`. Remove from this set as each
 # local gets the two-layer-defense pattern applied.
 _LOCALS_DEFERRED_TO_DEFENSIVE_REFACTOR = {
