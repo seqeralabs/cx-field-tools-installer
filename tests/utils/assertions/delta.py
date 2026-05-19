@@ -212,8 +212,8 @@ def assert_all_deltas(generated_test_files: dict, expected: dict) -> None:
     each template's `validation_type` in `tests.utils.config.all_template_files`:
       - `"kv"`  → `assert_kv_delta`
       - `"yml"` → `assert_yaml_delta`
-      - `"sql"` / `"TBD"` → `assert_text_delta` (substring checks; suitable for shell,
-        ansible playbook substring assertions, conf files, SQL).
+      - `"sql"` / `"plain_text"` → `assert_text_delta` (substring checks; suitable for
+        shell, ansible playbook substring assertions, conf files, SQL).
 
     Typical use:
 
@@ -253,7 +253,7 @@ def assert_all_deltas(generated_test_files: dict, expected: dict) -> None:
             assert_kv_delta(test_file_path=filepath, present=present, omitted=omitted)
         elif validation_type == "yml":
             assert_yaml_delta(test_file_path=filepath, present=present, omitted=omitted)
-        elif validation_type in {"sql", "TBD"}:
+        elif validation_type in {"sql", "plain_text"}:
             assert_text_delta(test_file_path=filepath, present=present, omitted=omitted)
         else:
             raise AssertionError(

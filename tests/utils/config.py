@@ -162,21 +162,22 @@ all_template_files = {
         "read_type": FileHelper.read_file,
         "content": "",
         "filepath": "",
-        "validation_type": "TBD",
+        "validation_type": "plain_text",
     },
     # Ansible playbooks are structurally YAML but the only assertions we make on them
     # are substring checks (per the legacy `assert "<task name>" in content` pattern).
-    # `validation_type = "TBD"` routes them to `assert_text_delta` in `assert_all_deltas`.
+    # `validation_type = "plain_text"` routes them to `assert_text_delta` in `assert_all_deltas`.
     # `read_type` stays as `read_yaml` so any consumer that wants the parsed structure
     # still gets it.
     #
-    # Templates still on `"yml"` are scheduled for migration in the test_002/003/006 round.
+    # `ansible_03_pull_containers_and_run_tower` is the last template still on `"yml"`;
+    # migrate it when its substring-only assertions are wired into FEATURE_ON_ASSERTIONS.
     "ansible_02_update_file_configurations": {
         "extension": ".yml",
         "read_type": FileHelper.read_yaml,
         "content": "",
         "filepath": "",
-        "validation_type": "yml",
+        "validation_type": "plain_text",
     },
     "ansible_03_pull_containers_and_run_tower": {
         "extension": ".yml",
@@ -190,14 +191,14 @@ all_template_files = {
         "read_type": FileHelper.read_yaml,
         "content": "",
         "filepath": "",
-        "validation_type": "TBD",
+        "validation_type": "plain_text",
     },
     "ansible_06_run_seqerakit": {
         "extension": ".yml",
         "read_type": FileHelper.read_yaml,
         "content": "",
         "filepath": "",
-        "validation_type": "yml",
+        "validation_type": "plain_text",
     },
     # TODO: codecommit_seqerakit
     # TODO: ssh_config
@@ -206,14 +207,14 @@ all_template_files = {
         "read_type": FileHelper.read_json,
         "content": "",
         "filepath": "",
-        "validation_type": "TBD",
+        "validation_type": "plain_text",
     },
     "private_ca_conf": {
         "extension": ".conf",
         "read_type": FileHelper.read_file,
         "content": "",
         "filepath": "",
-        "validation_type": "TBD",
+        "validation_type": "plain_text",
     },
 }
 

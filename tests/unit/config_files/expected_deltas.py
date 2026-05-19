@@ -147,6 +147,14 @@ PRIVATE_CA_REVERSE_PROXY_ON = """
     flag_do_not_use_https     = false
 """
 
+HOSTS_FILE_ENTRY_ON = """
+    flag_create_hosts_file_entry = true
+"""
+
+INSECURE_HTTP_ON = """
+    flag_do_not_use_https = true
+"""
+
 
 ## ------------------------------------------------------------------------------------
 ## MARK: ----- Assertions
@@ -346,13 +354,20 @@ BASELINE_ASSERTIONS = {
     "ansible_03_pull_containers_and_run_tower": {"present": {}, "omitted": set()},
     "ansible_05_patch_groundswell": {
         "present": set(),
-        # Triggered by container DB × Groundswell. Under BASELINE neither prerequisite is on
+        # Triggered by container DB x Groundswell. Under BASELINE neither prerequisite is on
         # (Groundswell off); under e.g. `BASELINE + GROUNDSWELL_ON` both prerequisites are on
         # (container DB is BASELINE default); under `BASELINE + DB_EXTERNAL_* + GROUNDSWELL_ON`
         # container DB is off and the block doesn't render (cleared inline at those test sites).
         "omitted": {"Patching container db with groundswell init script."},
     },
-    "ansible_06_run_seqerakit": {"present": {}, "omitted": set()},
+    "ansible_06_run_seqerakit": {
+        "present": {"Seqerakit - Using truststore."},
+        # The truststore branch is the "neither hosts file nor insecure HTTP" default;
+        # flipping either flag on removes it (per the
+        # `!flag_create_hosts_file_entry && !flag_do_not_use_https` gate in the
+        # template) and adds the corresponding alternative substring.
+        "omitted": {"Seqerakit - Using hosts file.", "Seqerakit - Using insecure."},
+    },
     "docker_logging": {"present": {}, "omitted": set()},
     "private_ca_conf": {"present": {}, "omitted": set()},
 }
@@ -376,6 +391,10 @@ DB_EXTERNAL_NEW_ON_ASSERTIONS = {
         },
         "omitted": set(),
     },
+    "ansible_02_update_file_configurations": {
+        "present": {"Populating external Platform DB."},
+        "omitted": set(),
+    },
 }
 
 
@@ -391,6 +410,10 @@ DB_EXTERNAL_EXISTING_ON_ASSERTIONS = {
         "present": {
             "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
         },
+        "omitted": set(),
+    },
+    "ansible_02_update_file_configurations": {
+        "present": {"Populating external Platform DB."},
         "omitted": set(),
     },
 }
@@ -492,6 +515,10 @@ STUDIOS_ON_ASSERTIONS = {
         # Specific sub-key from the `tower.data-studio` sub-tree — its mere presence
         # clears the parent `tower.data-studio` from OFF's omitted via prefix-aware merge.
         "present": {"tower.data-studio.allowed-workspaces": None},
+        "omitted": set(),
+    },
+    "ansible_02_update_file_configurations": {
+        "present": {"Creating data directory on host for Studios."},
         "omitted": set(),
     },
 }
@@ -613,6 +640,11 @@ WAVE_LITE_ON_ASSERTIONS = {
         },
         "omitted": set(),
     },
+    # NOTE: "Populating Wave Lite Postgres." in ansible_02 is gated by
+    # `flag_use_wave_lite && populate_external_db`, so it only renders when an external
+    # DB is also active. That substring lives on the cross-feature deltas
+    # (DB_EXTERNAL_NEW_X_WAVE_LITE_DELTA / DB_EXTERNAL_EXISTING_X_WAVE_LITE_DELTA), not
+    # here.
 }
 
 
@@ -712,6 +744,57 @@ PRIVATE_CA_REVERSE_PROXY_ON_ASSERTIONS = {
         "present": {"services.reverseproxy.labels.seqera": "reverseproxy"},
         "omitted": set(),
     },
+    "ansible_02_update_file_configurations": {
+        "present": {"Configuring private certificates."},
+        "omitted": set(),
+    },
+}
+
+
+# MARK: Seqerakit — Hosts File Entry
+# Activates the hosts-file branch of ansible_06. Triggered by
+# `flag_create_hosts_file_entry`; replaces BASELINE's truststore branch with the
+# hosts-file substring (the truststore branch is gated by
+# `!flag_create_hosts_file_entry && !flag_do_not_use_https`, so either flag flipping
+# on removes it).
+HOSTS_FILE_ENTRY_ON_ASSERTIONS = {
+    "ansible_06_run_seqerakit": {
+        "present": {"Seqerakit - Using hosts file."},
+        "omitted": {"Seqerakit - Using truststore."},
+    },
+}
+
+
+# MARK: Seqerakit — Insecure HTTP
+# Activates insecure-HTTP mode platform-wide. Triggered by `flag_do_not_use_https`,
+# which has effects beyond ansible_06:
+#   - `tower_env.TOWER_SERVER_URL` flips from `https://...` to `http://...:8000`
+#     (the explicit `:8000` port is added in insecure mode).
+#   - `tower_env.TOWER_ENABLE_UNSAFE_MODE` flips from `false` to `true`.
+#   - ansible_06 swaps the truststore substring for the insecure substring (gated by
+#     `!flag_create_hosts_file_entry && !flag_do_not_use_https`).
+# Studios and Wave-Lite are also force-disabled under insecure mode, but BASELINE has
+# both off already so no extra delta is needed here. If a future test stacks
+# `INSECURE_HTTP_ON` with `STUDIOS_ON` or `WAVE_LITE_ON`, a cross-feature delta will
+# be required (Studios → disabled, Wave-Lite → disabled).
+INSECURE_HTTP_ON_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_SERVER_URL": "http://autodc.dev-seqera.net:8000",
+            "TOWER_ENABLE_UNSAFE_MODE": "true",
+        },
+        "omitted": set(),
+    },
+    # `wave_lite_yml` is rendered even when Wave-Lite is off; `tower.endpoint.url`
+    # derives from `tower_server_url` and inherits the insecure scheme + port.
+    "wave_lite_yml": {
+        "present": {"tower.endpoint.url": "http://autodc.dev-seqera.net:8000/api"},
+        "omitted": set(),
+    },
+    "ansible_06_run_seqerakit": {
+        "present": {"Seqerakit - Using insecure."},
+        "omitted": {"Seqerakit - Using truststore."},
+    },
 }
 
 
@@ -740,6 +823,9 @@ DB_EXTERNAL_NEW_X_GROUNDSWELL_DELTA = {
             "SWELL_DB_URL": "mysql://mock.tower-db.com:3306/swell",
         },
     },
+    "ansible_02_update_file_configurations": {
+        "present": {"Populating external DB with Groundswell."},
+    },
     "ansible_05_patch_groundswell": {
         "omitted": {"Patching container db with groundswell init script."},
     },
@@ -756,6 +842,9 @@ DB_EXTERNAL_EXISTING_X_GROUNDSWELL_DELTA = {
             "SWELL_DB_URL": "mysql://existing.tower-db.com:3306/swell",
         },
     },
+    "ansible_02_update_file_configurations": {
+        "present": {"Populating external DB with Groundswell."},
+    },
     "ansible_05_patch_groundswell": {
         "omitted": {"Patching container db with groundswell init script."},
     },
@@ -763,14 +852,29 @@ DB_EXTERNAL_EXISTING_X_GROUNDSWELL_DELTA = {
 
 
 # When external new-DB is paired with Wave-Lite, Wave-Lite uses the new RDS for its
-# wave-db, and the container wave-db is removed from docker_compose. (No analogous
-# existing-DB × Wave-Lite delta — Wave-Lite ignores the existing-DB flag; that
-# non-interaction is asserted in `test_db_existing_with_wave_lite` with no inline delta.)
+# wave-db, the container wave-db is removed from docker_compose, and ansible_02 renders
+# the Wave-Lite Postgres population block (gated by `flag_use_wave_lite &&
+# populate_external_db`).
 DB_EXTERNAL_NEW_X_WAVE_LITE_DELTA = {
     "wave_lite_yml": {
         "present": {"wave.db.uri": "jdbc:postgresql://mock.wave-db.com:5432/wave"},
     },
     "docker_compose": {"omitted": {"services.wave-db"}},
+    "ansible_02_update_file_configurations": {
+        "present": {"Populating Wave Lite Postgres."},
+    },
+}
+
+
+# When existing external-DB is paired with Wave-Lite, Wave-Lite still uses its container
+# wave-db (the existing-DB flag is for Tower's DB, not Wave-Lite's) — so wave_lite_yml
+# and docker_compose stay at the Wave-Lite-only values. The only cross-feature effect is
+# in ansible_02: the Wave-Lite Postgres population block renders because
+# `populate_external_db` is true (gated by either external-DB flag).
+DB_EXTERNAL_EXISTING_X_WAVE_LITE_DELTA = {
+    "ansible_02_update_file_configurations": {
+        "present": {"Populating Wave Lite Postgres."},
+    },
 }
 
 

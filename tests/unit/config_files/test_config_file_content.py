@@ -9,12 +9,17 @@ from tests.unit.config_files.expected_deltas import (
     DB_EXTERNAL_EXISTING_ON,
     DB_EXTERNAL_EXISTING_ON_ASSERTIONS,
     DB_EXTERNAL_EXISTING_X_GROUNDSWELL_DELTA,
+    DB_EXTERNAL_EXISTING_X_WAVE_LITE_DELTA,
     DB_EXTERNAL_NEW_ON,
     DB_EXTERNAL_NEW_ON_ASSERTIONS,
     DB_EXTERNAL_NEW_X_GROUNDSWELL_DELTA,
     DB_EXTERNAL_NEW_X_WAVE_LITE_DELTA,
     GROUNDSWELL_ON,
     GROUNDSWELL_ON_ASSERTIONS,
+    HOSTS_FILE_ENTRY_ON,
+    HOSTS_FILE_ENTRY_ON_ASSERTIONS,
+    INSECURE_HTTP_ON,
+    INSECURE_HTTP_ON_ASSERTIONS,
     PRIVATE_CA_REVERSE_PROXY_ON,
     PRIVATE_CA_REVERSE_PROXY_ON_ASSERTIONS,
     REDIS_EXTERNAL_ON,
@@ -323,18 +328,21 @@ def test_db_existing_with_groundswell(generated_test_files):
 @pytest.mark.wave
 @pytest.mark.tfvars(BASELINE + WAVE_LITE_ON + DB_EXTERNAL_EXISTING_ON)
 def test_db_existing_with_wave_lite(generated_test_files):
-    """Existing external DB + Wave-Lite on: Wave-Lite ignores existing-DB.
+    """Existing external DB + Wave-Lite on: Wave-Lite ignores existing-DB for its own DB.
 
     Documented limitation as of Aug 2025: Wave-Lite always uses its container DB
-    regardless of the existing-DB flag. This test serves as a regression guard — if
-    Wave-Lite ever grows existing-DB support, `wave_lite_yml.wave.db.uri` will flip
-    and break this assertion, forcing a constants update. No cross-feature delta —
-    Wave-Lite's `wave.db.uri` stays at the container DB value.
+    regardless of the existing-DB flag — `wave_lite_yml.wave.db.uri` stays at the
+    container DB value, asserted via WAVE_LITE_ON_ASSERTIONS. The cross-feature delta
+    captures the only real interaction: ansible_02's Wave-Lite Postgres population
+    block renders because `populate_external_db` is true. If Wave-Lite ever grows
+    existing-DB support, `wave.db.uri` will flip and break this assertion, forcing
+    a constants update.
     """
     expected = merge_deltas(
         BASELINE_ASSERTIONS,
         WAVE_LITE_ON_ASSERTIONS,
         DB_EXTERNAL_EXISTING_ON_ASSERTIONS,
+        DB_EXTERNAL_EXISTING_X_WAVE_LITE_DELTA,
     )
     assert_all_deltas(generated_test_files, expected)
 
@@ -365,6 +373,52 @@ def test_redis_external_with_wave_lite(generated_test_files):
         REDIS_EXTERNAL_ON_ASSERTIONS,
         WAVE_LITE_ON_ASSERTIONS,
         REDIS_EXTERNAL_X_WAVE_LITE_DELTA,
+    )
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Seqerakit (ansible_06)
+##
+## `ansible_06_run_seqerakit` picks one of three mutually-exclusive substrings based on
+## two flags. The truststore branch is the BASELINE default; flipping either
+## `flag_create_hosts_file_entry` or `flag_do_not_use_https` on swaps it out for the
+## corresponding alternative. The combined test is included for documentation — both
+## flags independently knock out the truststore default, so there's no cross-feature
+## delta to declare.
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.ansible
+@pytest.mark.tfvars(BASELINE + HOSTS_FILE_ENTRY_ON)
+def test_hosts_file_entry_active(generated_test_files):
+    """`flag_create_hosts_file_entry` on: ansible_06 swaps the truststore branch for the hosts-file branch."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, HOSTS_FILE_ENTRY_ON_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+@pytest.mark.local
+@pytest.mark.ansible
+@pytest.mark.tfvars(BASELINE + INSECURE_HTTP_ON)
+def test_insecure_http_active(generated_test_files):
+    """`flag_do_not_use_https` on: ansible_06 swaps the truststore branch for the insecure-HTTP branch."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, INSECURE_HTTP_ON_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+@pytest.mark.local
+@pytest.mark.ansible
+@pytest.mark.tfvars(BASELINE + HOSTS_FILE_ENTRY_ON + INSECURE_HTTP_ON)
+def test_hosts_file_entry_with_insecure_http(generated_test_files):
+    """Both flags on simultaneously: hosts-file and insecure substrings both render; truststore stays out.
+
+    Documentation-only — there's no cross-feature delta because each flag independently
+    knocks out the truststore default. `merge_deltas` handles the union of both
+    `_ON_ASSERTIONS` constants correctly.
+    """
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        HOSTS_FILE_ENTRY_ON_ASSERTIONS,
+        INSECURE_HTTP_ON_ASSERTIONS,
     )
     assert_all_deltas(generated_test_files, expected)
 
