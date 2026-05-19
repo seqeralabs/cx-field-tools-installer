@@ -175,17 +175,19 @@ def test_aws_ses_active(generated_test_files):
 
 ## ------------------------------------------------------------------------------------
 ## MARK: Groundswell: Active
+## NOTE: Interactions with DB settings are tested in cross-features section.
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.groundswell
 @pytest.mark.tfvars(BASELINE + GROUNDSWELL_ON)
 def test_groundswell_active(generated_test_files):
-    """Groundswell on top of OFF baseline: tower_env Groundswell keys flip, groundswell_env populates, and the container-DB patching script renders in ansible_05."""
+    """Groundswell on (BASELINE container DB).
+
+    Asserts: tower_env Groundswell keys flip, groundswell_env populates, and the
+    container-DB patching script renders in ansible_05.
+    """
     expected = merge_deltas(BASELINE_ASSERTIONS, GROUNDSWELL_ON_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
-
-
-# NOTE: Interactions with DB settings are tested in cross-features section.
 
 
 ## ------------------------------------------------------------------------------------
@@ -213,7 +215,7 @@ def test_db_existing_active(generated_test_files):
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Redis (New))
+## MARK: Redis (New)
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.redis_external
@@ -225,7 +227,8 @@ def test_redis_external_active(generated_test_files):
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Seqera Wave: Active
+## MARK: Wave
+##  NOTE: Interactions with DB/Redis settings are tested in cross-features section.
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.wave
@@ -236,16 +239,31 @@ def test_seqera_hosted_wave_active(generated_test_files):
     assert_all_deltas(generated_test_files, expected)
 
 
+@pytest.mark.local
+@pytest.mark.wave
+@pytest.mark.tfvars(BASELINE + WAVE_LITE_ON)
+def test_wave_lite_active(generated_test_files):
+    """Wave-Lite on top of OFF baseline with container DB and container Redis (defaults).
+
+    Exercises the standalone Wave-Lite stack: wave_lite_yml URLs populate, the four
+    Wave-Lite containers (wave-lite, wave-lite-reverse-proxy, wave-db, wave-redis)
+    appear in docker_compose, and Tower's WAVE_SERVER_URL points at the local Wave-Lite
+    endpoint. Cross-feature variants (external DB / external Redis) live in the
+    Multi-Service Interactions section.
+    """
+    expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_LITE_ON_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
 ## ------------------------------------------------------------------------------------
-## MARK: Multi-Service Interactions
+## MARK: Cross Features
 ##
 ## Cross-feature tests: scenarios where two features stacked together produce extra
 ## effects beyond what each feature delivers in isolation. Each test merges:
 ##   BASELINE_ASSERTIONS + <FEATURE_A>_ON_ASSERTIONS + <FEATURE_B>_ON_ASSERTIONS
 ##                       + <FEATURE_A>_X_<FEATURE_B>_DELTA   (the cross-feature piece)
 ##
-## Cross-feature delta constants live in `expected_deltas.py` under `## MARK: Cross-feature
-## deltas` and are only valid when both component features are stacked. Use the existing
+## Cross-feature delta constants are only valid when both component features are stacked. Use the existing
 ## `_X_` constants where they exist; declare new ones there (not inline) when a new
 ## interaction emerges.
 ## ------------------------------------------------------------------------------------

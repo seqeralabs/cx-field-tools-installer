@@ -57,7 +57,7 @@ from tests.utils.config import expected_sql_dir
 from tests.utils.filehandling import FileHelper
 
 
-# MARK: TFVARS
+# MARK: ----- TFVARS
 BASELINE = """
     flag_use_existing_smtp              = true
     flag_use_aws_ses_iam_integration    = false
@@ -149,7 +149,7 @@ PRIVATE_CA_REVERSE_PROXY_ON = """
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Assertions
+## MARK: ----- Assertions
 ## OFF baseline expected post-state (per template)
 ## ------------------------------------------------------------------------------------
 # Section comments (`# CREDENTIALS`, `# MAIL`, etc.) group related keys for readability —
