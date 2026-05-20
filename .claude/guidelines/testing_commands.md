@@ -31,23 +31,23 @@ pytest tests/unit/test_module_connection_strings/ -v -s -x
 
 ## Structured logging
 
-Tests emit structured logs to `tests/logs/pytest_structured.log`. Parser tooling lives at [`tests/utils/log_parser.py`](../../tests/utils/log_parser.py):
+Tests emit structured logs to `tests/logs/pytest_structured.log`. Parser tooling lives at [`tests/utils/logger/log_parser.py`](../../tests/utils/logger/log_parser.py):
 
 ```bash
 # Summarise the most recent run
-python tests/utils/log_parser.py summarize
+python tests/utils/logger/log_parser.py summarize
 
 # Extract failures
-python tests/utils/log_parser.py extract-failures
+python tests/utils/logger/log_parser.py extract-failures
 
 # Format recent entries for LLM consumption
-python tests/utils/log_parser.py llm-format --recent 100
+python tests/utils/logger/log_parser.py llm-format --recent 100
 
 # Validate log format
-python tests/utils/log_parser.py validate
+python tests/utils/logger/log_parser.py validate
 
 # Export as JSON
-python tests/utils/log_parser.py export-json
+python tests/utils/logger/log_parser.py export-json
 
 # Tail in real-time during a run
 tail -f tests/logs/pytest_structured.log

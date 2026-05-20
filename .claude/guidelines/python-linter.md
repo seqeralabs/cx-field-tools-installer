@@ -78,7 +78,7 @@ Rules with no final decision yet — revisit when explicitly asked.
 | Rule | Notes |
 |------|-------|
 | **F841** | Unused local variable. Resolved in `tests/` (Pattern A drop, Pattern B `# noqa: F841 (kept for readability)`, Pattern C commented-out tc_assertions for consistency mirror). If F841 fires elsewhere with a similar split, refer to the same patterns. |
-| **PLW0603** | `global` statement for singleton state. Currently suppressed per-line with noqa. The proper refactor is to convert [`tests/utils/pytest_logger.py`](../../tests/utils/pytest_logger.py)'s `_logger_instance` singleton (lines ~226, ~249) to a class-based registry (e.g. `_LoggerRegistry.get()` / `.reset()`), eliminating the need for `global`. The [`tests/conftest.py:175`](../../tests/conftest.py#L175) occurrence is a legitimate module-level assignment but flagged because the rule discourages `global` broadly — could be left suppressed even after refactoring the singleton. |
+| **PLW0603** | `global` statement for singleton state. Currently suppressed per-line with noqa. The proper refactor is to convert [`tests/utils/logger/pytest_logger.py`](../../tests/utils/logger/pytest_logger.py)'s `_logger_instance` singleton (lines ~226, ~249) to a class-based registry (e.g. `_LoggerRegistry.get()` / `.reset()`), eliminating the need for `global`. The [`tests/conftest.py:175`](../../tests/conftest.py#L175) occurrence is a legitimate module-level assignment but flagged because the rule discourages `global` broadly — could be left suppressed even after refactoring the singleton. |
 
 ## How to update this file
 
