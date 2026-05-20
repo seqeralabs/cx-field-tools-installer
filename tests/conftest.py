@@ -94,11 +94,10 @@ def session_setup():
     print("\nBacking up terraform.tfvars.")
     FileHelper.move_file(FP.TFVARS_BASE, FP.TFVARS_BACKUP)
 
-    # Swap in test tfvars (base and base-override), and testing-specific outputs (e.g. locals).
-    print("\nLoading test tfvars and output artefacts.")
+    # Swap in test tfvars (base and base-override).
+    print("\nLoading test tfvars.")
     FileHelper.copy_file(FP.TFVARS_TEST_SRC, FP.TFVARS_TEST_DST)
     FileHelper.copy_file(FP.TFVARS_BASE_OVERRIDE_SRC, FP.TFVARS_BASE_OVERRIDE_DST)
-    FileHelper.copy_file(FP.OUTPUTS_SRC, FP.OUTPUTS_DST)
 
     # Prepare plan cache directory
     os.makedirs(FP.CACHE_PLAN_DIR, exist_ok=True)
@@ -147,7 +146,6 @@ def session_setup():
         FP.TFVARS_AUTO_OVERRIDE_DST,
         FP.TFVARS_BASE,
         FP.TFVARS_BASE_OVERRIDE_DST,
-        FP.OUTPUTS_DST,
         "009_define_file_templates.json",
         "012_outputs.json",
     ]
@@ -172,17 +170,16 @@ def generated_test_files(request, session_setup):
     """
     marker = request.node.get_closest_marker("tfvars")
     tf_modifiers = marker.args[0] if marker else "#NONE"
-    return generate_tc_files(None, request.node.name, tf_modifiers)
+    return generate_tc_files(tf_modifiers)
 
 
 @pytest.fixture
 def scenario_outputs(request, session_setup):
-    """Load the `module.connection_strings` outputs for this scenario from the precompute cache.
+    """Load every `012_outputs.tf` output for this scenario from the precompute cache.
 
     Reads `tests/.scenario_cache/{hash}/outputs.json`, populated by the parallel precompute
-    worker via a single `terraform console` call per scenario. Tests use this in place of the
-    old `prepare_plan(...)` + `extract_config_values(plan)` pattern, which required a real
-    `terraform plan` (and therefore valid AWS credentials).
+    worker via a single `terraform console` call per scenario. No `terraform plan` and no
+    AWS credentials required at test time.
     """
     marker = request.node.get_closest_marker("tfvars")
     tf_modifiers = marker.args[0] if marker else "#NONE"

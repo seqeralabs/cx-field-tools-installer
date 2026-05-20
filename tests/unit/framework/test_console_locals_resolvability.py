@@ -1,7 +1,7 @@
 """Regression test: every local referenced from `009_define_file_templates.tf` must resolve via `terraform console`.
 
 Companion to the #353 console-based templatefile rendering refactor. The fast path
-(`stage_tfvars` + `generate_tc_files(None, …)`) pipes templatefile arg maps through
+(`stage_tfvars` + `generate_tc_files(tf_modifiers)`) pipes templatefile arg maps through
 `terraform console`, which expects every `local.<name>` reference in those maps to
 evaluate to a concrete value. A local whose definition mixes a tfvars-known branch
 with a resource-attribute branch in a ternary will collapse to `(known after apply)`

@@ -28,13 +28,10 @@ def _cache_filename(key: str, extension: str) -> str:
     return f"{key}{extension}"
 
 
-def generate_tc_files(plan, testcase_name, tf_modifiers):
+def generate_tc_files(tf_modifiers):
     """Read every pre-rendered templatefile from this scenario's cache directory.
 
     Args:
-        plan: Unused. Kept in the signature for back-compat with callers that haven't
-            migrated. Will be dropped with the TCValues refactor.
-        testcase_name: Unused. Kept in the signature for back-compat. Same disposition.
         tf_modifiers: The per-test tfvars block (from `@pytest.mark.tfvars(...)`). Used
             to compute the cache directory.
 

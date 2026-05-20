@@ -2,15 +2,15 @@
 
 # NOTE: This script expects to be run from ROOT/tests/datafiles/
 # Ensure we are in that folder.
-echo $(dirname $0)
-cd $(dirname $0)
+dirname "$0"
+cd "$(dirname "$0")" || exit 1
 
 echo "generate_core_data.sh: Current directory is $PWD"
 
 # Removing existing files
 echo "Removing existing files."
-rm -f *.tfvars
-rm -f secrets/ssm_sensitive_values_*_testing.json
+rm -f -- *.tfvars
+rm -f -- secrets/ssm_sensitive_values_*_testing.json
 
 # Generate core terraform.tfvars file from template
 echo "Generating base terraform.tfvars file from templates/TEMPLATE_terraform.tfvars"
@@ -187,7 +187,7 @@ tower_email_trusted_users = "123@abc.com, 456@def.com"
 flag_tower_enable_participant_auto_create_user = true
 flag_tower_enable_member_auto_create_user      = true
 
-tower_workflow_cleanup_enabled          = true 
+tower_workflow_cleanup_enabled          = true
 
 tower_enable_openapi = true
 
@@ -276,9 +276,7 @@ update_ssm_parameter() {
     echo "Processing parameter: $param_name"
 
     # Try to get current value (single call)
-    current_value=$(aws ssm get-parameter --name "$param_name" --with-decryption --query 'Parameter.Value' --output text 2>/dev/null)
-
-    if [ $? -eq 0 ]; then
+    if current_value=$(aws ssm get-parameter --name "$param_name" --with-decryption --query 'Parameter.Value' --output text 2>/dev/null); then
         echo "Parameter $param_name exists, checking if update is needed..."
 
         # Hash the current value
@@ -325,17 +323,3 @@ echo "Skipping SSM parameter updates (CX_SKIP_SSM=true)"
 
 # Delete test log file
 echo '{"message": "Cleansing content for new test loop."}' > ../logs/pytest_structured.log || true
-
-
-## ------------------------------------------------------------------------------------
-## Create test-specific outputs (e.g. tf locals needed for assertions)
-## ------------------------------------------------------------------------------------
-cat << 'EOF' > 012_testing_outputs.tf
-## ------------------------------------------------------------------------------------
-## Write local values to output for testing purposes
-## Keep name of local the same; prefix with 'local_' for easy conversion
-## ------------------------------------------------------------------------------------
-output local_wave_enabled {
-    value = local.wave_enabled
-}
-EOF

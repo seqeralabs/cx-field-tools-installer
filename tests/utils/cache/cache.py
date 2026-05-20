@@ -13,8 +13,9 @@ from tests.utils.filehandling import FileHelper
 def hash_cache_key(tf_modifiers: str, qualifier: str = "") -> str:
     """Generate SHA-256 hash of override data and tfvars content for cache key.
 
-    Used by the legacy plan-based path (`prepare_plan`) for the per-scenario plan cache
-    under `tests/.plan_cache/`. The templatefile-rendering path uses
+    Used by the plan-based path (`prepare_plan`, currently scoped to
+    `test_variable_validation.py`) for the per-scenario plan cache under
+    `tests/.plan_cache/`. The templatefile-rendering path uses
     `hash_templatefile_cache_key` instead.
     """
     tfvars_base = FileHelper.read_file(FP.TFVARS_BASE).strip()
