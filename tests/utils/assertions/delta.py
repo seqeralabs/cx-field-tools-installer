@@ -26,7 +26,7 @@ from typing import Any
 import warnings
 
 from tests.utils.config import all_template_files
-from tests.utils.filehandling import FileHelper
+from tests.utils.filehandling.filehandling import FileHelper
 import yaml
 from yamlpath import Processor, YAMLPath
 from yamlpath.common import Parsers

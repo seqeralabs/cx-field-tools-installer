@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 
 from tests.utils.config import FP
-from tests.utils.filehandling import FileHelper
+from tests.utils.filehandling.filehandling import FileHelper
 
 
 ## ------------------------------------------------------------------------------------

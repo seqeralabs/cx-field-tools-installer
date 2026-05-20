@@ -11,7 +11,7 @@ class PytestLogFormatter:
 
     def __init__(self, log_file: str | None = None):
         if log_file is None:
-            tests_dir = Path(__file__).parent.parent
+            tests_dir = Path(__file__).parent.parent.parent
             log_file = tests_dir / "logs" / "pytest_structured.log"
 
         self.log_file = Path(log_file)

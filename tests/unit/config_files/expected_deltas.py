@@ -54,7 +54,7 @@ test logic and the constants stay focused on expected-state declarations.
 """
 
 from tests.utils.config import expected_sql_dir
-from tests.utils.filehandling import FileHelper
+from tests.utils.filehandling.filehandling import FileHelper
 
 
 # MARK: ----- TFVARS

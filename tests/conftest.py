@@ -16,9 +16,9 @@ from scripts.installer.utils.extractors import hcl_to_json
 from scripts.installer.utils.purge_folders import delete_pycache_folders
 
 from tests.utils.config import FP
-from tests.utils.filehandling import FileHelper
+from tests.utils.filehandling.filehandling import FileHelper
+from tests.utils.logger.pytest_logger import get_logger
 from tests.utils.preflight.preflight import check_aws_sso_token
-from tests.utils.pytest_logger import get_logger
 from tests.utils.terraform.executor import TF
 from tests.utils.terraform.precompute import (
     collect_scenarios_from_items,

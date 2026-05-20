@@ -11,7 +11,7 @@ from testcontainers.compose import DockerCompose
 from testcontainers.mysql import MySqlContainer
 from testcontainers.postgres import PostgresContainer
 from tests.utils.config import FP
-from tests.utils.filehandling import FileHelper
+from tests.utils.filehandling.filehandling import FileHelper
 
 
 ## ------------------------------------------------------------------------------------

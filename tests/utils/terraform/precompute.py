@@ -30,7 +30,7 @@ import time
 
 from tests.utils.cache.cache import hash_scenario, hash_templatefile_cache_key, normalize_whitespace
 from tests.utils.config import FP, all_template_files
-from tests.utils.filehandling import FileHelper
+from tests.utils.filehandling.filehandling import FileHelper
 
 
 JSON_009_PATH = "009_define_file_templates.json"

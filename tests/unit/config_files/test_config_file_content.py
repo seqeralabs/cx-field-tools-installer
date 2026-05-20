@@ -43,7 +43,7 @@ from tests.unit.config_files.expected_deltas import (
 )
 from tests.utils.assertions.delta import assert_all_deltas, merge_deltas
 from tests.utils.config import expected_sql_dir
-from tests.utils.filehandling import FileHelper
+from tests.utils.filehandling.filehandling import FileHelper
 
 
 ## ------------------------------------------------------------------------------------

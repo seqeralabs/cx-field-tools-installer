@@ -5,7 +5,7 @@ import subprocess
 
 from tests.utils.cache.cache import hash_cache_key, normalize_whitespace
 from tests.utils.config import FP
-from tests.utils.filehandling import FileHelper
+from tests.utils.filehandling.filehandling import FileHelper
 
 
 # Sentinel for `terraform console` placeholder when a value can't be resolved without `terraform apply`

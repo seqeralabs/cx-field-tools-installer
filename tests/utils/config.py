@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from tests.utils.filehandling import FileHelper
+from tests.utils.filehandling.filehandling import FileHelper
 
 
 ## ------------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ expected_results_dir = f"{FP.ROOT}/tests/datafiles/expected_results"
 expected_sql_dir = f"{expected_results_dir}/expected_sql"
 
 
-# Master test object (REFERNCE ONLY)
+# Master test object (REFERENCE ONLY)
 all_template_files = {
     "tower_env": {
         "extension": ".env",

@@ -5,8 +5,13 @@ from pathlib import Path
 import tempfile
 
 import pytest
+from tests.utils.logger.log_formatter import PytestLogFormatter
 
-from tests.utils.log_formatter import PytestLogFormatter
+
+# File-level marker: opts every test in this file into the `logger` slice, which is
+# excluded from the default `make run_tests_*` targets. Run via `make run_tests_logger_only`
+# or `pytest -m logger`.
+pytestmark = pytest.mark.logger
 
 
 class TestPytestLogFormatter:

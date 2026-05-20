@@ -82,14 +82,14 @@ podman version
 
 Tests emit JSON-Lines records to [`logs/pytest_structured.log`](./logs/) on every run. Each entry carries `timestamp`, `test_session_id`, `event_type`, `test_path`, `status`, `duration`, `metadata`, and `failure_reason` (when applicable).
 
-Parser CLI: [`utils/log_parser.py`](./utils/log_parser.py).
+Parser CLI: [`utils/logger/log_parser.py`](./utils/logger/log_parser.py).
 
 ```bash
-python tests/utils/log_parser.py summarize
-python tests/utils/log_parser.py extract-failures
-python tests/utils/log_parser.py llm-format --recent 100
-python tests/utils/log_parser.py validate
-python tests/utils/log_parser.py export-json
+python tests/utils/logger/log_parser.py summarize
+python tests/utils/logger/log_parser.py extract-failures
+python tests/utils/logger/log_parser.py llm-format --recent 100
+python tests/utils/logger/log_parser.py validate
+python tests/utils/logger/log_parser.py export-json
 tail -f tests/logs/pytest_structured.log
 ```
 
