@@ -15,6 +15,8 @@ from tests.utils.config import FP
 
 
 class LogLevel(Enum):
+    """Stdlib-logging level enum, exposed for typed config on `PytestStructuredLogger`."""
+
     DEBUG = logging.DEBUG
     INFO = logging.INFO
     WARNING = logging.WARNING
@@ -37,7 +39,7 @@ class PytestStructuredLogger:
 
         # Default log file location
         if log_file == "":
-            tests_dir = Path(__file__).parent.parent
+            tests_dir = Path(__file__).parent.parent.parent
             log_file = (tests_dir / "logs" / "pytest_structured.log").as_posix()
 
         self.log_file = Path(log_file)

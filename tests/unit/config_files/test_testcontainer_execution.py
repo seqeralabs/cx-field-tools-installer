@@ -1,7 +1,6 @@
 import json
 import os
 import subprocess
-import sys
 import tempfile
 import time
 import urllib.error  # TODO: Assess if this is right or should use urllib3?
@@ -12,9 +11,7 @@ from testcontainers.compose import DockerCompose
 from testcontainers.mysql import MySqlContainer
 from testcontainers.postgres import PostgresContainer
 from tests.utils.config import FP
-from tests.utils.filehandling import FileHelper
-from tests.utils.terraform.executor import stage_tfvars
-from tests.utils.terraform.template_generator import generate_tc_files
+from tests.utils.filehandling.filehandling import FileHelper
 
 
 ## ------------------------------------------------------------------------------------
@@ -22,7 +19,7 @@ from tests.utils.terraform.template_generator import generate_tc_files
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.testcontainer
-def test_tower_sql_population(session_setup):
+def test_tower_sql_population(generated_test_files):
     """Test that tower.sql successfully populates a MySQL8 database as expected (via Testcontainer).
 
     Emulates execution of RDS prepping script in Ansible.
@@ -34,19 +31,6 @@ def test_tower_sql_population(session_setup):
 
     Cant use `mysql_container.get_container_host_ip()` because it returns `localhost` and we need the host's actual IP.
     """
-    ## SETUP
-    ## =======================================================================================
-    tf_modifiers = """#NONE"""
-    stage_tfvars(tf_modifiers)
-
-    desired_files = ["tower_sql"]
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    # Not required right now
-    # assertion_modifiers = assertion_modifiers_template()
-    # tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-    # verify_all_assertions(tc_files, tc_assertions)
-
     # WARNING: DONT CHANGE THESE OR TEST FAILS.
     # https://hub.docker.com/_/mysql
     master_user = "root"
@@ -94,7 +78,7 @@ def test_tower_sql_population(session_setup):
     ) as mysql_container:  # noqa: F841  (kept for readability)
         # POPULATE
         # Run initial population script.
-        query = tc_files["tower_sql"]["content"]
+        query = generated_test_files["tower_sql"]["content"]
         db_result = run_mysql_query(query, master_user, master_password)
 
         # VERIFY
@@ -125,7 +109,7 @@ def test_tower_sql_population(session_setup):
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.testcontainer
-def test_wave_sql_rds_population(session_setup, config_baseline_settings_default):
+def test_wave_sql_rds_population(generated_test_files):
     """Test that wave-lite-rds.sql successfully populates a Postgres database as expected (via Testcontainer).
 
     Emulates execution of RDS prepping script in Ansible.
@@ -137,19 +121,6 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
 
     Cant use `mysql_container.get_container_host_ip()` because it returns `localhost` and we need the host's actual IP.
     """
-    ## SETUP
-    ## =======================================================================================
-    tf_modifiers = """#NONE"""
-    stage_tfvars(tf_modifiers)
-
-    desired_files = ["docker_compose", "wave_lite_yml", "wave_lite_rds"]
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    # Not required right now
-    # assertion_modifiers = assertion_modifiers_template()
-    # tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-    # verify_all_assertions(tc_files, tc_assertions)
-
     # https://hub.docker.com/_/postgres
     master_user = "wave_lite_test_master"
     master_password = "wave_lite_test_master_password"  # noqa: S105  (test fixture)
@@ -198,7 +169,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
     ) as postgres_container:  # noqa: F841  (kept for readability)
         # POPULATE
         # Run initial population script.
-        query = tc_files["wave_lite_rds"]["content"]
+        query = generated_test_files["wave_lite_rds"]["content"]
         run_postgres_query(query, master_user, master_password, master_db_name)
 
         # VERIFY
@@ -225,7 +196,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
     ## ==================================================================================
     ## SCENARIO3: Volume Mount RDS file to run on container init
     ## ==================================================================================
-    init_sql_rds_path = tc_files["wave_lite_rds"]["filepath"]
+    init_sql_rds_path = generated_test_files["wave_lite_rds"]["filepath"]
 
     with (
         # PostgresContainer("postgres:17.6", username="postgres", password="postgres", dbname="wave")
@@ -265,7 +236,7 @@ def test_wave_sql_rds_population(session_setup, config_baseline_settings_default
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.testcontainer
-def test_wave_containers(session_setup):
+def test_wave_containers(generated_test_files):
     """Ensure the entire Wave containerized ecosystem can run.
 
     How it works:
@@ -277,21 +248,9 @@ def test_wave_containers(session_setup):
         5. Purge ['wave-db]['volumes'] and replace with path to test-generated SQL.
         6. Purge ['wave-redis']['volumes'].
     """
-    ## SETUP
-    ## =======================================================================================
-    tf_modifiers = """#NONE"""
-    stage_tfvars(tf_modifiers)
-
-    desired_files = ["docker_compose", "wave_lite_yml", "wave_lite_rds"]
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    # Not required right now
-    # assertion_modifiers = assertion_modifiers_template()
-    # tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-    # verify_all_assertions(tc_files, tc_assertions)
 
     def prepare_wave_only_docker_compose():
-        docker_compose_data = FileHelper.read_yaml(tc_files["docker_compose"]["filepath"])
+        docker_compose_data = FileHelper.read_yaml(generated_test_files["docker_compose"]["filepath"])
 
         # Purge all containers except those tied to Wave Lite.
         desired_services = ["wave-lite", "wave-lite-reverse-proxy", "wave-db", "wave-redis"]
@@ -302,7 +261,7 @@ def test_wave_containers(session_setup):
             docker_compose_data["services"].pop(k)
 
         # Add generated Wave Lite YAML file
-        wave_lite_yaml_path = tc_files["wave_lite_yml"]["filepath"]
+        wave_lite_yaml_path = generated_test_files["wave_lite_yml"]["filepath"]
         volume_mount = f"{wave_lite_yaml_path}:/work/config.yml"
         docker_compose_data["services"]["wave-lite"]["volumes"] = []
         docker_compose_data["services"]["wave-lite"]["volumes"].append(volume_mount)
@@ -313,7 +272,7 @@ def test_wave_containers(session_setup):
         docker_compose_data["services"]["wave-lite-reverse-proxy"]["volumes"].append(volume_mount)
 
         # Add SQL & remove stateful storage from wave lite db
-        wave_lite_rds_path = tc_files["wave_lite_rds"]["filepath"]
+        wave_lite_rds_path = generated_test_files["wave_lite_rds"]["filepath"]
         volume_mount = f"{wave_lite_rds_path}:/docker-entrypoint-initdb.d/01-init.sql"
         docker_compose_data["services"]["wave-db"]["volumes"] = []
         docker_compose_data["services"]["wave-db"]["volumes"].append(volume_mount)

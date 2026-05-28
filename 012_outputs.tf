@@ -3,15 +3,15 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 output "aws_account_id" {
-  value = var.use_mocks ? "N/A" : data.aws_caller_identity.current[0].account_id
+  value = local.aws_account_id
 }
 
 output "aws_caller_arn" {
-  value = var.use_mocks ? "N/A" : data.aws_caller_identity.current[0].arn
+  value = local.aws_caller_arn
 }
 
 output "aws_caller_user" {
-  value = var.use_mocks ? "N/A" : data.aws_caller_identity.current[0].user_id
+  value = local.aws_caller_user
 }
 
 
@@ -20,7 +20,7 @@ output "aws_caller_user" {
 # ----------------------------------------------------------------------------------------------------------------------
 
 output "ec2_ssh_key" {
-  value     = tls_private_key.ec2_ssh_key.private_key_pem
+  value     = local.ec2_ssh_key
   sensitive = true
 }
 
@@ -41,11 +41,11 @@ output "tower_api_endpoint" {
 }
 
 output "aws_ec2_private_ip" {
-  value = var.flag_private_tower_without_eice == true ? aws_instance.ec2.private_ip : "N/A connect via EICE."
+  value = local.aws_ec2_private_ip
 }
 
 output "aws_ec2_public_ip" {
-  value = var.flag_make_instance_public == true ? aws_eip.towerhost[0].public_ip : "EC2 has no public IP."
+  value = local.aws_ec2_public_ip
 }
 
 # output "database_connection_string" {
@@ -152,4 +152,3 @@ output "wave_lite_redis_url" {
 # ----------------------------------------------------------------------------------------------------------------------
 
 output "route53_record_status" { value = var.flag_create_hosts_file_entry == true ? "Hosts file only. No R53 record." : "R53 record created." }
-

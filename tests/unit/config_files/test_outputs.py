@@ -1,26 +1,20 @@
 import pytest
 
-from tests.utils.config import TCValues
-from tests.utils.terraform.executor import prepare_plan
-from tests.utils.terraform.parser import extract_config_values
-
 
 """
-These tests used to validate the outputs emitted by Terraform plan (with particular focus on those
-emitted by module.connection_strings).
+These tests validate the outputs emitted by `module.connection_strings` for a representative
+set of scenarios. They're a sanity check before the broader templatefile-content tests, since
+the templatefile tests rely on the same module outputs being correct.
 
-When making any change to the `connection_strings` module, this should be run as a sanity check
-prior to full config file testing, since the config file testing relies on these same outputs.
-A mistake found and fixed here, avoids a mistake downstream that is harder to generate and fix.
+After the precompute refactor, `module.connection_strings.*` values are resolved in parallel
+at session setup (one `terraform console` call per scenario) and cached to
+`tests/.scenario_cache/{hash}/outputs.json`. The `scenario_outputs` fixture reads that file.
 
-NOTE: Module outputs may not be available if you do a targeted plan and/or don't call them out as
-root level outputs. To compensate for this:
-  1) All tests here make use of a full `terrform plan`. This takes a bit longer for the 1st time
-     run, but we cache the JSON output so n+1 is much faster.
-  2) We make use of `tests/012_testing_outputs.tf` to define outputs that are desired for testing
-     purposes (e.g. various service's DNS) but not really necessary for clients. As of Aug 22/25,
-     I'm dumping these all out in the customer-facing outputs but intended to migrate several to
-     the testing-only view (to occur in a discrete branch TBD).
+The previous version of this file also asserted on `aws_account_id`/`aws_caller_arn`/
+`aws_caller_user` — those always evaluate to "N/A" in mock mode (per the
+`var.use_mocks ? "N/A" : data.aws_caller_identity.current[0].X` ternary in `012_outputs.tf`).
+Asserting that a mock returns its mock value tests nothing useful, so those assertions are
+dropped along with the `terraform plan` / AWS-credential dependency they imposed.
 """
 
 
@@ -29,17 +23,9 @@ root level outputs. To compensate for this:
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.outputs
-def test_outputs_baseline_all_enabled(session_setup):
+def test_outputs_baseline_all_enabled(scenario_outputs):
     """Conduct baseline assertions when all SP services turned on."""
-    tf_modifiers = """#NONE"""
-    plan = prepare_plan(tf_modifiers)
-    tc: TCValues = extract_config_values(plan)
-    outputs: dict = tc.outputs
-
-    # Run assertions
-    assert outputs["aws_account_id"] == "N/A"
-    assert outputs["aws_caller_arn"] == "N/A"
-    assert outputs["aws_caller_user"] == "N/A"
+    outputs = scenario_outputs
 
     assert outputs["tower_base_url"] == "autodc.dev-seqera.net"
     assert outputs["tower_server_url"] == "https://autodc.dev-seqera.net"
@@ -69,36 +55,21 @@ def test_outputs_baseline_all_enabled(session_setup):
     assert outputs["wave_lite_redis_dns"] == "wave-redis"
     assert outputs["wave_lite_redis_url"] == "redis://wave-redis:6379"
 
-    """
-    Outputs we don't worry about
-      - ec2_ssh_key
-      - aws_ec2_private_ip
-      - aws_ec2_public_ip
-    """
-
 
 @pytest.mark.local
 @pytest.mark.outputs
-def test_outputs_baseline_all_disabled(session_setup):
-    """Conduct baseline assertions when all SP services turned on."""
-    # TODO: Get rid of email disabling. This should be a discrete check.
-    tf_modifiers = """
-        flag_use_aws_ses_iam_integration    = false
-        flag_use_existing_smtp              = true
-        flag_enable_groundswell             = false
-        flag_data_explorer_enabled          = false
-        flag_enable_data_studio             = false
-        flag_use_wave                       = false
-        flag_use_wave_lite                  = false
-    """
-    plan = prepare_plan(tf_modifiers)
-    tc: TCValues = extract_config_values(plan)
-    outputs: dict = tc.outputs
-
-    # Run assertions
-    assert outputs["aws_account_id"] == "N/A"
-    assert outputs["aws_caller_arn"] == "N/A"
-    assert outputs["aws_caller_user"] == "N/A"
+@pytest.mark.tfvars("""
+    flag_use_aws_ses_iam_integration    = false
+    flag_use_existing_smtp              = true
+    flag_enable_groundswell             = false
+    flag_data_explorer_enabled          = false
+    flag_enable_data_studio             = false
+    flag_use_wave                       = false
+    flag_use_wave_lite                  = false
+""")
+def test_outputs_baseline_all_disabled(scenario_outputs):
+    """Conduct baseline assertions when all SP services turned off."""
+    outputs = scenario_outputs
 
     assert outputs["tower_base_url"] == "autodc.dev-seqera.net"
     assert outputs["tower_server_url"] == "https://autodc.dev-seqera.net"
@@ -128,33 +99,19 @@ def test_outputs_baseline_all_disabled(session_setup):
     assert outputs["wave_lite_redis_dns"] == "N/A"
     assert outputs["wave_lite_redis_url"] == "N/A"
 
-    """
-    Outputs we don't worry about
-      - ec2_ssh_key
-      - aws_ec2_private_ip
-      - aws_ec2_public_ip
-    """
-
 
 ## ------------------------------------------------------------------------------------
 ## MARK: No HTTPS
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.outputs
-def test_outputs_no_https_all_enabled(session_setup):
-    """Conduct baseline assertions when all SP services turned on."""
-    tf_modifiers = """
-        flag_create_load_balancer                       = false
-        flag_do_not_use_https                           = true
-    """
-    plan = prepare_plan(tf_modifiers)
-    tc: TCValues = extract_config_values(plan)
-    outputs: dict = tc.outputs
-
-    # Run assertions
-    assert outputs["aws_account_id"] == "N/A"
-    assert outputs["aws_caller_arn"] == "N/A"
-    assert outputs["aws_caller_user"] == "N/A"
+@pytest.mark.tfvars("""
+    flag_create_load_balancer                       = false
+    flag_do_not_use_https                           = true
+""")
+def test_outputs_no_https_all_enabled(scenario_outputs):
+    """No-https variant when all SP services are on."""
+    outputs = scenario_outputs
 
     assert outputs["tower_base_url"] == "autodc.dev-seqera.net"
     assert outputs["tower_server_url"] == "http://autodc.dev-seqera.net:8000"
@@ -184,35 +141,20 @@ def test_outputs_no_https_all_enabled(session_setup):
     assert outputs["wave_lite_redis_dns"] == "N/A"
     assert outputs["wave_lite_redis_url"] == "N/A"
 
-    """
-    Outputs we don't worry about
-      - ec2_ssh_key
-      - aws_ec2_private_ip
-      - aws_ec2_public_ip
-    """
-
 
 @pytest.mark.local
 @pytest.mark.outputs
-def test_outputs_no_https_all_disabled(session_setup):
-    """Conduct baseline assertions when all SP services turned on."""
-    tf_modifiers = """
-        flag_create_load_balancer                       = false
-        flag_do_not_use_https                           = true
+@pytest.mark.tfvars("""
+    flag_create_load_balancer                       = false
+    flag_do_not_use_https                           = true
 
-        flag_enable_groundswell                         = false
-        flag_enable_data_studio                         = false
-        flag_use_wave_lite                              = false
-    """
-    plan = prepare_plan(tf_modifiers)
-
-    tc: TCValues = extract_config_values(plan)
-    outputs: dict = tc.outputs
-
-    # Run assertions
-    assert outputs["aws_account_id"] == "N/A"
-    assert outputs["aws_caller_arn"] == "N/A"
-    assert outputs["aws_caller_user"] == "N/A"
+    flag_enable_groundswell                         = false
+    flag_enable_data_studio                         = false
+    flag_use_wave_lite                              = false
+""")
+def test_outputs_no_https_all_disabled(scenario_outputs):
+    """No-https variant when SP services are off."""
+    outputs = scenario_outputs
 
     assert outputs["tower_base_url"] == "autodc.dev-seqera.net"
     assert outputs["tower_server_url"] == "http://autodc.dev-seqera.net:8000"
@@ -242,36 +184,23 @@ def test_outputs_no_https_all_disabled(session_setup):
     assert outputs["wave_lite_redis_dns"] == "N/A"
     assert outputs["wave_lite_redis_url"] == "N/A"
 
-    """
-    Outputs we don't worry about
-      - ec2_ssh_key
-      - aws_ec2_private_ip
-      - aws_ec2_public_ip
-    """
-
 
 ## ------------------------------------------------------------------------------------
 ## MARK: Connect Path-Routing
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.outputs
-def test_outputs_connect_alb_pathrouting(session_setup):
-    """Test Conect path-based routing. Ensure default 'connect.' is not present."""
-    # Given
-    tf_modifiers = """
-        flag_create_load_balancer                       = true
-        flag_do_not_use_https                           = false
+@pytest.mark.tfvars("""
+    flag_create_load_balancer                       = true
+    flag_do_not_use_https                           = false
 
-        flag_studio_enable_path_routing                 = true
-        data_studio_path_routing_url                    = "autoconnect.example.com"
-    """
+    flag_studio_enable_path_routing                 = true
+    data_studio_path_routing_url                    = "autoconnect.example.com"
+""")
+def test_outputs_connect_alb_pathrouting(scenario_outputs):
+    """Test Connect path-based routing. Ensure default 'connect.' is not present."""
+    outputs = scenario_outputs
 
-    # When
-    plan = prepare_plan(tf_modifiers)
-    tc: TCValues = extract_config_values(plan)
-    outputs: dict = tc.outputs
-
-    # Then
     assert outputs["tower_connect_dns"] == "autoconnect.example.com"
     assert outputs["tower_connect_wildcard_dns"] == "autoconnect.example.com"
     assert outputs["tower_connect_server_url"] == "https://autoconnect.example.com"
@@ -279,23 +208,17 @@ def test_outputs_connect_alb_pathrouting(session_setup):
 
 @pytest.mark.local
 @pytest.mark.outputs
-def test_outputs_connect_ec2_pathrouting(session_setup):
-    """Test Conect path-based routing. Ensure default 'connect.' is not present."""
-    # Given
-    tf_modifiers = """
-        flag_create_load_balancer                       = true
-        flag_do_not_use_https                           = false
+@pytest.mark.tfvars("""
+    flag_create_load_balancer                       = true
+    flag_do_not_use_https                           = false
 
-        flag_studio_enable_path_routing                 = true
-        data_studio_path_routing_url                    = "autoconnect.example.com"
-    """
+    flag_studio_enable_path_routing                 = true
+    data_studio_path_routing_url                    = "autoconnect.example.com"
+""")
+def test_outputs_connect_ec2_pathrouting(scenario_outputs):
+    """Test Connect path-based routing in the EC2-direct variant."""
+    outputs = scenario_outputs
 
-    # When
-    plan = prepare_plan(tf_modifiers)
-    tc: TCValues = extract_config_values(plan)
-    outputs: dict = tc.outputs
-
-    # Then
     assert outputs["tower_connect_dns"] == "autoconnect.example.com"
     assert outputs["tower_connect_wildcard_dns"] == "autoconnect.example.com"
     assert outputs["tower_connect_server_url"] == "https://autoconnect.example.com"

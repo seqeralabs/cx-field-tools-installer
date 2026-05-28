@@ -16,10 +16,23 @@ from scripts.installer.utils.extractors import hcl_to_json
 from scripts.installer.utils.purge_folders import delete_pycache_folders
 
 from tests.utils.config import FP
-from tests.utils.filehandling import FileHelper
+from tests.utils.filehandling.filehandling import FileHelper
+from tests.utils.logger.pytest_logger import get_logger
 from tests.utils.preflight.preflight import check_aws_sso_token
-from tests.utils.pytest_logger import get_logger
-from tests.utils.terraform.executor import TF, prepare_plan
+from tests.utils.terraform.executor import TF
+from tests.utils.terraform.precompute import (
+    collect_scenarios_from_items,
+    precompute_in_parallel,
+    read_scenario_outputs,
+    write_scenario_index,
+)
+from tests.utils.terraform.template_generator import generate_tc_files
+
+
+# Populated by `pytest_collection_modifyitems` from each test's `@pytest.mark.tfvars(...)` marker;
+# consumed by `session_setup` to drive the parallel precompute + INDEX.md generation.
+_collected_scenarios: dict[str, str] = {}
+_collected_items: list = []
 
 
 """
@@ -81,20 +94,44 @@ def session_setup():
     print("\nBacking up terraform.tfvars.")
     FileHelper.move_file(FP.TFVARS_BASE, FP.TFVARS_BACKUP)
 
-    # Swap in test tfvars (base and base-override), and testing-specific outputs (e.g. locals).
-    print("\nLoading test tfvars and output artefacts.")
+    # Swap in test tfvars (base and base-override).
+    print("\nLoading test tfvars.")
     FileHelper.copy_file(FP.TFVARS_TEST_SRC, FP.TFVARS_TEST_DST)
     FileHelper.copy_file(FP.TFVARS_BASE_OVERRIDE_SRC, FP.TFVARS_BASE_OVERRIDE_DST)
-    FileHelper.copy_file(FP.OUTPUTS_SRC, FP.OUTPUTS_DST)
 
     # Prepare plan cache directory
     os.makedirs(FP.CACHE_PLAN_DIR, exist_ok=True)
 
-    # Prepare JSONified 009 via the shared hcl_to_json helper (Phases 1+2 of #352).
+    # Prepare JSONified 009 + 012 via the shared hcl_to_json helper (Phases 1+2 of #352).
     # On linux/amd64 or linux/arm64 with the binary extracted, this is a ~10-50ms in-process
     # call; on unsupported hosts it falls back to the per-call vendored docker container.
-    data = hcl_to_json(f"{FP.ROOT}/009_define_file_templates.tf")
-    Path(f"{FP.ROOT}/009_define_file_templates.json").write_text(json.dumps(data))
+    # 009 supplies the templatefile() expression source; 012 supplies the output-name →
+    # value-expression map that the parallel precompute resolves per scenario.
+    data_009 = hcl_to_json(f"{FP.ROOT}/009_define_file_templates.tf")
+    Path(f"{FP.ROOT}/009_define_file_templates.json").write_text(json.dumps(data_009))
+    data_012 = hcl_to_json(f"{FP.ROOT}/012_outputs.tf")
+    Path(f"{FP.ROOT}/012_outputs.json").write_text(json.dumps(data_012))
+
+    # Parallel precompute of resolved locals + rendered templatefiles for every collected
+    # scenario. Each worker spawns one `terraform console` call per scenario and writes
+    # locals.json + every template into tests/.scenario_cache/{hash}/. Tests then read
+    # purely from disk — no console calls happen at test runtime.
+    if _collected_scenarios:
+        precompute_start = time.time()
+        statuses = precompute_in_parallel(_collected_scenarios)
+        elapsed = time.time() - precompute_start
+        hits = sum(1 for s in statuses.values() if s == "hit")
+        ok = sum(1 for s in statuses.values() if s == "miss-ok")
+        errs = sum(1 for s in statuses.values() if s.startswith("miss-err"))
+        print(f"\nPrecompute: {len(statuses)} scenarios ({hits} hit, {ok} miss-ok, {errs} miss-err) in {elapsed:.2f}s")
+        if errs:
+            for h, s in list(statuses.items())[:3]:
+                if s.startswith("miss-err"):
+                    print(f"  [{h[:8]}] {s[:300]}")
+
+        # Regenerate the human-readable scenario→folder mapping.
+        index_path = write_scenario_index(_collected_items)
+        print(f"Scenario index: {index_path}")
 
     yield
 
@@ -109,8 +146,8 @@ def session_setup():
         FP.TFVARS_AUTO_OVERRIDE_DST,
         FP.TFVARS_BASE,
         FP.TFVARS_BASE_OVERRIDE_DST,
-        FP.OUTPUTS_DST,
         "009_define_file_templates.json",
+        "012_outputs.json",
     ]
 
     for file in files_to_purge:
@@ -122,21 +159,31 @@ def session_setup():
     FileHelper.move_file(FP.TFVARS_BACKUP, FP.TFVARS_BASE)
 
 
-@pytest.fixture(scope="session")  # function
-def config_baseline_settings_default():
-    """Terraform plan and apply the default test terraform.tfvars and base-override.auto.tfvars.
+@pytest.fixture
+def generated_test_files(request, session_setup):
+    """Stage tfvars from `@pytest.mark.tfvars(...)` and return rendered templatefile bundle.
 
-    Plan with ALL resources rather than targeted, to get all outputs in plan document.
+    Per-test tfvars overrides are declared as a marker argument so they're discoverable at
+    pytest collection time (enabling future parallel precompute of resolved locals across
+    the whole suite). When no marker is present, falls back to `#NONE` — the same baseline
+    the original `tf_modifiers = "#NONE"` pattern produced.
     """
-    tf_modifiers = """#NONE"""
+    marker = request.node.get_closest_marker("tfvars")
+    tf_modifiers = marker.args[0] if marker else "#NONE"
+    return generate_tc_files(tf_modifiers)
 
-    # DONT USE THESE - no longer needed since the new `terraform template` approach is used.
-    # qualifier = "-target=null_resource.generate_independent_config_files"
-    # run_terraform_apply(qualifier)
 
-    return prepare_plan(tf_modifiers)
+@pytest.fixture
+def scenario_outputs(request, session_setup):
+    """Load every `012_outputs.tf` output for this scenario from the precompute cache.
 
-    # run_terraform_destroy()
+    Reads `tests/.scenario_cache/{hash}/outputs.json`, populated by the parallel precompute
+    worker via a single `terraform console` call per scenario. No `terraform plan` and no
+    AWS credentials required at test time.
+    """
+    marker = request.node.get_closest_marker("tfvars")
+    tf_modifiers = marker.args[0] if marker else "#NONE"
+    return read_scenario_outputs(tf_modifiers)
 
 
 @pytest.fixture(scope="function")  # noqa: PT003  (explicit for documentation)
@@ -328,8 +375,15 @@ def _apply_auto_skips(config, items):
 
 
 def pytest_collection_modifyitems(session, config, items):
-    """Apply auto-skips, then log the collected count."""
+    """Apply auto-skips, capture scenarios for parallel precompute, then log the collected count."""
     _apply_auto_skips(config, items)
+
+    # Capture runnable items for both the parallel precompute and INDEX.md generation.
+    # Filter to items NOT marked skip so we don't precompute for slices that won't run.
+    runnable_items = [i for i in items if not any(m.name == "skip" for m in i.iter_markers())]
+    _collected_scenarios.update(collect_scenarios_from_items(runnable_items))
+    _collected_items.extend(runnable_items)
+
     logger = get_logger()
     total_tests = len(items)
     logger.log_collection_modifyitems(total_tests=total_tests)

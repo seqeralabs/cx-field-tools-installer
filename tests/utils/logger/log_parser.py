@@ -5,7 +5,7 @@ import argparse
 import json
 import sys
 
-from tests.utils.log_formatter import PytestLogFormatter
+from tests.utils.logger.log_formatter import PytestLogFormatter
 
 
 class PytestLogParser:

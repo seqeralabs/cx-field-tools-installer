@@ -1,670 +1,442 @@
-import sys
-
 import pytest
-from tests.datafiles.expected_results.expected_results import (
-    assertion_modifiers_template,
-    generate_assertions_all_active,
-    generate_assertions_all_disabled,
+from tests.unit.config_files.expected_deltas import (
+    AWS_SES_ACTIVE,
+    AWS_SES_ACTIVE_ASSERTIONS,
+    BASELINE,
+    BASELINE_ASSERTIONS,
+    DATA_EXPLORER_ACTIVE,
+    DATA_EXPLORER_ACTIVE_ASSERTIONS,
+    DB_EXTERNAL_EXISTING_ACTIVE,
+    DB_EXTERNAL_EXISTING_ACTIVE_ASSERTIONS,
+    DB_EXTERNAL_EXISTING_X_GROUNDSWELL_DELTA,
+    DB_EXTERNAL_EXISTING_X_WAVE_LITE_DELTA,
+    DB_EXTERNAL_NEW_ACTIVE,
+    DB_EXTERNAL_NEW_ACTIVE_ASSERTIONS,
+    DB_EXTERNAL_NEW_X_GROUNDSWELL_DELTA,
+    DB_EXTERNAL_NEW_X_WAVE_LITE_DELTA,
+    GROUNDSWELL_ACTIVE,
+    GROUNDSWELL_ACTIVE_ASSERTIONS,
+    HOSTS_FILE_ENTRY_ACTIVE,
+    HOSTS_FILE_ENTRY_ACTIVE_ASSERTIONS,
+    INSECURE_HTTP_ACTIVE,
+    INSECURE_HTTP_ACTIVE_ASSERTIONS,
+    PRIVATE_CA_REVERSE_PROXY_ACTIVE,
+    PRIVATE_CA_REVERSE_PROXY_ACTIVE_ASSERTIONS,
+    REDIS_EXTERNAL_ACTIVE,
+    REDIS_EXTERNAL_ACTIVE_ASSERTIONS,
+    REDIS_EXTERNAL_X_STUDIOS_DELTA,
+    REDIS_EXTERNAL_X_WAVE_LITE_DELTA,
+    STUDIOS_ACTIVE,
+    STUDIOS_ACTIVE_ASSERTIONS,
+    STUDIOS_PATH_ROUTING_ACTIVE,
+    STUDIOS_PATH_ROUTING_ACTIVE_ASSERTIONS,
+    STUDIOS_SSH_ACTIVE,
+    STUDIOS_SSH_ACTIVE_ASSERTIONS,
+    STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE,
+    STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS,
+    TOWER_OPT_IN_FLAGS_ACTIVE,
+    TOWER_OPT_IN_FLAGS_ACTIVE_ASSERTIONS,
+    WAVE_LITE_ACTIVE,
+    WAVE_LITE_ACTIVE_ASSERTIONS,
+    WAVE_SEQERA_HOSTED_ACTIVE,
+    WAVE_SEQERA_HOSTED_ACTIVE_ASSERTIONS,
 )
-from tests.utils.assertions.verify_assertions import verify_all_assertions
+from tests.utils.assertions.delta import assert_all_deltas, merge_deltas
 from tests.utils.config import expected_sql_dir
-from tests.utils.filehandling import FileHelper
-from tests.utils.terraform.executor import stage_tfvars
-from tests.utils.terraform.template_generator import generate_tc_files
+from tests.utils.filehandling.filehandling import FileHelper
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Baseline ON/OFF
+## MARK: Baseline
 ## ------------------------------------------------------------------------------------
-## This establishes a baseline set of files using testing defaults:
-##    - ALB is active,
-##    - Containerized DB / Redis
-##    - Wave Lite & Groundswell & Data Explorer are active / inactive.
+## Confirms `BASELINE_ASSERTIONS` accurately describes the rendered output when only
+## `BASELINE` tfvars are applied — every other delta test in this file stacks features
+## on top of `BASELINE_ASSERTIONS` via `merge_deltas`, so drift here would cascade.
 
 
 @pytest.mark.local
-def test_baseline_alb_all_enabled(session_setup):
-    """Conduct baseline assertions when all SP services turned on."""
-    tf_modifiers = """#NONE"""
-    stage_tfvars(tf_modifiers)
-
-    # Create all config files since this scenario is used often. Good bang-for-buck. No assertion_modifiers
-    desired_files = []
-    assertion_modifiers = assertion_modifiers_template()
-
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-
-    verify_all_assertions(tc_files, tc_assertions)
+@pytest.mark.tfvars(BASELINE)
+def test_confirm_baseline(generated_test_files):
+    """Confirm BASELINE_ASSERTIONS matches the rendered state under BASELINE tfvars (no feature deltas)."""
+    assert_all_deltas(generated_test_files, BASELINE_ASSERTIONS)
 
 
+## ------------------------------------------------------------------------------------
+## MARK: Tower Flags
+## ------------------------------------------------------------------------------------
 @pytest.mark.local
-def test_baseline_alb_all_disabled(session_setup):
-    """Conduct baseline assertions when all SP services turned off."""
-    # TODO: Get rid of email disabling. This should be a discrete check.
-    tf_modifiers = """
-        flag_use_aws_ses_iam_integration    = false
-        flag_use_existing_smtp              = true
-        flag_enable_groundswell             = false
-        flag_data_explorer_enabled          = false
-        flag_enable_data_studio             = false
-        flag_use_wave                       = false
-        flag_use_wave_lite                  = false
-        flag_allow_aws_instance_credentials = false
-        tower_enable_openapi                = false
-        tower_enable_pipeline_versioning    = false
-        flag_tower_enable_participant_auto_create_user = false
-        flag_tower_enable_member_auto_create_user      = false
-        tower_workflow_cleanup_enabled                 = false
+@pytest.mark.tower
+@pytest.mark.tfvars(BASELINE + TOWER_OPT_IN_FLAGS_ACTIVE)
+def test_tower_opt_in_flags_active(generated_test_files):
+    """Six Tower-level config flags all on: instance creds, OpenAPI, pipeline versioning, auto-create users, cleanup.
+
+    Grouped as a single test for compactness — these are independent knobs with no
+    cross-feature interactions. If any one grows complex (e.g. pipeline versioning gets
+    workspace-restriction logic), break it out into its own `_active` test.
     """
-    stage_tfvars(tf_modifiers)
-
-    # Create all config files since this scenario is used often. Good bang-for-buck. No assertion_modifiers
-    desired_files = []
-    assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
-
-    verify_all_assertions(tc_files, tc_assertions)
+    expected = merge_deltas(BASELINE_ASSERTIONS, TOWER_OPT_IN_FLAGS_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Private CA: Active
+## MARK: Private CA Reverse Proxy: Active
 ## ------------------------------------------------------------------------------------
+# TODO: Add tests that cover URLs when ALB not active.
+
+
 @pytest.mark.local
 @pytest.mark.private_ca
-def test_private_ca_reverse_proxy_active(session_setup):
-    """Test scenario.
-
-    - Baseline all enabled.
-    - Reverseproxy with self-signed private CA active.
-    """
-    tf_modifiers = """
-        flag_create_load_balancer        = false
-        flag_use_private_cacert          = true
-        flag_do_not_use_https            = false
-    """
-    stage_tfvars(tf_modifiers)
-
-    desired_files = ["docker_compose"]
-    assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    assertion_modifiers["docker_compose"] = {
-        "present": {"services.reverseproxy.labels.seqera": "reverseproxy"},
-        "omitted": {},
-    }
-
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-    verify_all_assertions(tc_files, tc_assertions)
+@pytest.mark.tfvars(BASELINE + PRIVATE_CA_REVERSE_PROXY_ACTIVE)
+def test_private_ca_reverse_proxy_active(generated_test_files):
+    """Private CA reverse-proxy active: ALB skipped, reverseproxy container terminates TLS with the self-signed cert."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        PRIVATE_CA_REVERSE_PROXY_ACTIVE_ASSERTIONS,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Studios: Path Routing
+## MARK: Studios
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.studios
-def test_studio_path_routing_enabled(session_setup):
-    """Test scenario.
+@pytest.mark.tfvars(BASELINE + STUDIOS_ACTIVE)
+def test_studios_active(generated_test_files):
+    """Studios: Confirm TOWER_DATA_STUDIO_CONNECT_URL and CONNECT_PROXY_URL."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        STUDIOS_ACTIVE_ASSERTIONS,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
-    - Baseline all enabled.
-    - Studios path-routing enabled.
-    """
-    tf_modifiers = """
-        flag_enable_data_studio         = true
-        flag_studio_enable_path_routing = true
-        data_studio_path_routing_url    = "connect-example.com"
-    """
-    stage_tfvars(tf_modifiers)
 
-    desired_files = ["tower_env", "data_studios_env"]
-    assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING": "true",
-            "TOWER_DATA_STUDIO_CONNECT_URL": "https://connect-example.com",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["data_studios_env"] = {
-        "present": {"CONNECT_PROXY_URL": "https://connect-example.com"},
-        "omitted": {},
-    }
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-
-    verify_all_assertions(tc_files, tc_assertions)
+@pytest.mark.local
+@pytest.mark.studios
+@pytest.mark.tfvars(BASELINE + STUDIOS_ACTIVE + STUDIOS_PATH_ROUTING_ACTIVE)
+def test_studios_path_routing_active(generated_test_files):
+    """Studios + path routing on: TOWER_DATA_STUDIO_CONNECT_URL and CONNECT_PROXY_URL use the custom URL."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        STUDIOS_ACTIVE_ASSERTIONS,
+        STUDIOS_PATH_ROUTING_ACTIVE_ASSERTIONS,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Studios SSH: Enabled
+## MARK: Studios SSH
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.studios
-def test_studio_ssh_enabled(session_setup):
-    """Test scenario.
-
-    - Baseline all enabled.
-    - Studios SSH enabled.
-    """
-    tf_modifiers = """
-        flag_enable_data_studio_ssh = true
-        flag_limit_data_studio_ssh_to_some_workspaces = false
-    """
-    stage_tfvars(tf_modifiers)
-
-    desired_files = ["tower_env", "data_studios_env"]
-    assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_SSH_KEYS_MANAGEMENT_ENABLED": "true",
-            "CONNECT_SSH_ENABLED": "true",
-            "TOWER_DATA_STUDIO_CONNECT_SSH_PORT": "2222",
-            "TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES": "",
-            "TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS": "https://connect-ssh.autodc.dev-seqera.net",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["data_studios_env"] = {
-        "present": {
-            "CONNECT_SSH_ENABLED": "true",
-            "CONNECT_SSH_ADDR": ":2222",
-            "CONNECT_SSH_KEY_PATH": "/data/ssh-host-key",
-        },
-        "omitted": {},
-    }
-
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-    verify_all_assertions(tc_files, tc_assertions)
+@pytest.mark.tfvars(BASELINE + STUDIOS_ACTIVE + STUDIOS_SSH_ACTIVE)
+def test_studios_ssh_active(generated_test_files):
+    """Studios + SSH on: 5 SSH-related keys appear in tower_env, 3 in data_studios_env."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        STUDIOS_ACTIVE_ASSERTIONS,
+        STUDIOS_SSH_ACTIVE_ASSERTIONS,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
 
-## ------------------------------------------------------------------------------------
-## MARK: Studios SSH: Enabled — workspace restriction active
-## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.studios
-def test_studio_ssh_enabled_workspace_restriction(session_setup):
-    """Test scenario.
-
-    - Baseline all enabled.
-    - Studios SSH enabled.
-    - SSH restricted to specific workspaces.
-    """
-    tf_modifiers = """
-        flag_enable_data_studio_ssh = true
-        flag_limit_data_studio_ssh_to_some_workspaces = true
-        data_studio_ssh_eligible_workspaces = "12,34"
-    """
-    stage_tfvars(tf_modifiers)
-
-    desired_files = ["tower_env"]
-    assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES": "12,34",
-        },
-        "omitted": {},
-    }
-
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-    verify_all_assertions(tc_files, tc_assertions)
+@pytest.mark.tfvars(BASELINE + STUDIOS_ACTIVE + STUDIOS_SSH_ACTIVE + STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE)
+def test_studios_ssh_workspace_restriction_active(generated_test_files):
+    """Studios + SSH + workspace restriction: TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES flips to the configured CSV."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        STUDIOS_ACTIVE_ASSERTIONS,
+        STUDIOS_SSH_ACTIVE_ASSERTIONS,
+        STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Studios SSH: Disabled
+## MARK: Data Explorer: Active
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
-@pytest.mark.studios
-def test_studio_ssh_disabled(session_setup):
-    """Test scenario.
-
-    - Baseline all enabled.
-    - Studios on, SSH explicitly disabled.
-    """
-    tf_modifiers = """
-        flag_enable_data_studio_ssh = false
-    """
-    stage_tfvars(tf_modifiers)
-
-    desired_files = ["tower_env", "data_studios_env"]
-    assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    assertion_modifiers["tower_env"] = {
-        "present": {},
-        "omitted": {
-            "TOWER_SSH_KEYS_MANAGEMENT_ENABLED": "",
-            "TOWER_DATA_STUDIO_CONNECT_SSH_PORT": "",
-            "TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS": "",
-        },
-    }
-
-    assertion_modifiers["data_studios_env"] = {
-        "present": {},
-        "omitted": {
-            "CONNECT_SSH_ENABLED": "",
-            "CONNECT_SSH_ADDR": "",
-            "CONNECT_SSH_KEY_PATH": "",
-        },
-    }
-
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-    verify_all_assertions(tc_files, tc_assertions)
+@pytest.mark.data_explorer
+@pytest.mark.tfvars(BASELINE + DATA_EXPLORER_ACTIVE)
+def test_data_explorer_active(generated_test_files):
+    """Data Explorer on: TOWER_DATA_EXPLORER_ENABLED flips true, CLOUD_DISABLED_WORKSPACES surfaces empty."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, DATA_EXPLORER_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: New DB: All Active
+## MARK: AWS SES: Active
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.tower
+@pytest.mark.tfvars(BASELINE + AWS_SES_ACTIVE)
+def test_aws_ses_active(generated_test_files):
+    """AWS SES (IAM) on: TOWER_ENABLE_AWS_SES flips true, container SMTP host/port keys disappear."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, AWS_SES_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Groundswell: Active
+## NOTE: Interactions with DB settings are tested in cross-features section.
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.groundswell
+@pytest.mark.tfvars(BASELINE + GROUNDSWELL_ACTIVE)
+def test_groundswell_active(generated_test_files):
+    """Groundswell on (BASELINE container DB).
+
+    Asserts: tower_env Groundswell keys flip, groundswell_env populates, and the
+    container-DB patching script renders in ansible_05.
+    """
+    expected = merge_deltas(BASELINE_ASSERTIONS, GROUNDSWELL_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: DB (New)
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.db_new
-def test_new_db_all_enabled(session_setup):
-    """Test scenario.
-
-    - Baseline all enabled.
-    - New RDS active.
-    """
-    tf_modifiers = """
-        flag_create_external_db         = true
-        flag_use_existing_external_db   = false
-        flag_use_container_db           = false
-    """
-    stage_tfvars(tf_modifiers)
-
-    desired_files = ["tower_env", "groundswell_env", "wave_lite_yml", "docker_compose"]
-    assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["groundswell_env"] = {
-        "present": {
-            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["wave_lite_yml"] = {
-        "present": {
-            "wave.db.uri": "jdbc:postgresql://mock.wave-db.com:5432/wave",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["docker_compose"] = {
-        "present": {
-            "services.wave-lite.labels.seqera": "wave-lite",
-            "services.wave-lite-reverse-proxy.labels.seqera": "wave-lite-reverse-proxy",
-            "services.wave-redis.labels.seqera": "wave-redis",
-        },
-        "omitted": {
-            "services.wave-db": "",
-        },
-    }
-
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-    verify_all_assertions(tc_files, tc_assertions)
+@pytest.mark.tfvars(BASELINE + DB_EXTERNAL_NEW_ACTIVE)
+def test_db_new_active(generated_test_files):
+    """New external DB on top of OFF baseline: TOWER_DB_URL points to the new RDS endpoint."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, DB_EXTERNAL_NEW_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: New DB: All Disabled
+## MARK: DB (Existing)
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.db_existing
+@pytest.mark.tfvars(BASELINE + DB_EXTERNAL_EXISTING_ACTIVE)
+def test_db_existing_active(generated_test_files):
+    """Existing external DB on top of OFF baseline: TOWER_DB_URL points to the existing endpoint."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, DB_EXTERNAL_EXISTING_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Redis (New)
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.redis_external
+@pytest.mark.tfvars(BASELINE + REDIS_EXTERNAL_ACTIVE)
+def test_redis_external_active(generated_test_files):
+    """External Redis on top of OFF baseline: TOWER_REDIS_URL points to the external endpoint."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, REDIS_EXTERNAL_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Wave
+##  NOTE: Interactions with DB/Redis settings are tested in cross-features section.
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.wave
+@pytest.mark.tfvars(BASELINE + WAVE_SEQERA_HOSTED_ACTIVE)
+def test_seqera_hosted_wave_active(generated_test_files):
+    """Activating Seqera-hosted Wave from OFF baseline: assert every generated file vs OFF + Wave delta."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_SEQERA_HOSTED_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+@pytest.mark.local
+@pytest.mark.wave
+@pytest.mark.tfvars(BASELINE + WAVE_LITE_ACTIVE)
+def test_wave_lite_active(generated_test_files):
+    """Wave-Lite on top of OFF baseline with container DB and container Redis (defaults).
+
+    Exercises the standalone Wave-Lite stack: wave_lite_yml URLs populate, the four
+    Wave-Lite containers (wave-lite, wave-lite-reverse-proxy, wave-db, wave-redis)
+    appear in docker_compose, and Tower's WAVE_SERVER_URL points at the local Wave-Lite
+    endpoint. Cross-feature variants (external DB / external Redis) live in the
+    Multi-Service Interactions section.
+    """
+    expected = merge_deltas(BASELINE_ASSERTIONS, WAVE_LITE_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Cross Features
+##
+## Cross-feature tests: scenarios where two features stacked together produce extra
+## effects beyond what each feature delivers in isolation. Each test merges:
+##   BASELINE_ASSERTIONS + <FEATURE_A>_ON_ASSERTIONS + <FEATURE_B>_ON_ASSERTIONS
+##                       + <FEATURE_A>_X_<FEATURE_B>_DELTA   (the cross-feature piece)
+##
+## Cross-feature delta constants are only valid when both component features are stacked. Use the existing
+## `_X_` constants where they exist; declare new ones there (not inline) when a new
+## interaction emerges.
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.db_new
-def test_new_db_all_disabled(session_setup):
-    """Test scenario.
+@pytest.mark.groundswell
+@pytest.mark.tfvars(BASELINE + GROUNDSWELL_ACTIVE + DB_EXTERNAL_NEW_ACTIVE)
+def test_db_new_with_groundswell(generated_test_files):
+    """New external DB + Groundswell on: Groundswell's TOWER_DB_URL and SWELL_DB_URL flip to the new RDS endpoint."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        GROUNDSWELL_ACTIVE_ASSERTIONS,
+        DB_EXTERNAL_NEW_ACTIVE_ASSERTIONS,
+        DB_EXTERNAL_NEW_X_GROUNDSWELL_DELTA,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
-    - Baseline all disabled.
-    - New RDS active.
+
+@pytest.mark.local
+@pytest.mark.db_new
+@pytest.mark.wave
+@pytest.mark.tfvars(BASELINE + WAVE_LITE_ACTIVE + DB_EXTERNAL_NEW_ACTIVE)
+def test_db_new_with_wave_lite(generated_test_files):
+    """New external DB + Wave-Lite on: Wave-Lite uses the new RDS for its wave-db; container wave-db is removed.
+
+    Mirror inverse of `test_db_existing_with_wave_lite` (which asserts the
+    non-interaction). Unlike existing-DB, new-DB IS a real cross-feature interaction
+    for Wave-Lite — Terraform provisions a wave-db RDS that Wave-Lite uses in place
+    of the container.
     """
-    tf_modifiers = """
-        flag_use_aws_ses_iam_integration    = false
-        flag_use_existing_smtp              = true
-        flag_enable_groundswell             = false
-        flag_data_explorer_enabled          = false
-        flag_enable_data_studio             = false
-        flag_use_wave                       = false
-        flag_use_wave_lite                  = false
-
-        flag_create_external_db             = true
-        flag_use_existing_external_db       = false
-        flag_use_container_db               = false
-        flag_allow_aws_instance_credentials = false
-        flag_tower_enable_participant_auto_create_user = false
-        flag_tower_enable_member_auto_create_user      = false
-        tower_workflow_cleanup_enabled                 = false
-    """
-    stage_tfvars(tf_modifiers)
-
-    desired_files = ["tower_env", "groundswell_env", "wave_lite_yml"]
-    assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
-        },
-        "omitted": {},
-    }
-
-    # No need for custom assertion_modifiers -- core testcase handles this one.
-    assertion_modifiers["groundswell_env"] = {"present": {}, "omitted": {}}
-
-    # No need for custom assertion_modifiers -- core testcase handles this one.
-    assertion_modifiers["wave_lite_yml"] = {"present": {}, "omitted": {}}
-    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
-
-    verify_all_assertions(tc_files, tc_assertions)
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        WAVE_LITE_ACTIVE_ASSERTIONS,
+        DB_EXTERNAL_NEW_ACTIVE_ASSERTIONS,
+        DB_EXTERNAL_NEW_X_WAVE_LITE_DELTA,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
 
-## ------------------------------------------------------------------------------------
-## MARK: Existing DB: All Active
-## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.db_existing
-def test_existing_db_all_enabled(session_setup):
-    """Test scenario.
-
-    - Baseline all enabled.
-    - Existing RDS active.
-    """
-    tf_modifiers = """
-        flag_create_external_db         = false
-        flag_use_existing_external_db   = true
-        flag_use_container_db           = false
-        tower_db_url                        = "existing.tower-db.com"
-    """
-    stage_tfvars(tf_modifiers)
-
-    desired_files = ["tower_env", "groundswell_env", "wave_lite_yml"]
-    assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["groundswell_env"] = {
-        "present": {
-            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
-        },
-        "omitted": {},
-    }
-
-    # NOTE: Current as of Aug 13/2025, Wave-Lite does not support existing db flow.
-    # TODO: Extend functionality.
-    assertion_modifiers["wave_lite_yml"] = {
-        "present": {
-            "wave.db.uri": "jdbc:postgresql://wave-db:5432/wave",
-        },
-        "omitted": {},
-    }
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-
-    verify_all_assertions(tc_files, tc_assertions)
+@pytest.mark.groundswell
+@pytest.mark.tfvars(BASELINE + GROUNDSWELL_ACTIVE + DB_EXTERNAL_EXISTING_ACTIVE)
+def test_db_existing_with_groundswell(generated_test_files):
+    """Existing external DB + Groundswell on: Groundswell's TOWER_DB_URL also flips to the existing endpoint."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        GROUNDSWELL_ACTIVE_ASSERTIONS,
+        DB_EXTERNAL_EXISTING_ACTIVE_ASSERTIONS,
+        DB_EXTERNAL_EXISTING_X_GROUNDSWELL_DELTA,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
 
-## ------------------------------------------------------------------------------------
-## MARK: Existing DB: All Disabled
-## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.db_existing
-def test_existing_db_all_disabled(session_setup):
-    """Test scenario.
+@pytest.mark.wave
+@pytest.mark.tfvars(BASELINE + WAVE_LITE_ACTIVE + DB_EXTERNAL_EXISTING_ACTIVE)
+def test_db_existing_with_wave_lite(generated_test_files):
+    """Existing external DB + Wave-Lite on: Wave-Lite ignores existing-DB for its own DB.
 
-    - Baseline all disabled.
-    - Existing RDS active.
+    Documented limitation as of Aug 2025: Wave-Lite always uses its container DB
+    regardless of the existing-DB flag — `wave_lite_yml.wave.db.uri` stays at the
+    container DB value, asserted via WAVE_LITE_ACTIVE_ASSERTIONS. The cross-feature delta
+    captures the only real interaction: ansible_02's Wave-Lite Postgres population
+    block renders because `populate_external_db` is true. If Wave-Lite ever grows
+    existing-DB support, `wave.db.uri` will flip and break this assertion, forcing
+    a constants update.
     """
-    tf_modifiers = """
-        flag_use_aws_ses_iam_integration    = false
-        flag_use_existing_smtp              = true
-        flag_enable_groundswell             = false
-        flag_data_explorer_enabled          = false
-        flag_enable_data_studio             = false
-        flag_use_wave                       = false
-        flag_use_wave_lite                  = false
-
-        flag_create_external_db             = false
-        flag_use_existing_external_db       = true
-        flag_use_container_db               = false
-        tower_db_url                        = "existing.tower-db.com"
-        flag_allow_aws_instance_credentials = false
-        tower_enable_openapi                = false
-        tower_enable_pipeline_versioning        = false
-        flag_tower_enable_participant_auto_create_user = false
-        flag_tower_enable_member_auto_create_user      = false
-        tower_workflow_cleanup_enabled                 = false
-    """
-    stage_tfvars(tf_modifiers)
-
-    desired_files = ["tower_env", "groundswell_env", "wave_lite_yml"]
-    assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
-        },
-        "omitted": {},
-    }
-
-    # No need for custom assertion_modifiers -- core testcase handles this one.
-    assertion_modifiers["groundswell_env"] = {"present": {}, "omitted": {}}
-
-    # No need for custom assertion_modifiers -- core testcase handles this one.
-    assertion_modifiers["wave_lite_yml"] = {"present": {}, "omitted": {}}
-    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
-
-    verify_all_assertions(tc_files, tc_assertions)
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        WAVE_LITE_ACTIVE_ASSERTIONS,
+        DB_EXTERNAL_EXISTING_ACTIVE_ASSERTIONS,
+        DB_EXTERNAL_EXISTING_X_WAVE_LITE_DELTA,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
 
-## ------------------------------------------------------------------------------------
-## MARK: New Redis: All Active
-## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.redis_external
-def test_new_redis_all_enabled(session_setup):
-    """Test scenario.
-
-    - Baseline all enabled.
-    - Elasticache Redis active.
-    """
-    tf_modifiers = """
-        flag_create_external_redis                      = true
-        flag_use_container_redis                        = false
-    """
-    stage_tfvars(tf_modifiers)
-
-    desired_files = ["tower_env", "data_studios_env", "wave_lite_yml", "docker_compose"]
-    assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_REDIS_URL": "redis://mock.tower-redis.com:6379",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["data_studios_env"] = {
-        "present": {
-            "CONNECT_REDIS_ADDRESS": "mock.tower-redis.com:6379",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["wave_lite_yml"] = {
-        "present": {
-            "redis.uri": "rediss://mock.wave-redis.com:6379",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["docker_compose"] = {
-        "present": {
-            "services.wave-lite.labels.seqera": "wave-lite",
-            "services.wave-lite-reverse-proxy.labels.seqera": "wave-lite-reverse-proxy",
-            "services.wave-db.labels.seqera": "wave-db",
-        },
-        "omitted": {
-            "services.wave-redis": "",
-        },
-    }
-
-    tc_assertions = generate_assertions_all_active(tc_files, assertion_modifiers)
-    verify_all_assertions(tc_files, tc_assertions)
+@pytest.mark.studios
+@pytest.mark.tfvars(BASELINE + STUDIOS_ACTIVE + REDIS_EXTERNAL_ACTIVE)
+def test_redis_external_with_studios(generated_test_files):
+    """External Redis + Studios on: Studios's CONNECT_REDIS_ADDRESS flips to the external endpoint."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        REDIS_EXTERNAL_ACTIVE_ASSERTIONS,
+        STUDIOS_ACTIVE_ASSERTIONS,
+        REDIS_EXTERNAL_X_STUDIOS_DELTA,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
 
-## ------------------------------------------------------------------------------------
-## MARK: New Redis: All Disabled
-## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.redis_external
-def test_new_redis_all_disabled(session_setup):
-    """Test scenario.
-
-    - Baseline all disabled.
-    - Elasticache Redis active.
-    """
-    tf_modifiers = """
-        flag_use_aws_ses_iam_integration    = false
-        flag_use_existing_smtp              = true
-        flag_enable_groundswell             = false
-        flag_data_explorer_enabled          = false
-        flag_enable_data_studio             = false
-        flag_use_wave                       = false
-        flag_use_wave_lite                  = false
-
-        flag_create_external_redis          = true
-        flag_use_container_redis            = false
-        flag_allow_aws_instance_credentials = false
-        tower_enable_openapi                = false
-        tower_enable_pipeline_versioning        = false
-        flag_tower_enable_participant_auto_create_user = false
-        flag_tower_enable_member_auto_create_user      = false
-        tower_workflow_cleanup_enabled                 = false
-    """
-    stage_tfvars(tf_modifiers)
-
-    desired_files = ["tower_env", "data_studios_env", "wave_lite_yml"]
-    assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "TOWER_REDIS_URL": "redis://mock.tower-redis.com:6379",
-        },
-        "omitted": {},
-    }
-
-    # When disabled, none of the settings are present other than comment explaining why.
-    # TODO: Harmonize behaviour with other files like Groundswell / Wave-Lite.
-    assertion_modifiers["data_studios_env"] = {
-        "present": {},
-        "omitted": {
-            "CONNECT_REDIS_ADDRESS": "N/A",
-        },
-    }
-
-    assertion_modifiers["wave_lite_yml"] = {
-        "present": {
-            "redis.uri": "N/A",
-        },
-        "omitted": {},
-    }
-    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
-
-    verify_all_assertions(tc_files, tc_assertions)
+@pytest.mark.wave
+@pytest.mark.tfvars(BASELINE + WAVE_LITE_ACTIVE + REDIS_EXTERNAL_ACTIVE)
+def test_redis_external_with_wave_lite(generated_test_files):
+    """External Redis + Wave-Lite on: Wave-Lite's redis endpoint flips and the container wave-redis is removed."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        REDIS_EXTERNAL_ACTIVE_ASSERTIONS,
+        WAVE_LITE_ACTIVE_ASSERTIONS,
+        REDIS_EXTERNAL_X_WAVE_LITE_DELTA,
+    )
+    assert_all_deltas(generated_test_files, expected)
 
 
 ## ------------------------------------------------------------------------------------
-## MARK: Seqera Wave: Active
+## MARK: Seqerakit (ansible_06)
+##
+## `ansible_06_run_seqerakit` picks one of three mutually-exclusive substrings based on
+## two flags. The truststore branch is the BASELINE default; flipping either
+## `flag_create_hosts_file_entry` or `flag_do_not_use_https` on swaps it out for the
+## corresponding alternative. The combined test is included for documentation — both
+## flags independently knock out the truststore default, so there's no cross-feature
+## delta to declare.
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.ansible
+@pytest.mark.tfvars(BASELINE + HOSTS_FILE_ENTRY_ACTIVE)
+def test_hosts_file_entry_active(generated_test_files):
+    """`flag_create_hosts_file_entry` on: ansible_06 swaps the truststore branch for the hosts-file branch."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, HOSTS_FILE_ENTRY_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+@pytest.mark.local
+@pytest.mark.ansible
+@pytest.mark.tfvars(BASELINE + INSECURE_HTTP_ACTIVE)
+def test_insecure_http_active(generated_test_files):
+    """`flag_do_not_use_https` on: ansible_06 swaps the truststore branch for the insecure-HTTP branch."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, INSECURE_HTTP_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+@pytest.mark.local
+@pytest.mark.ansible
+@pytest.mark.tfvars(BASELINE + HOSTS_FILE_ENTRY_ACTIVE + INSECURE_HTTP_ACTIVE)
+def test_hosts_file_entry_with_insecure_http(generated_test_files):
+    """Both flags on simultaneously: hosts-file and insecure substrings both render; truststore stays out.
+
+    Documentation-only — there's no cross-feature delta because each flag independently
+    knocks out the truststore default. `merge_deltas` handles the union of both
+    `_ON_ASSERTIONS` constants correctly.
+    """
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        HOSTS_FILE_ENTRY_ACTIVE_ASSERTIONS,
+        INSECURE_HTTP_ACTIVE_ASSERTIONS,
+    )
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: TODO: Wave-Lite SQL
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
 @pytest.mark.wave
-def test_seqera_hosted_wave_active(session_setup):
-    """Test scenario.
-
-    - Baseline all disabled.
-    - Seqera-hosted Wave active.
-    """
-    tf_modifiers = """
-        flag_use_aws_ses_iam_integration    = false
-        flag_use_existing_smtp              = true
-        flag_enable_groundswell             = false
-        flag_data_explorer_enabled          = false
-        flag_enable_data_studio             = false
-        # flag_use_wave                     = false
-        flag_use_wave_lite                  = false
-
-        flag_use_wave                       = true
-        wave_server_url                     = "wave.seqera.io"
-        flag_tower_enable_participant_auto_create_user = false
-        flag_tower_enable_member_auto_create_user      = false
-        tower_workflow_cleanup_enabled                 = false
-    """
-    stage_tfvars(tf_modifiers)
-
-    desired_files = ["tower_env", "data_studios_env", "wave_lite_yml"]
-    assertion_modifiers = assertion_modifiers_template()
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    assertion_modifiers["tower_env"] = {
-        "present": {
-            "WAVE_SERVER_URL": "https://wave.seqera.io",
-        },
-        "omitted": {},
-    }
-
-    assertion_modifiers["wave_lite_yml"] = {
-        "present": {
-            "wave.server.url": "https://wave.seqera.io",
-        },
-        "omitted": {},
-    }
-    tc_assertions = generate_assertions_all_disabled(tc_files, assertion_modifiers)
-
-    verify_all_assertions(tc_files, tc_assertions)
-
-
-## ------------------------------------------------------------------------------------
-## MARK: Wave-Lite SQL
-## ------------------------------------------------------------------------------------
-@pytest.mark.local
-@pytest.mark.wave
-def test_wave_sql_file_content(session_setup):
+def test_wave_sql_file_content(generated_test_files):
     """Test scenario.
 
     - Use the SQL files generated by the baseline testcase.
     - Compare against pre-generated result files in `tests/datafiles/expected_results/expected_sql`.
     """
-    tf_modifiers = """#NONE"""
-    ## SETUP
-    ## ========================================================================================
-    stage_tfvars(tf_modifiers)
-
-    desired_files = ["wave_lite_rds"]
-    tc_files = generate_tc_files(None, desired_files, sys._getframe().f_code.co_name)
-
-    # No assertions for this since it's file-comparison based.
-
     ## COMPARISON
     ## ========================================================================================
-    wave_lite_rds = FileHelper.read_file(f"{tc_files['wave_lite_rds']['filepath']}")
+    wave_lite_rds = FileHelper.read_file(f"{generated_test_files['wave_lite_rds']['filepath']}")
     ref_wave_lite_rds = FileHelper.read_file(f"{expected_sql_dir}/wave-lite-rds.sql")
 
     assert ref_wave_lite_rds == wave_lite_rds

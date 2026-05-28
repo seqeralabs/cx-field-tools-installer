@@ -1,4 +1,3 @@
-import json
 import os
 from pathlib import Path
 import shutil
@@ -6,7 +5,7 @@ import subprocess
 
 from tests.utils.cache.cache import hash_cache_key, normalize_whitespace
 from tests.utils.config import FP
-from tests.utils.filehandling import FileHelper
+from tests.utils.filehandling.filehandling import FileHelper
 
 
 # Sentinel for `terraform console` placeholder when a value can't be resolved without `terraform apply`
@@ -23,7 +22,7 @@ TF_CONSOLE_UNKNOWN_MARKER = "(known after apply)"
 def execute_subprocess(command: str) -> str:
     """Execute a subprocess command. Surfaces stdout+stderr on failure."""
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S602  (shell=True is intentional; commands are project-constructed terraform CLI strings, not user input)
             command,
             check=True,
             capture_output=True,
@@ -45,6 +44,7 @@ def execute_subprocess(command: str) -> str:
 # Keep all file method helpers in a single class to simplify imports.
 class TF:
     """Terraform command execution helpers.
+
     - Plan based on core tfvars, core override, and testcase override.
     - Targeted apply/destroy available if necessary. eg.
       - `terraform apply   --auto-approve tfpan`
@@ -121,73 +121,8 @@ def prepare_plan(tf_modifiers: str, qualifier: str = "") -> dict:
 
 
 ## ------------------------------------------------------------------------------------
-## Console-only path (no plan required)
+## Console evaluation
 ## ------------------------------------------------------------------------------------
-def stage_tfvars(tf_modifiers: str) -> None:
-    """Write `tf_modifiers` to override.auto.tfvars without running `terraform plan`.
-
-    Faster counterpart to `prepare_plan` for tests that don't need plan-derived values
-    (i.e. anything in the templatefile path after the #353 console-based refactor).
-
-    Same whitespace normalisation as `prepare_plan` so the override file is byte-identical
-    regardless of which helper produced it.
-    """
-    tf_modifiers = normalize_whitespace(tf_modifiers)
-    FileHelper.write_file(FP.TFVARS_AUTO_OVERRIDE_DST, tf_modifiers)
-
-
-def _console_outputs_cache_path() -> Path:
-    """Disk path for the cached console outputs of the currently-staged scenario.
-
-    Cache key is the hash of `override.auto.tfvars`'s content. Matches `prepare_plan`'s
-    cache-keying convention so the two paths invalidate together on tfvars changes.
-    """
-    try:
-        override_content = FileHelper.read_file(FP.TFVARS_AUTO_OVERRIDE_DST)
-    except (FileNotFoundError, OSError):
-        override_content = ""
-    cache_key = hash_cache_key(override_content, "")
-    return Path(FP.CACHE_CONSOLE_DIR) / f"console_outputs_{cache_key}.json"
-
-
-def extract_module_outputs_via_console() -> dict[str, object]:
-    """Return the full `module.connection_strings.*` output map via a single `terraform console` call.
-
-    Replaces the plan-derived `tc.outputs` for tests that only need module outputs (which
-    after the v2.0.0 refactor of the `connection_strings` module is a pure-function map of
-    its inputs). Does NOT require `terraform plan`; requires `terraform init`.
-
-    Works because the module's call site at `000_main.tf` wraps every resource-attribute
-    input in the `var.use_mocks ? null : try(<ref>, null)` two-layer defense, which keeps
-    all the module's inputs evaluatable under console-without-state. See the #353 addendum
-    for the full reasoning.
-
-    Results are cached to disk in `tests/.console_cache/` keyed on the override.auto.tfvars
-    hash — a single `terraform console` invocation costs ~1.8s, so reusing across test
-    sessions (or across multiple tests staging the same scenario) preserves the warm-cache
-    speed the legacy plan-based path provided. Invalidate via `make purge_cache`.
-    """
-    cache_path = _console_outputs_cache_path()
-    if cache_path.exists():
-        return FileHelper.read_json(str(cache_path))
-
-    result = subprocess.run(
-        ["terraform", "console"],  # noqa: S607  (relies on PATH; standard for test env)
-        input="jsonencode(module.connection_strings)",
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    # `terraform console` emits the value of `jsonencode(...)` as a *quoted* JSON string
-    # (e.g. `"{\"tower_db_url\":\"...\"}"\n`). Decode the wrapping quote-string first, then
-    # parse the inner JSON object.
-    outputs = json.loads(json.loads(result.stdout.strip()))
-
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-    cache_path.write_text(json.dumps(outputs))
-    return outputs
-
-
 def console_evaluate_local(local_name: str) -> str:
     """Return the raw stdout from `terraform console` for the expression `local.<local_name>`.
 

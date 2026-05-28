@@ -79,7 +79,7 @@ run_tests_all: extract_hcl2json
 	@pytest -c tests/pytest.ini tests/
 
 run_tests_core_only: extract_hcl2json
-	@pytest -c tests/pytest.ini tests/ -m "not testcontainer and not variable_validation"
+	@pytest -c tests/pytest.ini tests/ -m "not testcontainer and not variable_validation and not logger"
 
 run_tests_containers_only: extract_hcl2json
 	@pytest -c tests/pytest.ini tests/ -m "testcontainer"
@@ -87,23 +87,22 @@ run_tests_containers_only: extract_hcl2json
 run_tests_variables_only: extract_hcl2json
 	@pytest -c tests/pytest.ini tests/ -m "variable_validation"
 
+run_tests_logger_only: extract_hcl2json
+	@pytest -c tests/pytest.ini tests/unit/logger -m "logger"
+
 run_tests_core_and_containers: extract_hcl2json
-	@pytest -c tests/pytest.ini tests/ -m "not variable_validation"
+	@pytest -c tests/pytest.ini tests/ -m "not variable_validation and not logger"
 
 run_tests_core_and_variables: extract_hcl2json
-	@pytest -c tests/pytest.ini tests/ -m "not testcontainer"
+	@pytest -c tests/pytest.ini tests/ -m "not testcontainer and not logger"
 
 purge_cached_plans:
 	@cd tests/ && rm -rf .plan_cache
 
-purge_cached_templatefiles:
-	@cd tests/ && rm -rf .templatefile_cache
-
-purge_cached_console_outputs:
-	@cd tests/ && rm -rf .console_cache
+purge_cached_scenarios:
+	@cd tests/ && rm -rf .scenario_cache
 
 purge_cache:
 	@echo "Purging testing caches"
-	@$(MAKE) purge_cached_templatefiles
+	@$(MAKE) purge_cached_scenarios
 	@$(MAKE) purge_cached_plans
-	@$(MAKE) purge_cached_console_outputs

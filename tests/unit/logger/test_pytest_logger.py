@@ -8,8 +8,13 @@ import time
 from unittest.mock import patch
 
 import pytest
+from tests.utils.logger.pytest_logger import PytestStructuredLogger, get_logger, reset_logger
 
-from tests.utils.pytest_logger import PytestStructuredLogger, get_logger, reset_logger
+
+# File-level marker: opts every test in this file into the `logger` slice, which is
+# excluded from the default `make run_tests_*` targets. Run via `make run_tests_logger_only`
+# or `pytest -m logger`.
+pytestmark = pytest.mark.logger
 
 
 # TODO: Rewrite this as a fixture? TBD.
