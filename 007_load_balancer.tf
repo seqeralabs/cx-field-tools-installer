@@ -3,7 +3,7 @@ module "alb" {
   count = var.flag_create_load_balancer == true ? 1 : 0
 
   source  = "terraform-aws-modules/alb/aws"
-  version = "8.7.0"
+  version = "10.5.0"
 
   name               = local.global_prefix
   load_balancer_type = "application"
