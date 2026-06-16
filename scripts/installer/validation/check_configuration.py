@@ -253,6 +253,30 @@ def verify_ses_integration(data: SimpleNamespace):
             log_error_and_exit("SES integration requires port 587. Please fix.")
 
 
+def verify_pre_existing_role_attachments(data: SimpleNamespace):
+    """Warn when feature-attachable IAM policies can't be applied to a pre-existing role.
+
+    When `flag_iam_use_prexisting_role_arn = true`, the installer doesn't manage the
+    EC2 instance role, so optional policy attachments (SES, data lineage) can't be
+    auto-wired. Deployers must attach the corresponding policies to their own role
+    manually. See `documentation/setup/` for per-feature instructions.
+    """
+    if not data.flag_iam_use_prexisting_role_arn:
+        return
+
+    if data.flag_use_aws_ses_iam_integration:
+        logger.warning(
+            "`flag_use_aws_ses_iam_integration = true` but `flag_iam_use_prexisting_role_arn = true`. "
+            "The installer cannot attach the SES policy to your pre-existing role; attach it manually."
+        )
+
+    if getattr(data, "flag_enable_data_lineage", False):
+        logger.warning(
+            "`flag_enable_data_lineage = true` but `flag_iam_use_prexisting_role_arn = true`. "
+            "The installer cannot attach the data lineage policy to your pre-existing role; attach it manually."
+        )
+
+
 def verify_route53_integration(data: SimpleNamespace):
     """Check DNS settings."""
     mismatch = False
@@ -529,6 +553,7 @@ if __name__ == "__main__":
     logger.info("-" * 50)
     verify_subnet_privacy(data)
     verify_ses_integration(data)
+    verify_pre_existing_role_attachments(data)
     verify_route53_integration(data)
     verify_ingress_and_egress(data, data_dictionary)
     verify_flow_logs(data)
