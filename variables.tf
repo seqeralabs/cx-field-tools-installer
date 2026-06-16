@@ -278,6 +278,27 @@ variable "data_studio_options" {
 
 
 # ------------------------------------------------------------------------------------
+# Data Lineage - Feature Gated (v26.1.0+)
+# ------------------------------------------------------------------------------------
+
+variable "flag_enable_data_lineage" {
+  type        = bool
+  default     = false
+  description = "Enable Nextflow data lineage tracking (Platform v26.1.0+). When true, the EC2 instance role gains S3+SQS permissions scoped to seqera-lineage-* resources so Platform can auto-provision per-workspace lineage infrastructure."
+}
+
+variable "data_lineage_allowed_workspaces" {
+  type        = string
+  default     = ""
+  description = "Comma-separated list of numeric workspace IDs allowed to use data lineage. Empty string = all workspaces (when flag_enable_data_lineage = true). Ignored when flag_enable_data_lineage = false."
+  validation {
+    condition     = var.data_lineage_allowed_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_lineage_allowed_workspaces))
+    error_message = "data_lineage_allowed_workspaces must be empty or a comma-separated list of numeric workspace IDs (e.g., \"123\" or \"123,456,789\")."
+  }
+}
+
+
+# ------------------------------------------------------------------------------------
 # Database (Generic)
 # ------------------------------------------------------------------------------------
 

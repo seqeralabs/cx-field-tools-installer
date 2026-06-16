@@ -530,6 +530,31 @@ data_studio_options = {
   }
 }
 
+
+/*
+## ------------------------------------------------------------------------------------
+## Data Lineage - Feature Gated (v26.1.0+)
+## ------------------------------------------------------------------------------------
+Enable Nextflow data lineage tracking. Records the provenance of pipeline runs at
+workflow, task, and file levels.
+
+Currently a public-preview feature; requires Platform v26.1.0+ and Nextflow v25.04+
+(v26.04+ recommended).
+
+NOTES:
+  All workspaces:       data_lineage_allowed_workspaces = ""
+  Specific workspaces:  data_lineage_allowed_workspaces = "12,34,56"
+
+When enabled, the EC2 instance role gains permissions to create/manage S3 buckets
+and SQS queues with the `seqera-lineage-*` prefix, so Platform can auto-provision
+per-workspace lineage infrastructure.
+
+See: https://docs.seqera.io/platform-cloud/data/data-lineage
+*/
+flag_enable_data_lineage        = false
+data_lineage_allowed_workspaces = ""
+
+
 /*
 ## ------------------------------------------------------------------------------------
 ## Database (Generic)
