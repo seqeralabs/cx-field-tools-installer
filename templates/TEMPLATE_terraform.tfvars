@@ -40,7 +40,7 @@ aws_region  = "REPLACE_ME"
 aws_profile = "REPLACE_ME"
 
 # TODO(#332): bump to the v26.1.x GA tag before merging. Master supports only v25+.
-tower_container_version = "v25.3.0"
+tower_container_version = "v26.1.2"
 
 
 /*
@@ -228,7 +228,7 @@ to work. e.g:
 flag_use_wave      = false
 flag_use_wave_lite = false
 # TODO(#332): bump to the wave-lite version paired with the v26.1.x release set.
-wave_lite_container_version = "v1.29.1"
+wave_lite_container_version = "v1.33.0"
 
 num_wave_lite_replicas = 2
 wave_server_url        = "wave.seqera.io"
@@ -390,7 +390,7 @@ Enable to allow pipeline optimization.
 flag_enable_groundswell = true
 
 # TODO(#332): bump to the groundswell version paired with the v26.1.x release set.
-swell_container_version = "0.4.6"
+swell_container_version = "0.4.15"
 swell_database_name     = "swell"
 ## swell_db_user                        = "DO_NOT_UNCOMMENT_ME"
 ## swell_db_password                    = "DO_NOT_UNCOMMENT_ME"
@@ -441,7 +441,7 @@ NOTES:
 # Studios
 flag_enable_data_studio = true
 # TODO(#332): bump to the data-studio / connect-proxy version paired with the v26.1.x release set.
-data_studio_container_version             = "0.11.0"
+data_studio_container_version             = "0.12.1"
 flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""
 
@@ -472,61 +472,61 @@ data_studio_options = {
   # DEPRECATION NOTICE (March 13/26): Future versions will not list entries for connect-client v0.9.0.
   # (July 31/25) - `rstudio-...` removed due to license issues.
 
-  vscode-1-101-2-0-9-0 = {
-    qualifier = "VSCODE-1-101-2-0-9-0"
-    icon      = "vscode"
-    tool      = "vscode"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.9.0"
-  },
-  jupyter-4-2-5-0-9-0 = {
-    qualifier = "JUPYTER-4-2-5-0-9-0"
-    icon      = "jupyter"
-    tool      = "jupyter"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.9.0"
-  },
-  ride-2025-04-1-0-9-0 = {
-    qualifier = "RIDE-2025-04-1-0-9-0"
-    icon      = "rstudio"
-    tool      = "rstudio"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.9.0"
-  },
-  xpra-6-2-R2-1-0-9-0 = {
-    qualifier = "XPRA-6-2-R2-1-0-9-0"
-    icon      = "xpra"
-    tool      = "xpra"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.9.0"
-  },
   vscode-1-101-2-0-11-0 = {
     qualifier = "VSCODE-1-101-2-0-11-0"
     icon      = "vscode"
     tool      = "vscode"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.11.0"
   },
   jupyter-4-2-5-0-11-0 = {
     qualifier = "JUPYTER-4-2-5-0-11-0"
     icon      = "jupyter"
     tool      = "jupyter"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.11.0"
   },
   ride-2025-04-1-0-11-0 = {
     qualifier = "RIDE-2025-04-1-0-11-0"
     icon      = "rstudio"
     tool      = "rstudio"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.11.0"
   },
   xpra-6-2-R2-1-0-11-0 = {
     qualifier = "XPRA-6-2-R2-1-0-11-0"
     icon      = "xpra"
     tool      = "xpra"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.11.0"
+  },
+  vscode-1-101-2-0-12-1 = {
+    qualifier = "VSCODE-1-101-2-0-12-1"
+    icon      = "vscode"
+    tool      = "vscode"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.12.1"
+  },
+  jupyter-4-2-5-0-12-1 = {
+    qualifier = "JUPYTER-4-2-5-0-12-1"
+    icon      = "jupyter"
+    tool      = "jupyter"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.12.1"
+  },
+  ride-2025-04-1-0-12-1 = {
+    qualifier = "RIDE-2025-04-1-0-12-1"
+    icon      = "rstudio"
+    tool      = "rstudio"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.12.1"
+  },
+  xpra-6-2-0-R2-1-0-12-1 = {
+    qualifier = "XPRA-6-2-0-R2-1-0-12-1"
+    icon      = "xpra"
+    tool      = "xpra"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.12.1"
   }
 }
 
@@ -804,8 +804,8 @@ tower_email_trusted_users = "REPLACE_ME"
 flag_tower_enable_participant_auto_create_user = false
 flag_tower_enable_member_auto_create_user      = false
 
-tower_audit_retention_days = 1095 # 3 years (value in days)
-tower_workflow_cleanup_enabled          = true      # only applicable for AWS Batch
+tower_audit_retention_days     = 1095 # 3 years (value in days)
+tower_workflow_cleanup_enabled = true # only applicable for AWS Batch
 
 tower_enable_openapi = true
 
