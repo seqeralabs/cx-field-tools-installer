@@ -493,8 +493,8 @@ data_studio_options = {
     status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.11.0"
   },
-  xpra-6-2-R2-1-0-11-0 = {
-    qualifier = "XPRA-6-2-R2-1-0-11-0"
+  xpra-6-2-0-R2-1-0-11-0 = {
+    qualifier = "XPRA-6-2-0-R2-1-0-11-0"
     icon      = "xpra"
     tool      = "xpra"
     status    = "deprecated"
