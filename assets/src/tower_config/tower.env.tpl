@@ -72,7 +72,7 @@ TOWER_ENABLE_UNSAFE_MODE=false
 %{ endif ~}
 
 # ------------------------------------------------
-# ENABLE OpenAPI  
+# ENABLE OpenAPI
 # Set this variable to enable the OpenAPI documentation endpoint
 # ------------------------------------------------
 %{ if tower_enable_openapi == true }
@@ -188,9 +188,19 @@ TOWER_DATA_STUDIO_CONNECT_SSH_KEY_FINGERPRINT=${connect_ssh_fingerprint}
 # PIPELINE VERSIONING
 # ------------------------------------------------
 %{ if tower_enable_pipeline_versioning == true ~}
-TOWER_PIPELINE_VERSIONING_ALLOWED_WORKSPACES=${pipeline_versioning_eligible_workspaces} 
+TOWER_PIPELINE_VERSIONING_ALLOWED_WORKSPACES=${pipeline_versioning_eligible_workspaces}
 %{ else ~}
 # TOWER_PIPELINE_VERSIONING_NOT_ENABLED=DO_NOT_UNCOMMENT
+%{ endif }
+
+
+#-------------------------------------------------
+# DATA LINEAGE (v26.1.0+)
+# ------------------------------------------------
+%{ if flag_enable_data_lineage == true ~}
+TOWER_LINEAGE_ALLOWED_WORKSPACES=${data_lineage_allowed_workspaces}
+%{ else ~}
+# TOWER_LINEAGE_NOT_ENABLED=DO_NOT_UNCOMMENT
 %{ endif }
 
 
