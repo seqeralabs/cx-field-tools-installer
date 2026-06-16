@@ -494,20 +494,14 @@ def verify_production_deployment(data: SimpleNamespace):
 
 
 def verify_container_registry_credentials(data: SimpleNamespace):
-    """Warn about Harbor registry credential requirements based on Platform version."""
+    """Warn about Harbor registry credential requirements for Platform v26.1+."""
     if data.tower_container_version >= "v26.1":
         logger.warning(
-            "Platform v26.1+ uses new registry paths (cr.seqera.io/enterprise/platform/...). "
-            "Ensure your Harbor credentials are valid for the enterprise namespace. "
-            "Old private namespace credentials will not work. "
-            "If upgrading from <v26.1, contact your Seqera representative to request updated Harbor credentials."
-        )
-
-    if data.tower_container_version < "v26.1":
-        logger.info(
-            "Platform <v26.1 uses legacy registry paths (cr.seqera.io/private/nf-tower-enterprise/...). "
-            "Ensure your Harbor credentials are valid for the private namespace. "
-            "New enterprise credentials will not work."
+            "Platform v26.1+ images are hosted at cr.seqera.io/enterprise/platform/ and require "
+            "new enterprise Harbor credentials. Credentials for cr.seqera.io/private/nf-tower-enterprise/ "
+            "will not grant access to v26.1+ images. "
+            "Note: pre-v26.1 images are also available at cr.seqera.io/enterprise/platform/ with the new credentials. "
+            "Contact your Seqera representative to obtain updated Harbor credentials."
         )
 
 
