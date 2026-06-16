@@ -633,7 +633,7 @@ WAVE_LITE_ACTIVE_ASSERTIONS = {
         # (`services.<name>`) from OFF's omitted via prefix-aware merge.
         "present": {
             "services.wave-lite.labels.seqera": "wave-lite",
-            "services.wave-lite.image": "cr.seqera.io/private/nf-tower-enterprise/wave:v1.29.1",
+            "services.wave-lite.image": "cr.seqera.io/enterprise/wave/server:v1.29.1",
             "services.wave-lite-reverse-proxy.labels.seqera": "wave-lite-reverse-proxy",
             "services.wave-db.labels.seqera": "wave-db",
             "services.wave-redis.labels.seqera": "wave-redis",
