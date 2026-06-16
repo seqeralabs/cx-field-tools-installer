@@ -493,6 +493,24 @@ def verify_production_deployment(data: SimpleNamespace):
         )
 
 
+def verify_container_registry_credentials(data: SimpleNamespace):
+    """Warn about Harbor registry credential requirements based on Platform version."""
+    if data.tower_container_version >= "v26.1":
+        logger.warning(
+            "Platform v26.1+ uses new registry paths (cr.seqera.io/enterprise/platform/...). "
+            "Ensure your Harbor credentials are valid for the enterprise namespace. "
+            "Old private namespace credentials will not work. "
+            "If upgrading from <v26.1, contact your Seqera representative to request updated Harbor credentials."
+        )
+
+    if data.tower_container_version < "v26.1":
+        logger.info(
+            "Platform <v26.1 uses legacy registry paths (cr.seqera.io/private/nf-tower-enterprise/...). "
+            "Ensure your Harbor credentials are valid for the private namespace. "
+            "New enterprise credentials will not work."
+        )
+
+
 def verify_insecure_platform(data: SimpleNamespace):
     """Block feature combinations that require HTTPS when HTTPS is disabled."""
     if data.flag_do_not_use_https:
@@ -538,6 +556,12 @@ if __name__ == "__main__":
     verify_sensitive_keys(data, data_dictionary)
     verify_tfvars_config_dependencies(data)
 
+    # Verify container registry credentials
+    print("\n")
+    logger.info("Verifying container registry credentials")
+    logger.info("-" * 50)
+    verify_container_registry_credentials(data)
+    
     # Verify Tower application configurations
     print("\n")
     logger.info("Verifying Tower configurations")
