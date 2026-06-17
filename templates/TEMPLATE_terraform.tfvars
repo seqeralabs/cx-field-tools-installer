@@ -902,6 +902,13 @@ docker_cidr_range = "172.80.0.0/16"
 ## ------------------------------------------------------------------------------------
 ## seqerakit
 ## ------------------------------------------------------------------------------------
+DEPRECATED as of Release 1.8 — Seqerakit components are no longer actively maintained and
+will be replaced by the Seqera Terraform provider. See `README.md` → "Supported Versions
+& Components". The SSM entry referenced by `secrets_bootstrap_seqerakit` (below) must
+still be created — the installer reads its path at plan time — but its contents may be
+placeholder values if you don't intend to run the seqerakit step
+(`flag_run_seqerakit = false`).
+
 This section is an optional post-configuration activity. Once infrastructure is provisioned
 and the Seqera Platform instance is running, you can create a compute environment and execute
 a small pipeline run to verify if the environment is properly configured.
