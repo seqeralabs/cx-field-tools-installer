@@ -466,6 +466,8 @@ data_studio_path_routing_url    = "REPLACE_ME_IF_NECESSARY"
 #   4. For the use of custom data studio images, ensure flag_use_wave = true.
 #   5. Acceptable status values are: "recommended", "deprecated", and "experimental". Anything else will be displayed as "unsupported".
 #   6. Current as of Platform v25.2.0, only VSCode, Jupyter, and R will work with path-based Studio routing (not Xpra). This must also be the 0.8.5 client version.
+#   7. Newer VSCode images ship with Docker-in-Docker. This will break AWS Batch CEs using stock AL2 AMIs.
+#        Ref: https://github.com/seqeralabs/studio-vscode/blob/vscode/1.101.2/connect/0.12.0/.seqera/Dockerfile#L93
 
 data_studio_options = {
   # DEPENDENCY
