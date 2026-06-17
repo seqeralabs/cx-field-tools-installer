@@ -8,11 +8,11 @@ If you run Seqera Platform on AWS infrastructure, an optional configuration is a
 - **Tower Configuration**: The `TOWER_ALLOW_INSTANCE_CREDENTIALS` setting allows Tower to use the EC2 instance's IAM role instead of AWS long-lived credentials if no other credentials are provided.
 
 
-## Security Considerations 
+## Security Considerations
 
 While using an EC2 Instance Role improves security by eliminating stored keys, it still requires trust in workspace-level administrators who are allowed to create Credentials in Seqera Workspaces.
 
-[Any user with adequate permissions (Admin)](https://docs.seqera.io/platform-cloud/orgs-and-teams/roles) to create Credentials in workspaces will have the ability to leverage the EC2 Instance Role to access any other IAM Role which the EC2 Instance Role has access to. 
+[Any user with adequate permissions (Admin)](https://docs.seqera.io/platform-cloud/orgs-and-teams/roles) to create Credentials in workspaces will have the ability to leverage the EC2 Instance Role to access any other IAM Role which the EC2 Instance Role has access to.
 
 Risk Scenario:
 
@@ -29,7 +29,9 @@ Risk Scenario:
 As of v1.6.2, activation of this feature is available via Terraform configuration (_disabled by default_). Opt in by:
 
 1. Setting `flag_allow_aws_instance_credentials=true` in `terraform.tfvars`.
-2. Ensuring you populate `TOWER_AWS_ROLE` in Seqerakit SSM entry with an IAM Role that can be configured by the EC2 Instance Profile created by this solution.
+2. Ensuring you populate `TOWER_AWS_ROLE` in the Seqerakit SSM entry with an IAM Role that can be configured by the EC2 Instance Profile created by this solution.
+
+    **Note:** Although [seqerakit components are deprecated](../../README.md#supported-versions--components), the EC2 instance-credentials flow still reads `TOWER_AWS_ROLE` from that secret object until the Seqera Terraform provider takes over. If you're enabling instance credentials, this specific key needs a real value (the rest of the seqerakit secret entry may remain placeholder).
 
     The example below contains a snippet for how to make the target IAM Role assumable by multiple iterations of a single deployment and/or multiple deployment instances. Modify as required and please ensure to have any changed vetted by your security stakeholders for alignment to your organization's security protocols.
 
@@ -131,7 +133,7 @@ Here is an example overview of a potential multi-account set-up:
             "Resource": "arn:aws:iam::111111111111:role/SeqeraPlatformRole-AccountA"
         },
         {
-            "Sid": "AllowAssumeRoleInAccountB", 
+            "Sid": "AllowAssumeRoleInAccountB",
             "Effect": "Allow",
             "Action": "sts:AssumeRole",
             "Resource": "arn:aws:iam::222222222222:role/SeqeraPlatformRole-AccountB"
