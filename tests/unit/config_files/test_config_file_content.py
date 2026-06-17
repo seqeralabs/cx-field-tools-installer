@@ -6,6 +6,10 @@ from tests.unit.config_files.expected_deltas import (
     BASELINE_ASSERTIONS,
     DATA_EXPLORER_ACTIVE,
     DATA_EXPLORER_ACTIVE_ASSERTIONS,
+    DATA_LINEAGE_ACTIVE,
+    DATA_LINEAGE_ACTIVE_ASSERTIONS,
+    DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE,
+    DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS,
     DB_EXTERNAL_EXISTING_ACTIVE,
     DB_EXTERNAL_EXISTING_ACTIVE_ASSERTIONS,
     DB_EXTERNAL_EXISTING_X_GROUNDSWELL_DELTA,
@@ -163,6 +167,31 @@ def test_studios_ssh_workspace_restriction_active(generated_test_files):
 def test_data_explorer_active(generated_test_files):
     """Data Explorer on: TOWER_DATA_EXPLORER_ENABLED flips true, CLOUD_DISABLED_WORKSPACES surfaces empty."""
     expected = merge_deltas(BASELINE_ASSERTIONS, DATA_EXPLORER_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Data Lineage: Active
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.data_lineage
+@pytest.mark.tfvars(BASELINE + DATA_LINEAGE_ACTIVE)
+def test_data_lineage_active(generated_test_files):
+    """Data Lineage on, no workspace restriction: TOWER_LINEAGE_ALLOWED_WORKSPACES surfaces empty (= all workspaces)."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, DATA_LINEAGE_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+@pytest.mark.local
+@pytest.mark.data_lineage
+@pytest.mark.tfvars(BASELINE + DATA_LINEAGE_ACTIVE + DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE)
+def test_data_lineage_workspace_restriction_active(generated_test_files):
+    """Data Lineage + workspace restriction: TOWER_LINEAGE_ALLOWED_WORKSPACES flips from "" to the configured CSV."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        DATA_LINEAGE_ACTIVE_ASSERTIONS,
+        DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS,
+    )
     assert_all_deltas(generated_test_files, expected)
 
 

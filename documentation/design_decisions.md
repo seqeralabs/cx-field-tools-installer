@@ -277,4 +277,14 @@ In addition to the general design decisions noted above, there are a few decisio
 
     Both adapters defer to positive `-m` selection: invoking `make run_tests_variables_only` or `make run_tests_containers_only` bypasses the heuristic so explicit recipes always behave as the operator expects.
 
-    The motivation is LLM-driven verification loops that invoke `pytest` with no marker filter. Without these adapters, a Docker-less sandbox or a branch unrelated to `variables.tf` produces a wall of failures and errors that have nothing to do with the change under review — flooding the agent's context with red herrings and burning iteration budget. With them, the same indiscriminate invocation produces a clean log scoped to what's actually relevant. Contributors with Docker available and a `variables.tf`-touching branch see no change in behaviour.
+19. **Data Lineage SQS queue creation is Platform's responsibility, not the installer's**
+
+    Seqera Platform v26.1.0+ has built-in support for creating the SQS queue (and the paired S3 bucket + bucket-notification routing) required by the Data Lineage feature. Platform creates these per-workspace under the `seqera-lineage-*` resource-name prefix at the moment a workspace enables lineage via its UI.
+
+    Rather than replicate that functionality, the installer's role for lineage is intentionally scoped to **granting the EC2 instance role the IAM permissions Platform needs** to do the queue/bucket creation itself. The installer attaches a policy (`${global_prefix}_policy_lineage`) authorising the relevant S3 + SQS actions on `seqera-lineage-*` ARNs only — see [`assets/src/aws/iam_role_policy_lineage.json.tpl`](../../assets/src/aws/iam_role_policy_lineage.json.tpl).
+
+    Consequences of this division of labour:
+
+    - The installer does **not** provision an SQS queue, S3 bucket, or bucket-notification rule for lineage. Those resources don't appear in `terraform plan` and aren't part of `terraform destroy`.
+    - Queue/bucket lifecycle (creation, configuration, deletion) is owned entirely by Platform. Deployers cannot pre-create or pin specific ARNs from the installer side.
+    - If Platform's resource-naming convention or auto-provisioning behaviour changes in a future release, the only file that needs to update is the IAM policy template — not the installer's resource graph.

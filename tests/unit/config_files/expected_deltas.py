@@ -155,6 +155,14 @@ INSECURE_HTTP_ACTIVE = """
     flag_do_not_use_https = true
 """
 
+DATA_LINEAGE_ACTIVE = """
+    flag_enable_data_lineage = true
+"""
+
+DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE = """
+    data_lineage_allowed_workspaces = "12,34"
+"""
+
 
 ## ------------------------------------------------------------------------------------
 ## MARK: ----- Assertions
@@ -201,6 +209,8 @@ BASELINE_ASSERTIONS = {
             "# STUDIOS_NOT_ENABLED": "DO_NOT_UNCOMMENT",
             # PIPELINE_VERSIONING
             "# TOWER_PIPELINE_VERSIONING_NOT_ENABLED": "DO_NOT_UNCOMMENT",
+            # DATA_LINEAGE
+            "# TOWER_LINEAGE_NOT_ENABLED": "DO_NOT_UNCOMMENT",
         },
         "omitted": {
             # DB                      Never generated in file
@@ -257,6 +267,8 @@ BASELINE_ASSERTIONS = {
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-0-12-1_STATUS",
             # ---
             "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES",
+            # DATA_LINEAGE
+            "TOWER_LINEAGE_ALLOWED_WORKSPACES",
         },
     },
     "tower_yml": {
@@ -794,6 +806,32 @@ INSECURE_HTTP_ACTIVE_ASSERTIONS = {
     "ansible_06_run_seqerakit": {
         "present": {"Seqerakit - Using insecure."},
         "omitted": {"Seqerakit - Using truststore."},
+    },
+}
+
+
+# MARK: Data Lineage
+# Activates Nextflow data lineage. The off-state renders a `# TOWER_LINEAGE_NOT_ENABLED`
+# comment marker; activation flips that into a real `TOWER_LINEAGE_ALLOWED_WORKSPACES`
+# entry. Workspace restriction is a separate constant (see below) that overrides the
+# empty allowlist with a specific CSV.
+DATA_LINEAGE_ACTIVE_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_LINEAGE_ALLOWED_WORKSPACES": "",
+        },
+        "omitted": {"# TOWER_LINEAGE_NOT_ENABLED"},
+    },
+}
+
+
+# MARK: Data Lineage Workspace Restriction
+# Sub-feature of Data Lineage — requires `DATA_LINEAGE_ACTIVE` stacked first.
+# Replaces the empty workspace allowlist with the supplied CSV.
+DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS = {
+    "tower_env": {
+        "present": {"TOWER_LINEAGE_ALLOWED_WORKSPACES": "12,34"},
+        "omitted": set(),
     },
 }
 

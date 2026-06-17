@@ -29,6 +29,8 @@ The Seqera CX team has developed a field tool to simplify deployment in two ways
   - [03: Update your Git repo settings](#03-update-your-git-repo-settings)
   - [04: Initiate Crypto secret rotation](#04-initiate-crypto-secret-rotation-advanced)
   - [05: Using a Private Certificate Authority](#05-using-a-private-certificate-authority-advanced)
+  - [06: Enable EC2 Instance Role Authentication](#06-enable-ec2-instance-role-authentication)
+  - [07: Enable Data Lineage (Platform v26.1.0+)](#07-enable-data-lineage-platform-v2610)
 - [Execution Steps](#execution-steps)
   - [Deployment](#deployment)
   - [Teardown](#teardown)
@@ -157,6 +159,9 @@ The following configuration actions are encouraged but not mandatory.
 
 #### 06: Enable EC2 Instance Role Authentication
 1. Follow the instructions in [Using AWS EC2 Instance Role](./documentation/setup/optional_allow_instance_credentials.md)
+
+#### 07: Enable Data Lineage (Platform v26.1.0+)
+1. Follow the instructions in [Data Lineage](./documentation/setup/optional_data_lineage.md).
 
 <br />
 

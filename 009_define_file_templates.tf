@@ -58,6 +58,9 @@ locals {
 
       tower_enable_pipeline_versioning        = var.tower_enable_pipeline_versioning,
       pipeline_versioning_eligible_workspaces = var.pipeline_versioning_eligible_workspaces,
+
+      flag_enable_data_lineage        = var.flag_enable_data_lineage,
+      data_lineage_allowed_workspaces = var.data_lineage_allowed_workspaces,
     }
   )
 
@@ -428,5 +431,3 @@ resource "tls_private_key" "connect_pem" {
 resource "tls_private_key" "connect_ssh_host_key" {
   algorithm = "ED25519"
 }
-
-

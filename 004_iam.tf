@@ -23,7 +23,15 @@ locals {
   )
 
   instance_role_policy_ses = templatefile("assets/src/aws/iam_role_policy_ses.json.tpl", {})
-  lt_content_raw           = templatefile("assets/src/aws/launch_template_ec2.tpl", {})
+
+  instance_role_policy_lineage = templatefile("assets/src/aws/iam_role_policy_lineage.json.tpl",
+    {
+      aws_region  = var.aws_region,
+      aws_account = var.aws_account,
+    }
+  )
+
+  lt_content_raw = templatefile("assets/src/aws/launch_template_ec2.tpl", {})
 }
 
 data "aws_kms_alias" "default_ssm" {
@@ -68,6 +76,15 @@ resource "aws_iam_policy" "ses_policy" {
 }
 
 
+resource "aws_iam_policy" "lineage_policy" {
+  count = var.flag_iam_use_prexisting_role_arn == true ? 0 : 1
+
+  name        = "${local.global_prefix}_policy_lineage"
+  description = "Data Lineage policy (S3 + SQS on seqera-lineage-* resources)."
+  policy      = local.instance_role_policy_lineage
+}
+
+
 resource "aws_iam_role_policy_attachment" "attach_main" {
   count = var.flag_iam_use_prexisting_role_arn == true ? 0 : 1
 
@@ -82,6 +99,15 @@ resource "aws_iam_role_policy_attachment" "attach_ses" {
 
   role       = aws_iam_role.ec2[0].name
   policy_arn = aws_iam_policy.ses_policy[0].arn
+}
+
+
+# Attach the lineage policy if Data Lineage is enabled. Else, ignore.
+resource "aws_iam_role_policy_attachment" "attach_lineage" {
+  count = var.flag_iam_use_prexisting_role_arn == false && var.flag_enable_data_lineage == true ? 1 : 0
+
+  role       = aws_iam_role.ec2[0].name
+  policy_arn = aws_iam_policy.lineage_policy[0].arn
 }
 
 
