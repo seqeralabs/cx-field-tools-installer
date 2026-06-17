@@ -53,6 +53,21 @@ locals {
       data_studio_options             = var.data_studio_options,
       flag_studio_enable_path_routing = var.flag_studio_enable_path_routing,
 
+      data_studio_default_lifespan           = var.data_studio_default_lifespan,
+      data_studio_list_max_allowed           = var.data_studio_list_max_allowed,
+      flag_studio_private_by_default         = var.flag_studio_private_by_default,
+      data_studio_feature_manifest_url       = var.data_studio_feature_manifest_url,
+      data_studio_iframe_eligible_workspaces = var.data_studio_iframe_eligible_workspaces,
+      tower_ssh_keys_supported_types         = var.tower_ssh_keys_supported_types,
+      data_studio_metrics_eligible_workspaces       = var.data_studio_metrics_eligible_workspaces,
+      data_studio_metrics_retention_days            = var.data_studio_metrics_retention_days,
+      data_studio_wave_disallowed_registries        = var.data_studio_wave_disallowed_registries,
+      data_studio_wave_custom_image_registry        = var.data_studio_wave_custom_image_registry,
+      data_studio_wave_custom_image_repository      = var.data_studio_wave_custom_image_repository,
+      data_studio_wave_custom_image_name_strategy   = var.data_studio_wave_custom_image_name_strategy,
+      data_studio_wave_status_check_initial_delay   = var.data_studio_wave_status_check_initial_delay,
+      data_studio_wave_status_check_rate            = var.data_studio_wave_status_check_rate,
+
       flag_allow_aws_instance_credentials = var.flag_allow_aws_instance_credentials,
       tower_enable_openapi                = var.tower_enable_openapi,
 
@@ -135,12 +150,13 @@ locals {
 
   data_studios_env = templatefile("assets/src/tower_config/data-studios.env.tpl",
     {
-      flag_enable_data_studio     = var.flag_enable_data_studio,
-      tower_server_url            = module.connection_strings.tower_server_url,
-      tower_redis_url             = module.connection_strings.tower_connect_redis_url,
-      tower_connect_server_url    = module.connection_strings.tower_connect_server_url,
-      flag_enable_data_studio_ssh = var.flag_enable_data_studio_ssh,
-      connect_ssh_key_path        = "/data/ssh-host-key",
+      flag_enable_data_studio      = var.flag_enable_data_studio,
+      tower_server_url             = module.connection_strings.tower_server_url,
+      tower_redis_url              = module.connection_strings.tower_connect_redis_url,
+      tower_connect_server_url     = module.connection_strings.tower_connect_server_url,
+      flag_enable_data_studio_ssh  = var.flag_enable_data_studio_ssh,
+      connect_ssh_key_path         = "/data/ssh-host-key",
+      connect_ssh_key_value_base64 = var.connect_ssh_key_value_base64,
     }
   )
 

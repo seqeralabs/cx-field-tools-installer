@@ -457,6 +457,10 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "TOWER_DATA_STUDIO_CONNECT_URL": "https://connect.autodc.dev-seqera.net",
             "TOWER_OIDC_PEM_PATH": "/data-studios-rsa.pem",
             "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN": "ipsemlorem",
+            "TOWER_DATA_STUDIO_DEFAULT_LIFESPAN": "8",
+            "TOWER_DATA_STUDIO_LIST_MAX_ALLOWED": "100",
+            "TOWER_DATA_STUDIO_PRIVATE_STUDIO_BY_DEFAULT": "false",
+            "TOWER_STUDIO_METRICS_RETENTION_DAYS": "90",
             # Templates: JUPYTER
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-12-1_ICON": "jupyter",
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-12-1_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.12.1",  # noqa: E501
@@ -503,6 +507,15 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "TOWER_SSH_KEYS_MANAGEMENT_ENABLED",
             "TOWER_DATA_STUDIO_CONNECT_SSH_PORT",
             "TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS",
+            # Optional v26.1 vars — not emitted when set to empty string (the default).
+            "TOWER_DATA_STUDIO_FEATURE_MANIFEST_URL",
+            "TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES",
+            "TOWER_STUDIO_METRICS_ENABLED_WORKSPACES",
+            # Wave Studios vars — only emitted when flag_use_wave=true.
+            "TOWER_DATA_STUDIO_WAVE_DISALLOWED_REGISTRIES",
+            "TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_NAME_STRATEGY",
+            "TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_INITIAL_DELAY",
+            "TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_RATE",
         },
     },
     "data_studios_env": {
@@ -572,6 +585,7 @@ STUDIOS_SSH_ACTIVE_ASSERTIONS = {
             "TOWER_DATA_STUDIO_CONNECT_SSH_PORT": "2222",
             "TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES": "",
             "TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS": "https://connect-ssh.autodc.dev-seqera.net",
+            "TOWER_SSH_KEYS_SUPPORTED_TYPES": "ssh-rsa,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521",  # noqa: E501
         },
         "omitted": set(),
     },
@@ -582,6 +596,27 @@ STUDIOS_SSH_ACTIVE_ASSERTIONS = {
             "CONNECT_SSH_KEY_PATH": "/data/ssh-host-key",
         },
         "omitted": set(),
+    },
+}
+
+
+# MARK: Studios Wave integration
+# Sub-feature of Studios — requires both `STUDIOS_ACTIVE` and `WAVE_SEQERA_HOSTED_ACTIVE`
+# stacked first. Adds the DATA STUDIO - WAVE INTEGRATION block to `tower_env`, which is
+# only rendered when both `flag_enable_data_studio` and `flag_use_wave` are true.
+STUDIOS_WAVE_ACTIVE_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_DATA_STUDIO_WAVE_DISALLOWED_REGISTRIES": "community.wave.seqera.io",
+            "TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_NAME_STRATEGY": "tagPrefix",
+            "TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_INITIAL_DELAY": "5s",
+            "TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_RATE": "30s",
+        },
+        "omitted": {
+            # Custom registry/repo only emitted when set to non-empty.
+            "TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REGISTRY",
+            "TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REPOSITORY",
+        },
     },
 }
 

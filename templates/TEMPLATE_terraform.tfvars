@@ -453,6 +453,30 @@ data_studio_ssh_eligible_workspaces           = ""
 flag_studio_enable_path_routing = false
 data_studio_path_routing_url    = "REPLACE_ME_IF_NECESSARY"
 
+# Studios - General behaviour (v26.1.0+)
+data_studio_default_lifespan           = "8"
+data_studio_list_max_allowed           = "100"
+flag_studio_private_by_default         = false
+data_studio_feature_manifest_url       = ""
+data_studio_iframe_eligible_workspaces = ""
+
+# Studios - SSH (v26.1.0+)
+tower_ssh_keys_supported_types = "ssh-rsa,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521"
+
+# Studios - Metrics (v26.1.0+)
+data_studio_metrics_eligible_workspaces = ""
+data_studio_metrics_retention_days      = "90"
+
+# Studios - Wave integration (v26.1.0+)
+data_studio_wave_disallowed_registries      = "community.wave.seqera.io"
+data_studio_wave_custom_image_registry      = ""
+data_studio_wave_custom_image_repository    = ""
+data_studio_wave_custom_image_name_strategy = "tagPrefix"
+data_studio_wave_status_check_initial_delay = "5s"
+data_studio_wave_status_check_rate          = "30s"
+
+# Connect proxy SSH (v0.11.1+)
+connect_ssh_key_value_base64 = ""
 
 
 # For full list of images Seqera makes available, please see: https://public.cr.seqera.io/

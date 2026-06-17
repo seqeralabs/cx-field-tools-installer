@@ -19,6 +19,9 @@ CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN="ipsemlorem"
 CONNECT_SSH_ENABLED=true
 CONNECT_SSH_ADDR=:2222
 CONNECT_SSH_KEY_PATH=${connect_ssh_key_path}
+%{ if connect_ssh_key_value_base64 != "" ~}
+CONNECT_SSH_KEY_VALUE_BASE64=${connect_ssh_key_value_base64}
+%{ endif ~}
 %{ else ~}
 # CONNECT_SSH_ENABLED=DO_NOT_UNCOMMENT
 # CONNECT_SSH_ADDR=DO_NOT_UNCOMMENT
