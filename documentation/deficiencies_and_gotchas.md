@@ -33,27 +33,27 @@ This page lists to-be-built-in-future functionality and various oddities you may
 
 - VPC endpoint private DNS
 
-    Interface endpoints are generated with [`private_dns_enabled = true](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint#route_table_ids). If you put your Tower instance in a different subnet than your AWS Batch compute AND want both subnets to use an interface endpoint to the same AWS service (e.g. Parameter Store), an error will occur during the creation of the second endpoint instance due to a DNS record already existing. 
+    Interface endpoints are generated with [`private_dns_enabled = true](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint#route_table_ids). If you put your Tower instance in a different subnet than your AWS Batch compute AND want both subnets to use an interface endpoint to the same AWS service (e.g. Parameter Store), an error will occur during the creation of the second endpoint instance due to a DNS record already existing.
 
-    To avoid this problem, the Terraform logic is implemented as follows: "_If creating an endpoint tied to the Tower subnet, create a DNS entry. If creating an endpoint tied to the Batch subnet(s), do not try to create a DNS entry._" 
-    
+    To avoid this problem, the Terraform logic is implemented as follows: "_If creating an endpoint tied to the Tower subnet, create a DNS entry. If creating an endpoint tied to the Batch subnet(s), do not try to create a DNS entry._"
+
     To ensure smooth operations across your VPC, consider assigning a superset of interface endpoints to your Tower instance. This will ensure DNS entries are available across the VPC.
 
 - Extraneous cloud artefacts due to failed Terraform deployments
 
     Terraform is pretty good at cleaning up after itself, but we have noticed that - if particular internal Terraform milestones can't be reached during a deployment before a deployment-ending error occurs - extra resources can appear in cloud account (e.g. a 2nd or 3rd VM).
 
-    This problem is only likely to be seen during the initial phase of your deployment efforts as you tweak OOTB settings to fit your organization's reality. Once you can successfully complete an end-to-end deployment, it is suggested you run a full destroy-and-redeploy cycle to clean up any extraneous artefacts that may have spawned. 
+    This problem is only likely to be seen during the initial phase of your deployment efforts as you tweak OOTB settings to fit your organization's reality. Once you can successfully complete an end-to-end deployment, it is suggested you run a full destroy-and-redeploy cycle to clean up any extraneous artefacts that may have spawned.
 
 - `tw cli` limitations
 
-    Current as of May 4/24, the `tw cli` does not support all transactions available via the Tower APIs (_including the creation of some Git credential types like CodeCommit). This lack of support means that direct invocation of Seqerakit after infrastructure creation requires an alternative implementation (_i.e. breaking up the monolith setup.yml file and invoking direct API calls in the middle). This workaround can be retired once `tw` is fully harmonized with the API offerings.
+    Current as of May 4/24, the `tw cli` does not support all transactions available via the Tower APIs (_including the creation of some Git credential types like CodeCommit). This lack of support means that direct invocation of Seqerakit after infrastructure creation requires an alternative implementation (_i.e. breaking up the monolith setup.yml file and invoking direct API calls in the middle). This workaround can be retired once `tw` is fully harmonized with the API offerings. **Update — as of Release 1.8, seqerakit components are [deprecated](../README.md#supported-versions--components); this gotcha will not see further development and is expected to disappear when the [Seqera Terraform provider](https://registry.terraform.io/providers/seqeralabs/seqera/latest/docs) replaces the seqerakit step.**
 
 - Limitations of Terraform templating
 
-    The Terraform `templatefile` function is used extensively in this project to generate config files (_e.g. `file.json.tpl` --> `file.json`). This generally works well, but the `$` variable identification notation causes problems when: 
-    
-        1. Trying to create a template file that contains both variables being passed to the `templatefile` function within Terraform and Bash subshell commands / conditional logic which are expected to be interpolated when Ansible runs the resulting file on the EC2. 
+    The Terraform `templatefile` function is used extensively in this project to generate config files (_e.g. `file.json.tpl` --> `file.json`). This generally works well, but the `$` variable identification notation causes problems when:
+
+        1. Trying to create a template file that contains both variables being passed to the `templatefile` function within Terraform and Bash subshell commands / conditional logic which are expected to be interpolated when Ansible runs the resulting file on the EC2.
 
         2. Using proper punctuation in comments (_e.g. the `'` in `won't`), which results in hugely frustrating-to-resolve file generation errors which make me want to purge Ansible from this solution every couple of weeks.
 
@@ -63,11 +63,11 @@ This page lists to-be-built-in-future functionality and various oddities you may
 
         2. Break-up of Ansible and Bash scripts into smaller files in a way such that some files can be pushed through the Terraform templating engine, while others are treated as static files.
 
-    TBD whether Terraform templating should remain the longer-term solution (current as of May 2024). The introduction of the new Python-based variable configuration checker could likely be easily extended to handle template file generation as well, and brings all the power of a true programming language. 
+    TBD whether Terraform templating should remain the longer-term solution (current as of May 2024). The introduction of the new Python-based variable configuration checker could likely be easily extended to handle template file generation as well, and brings all the power of a true programming language.
 
 - Launch Template behaviour
 
-    The `data.aws_ami` resource filtering we use in [`006_ec2.tf`](https://github.com/seqeralabs/cx-field-tools-installer/blob/master/006_ec2.tf) was too loose upon initial release. While it does well at finding updated Amazon Linux 2023 AMIs, existing candidates can be pulled from at least 4 different family types (_standard, minimal, neuron, hvm, etc_). 
+    The `data.aws_ami` resource filtering we use in [`006_ec2.tf`](https://github.com/seqeralabs/cx-field-tools-installer/blob/master/006_ec2.tf) was too loose upon initial release. While it does well at finding updated Amazon Linux 2023 AMIs, existing candidates can be pulled from at least 4 different family types (_standard, minimal, neuron, hvm, etc_).
 
     The default behaviour has been remediated in version 1.3:
 
@@ -90,11 +90,11 @@ This page lists to-be-built-in-future functionality and various oddities you may
 
 - Private Certificate Option does not support Data Studio
 
-    Current as of July 26/25, the project supports private certificates. [Additional work](./setup/optional_private_certificates.md) required to prep your Studio images, however. 
+    Current as of July 26/25, the project supports private certificates. [Additional work](./setup/optional_private_certificates.md) required to prep your Studio images, however.
 
 - Private Certificate Option does not support Wave-Lite
 
-    Current as of July 26/25, the project supports private certificates. [Additional work](./setup/optional_private_certificates.md) required to prep your compute nodes, however. 
+    Current as of July 26/25, the project supports private certificates. [Additional work](./setup/optional_private_certificates.md) required to prep your compute nodes, however.
 
 
 ## Deficiencies
