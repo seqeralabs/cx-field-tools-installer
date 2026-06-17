@@ -224,37 +224,37 @@ BASELINE_ASSERTIONS = {
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_REPOSITORY",
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_TOOL",
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_STATUS",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_ICON",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_REPOSITORY",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_TOOL",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_STATUS",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-12-1_ICON",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-12-1_REPOSITORY",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-12-1_TOOL",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-12-1_STATUS",
             # ---
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_ICON",
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_REPOSITORY",
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_TOOL",
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_STATUS",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_ICON",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_REPOSITORY",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_TOOL",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_STATUS",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-12-1_ICON",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-12-1_REPOSITORY",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-12-1_TOOL",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-12-1_STATUS",
             # ---
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_ICON",
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_REPOSITORY",
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_TOOL",
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_STATUS",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_ICON",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_REPOSITORY",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_TOOL",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_STATUS",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-1_ICON",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-1_REPOSITORY",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-1_TOOL",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-1_STATUS",
             # ---
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-11-0_ICON",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-11-0_REPOSITORY",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-11-0_TOOL",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-0-R2-1-0-11-0_STATUS",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-0-9-0_ICON",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-0-9-0_REPOSITORY",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-0-9-0_TOOL",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-0-9-0_STATUS",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-0-12-1_ICON",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-0-12-1_REPOSITORY",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-0-12-1_TOOL",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-0-12-1_STATUS",
             # ---
             "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES",
         },
@@ -446,41 +446,41 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "TOWER_OIDC_PEM_PATH": "/data-studios-rsa.pem",
             "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN": "ipsemlorem",
             # Templates: JUPYTER
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_ICON": "jupyter",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.9.0",  # noqa: E501
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_TOOL": "jupyter",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-9-0_STATUS": "deprecated",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-12-1_ICON": "jupyter",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-12-1_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.12.1",  # noqa: E501
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-12-1_TOOL": "jupyter",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-12-1_STATUS": "recommended",
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_ICON": "jupyter",
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.11.0",  # noqa: E501
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_TOOL": "jupyter",
-            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_STATUS": "recommended",
+            "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-11-0_STATUS": "deprecated",
             # Templates: RIDE (RStudio)
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_ICON": "rstudio",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.9.0",  # noqa: E501
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_TOOL": "rstudio",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-9-0_STATUS": "deprecated",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-12-1_ICON": "rstudio",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-12-1_REPOSITORY": "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.12.1",  # noqa: E501
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-12-1_TOOL": "rstudio",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-12-1_STATUS": "recommended",
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_ICON": "rstudio",
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.11.0",  # noqa: E501
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_TOOL": "rstudio",
-            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_STATUS": "recommended",
+            "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_STATUS": "deprecated",
             # Templates: VSCODE
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_ICON": "vscode",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.9.0",  # noqa: E501
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_TOOL": "vscode",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-9-0_STATUS": "deprecated",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-1_ICON": "vscode",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-1_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.12.1",  # noqa: E501
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-1_TOOL": "vscode",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-1_STATUS": "recommended",
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_ICON": "vscode",
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.11.0",  # noqa: E501
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_TOOL": "vscode",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_STATUS": "recommended",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_STATUS": "deprecated",
             # Templates: XPRA
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_ICON": "xpra",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.9.0",  # noqa: E501
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_TOOL": "xpra",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-9-0_STATUS": "deprecated",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_ICON": "xpra",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.11.0",  # noqa: E501
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_TOOL": "xpra",
-            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-R2-1-0-11-0_STATUS": "recommended",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-1-0-12-1_ICON": "xpra",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-1-0-12-1_REPOSITORY": "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.12.1",  # noqa: E501
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-1-0-12-1_TOOL": "xpra",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-1-0-12-1_STATUS": "recommended",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-1-0-11-0_ICON": "xpra",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-1-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.11.0",  # noqa: E501
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-1-0-11-0_TOOL": "xpra",
+            "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-1-0-11-0_STATUS": "deprecated",
             "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES": "DO_NOT_UNCOMMENT",
         },
         "omitted": {
@@ -633,7 +633,7 @@ WAVE_LITE_ACTIVE_ASSERTIONS = {
         # (`services.<name>`) from OFF's omitted via prefix-aware merge.
         "present": {
             "services.wave-lite.labels.seqera": "wave-lite",
-            "services.wave-lite.image": "cr.seqera.io/private/nf-tower-enterprise/wave:v1.29.1",
+            "services.wave-lite.image": "cr.seqera.io/enterprise/wave/server:v1.33.0",
             "services.wave-lite-reverse-proxy.labels.seqera": "wave-lite-reverse-proxy",
             "services.wave-db.labels.seqera": "wave-db",
             "services.wave-redis.labels.seqera": "wave-redis",
