@@ -584,6 +584,9 @@ This section added to handle new connection string requirements for Tower v24.1.
 */
 db_container_engine = "mysql"
 # TODO(#332): confirm the container DB engine version paired with the v26.1.x release set.
+# NOTE: MySQL 8.0 is approaching end-of-life. See CHANGELOG → 1.8.0 Forward Roadmap
+# Guidance and [#271](https://github.com/seqeralabs/cx-field-tools-installer/issues/271)
+# for the upgrade pathway (shipping out-of-band from this release).
 db_container_engine_version = "8.0"
 
 /*
@@ -609,6 +612,9 @@ WARNING:
 
 db_engine = "mysql"
 # TODO(#332): confirm the RDS engine version & matching param group paired with the v26.1.x release set.
+# NOTE: MySQL 8.0 is approaching end-of-life. See CHANGELOG → 1.8.0 Forward Roadmap
+# Guidance and [#271](https://github.com/seqeralabs/cx-field-tools-installer/issues/271)
+# for the upgrade pathway (shipping out-of-band from this release).
 db_engine_version    = "8.0"
 db_param_group       = "mysql8.0"
 db_instance_class    = "db.m5.large"

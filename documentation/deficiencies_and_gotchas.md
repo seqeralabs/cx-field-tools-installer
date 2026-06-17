@@ -96,6 +96,10 @@ This page lists to-be-built-in-future functionality and various oddities you may
 
     Current as of July 26/25, the project supports private certificates. [Additional work](./setup/optional_private_certificates.md) required to prep your compute nodes, however.
 
+- MySQL 8.0 end-of-life
+
+    MySQL 8.0 is approaching end-of-life and existing deployments (both containerized and RDS-backed) will need to migrate to 8.4. The upgrade pathway is **not** bundled into Release 1.8; it will ship as a dedicated out-of-band release with its own runbook and tooling — see CHANGELOG → 1.8.0 Forward Roadmap Guidance and [#271](https://github.com/seqeralabs/cx-field-tools-installer/issues/271). Until then, deployments continue to use `db_engine_version = "8.0"` / `db_container_engine_version = "8.0"`.
+
 
 ## Deficiencies
 
