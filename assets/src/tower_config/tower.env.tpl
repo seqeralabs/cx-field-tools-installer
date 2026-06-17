@@ -204,6 +204,31 @@ TOWER_LINEAGE_ALLOWED_WORKSPACES=${data_lineage_allowed_workspaces}
 %{ endif }
 
 
+#-------------------------------------------------
+# AUDIT LOG V2 (v26.1.0+)
+# ------------------------------------------------
+TOWER_AUDIT_LOG_V2_WRITE_MODE=${tower_audit_log_v2_write_mode}
+TOWER_AUDIT_LOG_V2_CSV_EXPORT_MAX_LOGS=${tower_audit_log_v2_csv_export_max_logs}
+%{ if tower_audit_log_v2_pre_post_change_enabled == true ~}
+TOWER_AUDIT_LOG_V2_PRE_POST_CHANGE_ENABLED=true
+%{ else ~}
+TOWER_AUDIT_LOG_V2_PRE_POST_CHANGE_ENABLED=false
+%{ endif ~}
+
+
+#-------------------------------------------------
+# CRON AUDIT LOG CLEANUP (v26.1.0+)
+# ------------------------------------------------
+%{ if tower_cron_audit_log_clean_up_enabled == true ~}
+TOWER_CRON_AUDIT_LOG_CLEAN_UP_ENABLED=true
+%{ else ~}
+TOWER_CRON_AUDIT_LOG_CLEAN_UP_ENABLED=false
+%{ endif ~}
+TOWER_CRON_AUDIT_LOG_CLEAN_UP_INTERVAL=${tower_cron_audit_log_clean_up_interval}
+TOWER_CRON_AUDIT_LOG_CLEAN_UP_DELAY=${tower_cron_audit_log_clean_up_delay}
+TOWER_CRON_AUDIT_LOG_CLEAN_UP_CHUNK_SIZE=${tower_cron_audit_log_clean_up_chunk_size}
+
+
 # ------------------------------------------------
 # TEMPORARY WORKAROUND FOR MIGRATION SCRIPT
 #  - Need to add database creds here due to migration script limitation (Dec 2023)

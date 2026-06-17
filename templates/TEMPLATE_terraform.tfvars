@@ -832,6 +832,22 @@ flag_tower_enable_participant_auto_create_user = false
 flag_tower_enable_member_auto_create_user      = false
 
 tower_audit_retention_days     = 1095 # 3 years (value in days)
+
+# Audit Log v2 (v26.1.0+)
+# Controls which audit log tables receive write operations: "v1" (legacy only), "v2" (v2 only), or "dual" (both).
+tower_audit_log_v2_write_mode              = "dual"
+# Maximum number of records allowed in a single audit log CSV export.
+tower_audit_log_v2_csv_export_max_logs     = "500000"
+# Enable capturing pre- and post-change state images for audit log resources (air-gapped deployments).
+tower_audit_log_v2_pre_post_change_enabled = false
+
+# Cron audit log cleanup (v26.1.0+)
+# Controls the scheduled job that purges old audit log records. Active on the cron service container.
+tower_cron_audit_log_clean_up_enabled    = true
+tower_cron_audit_log_clean_up_interval   = "5m"
+tower_cron_audit_log_clean_up_delay      = "10s"
+tower_cron_audit_log_clean_up_chunk_size = "1000"
+
 tower_workflow_cleanup_enabled = true # only applicable for AWS Batch
 
 tower_enable_openapi = true

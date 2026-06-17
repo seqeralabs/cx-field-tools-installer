@@ -211,6 +211,15 @@ BASELINE_ASSERTIONS = {
             "# TOWER_PIPELINE_VERSIONING_NOT_ENABLED": "DO_NOT_UNCOMMENT",
             # DATA_LINEAGE
             "# TOWER_LINEAGE_NOT_ENABLED": "DO_NOT_UNCOMMENT",
+            # AUDIT_LOG_V2
+            "TOWER_AUDIT_LOG_V2_WRITE_MODE": "dual",
+            "TOWER_AUDIT_LOG_V2_CSV_EXPORT_MAX_LOGS": "500000",
+            "TOWER_AUDIT_LOG_V2_PRE_POST_CHANGE_ENABLED": "false",
+            # CRON_AUDIT_LOG_CLEANUP
+            "TOWER_CRON_AUDIT_LOG_CLEAN_UP_ENABLED": "true",
+            "TOWER_CRON_AUDIT_LOG_CLEAN_UP_INTERVAL": "5m",
+            "TOWER_CRON_AUDIT_LOG_CLEAN_UP_DELAY": "10s",
+            "TOWER_CRON_AUDIT_LOG_CLEAN_UP_CHUNK_SIZE": "1000",
         },
         "omitted": {
             # DB                      Never generated in file

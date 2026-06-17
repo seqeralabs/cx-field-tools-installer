@@ -498,6 +498,18 @@ variable "flag_tower_enable_participant_auto_create_user" { type = bool }
 variable "flag_tower_enable_member_auto_create_user" { type = bool }
 
 variable "tower_audit_retention_days" { type = number }
+
+# Audit Log v2 (v26.1.0+)
+variable "tower_audit_log_v2_write_mode" { type = string }
+variable "tower_audit_log_v2_csv_export_max_logs" { type = string }
+variable "tower_audit_log_v2_pre_post_change_enabled" { type = bool }
+
+# Cron audit log cleanup (v26.1.0+)
+variable "tower_cron_audit_log_clean_up_enabled" { type = bool }
+variable "tower_cron_audit_log_clean_up_interval" { type = string }
+variable "tower_cron_audit_log_clean_up_delay" { type = string }
+variable "tower_cron_audit_log_clean_up_chunk_size" { type = string }
+
 variable "tower_workflow_cleanup_enabled" { type = bool }
 
 variable "tower_enable_openapi" { type = bool }
