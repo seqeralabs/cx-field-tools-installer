@@ -14,30 +14,21 @@ write_files:
       exec > >(tee /var/log/tower-forge.log|logger -t TowerForge -s 2>/dev/console) 2>&1
 
       ## Install packages
-      yum update
+      yum update -y
       yum install -y nano ec2-instance-connect tree dnsutils traceroute
 
-      # Amazon Linux 2023 already has Python3.9 so we just need to install Ansible:
-      # https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html
-      USER=/home/ec2-user
-      cd /home/ec2-user
+      # Install pip via the system package manager.
+      #
+      # OLD: bootstrapped pip via `curl https://bootstrap.pypa.io/get-pip.py | python3`,
+      # with a download-retry loop. Upstream `get-pip.py` now requires Python >= 3.10,
+      # but Amazon Linux 2023 ships with Python 3.9 as the system default — the
+      # bootstrap script aborts on that interpreter. `yum install -y python3-pip`
+      # gives us a pip that tracks the system Python version and avoids the network
+      # round-trip to bootstrap.pypa.io entirely.
+      yum install -y python3-pip
 
-      counter=0
-      while [ ! -f get-pip.py ] && [ $counter -lt 10 ]; do 
-        echo "File not found, retrying download..."
-        curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-        sleep 1
-        counter=$((counter+1))
-      done
-      if [ $counter -eq 10 ]; then
-        echo "Failed to download file after 10 attempts."
-        exit 1
-      fi
-
-      python3 get-pip.py 
       python3 -m pip install ansible-core
       echo "$(ansible --version)"
-      rm get-pip.py
 
 runcmd:
   - bash /root/tower-forge.sh
