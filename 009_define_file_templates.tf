@@ -61,6 +61,14 @@ locals {
 
       flag_enable_data_lineage        = var.flag_enable_data_lineage,
       data_lineage_allowed_workspaces = var.data_lineage_allowed_workspaces,
+
+      tower_compute_env_cleanup_enabled              = var.tower_compute_env_cleanup_enabled,
+      tower_compute_env_cleanup_delay                = var.tower_compute_env_cleanup_delay,
+      tower_compute_env_cleanup_interval             = var.tower_compute_env_cleanup_interval,
+      tower_compute_env_cleanup_batch_size           = var.tower_compute_env_cleanup_batch_size,
+      tower_compute_env_cleanup_time_offset          = var.tower_compute_env_cleanup_time_offset,
+      tower_compute_env_cleanup_stuck_creating_timeout = var.tower_compute_env_cleanup_stuck_creating_timeout,
+      tower_compute_env_cleanup_stuck_deleting_timeout = var.tower_compute_env_cleanup_stuck_deleting_timeout,
     }
   )
 

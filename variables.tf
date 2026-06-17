@@ -500,6 +500,15 @@ variable "flag_tower_enable_member_auto_create_user" { type = bool }
 variable "tower_audit_retention_days" { type = number }
 variable "tower_workflow_cleanup_enabled" { type = bool }
 
+# Compute environment cleanup (v26.1.0+)
+variable "tower_compute_env_cleanup_enabled" { type = bool }
+variable "tower_compute_env_cleanup_delay" { type = string }
+variable "tower_compute_env_cleanup_interval" { type = string }
+variable "tower_compute_env_cleanup_batch_size" { type = string }
+variable "tower_compute_env_cleanup_time_offset" { type = string }
+variable "tower_compute_env_cleanup_stuck_creating_timeout" { type = string }
+variable "tower_compute_env_cleanup_stuck_deleting_timeout" { type = string }
+
 variable "tower_enable_openapi" { type = bool }
 
 variable "tower_enable_pipeline_versioning" { type = bool }

@@ -834,6 +834,17 @@ flag_tower_enable_member_auto_create_user      = false
 tower_audit_retention_days     = 1095 # 3 years (value in days)
 tower_workflow_cleanup_enabled = true # only applicable for AWS Batch
 
+# Compute environment cleanup (v26.1.0+)
+# When enabled, a cron job periodically identifies and deletes compute environments stuck
+# in CREATING or DELETING states. Only active on the cron service container.
+tower_compute_env_cleanup_enabled              = false
+tower_compute_env_cleanup_delay                = "1m"
+tower_compute_env_cleanup_interval             = "1h"
+tower_compute_env_cleanup_batch_size           = "10"
+tower_compute_env_cleanup_time_offset          = "60s"
+tower_compute_env_cleanup_stuck_creating_timeout = "1h"
+tower_compute_env_cleanup_stuck_deleting_timeout = "1h"
+
 tower_enable_openapi = true
 
 # If enabled, set eligibility to "" for all workspaces, or "WSP1_ID,WSP2_ID,..."

@@ -204,6 +204,22 @@ TOWER_LINEAGE_ALLOWED_WORKSPACES=${data_lineage_allowed_workspaces}
 %{ endif }
 
 
+#-------------------------------------------------
+# COMPUTE ENVIRONMENT CLEANUP (v26.1.0+)
+# ------------------------------------------------
+%{ if tower_compute_env_cleanup_enabled == true ~}
+TOWER_COMPUTE_ENV_CLEANUP_ENABLED=true
+TOWER_COMPUTE_ENV_CLEANUP_DELAY=${tower_compute_env_cleanup_delay}
+TOWER_COMPUTE_ENV_CLEANUP_INTERVAL=${tower_compute_env_cleanup_interval}
+TOWER_COMPUTE_ENV_CLEANUP_BATCH_SIZE=${tower_compute_env_cleanup_batch_size}
+TOWER_COMPUTE_ENV_CLEANUP_TIME_OFFSET=${tower_compute_env_cleanup_time_offset}
+TOWER_COMPUTE_ENV_CLEANUP_STUCK_CREATING_TIMEOUT=${tower_compute_env_cleanup_stuck_creating_timeout}
+TOWER_COMPUTE_ENV_CLEANUP_STUCK_DELETING_TIMEOUT=${tower_compute_env_cleanup_stuck_deleting_timeout}
+%{ else ~}
+# TOWER_COMPUTE_ENV_CLEANUP_NOT_ENABLED=DO_NOT_UNCOMMENT
+%{ endif }
+
+
 # ------------------------------------------------
 # TEMPORARY WORKAROUND FOR MIGRATION SCRIPT
 #  - Need to add database creds here due to migration script limitation (Dec 2023)
