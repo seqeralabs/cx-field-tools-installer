@@ -11,6 +11,8 @@ write_files:
     owner: root
     content: |
       #!/usr/bin/env bash
+      set -euo pipefail
+      
       exec > >(tee /var/log/tower-forge.log|logger -t TowerForge -s 2>/dev/console) 2>&1
 
       ## Install packages
