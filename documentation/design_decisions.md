@@ -296,6 +296,7 @@ In addition to the general design decisions noted above, there are a few decisio
     | `CONNECT_REDIS_TLS_CERT_FILE` | `""` | Dependent on `CONNECT_REDIS_TLS_ENABLE` — omitted for the same reason. |
     | `CONNECT_REDIS_USER` | `""` | The installer has no Redis authentication mechanism. Platform connects to Redis without credentials (`TOWER_REDIS_URL` carries no auth). Since Connect shares the same Redis instance, Redis AUTH is equally inapplicable. |
     | `CONNECT_REDIS_PASSWORD` | `""` | Same as above. |
+    | `CONNECT_SSH_KEY_VALUE_BASE64` | `""` | Base64-encoded alternative to the file-mounted SSH host key. The installer mounts the key as a file via `CONNECT_SSH_KEY_PATH=/data/ssh-host-key`, which is the correct default for all standard deployments. The base64 option exists for environments where file mounting is not possible — an edge case beyond the scope of this installer. |
     | `CONNECT_SSH_MAX_CONNECTIONS` | `2000` | SSH tuning variable. Built-in default is appropriate for the vast majority of deployments. Only relevant under unusually high SSH load. |
     | `CONNECT_SSH_MAX_CONN_CHANNELS` | `30` | Same as above. |
     | `CONNECT_SSH_HANDSHAKE_TIMEOUT` | `1m` | Same as above. |

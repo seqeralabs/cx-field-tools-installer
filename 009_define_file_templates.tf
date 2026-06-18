@@ -150,7 +150,6 @@ locals {
       tower_connect_server_url     = module.connection_strings.tower_connect_server_url,
       flag_enable_data_studio_ssh  = var.flag_enable_data_studio_ssh,
       connect_ssh_key_path         = "/data/ssh-host-key",
-      connect_ssh_key_value_base64 = var.connect_ssh_key_value_base64,
       connect_management_port      = var.connect_management_port,
       connect_management_auth_key  = var.connect_management_auth_key,
       connect_log_level            = var.connect_log_level,

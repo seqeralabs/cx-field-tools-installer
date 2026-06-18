@@ -615,11 +615,11 @@ STUDIOS_SSH_ACTIVE_ASSERTIONS = {
             "CONNECT_SSH_ENABLED": "true",
             "CONNECT_SSH_ADDR": ":2222",
             "CONNECT_SSH_KEY_PATH": "/data/ssh-host-key",
-            # connect_ssh_key_value_base64 defaults to "" — renders commented marker.
-            "# CONNECT_SSH_KEY_VALUE_BASE64_NOT_SET": "DO_NOT_UNCOMMENT",
         },
         "omitted": {
+            # Not exposed by installer — see Design Decision #20.
             "CONNECT_SSH_KEY_VALUE_BASE64",
+            "# CONNECT_SSH_KEY_VALUE_BASE64_NOT_SET",
         },
     },
 }
