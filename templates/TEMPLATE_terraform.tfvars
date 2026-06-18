@@ -486,6 +486,36 @@ data_studio_wave_status_check_rate          = "30s"        # polling rate for Wa
 # will see a different host fingerprint on every restart).
 connect_ssh_key_value_base64 = ""
 
+# Connect proxy - server config (v0.11.1+)
+# See: https://docs.seqera.io/platform-enterprise/enterprise/install-studios#connect-environment-variables
+connect_listener_port       = "7777"  # port connect-server listens on for incoming connections
+connect_tunnel_port         = "7070"  # port used to open new tunnels
+connect_storage_root        = "/data" # root directory for connect proxy data
+connect_host_domain         = ""      # host domain suffix; leave empty for default
+connect_management_port     = ""      # port for metrics/readiness endpoints; leave empty to disable
+connect_management_auth_key = ""      # auth key for management endpoints; leave empty if not using management port
+connect_log_level           = "debug" # logging verbosity (debug, info, warn, error)
+
+# Connect proxy - OIDC / client config (v0.11.1+)
+# See: https://docs.seqera.io/platform-enterprise/enterprise/install-studios#connect-environment-variables
+connect_client_name = "tower-connect-proxy-client" # OIDC client identifier for Studio provider
+connect_grant_type  = "authorization_code"          # OAuth grant type
+
+# Connect proxy - Redis extras (v0.11.1+)
+# CONNECT_REDIS_USER and CONNECT_REDIS_PASSWORD are sourced from SSM (optional; only required if Redis auth is enabled).
+# See: https://docs.seqera.io/platform-enterprise/enterprise/install-studios#connect-environment-variables
+connect_redis_prefix          = "connect:session" # prefix for tunnel keys in Redis
+connect_redis_tls_enable      = false             # enable TLS for Redis connection
+connect_redis_tls_skip_verify = false             # skip TLS certificate verification (only applies when TLS is enabled)
+connect_redis_tls_key_file    = ""                # path to TLS key file; leave empty if not using TLS
+connect_redis_tls_cert_file   = ""                # path to TLS cert file; leave empty if not using TLS
+
+# Connect proxy - SSH tuning (v0.11.1+)
+# See: https://docs.seqera.io/platform-enterprise/enterprise/install-studios#connect-environment-variables
+connect_ssh_max_connections   = "2000" # maximum concurrent SSH connections
+connect_ssh_max_conn_channels = "30"   # maximum concurrent channels per SSH connection
+connect_ssh_handshake_timeout = "1m"   # SSH handshake timeout duration
+
 
 # For full list of images Seqera makes available, please see: https://public.cr.seqera.io/
 # NOTE!!

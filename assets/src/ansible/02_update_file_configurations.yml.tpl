@@ -160,4 +160,30 @@
 
         mkdir -p /home/ec2-user/.tower/connect
         sudo chmod 777 /home/ec2-user/.tower/connect
+
+    - name: Inject Connect Redis credentials from SSM (optional; skipped if value is placeholder or empty).
+      become: true
+      become_user: ec2-user
+      ansible.builtin.shell: |
+        cd /home/ec2-user && source ~/.bashrc
+
+        export CONNECT_REDIS_USER=$(aws ssm get-parameters --name "/config/${app_name}/connect/redis/user" --with-decryption --query "Parameters[*].{Value:Value}" --output text 2>/dev/null || echo "")
+        export CONNECT_REDIS_PASSWORD=$(aws ssm get-parameters --name "/config/${app_name}/connect/redis/password" --with-decryption --query "Parameters[*].{Value:Value}" --output text 2>/dev/null || echo "")
+        export DATA_STUDIO_ENV=$(pwd)/target/tower_config/data-studios.env
+
+        if [ -n "$CONNECT_REDIS_USER" ] && [ "$CONNECT_REDIS_USER" != "CHANGE_ME_IF_NECESSARY" ]; then
+          if ! grep -q "^CONNECT_REDIS_USER=" "$DATA_STUDIO_ENV"; then
+            echo "CONNECT_REDIS_USER=$CONNECT_REDIS_USER" >> "$DATA_STUDIO_ENV"
+          else
+            sed -i "s/^CONNECT_REDIS_USER=.*/CONNECT_REDIS_USER=$CONNECT_REDIS_USER/" "$DATA_STUDIO_ENV"
+          fi
+        fi
+
+        if [ -n "$CONNECT_REDIS_PASSWORD" ] && [ "$CONNECT_REDIS_PASSWORD" != "CHANGE_ME_IF_NECESSARY" ]; then
+          if ! grep -q "^CONNECT_REDIS_PASSWORD=" "$DATA_STUDIO_ENV"; then
+            echo "CONNECT_REDIS_PASSWORD=$CONNECT_REDIS_PASSWORD" >> "$DATA_STUDIO_ENV"
+          else
+            sed -i "s/^CONNECT_REDIS_PASSWORD=.*/CONNECT_REDIS_PASSWORD=$CONNECT_REDIS_PASSWORD/" "$DATA_STUDIO_ENV"
+          fi
+        fi
 %{ endif ~}

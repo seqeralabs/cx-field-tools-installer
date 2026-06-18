@@ -147,9 +147,13 @@ TOWER_DATA_STUDIO_LIST_MAX_ALLOWED=${data_studio_list_max_allowed}
 TOWER_DATA_STUDIO_PRIVATE_STUDIO_BY_DEFAULT=${flag_studio_private_by_default}
 %{ if data_studio_feature_manifest_url != "" ~}
 TOWER_DATA_STUDIO_FEATURE_MANIFEST_URL=${data_studio_feature_manifest_url}
+%{ else ~}
+# TOWER_DATA_STUDIO_FEATURE_MANIFEST_URL_NOT_SET=DO_NOT_UNCOMMENT
 %{ endif ~}
 %{ if data_studio_iframe_eligible_workspaces != "" ~}
 TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES="${data_studio_iframe_eligible_workspaces}"
+%{ else ~}
+# TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES_NOT_SET=DO_NOT_UNCOMMENT
 %{ endif ~}
 
 #-------------------------------------------------
@@ -158,6 +162,8 @@ TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES="${data_studio_iframe_eligib
 TOWER_STUDIO_METRICS_RETENTION_DAYS=${data_studio_metrics_retention_days}
 %{ if data_studio_metrics_eligible_workspaces != "" ~}
 TOWER_STUDIO_METRICS_ENABLED_WORKSPACES="${data_studio_metrics_eligible_workspaces}"
+%{ else ~}
+# TOWER_STUDIO_METRICS_ENABLED_WORKSPACES_NOT_SET=DO_NOT_UNCOMMENT
 %{ endif ~}
 
 %{ for ds in data_studio_options ~}
@@ -178,9 +184,13 @@ TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_INITIAL_DELAY=${data_studio_wave_status_chec
 TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_RATE=${data_studio_wave_status_check_rate}
 %{ if data_studio_wave_custom_image_registry != "" ~}
 TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REGISTRY=${data_studio_wave_custom_image_registry}
+%{ else ~}
+# TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REGISTRY_NOT_SET=DO_NOT_UNCOMMENT
 %{ endif ~}
 %{ if data_studio_wave_custom_image_repository != "" ~}
 TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REPOSITORY=${data_studio_wave_custom_image_repository}
+%{ else ~}
+# TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REPOSITORY_NOT_SET=DO_NOT_UNCOMMENT
 %{ endif ~}
 
 %{ endif ~}
