@@ -456,9 +456,7 @@ data_studio_path_routing_url    = "REPLACE_ME_IF_NECESSARY"
 # Studios - General behaviour (v26.1.0+)
 # See: https://docs.seqera.io/platform-enterprise/latest/enterprise/configuration/overview#data-features
 data_studio_default_lifespan           = "8"    # default lifespan in hours per Studio
-data_studio_list_max_allowed           = "100"  # max items per page when listing Studios
 flag_studio_private_by_default         = false  # make Studios private by default
-data_studio_feature_manifest_url       = ""     # leave empty to use Platform default
 data_studio_iframe_eligible_workspaces = ""     # comma-separated workspace IDs; empty = all
 
 # Studios - SSH (v26.1.0+)
@@ -468,17 +466,18 @@ tower_ssh_keys_supported_types = "ssh-rsa,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-
 # Studios - Metrics (v26.1.0+)
 # See: https://docs.seqera.io/platform-enterprise/latest/enterprise/configuration/overview#data-features
 data_studio_metrics_eligible_workspaces = "" # comma-separated workspace IDs; empty = all
-data_studio_metrics_retention_days      = "90" # days to retain startup metrics
 
 # Studios - Wave integration (v26.1.0+)
 # Requires flag_use_wave = true.
 # See: https://docs.seqera.io/platform-enterprise/latest/enterprise/configuration/overview#data-features
-data_studio_wave_disallowed_registries      = "community.wave.seqera.io" # registries blocked as Wave build destinations
-data_studio_wave_custom_image_registry      = ""           # leave empty to use Wave default
-data_studio_wave_custom_image_repository    = ""           # leave empty to use Wave default (data-studios/<tool>)
-data_studio_wave_custom_image_name_strategy = "tagPrefix"  # accepted values: "tagPrefix", "imageSuffix"
-data_studio_wave_status_check_initial_delay = "5s"         # delay before first Wave build status check
-data_studio_wave_status_check_rate          = "30s"        # polling rate for Wave build status checks
+data_studio_wave_disallowed_registries   = "community.wave.seqera.io" # registries blocked as Wave build destinations
+data_studio_wave_custom_image_registry   = ""  # leave empty to use Wave default
+data_studio_wave_custom_image_repository = ""  # leave empty to use Wave default (data-studios/<tool>)
+
+# NOTE: Several Studios variables are intentionally omitted from this installer (list pagination,
+# feature manifest URL, metrics retention, Wave timing and naming strategy). Platform defaults apply
+# in all cases. See documentation/design_decisions.md for rationale. If you need any of these for
+# your deployment, reach out to Seqera and we can discuss your requirements.
 
 # Connect proxy SSH (v0.11.1+)
 # The installer uses the file-mounted SSH host key (CONNECT_SSH_KEY_PATH) by default to maintain

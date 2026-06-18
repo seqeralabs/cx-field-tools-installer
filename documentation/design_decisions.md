@@ -302,6 +302,21 @@ In addition to the general design decisions noted above, there are a few decisio
 
     Deployers who need to override any of these values can do so by adding them directly to `data-studios.env` on the target instance after deployment. If you need assistance configuring any of these variables, reach out to Seqera and we can discuss your requirements. Full variable reference: [connect environment variables](https://docs.seqera.io/platform-enterprise/enterprise/install-studios#connect-environment-variables).
 
+21. **Some Studios platform environment variables are intentionally omitted from the installer**
+
+    The installer exposes only the Studios platform variables that have practical value for standard deployments. The remaining variables documented in the [configuration overview](https://docs.seqera.io/platform-enterprise/latest/enterprise/configuration/overview#data-features) are omitted for the reasons described below.
+
+    | Variable | Default | Reason omitted |
+    |----------|---------|----------------|
+    | `TOWER_DATA_STUDIO_LIST_MAX_ALLOWED` | `100` | Pagination tuning. 100 concurrent Studios per page is sufficient for all standard deployments. Only relevant at very high Studio volume. |
+    | `TOWER_DATA_STUDIO_FEATURE_MANIFEST_URL` | Platform default | Internal manifest URL for Studio template version compatibility. Platform provides its own default — a custom URL would only be provided by Seqera directly. |
+    | `TOWER_STUDIO_METRICS_RETENTION_DAYS` | `90` | Metrics storage tuning. 90 days is appropriate for all deployments. Only relevant if storage constraints require shorter retention. |
+    | `TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_NAME_STRATEGY` | `tagPrefix` | Advanced Wave image naming convention. The default `tagPrefix` is the only strategy used in standard Studio image builds. Changing this requires corresponding changes to the Wave build pipeline. |
+    | `TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_INITIAL_DELAY` | `5s` | Timing tuning for Wave build status polling. Default is appropriate for all deployments. |
+    | `TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_RATE` | `30s` | Timing tuning for Wave build status polling. Default is appropriate for all deployments. |
+
+    Deployers who need to override any of these values can do so by adding them directly to `tower.env` on the target instance after deployment. If you need assistance configuring any of these variables, reach out to Seqera and we can discuss your requirements. Full variable reference: [configuration overview](https://docs.seqera.io/platform-enterprise/latest/enterprise/configuration/overview#data-features).
+
 19. **Data Lineage SQS queue creation is Platform's responsibility, not the installer's**
 
     Seqera Platform v26.1.0+ has built-in support for creating the SQS queue (and the paired S3 bucket + bucket-notification routing) required by the Data Lineage feature. Platform creates these per-workspace under the `seqera-lineage-*` resource-name prefix at the moment a workspace enables lineage via its UI.

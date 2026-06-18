@@ -143,13 +143,7 @@ TOWER_OIDC_PEM_PATH=/data-studios-rsa.pem
 TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN="ipsemlorem"
 
 TOWER_DATA_STUDIO_DEFAULT_LIFESPAN=${data_studio_default_lifespan}
-TOWER_DATA_STUDIO_LIST_MAX_ALLOWED=${data_studio_list_max_allowed}
 TOWER_DATA_STUDIO_PRIVATE_STUDIO_BY_DEFAULT=${flag_studio_private_by_default}
-%{ if data_studio_feature_manifest_url != "" ~}
-TOWER_DATA_STUDIO_FEATURE_MANIFEST_URL=${data_studio_feature_manifest_url}
-%{ else ~}
-# TOWER_DATA_STUDIO_FEATURE_MANIFEST_URL_NOT_SET=DO_NOT_UNCOMMENT
-%{ endif ~}
 %{ if data_studio_iframe_eligible_workspaces != "" ~}
 TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES="${data_studio_iframe_eligible_workspaces}"
 %{ else ~}
@@ -159,7 +153,6 @@ TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES="${data_studio_iframe_eligib
 #-------------------------------------------------
 # DATA STUDIO - METRICS
 # ------------------------------------------------
-TOWER_STUDIO_METRICS_RETENTION_DAYS=${data_studio_metrics_retention_days}
 %{ if data_studio_metrics_eligible_workspaces != "" ~}
 TOWER_STUDIO_METRICS_ENABLED_WORKSPACES="${data_studio_metrics_eligible_workspaces}"
 %{ else ~}
@@ -179,9 +172,6 @@ TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_STATUS="${ds.status != null ? ds.sta
 # DATA STUDIO - WAVE INTEGRATION
 # ------------------------------------------------
 TOWER_DATA_STUDIO_WAVE_DISALLOWED_REGISTRIES=${data_studio_wave_disallowed_registries}
-TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_NAME_STRATEGY=${data_studio_wave_custom_image_name_strategy}
-TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_INITIAL_DELAY=${data_studio_wave_status_check_initial_delay}
-TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_RATE=${data_studio_wave_status_check_rate}
 %{ if data_studio_wave_custom_image_registry != "" ~}
 TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REGISTRY=${data_studio_wave_custom_image_registry}
 %{ else ~}

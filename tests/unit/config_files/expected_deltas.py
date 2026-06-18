@@ -458,9 +458,7 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "TOWER_OIDC_PEM_PATH": "/data-studios-rsa.pem",
             "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN": "ipsemlorem",
             "TOWER_DATA_STUDIO_DEFAULT_LIFESPAN": "8",
-            "TOWER_DATA_STUDIO_LIST_MAX_ALLOWED": "100",
             "TOWER_DATA_STUDIO_PRIVATE_STUDIO_BY_DEFAULT": "false",
-            "TOWER_STUDIO_METRICS_RETENTION_DAYS": "90",
             # Templates: JUPYTER
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-12-1_ICON": "jupyter",
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-12-1_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.12.1",  # noqa: E501
@@ -499,7 +497,6 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-1-0-11-0_STATUS": "deprecated",
             "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES": "DO_NOT_UNCOMMENT",
             # Optional v26.1 vars — renders commented marker when set to empty string (the default).
-            "# TOWER_DATA_STUDIO_FEATURE_MANIFEST_URL_NOT_SET": "DO_NOT_UNCOMMENT",
             "# TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES_NOT_SET": "DO_NOT_UNCOMMENT",
             "# TOWER_STUDIO_METRICS_ENABLED_WORKSPACES_NOT_SET": "DO_NOT_UNCOMMENT",
         },
@@ -512,11 +509,15 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "TOWER_DATA_STUDIO_CONNECT_SSH_PORT",
             "TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS",
             # Active var names are absent — only the _NOT_SET markers render (see present above).
-            "TOWER_DATA_STUDIO_FEATURE_MANIFEST_URL",
             "TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES",
             "TOWER_STUDIO_METRICS_ENABLED_WORKSPACES",
             # Wave Studios vars — only emitted when flag_use_wave=true.
             "TOWER_DATA_STUDIO_WAVE_DISALLOWED_REGISTRIES",
+            # Vars not exposed by installer — omitted entirely (see Design Decision #21).
+            "TOWER_DATA_STUDIO_LIST_MAX_ALLOWED",
+            "TOWER_DATA_STUDIO_FEATURE_MANIFEST_URL",
+            "# TOWER_DATA_STUDIO_FEATURE_MANIFEST_URL_NOT_SET",
+            "TOWER_STUDIO_METRICS_RETENTION_DAYS",
             "TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_NAME_STRATEGY",
             "TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_INITIAL_DELAY",
             "TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_RATE",
@@ -530,7 +531,6 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "CONNECT_PROXY_URL": "https://connect.autodc.dev-seqera.net",
             # Optional server config — renders commented marker when empty (the default).
             "# CONNECT_MANAGEMENT_PORT_NOT_SET": "DO_NOT_UNCOMMENT",
-            "# CONNECT_MANAGEMENT_AUTH_KEY_NOT_SET": "DO_NOT_UNCOMMENT",
             "CONNECT_REDIS_ADDRESS": "redis:6379",
             "CONNECT_REDIS_DB": 1,
             "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN": "ipsemlorem",
@@ -545,6 +545,8 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             # Active var names absent when NOT_SET markers render.
             "CONNECT_MANAGEMENT_PORT",
             "CONNECT_MANAGEMENT_AUTH_KEY",
+            # Auth key NOT_SET marker only renders when port is set (nested block).
+            "# CONNECT_MANAGEMENT_AUTH_KEY_NOT_SET",
             # Vars not exposed by installer — omitted entirely.
             "CONNECT_HOST_DOMAIN",
             "CONNECT_REDIS_PREFIX",
@@ -631,9 +633,6 @@ STUDIOS_WAVE_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_DATA_STUDIO_WAVE_DISALLOWED_REGISTRIES": "community.wave.seqera.io",
-            "TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_NAME_STRATEGY": "tagPrefix",
-            "TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_INITIAL_DELAY": "5s",
-            "TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_RATE": "30s",
             # Custom registry/repo renders commented marker when set to empty string (the default).
             "# TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REGISTRY_NOT_SET": "DO_NOT_UNCOMMENT",
             "# TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REPOSITORY_NOT_SET": "DO_NOT_UNCOMMENT",
@@ -642,6 +641,10 @@ STUDIOS_WAVE_ACTIVE_ASSERTIONS = {
             # Active var names are absent — only the _NOT_SET markers render (see present above).
             "TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REGISTRY",
             "TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REPOSITORY",
+            # Vars not exposed by installer — omitted entirely (see Design Decision #21).
+            "TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_NAME_STRATEGY",
+            "TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_INITIAL_DELAY",
+            "TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_RATE",
         },
     },
 }

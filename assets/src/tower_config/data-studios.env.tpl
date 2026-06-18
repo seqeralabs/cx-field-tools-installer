@@ -9,13 +9,11 @@ CONNECT_TUNNEL_URL=connect-server:7070
 CONNECT_PROXY_URL=${tower_connect_server_url}
 %{ if connect_management_port != "" ~}
 CONNECT_MANAGEMENT_PORT=${connect_management_port}
-%{ else ~}
-# CONNECT_MANAGEMENT_PORT_NOT_SET=DO_NOT_UNCOMMENT
-%{ endif ~}
 %{ if connect_management_auth_key != "" ~}
 CONNECT_MANAGEMENT_AUTH_KEY=${connect_management_auth_key}
+%{ endif ~}
 %{ else ~}
-# CONNECT_MANAGEMENT_AUTH_KEY_NOT_SET=DO_NOT_UNCOMMENT
+# CONNECT_MANAGEMENT_PORT_NOT_SET=DO_NOT_UNCOMMENT
 %{ endif ~}
 
 CONNECT_REDIS_ADDRESS=${tower_redis_url}
