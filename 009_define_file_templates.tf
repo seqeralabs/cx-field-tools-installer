@@ -157,23 +157,9 @@ locals {
       flag_enable_data_studio_ssh  = var.flag_enable_data_studio_ssh,
       connect_ssh_key_path         = "/data/ssh-host-key",
       connect_ssh_key_value_base64 = var.connect_ssh_key_value_base64,
-      connect_listener_port        = var.connect_listener_port,
-      connect_tunnel_port          = var.connect_tunnel_port,
-      connect_storage_root         = var.connect_storage_root,
-      connect_host_domain          = var.connect_host_domain,
       connect_management_port      = var.connect_management_port,
       connect_management_auth_key  = var.connect_management_auth_key,
       connect_log_level            = var.connect_log_level,
-      connect_client_name          = var.connect_client_name,
-      connect_grant_type           = var.connect_grant_type,
-      connect_redis_prefix         = var.connect_redis_prefix,
-      connect_redis_tls_enable     = var.connect_redis_tls_enable,
-      connect_redis_tls_skip_verify = var.connect_redis_tls_skip_verify,
-      connect_redis_tls_key_file   = var.connect_redis_tls_key_file,
-      connect_redis_tls_cert_file  = var.connect_redis_tls_cert_file,
-      connect_ssh_max_connections   = var.connect_ssh_max_connections,
-      connect_ssh_max_conn_channels = var.connect_ssh_max_conn_channels,
-      connect_ssh_handshake_timeout = var.connect_ssh_handshake_timeout,
     }
   )
 

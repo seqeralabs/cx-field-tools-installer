@@ -481,40 +481,23 @@ data_studio_wave_status_check_initial_delay = "5s"         # delay before first 
 data_studio_wave_status_check_rate          = "30s"        # polling rate for Wave build status checks
 
 # Connect proxy SSH (v0.11.1+)
-# Alternative to file-based CONNECT_SSH_KEY_PATH for environments where mounting a key file is not possible.
-# CONNECT_SSH_KEY_PATH takes precedence if both are set. Leave empty to use an ephemeral key (clients
-# will see a different host fingerprint on every restart).
+# The installer uses the file-mounted SSH host key (CONNECT_SSH_KEY_PATH) by default to maintain
+# backwards compatibility with existing deployments. If you are in an environment where mounting a
+# key file is not possible, you can supply the key as a base64-encoded string instead via the variable
+# below. CONNECT_SSH_KEY_PATH takes precedence if both are set. Leave empty to use an ephemeral key.
+# See: https://docs.seqera.io/platform-enterprise/enterprise/install-studios#connect-environment-variables
 connect_ssh_key_value_base64 = ""
 
 # Connect proxy - server config (v0.11.1+)
 # See: https://docs.seqera.io/platform-enterprise/enterprise/install-studios#connect-environment-variables
-connect_listener_port       = "7777"  # port connect-server listens on for incoming connections
-connect_tunnel_port         = "7070"  # port used to open new tunnels
-connect_storage_root        = "/data" # root directory for connect proxy data
-connect_host_domain         = ""      # host domain suffix; leave empty for default
 connect_management_port     = ""      # port for metrics/readiness endpoints; leave empty to disable
 connect_management_auth_key = ""      # auth key for management endpoints; leave empty if not using management port
 connect_log_level           = "debug" # logging verbosity (debug, info, warn, error)
 
-# Connect proxy - OIDC / client config (v0.11.1+)
-# See: https://docs.seqera.io/platform-enterprise/enterprise/install-studios#connect-environment-variables
-connect_client_name = "tower-connect-proxy-client" # OIDC client identifier for Studio provider
-connect_grant_type  = "authorization_code"          # OAuth grant type
-
-# Connect proxy - Redis extras (v0.11.1+)
-# CONNECT_REDIS_USER and CONNECT_REDIS_PASSWORD are sourced from SSM (optional; only required if Redis auth is enabled).
-# See: https://docs.seqera.io/platform-enterprise/enterprise/install-studios#connect-environment-variables
-connect_redis_prefix          = "connect:session" # prefix for tunnel keys in Redis
-connect_redis_tls_enable      = false             # enable TLS for Redis connection
-connect_redis_tls_skip_verify = false             # skip TLS certificate verification (only applies when TLS is enabled)
-connect_redis_tls_key_file    = ""                # path to TLS key file; leave empty if not using TLS
-connect_redis_tls_cert_file   = ""                # path to TLS cert file; leave empty if not using TLS
-
-# Connect proxy - SSH tuning (v0.11.1+)
-# See: https://docs.seqera.io/platform-enterprise/enterprise/install-studios#connect-environment-variables
-connect_ssh_max_connections   = "2000" # maximum concurrent SSH connections
-connect_ssh_max_conn_channels = "30"   # maximum concurrent channels per SSH connection
-connect_ssh_handshake_timeout = "1m"   # SSH handshake timeout duration
+# NOTE: Several Connect proxy variables are intentionally omitted from this installer (port/path overrides,
+# OIDC/client config, Redis config, SSH tuning). Connect's own defaults apply in all cases.
+# See documentation/design_decisions.md for rationale. If you need any of these for your deployment,
+# reach out to Seqera and we can discuss your requirements.
 
 
 # For full list of images Seqera makes available, please see: https://public.cr.seqera.io/

@@ -277,6 +277,31 @@ In addition to the general design decisions noted above, there are a few decisio
 
     Both adapters defer to positive `-m` selection: invoking `make run_tests_variables_only` or `make run_tests_containers_only` bypasses the heuristic so explicit recipes always behave as the operator expects.
 
+20. **Some Connect proxy environment variables are intentionally omitted from the installer**
+
+    The installer exposes only the Connect proxy variables that have practical value for standard deployments. The remaining variables documented in the [connect environment variables reference](https://docs.seqera.io/platform-enterprise/enterprise/install-studios#connect-environment-variables) are omitted for the reasons described below.
+
+    | Variable | Default | Reason omitted |
+    |----------|---------|----------------|
+    | `CONNECT_LISTENER_PORT` | `7777` | Compiled-in default in the Connect server. No value in rendering it explicitly for standard deployments. Only relevant if port conflicts exist. |
+    | `CONNECT_TUNNEL_PORT` | `7070` | Same as above. |
+    | `CONNECT_STORAGE_ROOT` | `/data` | Built-in Caddyfile default (`{$CONNECT_STORAGE_ROOT:/data}`). Only relevant if a custom volume mount path is required. |
+    | `CONNECT_HOST_DOMAIN` | `""` | The installer auto-derives and wires the Connect subdomain (`connect.<tower_server_url>`). No known standard deployment scenario requires this override. |
+    | `CONNECT_CLIENT_NAME` | `tower-connect-proxy-client` | The default is the only correct value for a Seqera Platform Studios deployment. Changing it would break the OIDC registration flow with Platform. |
+    | `CONNECT_GRANT_TYPE` | `authorization_code` | Same as above — changing this would break the OIDC auth flow. |
+    | `CONNECT_REDIS_PREFIX` | `connect:session` | The default is appropriate for all deployments. An override is only needed when running multiple Connect proxy instances against the same Redis database, which is beyond the scope of this installer. |
+    | `CONNECT_REDIS_TLS_ENABLE` | `false` | Redis TLS support is not yet implemented in the installer (`redis_security_mode_inferred = "insecure"` in the connection strings module). Exposing Connect TLS vars while Platform has no Redis TLS support would create an inconsistent configuration. |
+    | `CONNECT_REDIS_TLS_SKIP_VERIFY` | `false` | Dependent on `CONNECT_REDIS_TLS_ENABLE` — omitted for the same reason. |
+    | `CONNECT_REDIS_TLS_KEY_FILE` | `""` | Dependent on `CONNECT_REDIS_TLS_ENABLE` — omitted for the same reason. |
+    | `CONNECT_REDIS_TLS_CERT_FILE` | `""` | Dependent on `CONNECT_REDIS_TLS_ENABLE` — omitted for the same reason. |
+    | `CONNECT_REDIS_USER` | `""` | The installer has no Redis authentication mechanism. Platform connects to Redis without credentials (`TOWER_REDIS_URL` carries no auth). Since Connect shares the same Redis instance, Redis AUTH is equally inapplicable. |
+    | `CONNECT_REDIS_PASSWORD` | `""` | Same as above. |
+    | `CONNECT_SSH_MAX_CONNECTIONS` | `2000` | SSH tuning variable. Built-in default is appropriate for the vast majority of deployments. Only relevant under unusually high SSH load. |
+    | `CONNECT_SSH_MAX_CONN_CHANNELS` | `30` | Same as above. |
+    | `CONNECT_SSH_HANDSHAKE_TIMEOUT` | `1m` | Same as above. |
+
+    Deployers who need to override any of these values can do so by adding them directly to `data-studios.env` on the target instance after deployment. If you need assistance configuring any of these variables, reach out to Seqera and we can discuss your requirements. Full variable reference: [connect environment variables](https://docs.seqera.io/platform-enterprise/enterprise/install-studios#connect-environment-variables).
+
 19. **Data Lineage SQS queue creation is Platform's responsibility, not the installer's**
 
     Seqera Platform v26.1.0+ has built-in support for creating the SQS queue (and the paired S3 bucket + bucket-notification routing) required by the Data Lineage feature. Platform creates these per-workspace under the `seqera-lineage-*` resource-name prefix at the moment a workspace enables lineage via its UI.

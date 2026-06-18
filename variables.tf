@@ -314,29 +314,10 @@ variable "data_studio_wave_status_check_rate" { type = string }
 variable "connect_ssh_key_value_base64" { type = string }
 
 # Connect proxy - server config (v0.11.1+)
-variable "connect_listener_port"      { type = string }
-variable "connect_tunnel_port"        { type = string }
-variable "connect_storage_root"       { type = string }
-variable "connect_host_domain"        { type = string }
 variable "connect_management_port"    { type = string }
 variable "connect_management_auth_key" { type = string }
 variable "connect_log_level"          { type = string }
 
-# Connect proxy - OIDC / client config (v0.11.1+)
-variable "connect_client_name"  { type = string }
-variable "connect_grant_type"   { type = string }
-
-# Connect proxy - Redis extras (v0.11.1+)
-variable "connect_redis_prefix"        { type = string }
-variable "connect_redis_tls_enable"    { type = bool }
-variable "connect_redis_tls_skip_verify" { type = bool }
-variable "connect_redis_tls_key_file"  { type = string }
-variable "connect_redis_tls_cert_file" { type = string }
-
-# Connect proxy - SSH tuning (v0.11.1+)
-variable "connect_ssh_max_connections"  { type = string }
-variable "connect_ssh_max_conn_channels" { type = string }
-variable "connect_ssh_handshake_timeout" { type = string }
 
 
 # ------------------------------------------------------------------------------------

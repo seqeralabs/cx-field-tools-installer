@@ -528,47 +528,31 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "CONNECT_HTTP_PORT": 9090,
             "CONNECT_TUNNEL_URL": "connect-server:7070",
             "CONNECT_PROXY_URL": "https://connect.autodc.dev-seqera.net",
-            # New server config vars (v0.11.1+)
-            "CONNECT_LISTENER_PORT": "7777",
-            "CONNECT_TUNNEL_PORT": "7070",
-            "CONNECT_STORAGE_ROOT": "/data",
             # Optional server config — renders commented marker when empty (the default).
-            "# CONNECT_HOST_DOMAIN_NOT_SET": "DO_NOT_UNCOMMENT",
             "# CONNECT_MANAGEMENT_PORT_NOT_SET": "DO_NOT_UNCOMMENT",
             "# CONNECT_MANAGEMENT_AUTH_KEY_NOT_SET": "DO_NOT_UNCOMMENT",
             "CONNECT_REDIS_ADDRESS": "redis:6379",
             "CONNECT_REDIS_DB": 1,
-            "CONNECT_REDIS_PREFIX": "connect:session",
-            # Redis TLS off by default — renders single NOT_ENABLED marker.
-            "# CONNECT_REDIS_TLS_NOT_ENABLED": "DO_NOT_UNCOMMENT",
-            # SSH tuning vars absent when SSH is off — renders commented markers.
-            "# CONNECT_SSH_MAX_CONNECTIONS": "DO_NOT_UNCOMMENT",
-            "# CONNECT_SSH_MAX_CONN_CHANNELS": "DO_NOT_UNCOMMENT",
-            "# CONNECT_SSH_HANDSHAKE_TIMEOUT": "DO_NOT_UNCOMMENT",
             "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN": "ipsemlorem",
-            "CONNECT_CLIENT_NAME": "tower-connect-proxy-client",
-            "CONNECT_GRANT_TYPE": "authorization_code",
             "CONNECT_LOG_LEVEL": "debug",
         },
         "omitted": {
             "# STUDIOS_NOT_ENABLED",
-            # SSH off by default — see tower_env note above.
+            # SSH off by default.
             "CONNECT_SSH_ENABLED",
             "CONNECT_SSH_ADDR",
             "CONNECT_SSH_KEY_PATH",
-            # SSH tuning vars absent when SSH is off — replaced by commented markers.
+            # Active var names absent when NOT_SET markers render.
+            "CONNECT_MANAGEMENT_PORT",
+            "CONNECT_MANAGEMENT_AUTH_KEY",
+            # Vars not exposed by installer — omitted entirely.
+            "CONNECT_HOST_DOMAIN",
+            "CONNECT_REDIS_PREFIX",
+            "CONNECT_CLIENT_NAME",
+            "CONNECT_GRANT_TYPE",
             "CONNECT_SSH_MAX_CONNECTIONS",
             "CONNECT_SSH_MAX_CONN_CHANNELS",
             "CONNECT_SSH_HANDSHAKE_TIMEOUT",
-            # Active var names absent when NOT_SET markers render.
-            "CONNECT_HOST_DOMAIN",
-            "CONNECT_MANAGEMENT_PORT",
-            "CONNECT_MANAGEMENT_AUTH_KEY",
-            # Redis TLS vars absent when TLS is off.
-            "CONNECT_REDIS_TLS_ENABLE",
-            "CONNECT_REDIS_TLS_SKIP_VERIFY",
-            "CONNECT_REDIS_TLS_KEY_FILE",
-            "CONNECT_REDIS_TLS_CERT_FILE",
         },
     },
     "tower_yml": {
@@ -631,17 +615,9 @@ STUDIOS_SSH_ACTIVE_ASSERTIONS = {
             "CONNECT_SSH_KEY_PATH": "/data/ssh-host-key",
             # connect_ssh_key_value_base64 defaults to "" — renders commented marker.
             "# CONNECT_SSH_KEY_VALUE_BASE64_NOT_SET": "DO_NOT_UNCOMMENT",
-            # SSH tuning vars — unconditional inside SSH active block.
-            "CONNECT_SSH_MAX_CONNECTIONS": "2000",
-            "CONNECT_SSH_MAX_CONN_CHANNELS": "30",
-            "CONNECT_SSH_HANDSHAKE_TIMEOUT": "1m",
         },
         "omitted": {
             "CONNECT_SSH_KEY_VALUE_BASE64",
-            # SSH-off markers replaced by live values when SSH is active.
-            "# CONNECT_SSH_MAX_CONNECTIONS",
-            "# CONNECT_SSH_MAX_CONN_CHANNELS",
-            "# CONNECT_SSH_HANDSHAKE_TIMEOUT",
         },
     },
 }
