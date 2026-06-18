@@ -40,6 +40,7 @@ from tests.unit.config_files.expected_deltas import (
     STUDIOS_SSH_ACTIVE_ASSERTIONS,
     STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE,
     STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS,
+    STUDIOS_WAVE_ACTIVE_ASSERTIONS,
     TOWER_OPT_IN_FLAGS_ACTIVE,
     TOWER_OPT_IN_FLAGS_ACTIVE_ASSERTIONS,
     WAVE_LITE_ACTIVE,
@@ -156,6 +157,23 @@ def test_studios_ssh_workspace_restriction_active(generated_test_files):
         STUDIOS_ACTIVE_ASSERTIONS,
         STUDIOS_SSH_ACTIVE_ASSERTIONS,
         STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS,
+    )
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Studios + Wave integration
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.studios
+@pytest.mark.tfvars(BASELINE + STUDIOS_ACTIVE + WAVE_SEQERA_HOSTED_ACTIVE)
+def test_studios_wave_active(generated_test_files):
+    """Studios + Wave: DATA STUDIO - WAVE INTEGRATION block renders with default Wave vars."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        STUDIOS_ACTIVE_ASSERTIONS,
+        WAVE_SEQERA_HOSTED_ACTIVE_ASSERTIONS,
+        STUDIOS_WAVE_ACTIVE_ASSERTIONS,
     )
     assert_all_deltas(generated_test_files, expected)
 

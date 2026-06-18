@@ -276,6 +276,39 @@ variable "data_studio_options" {
   }))
 }
 
+# Studios general behaviour (v26.1.0+)
+variable "data_studio_default_lifespan" { type = string }
+variable "flag_studio_private_by_default" { type = bool }
+variable "data_studio_iframe_eligible_workspaces" {
+  type = string
+  validation {
+    condition     = var.data_studio_iframe_eligible_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_studio_iframe_eligible_workspaces))
+    error_message = "data_studio_iframe_eligible_workspaces must be empty or a comma-separated list of numeric workspace IDs (e.g., \"123\" or \"123,456,789\")."
+  }
+}
+
+# Studios SSH (v26.1.0+)
+variable "tower_ssh_keys_supported_types" { type = string }
+
+# Studios metrics (v26.1.0+)
+variable "data_studio_metrics_eligible_workspaces" {
+  type = string
+  validation {
+    condition     = var.data_studio_metrics_eligible_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_studio_metrics_eligible_workspaces))
+    error_message = "data_studio_metrics_eligible_workspaces must be empty or a comma-separated list of numeric workspace IDs (e.g., \"123\" or \"123,456,789\")."
+  }
+}
+# Studios Wave integration (v26.1.0+)
+variable "data_studio_wave_disallowed_registries" { type = string }
+variable "data_studio_wave_custom_image_registry" { type = string }
+variable "data_studio_wave_custom_image_repository" { type = string }
+
+# Connect proxy - server config (v0.11.1+)
+variable "connect_management_port"    { type = string }
+variable "connect_management_auth_key" { type = string }
+variable "connect_log_level"          { type = string }
+
+
 
 # ------------------------------------------------------------------------------------
 # Data Lineage - Feature Gated (v26.1.0+)

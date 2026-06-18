@@ -472,6 +472,8 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "TOWER_DATA_STUDIO_CONNECT_URL": "https://connect.autodc.dev-seqera.net",
             "TOWER_OIDC_PEM_PATH": "/data-studios-rsa.pem",
             "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN": "ipsemlorem",
+            "TOWER_DATA_STUDIO_DEFAULT_LIFESPAN": "8",
+            "TOWER_DATA_STUDIO_PRIVATE_STUDIO_BY_DEFAULT": "false",
             # Templates: JUPYTER
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-12-2_ICON": "jupyter",
             "TOWER_DATA_STUDIO_TEMPLATES_JUPYTER-4-2-5-0-12-2_REPOSITORY": "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.12.2",  # noqa: E501
@@ -509,6 +511,9 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-1-0-11-0_TOOL": "xpra",
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-1-0-11-0_STATUS": "deprecated",
             "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES": "DO_NOT_UNCOMMENT",
+            # Optional v26.1 vars — renders commented marker when set to empty string (the default).
+            "# TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES_NOT_SET": "DO_NOT_UNCOMMENT",
+            "# TOWER_STUDIO_METRICS_ENABLED_WORKSPACES_NOT_SET": "DO_NOT_UNCOMMENT",
         },
         "omitted": {
             "# STUDIOS_NOT_ENABLED",
@@ -518,6 +523,19 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "TOWER_SSH_KEYS_MANAGEMENT_ENABLED",
             "TOWER_DATA_STUDIO_CONNECT_SSH_PORT",
             "TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS",
+            # Active var names are absent — only the _NOT_SET markers render (see present above).
+            "TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES",
+            "TOWER_STUDIO_METRICS_ENABLED_WORKSPACES",
+            # Wave Studios vars — only emitted when flag_use_wave=true.
+            "TOWER_DATA_STUDIO_WAVE_DISALLOWED_REGISTRIES",
+            # Vars not exposed by installer — omitted entirely (see Design Decision #21).
+            "TOWER_DATA_STUDIO_LIST_MAX_ALLOWED",
+            "TOWER_DATA_STUDIO_FEATURE_MANIFEST_URL",
+            "# TOWER_DATA_STUDIO_FEATURE_MANIFEST_URL_NOT_SET",
+            "TOWER_STUDIO_METRICS_RETENTION_DAYS",
+            "TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_NAME_STRATEGY",
+            "TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_INITIAL_DELAY",
+            "TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_RATE",
         },
     },
     "data_studios_env": {
@@ -526,16 +544,32 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "CONNECT_HTTP_PORT": 9090,
             "CONNECT_TUNNEL_URL": "connect-server:7070",
             "CONNECT_PROXY_URL": "https://connect.autodc.dev-seqera.net",
+            # Optional server config — renders commented marker when empty (the default).
+            "# CONNECT_MANAGEMENT_PORT_NOT_SET": "DO_NOT_UNCOMMENT",
             "CONNECT_REDIS_ADDRESS": "redis:6379",
             "CONNECT_REDIS_DB": 1,
             "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN": "ipsemlorem",
+            "CONNECT_LOG_LEVEL": "debug",
         },
         "omitted": {
             "# STUDIOS_NOT_ENABLED",
-            # SSH off by default — see tower_env note above.
+            # SSH off by default.
             "CONNECT_SSH_ENABLED",
             "CONNECT_SSH_ADDR",
             "CONNECT_SSH_KEY_PATH",
+            # Active var names absent when NOT_SET markers render.
+            "CONNECT_MANAGEMENT_PORT",
+            "CONNECT_MANAGEMENT_AUTH_KEY",
+            # Auth key NOT_SET marker only renders when port is set (nested block).
+            "# CONNECT_MANAGEMENT_AUTH_KEY_NOT_SET",
+            # Vars not exposed by installer — omitted entirely.
+            "CONNECT_HOST_DOMAIN",
+            "CONNECT_REDIS_PREFIX",
+            "CONNECT_CLIENT_NAME",
+            "CONNECT_GRANT_TYPE",
+            "CONNECT_SSH_MAX_CONNECTIONS",
+            "CONNECT_SSH_MAX_CONN_CHANNELS",
+            "CONNECT_SSH_HANDSHAKE_TIMEOUT",
         },
     },
     "tower_yml": {
@@ -587,6 +621,7 @@ STUDIOS_SSH_ACTIVE_ASSERTIONS = {
             "TOWER_DATA_STUDIO_CONNECT_SSH_PORT": "2222",
             "TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES": "",
             "TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS": "https://connect-ssh.autodc.dev-seqera.net",
+            "TOWER_SSH_KEYS_SUPPORTED_TYPES": "ssh-rsa,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521",  # noqa: E501
         },
         "omitted": set(),
     },
@@ -596,7 +631,36 @@ STUDIOS_SSH_ACTIVE_ASSERTIONS = {
             "CONNECT_SSH_ADDR": ":2222",
             "CONNECT_SSH_KEY_PATH": "/data/ssh-host-key",
         },
-        "omitted": set(),
+        "omitted": {
+            # Not exposed by installer — see Design Decision #20.
+            "CONNECT_SSH_KEY_VALUE_BASE64",
+            "# CONNECT_SSH_KEY_VALUE_BASE64_NOT_SET",
+        },
+    },
+}
+
+
+# MARK: Studios Wave integration
+# Sub-feature of Studios — requires both `STUDIOS_ACTIVE` and `WAVE_SEQERA_HOSTED_ACTIVE`
+# stacked first. Adds the DATA STUDIO - WAVE INTEGRATION block to `tower_env`, which is
+# only rendered when both `flag_enable_data_studio` and `flag_use_wave` are true.
+STUDIOS_WAVE_ACTIVE_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_DATA_STUDIO_WAVE_DISALLOWED_REGISTRIES": "community.wave.seqera.io",
+            # Custom registry/repo renders commented marker when set to empty string (the default).
+            "# TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REGISTRY_NOT_SET": "DO_NOT_UNCOMMENT",
+            "# TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REPOSITORY_NOT_SET": "DO_NOT_UNCOMMENT",
+        },
+        "omitted": {
+            # Active var names are absent — only the _NOT_SET markers render (see present above).
+            "TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REGISTRY",
+            "TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REPOSITORY",
+            # Vars not exposed by installer — omitted entirely (see Design Decision #21).
+            "TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_NAME_STRATEGY",
+            "TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_INITIAL_DELAY",
+            "TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_RATE",
+        },
     },
 }
 

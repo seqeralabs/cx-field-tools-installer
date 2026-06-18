@@ -142,12 +142,48 @@ TOWER_DATA_STUDIO_CONNECT_URL=${tower_connect_server_url}
 TOWER_OIDC_PEM_PATH=/data-studios-rsa.pem
 TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN="ipsemlorem"
 
+TOWER_DATA_STUDIO_DEFAULT_LIFESPAN=${data_studio_default_lifespan}
+TOWER_DATA_STUDIO_PRIVATE_STUDIO_BY_DEFAULT=${flag_studio_private_by_default}
+%{ if data_studio_iframe_eligible_workspaces != "" ~}
+TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES="${data_studio_iframe_eligible_workspaces}"
+%{ else ~}
+# TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES_NOT_SET=DO_NOT_UNCOMMENT
+%{ endif ~}
+
+#-------------------------------------------------
+# DATA STUDIO - METRICS
+# ------------------------------------------------
+%{ if data_studio_metrics_eligible_workspaces != "" ~}
+TOWER_STUDIO_METRICS_ENABLED_WORKSPACES="${data_studio_metrics_eligible_workspaces}"
+%{ else ~}
+# TOWER_STUDIO_METRICS_ENABLED_WORKSPACES_NOT_SET=DO_NOT_UNCOMMENT
+%{ endif ~}
+
 %{ for ds in data_studio_options ~}
 TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_ICON="${ds.icon}"
 TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_REPOSITORY="${ds.container}"
 TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_TOOL="${ds.tool != null ? ds.tool : ""}"
 TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_STATUS="${ds.status != null ? ds.status : ""}"
 %{ endfor ~}
+
+%{ if flag_use_wave == true ~}
+
+#-------------------------------------------------
+# DATA STUDIO - WAVE INTEGRATION
+# ------------------------------------------------
+TOWER_DATA_STUDIO_WAVE_DISALLOWED_REGISTRIES=${data_studio_wave_disallowed_registries}
+%{ if data_studio_wave_custom_image_registry != "" ~}
+TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REGISTRY=${data_studio_wave_custom_image_registry}
+%{ else ~}
+# TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REGISTRY_NOT_SET=DO_NOT_UNCOMMENT
+%{ endif ~}
+%{ if data_studio_wave_custom_image_repository != "" ~}
+TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REPOSITORY=${data_studio_wave_custom_image_repository}
+%{ else ~}
+# TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REPOSITORY_NOT_SET=DO_NOT_UNCOMMENT
+%{ endif ~}
+
+%{ endif ~}
 
 %{ if flag_enable_data_studio_ssh == true ~}
 
@@ -164,6 +200,7 @@ TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES=
 %{ endif ~}
 TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS=${data_studio_ssh_address}
 TOWER_DATA_STUDIO_CONNECT_SSH_KEY_FINGERPRINT=${connect_ssh_fingerprint}
+TOWER_SSH_KEYS_SUPPORTED_TYPES=${tower_ssh_keys_supported_types}
 
 %{ else ~}
 
@@ -176,6 +213,7 @@ TOWER_DATA_STUDIO_CONNECT_SSH_KEY_FINGERPRINT=${connect_ssh_fingerprint}
 # TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES=DO_NOT_UNCOMMENT
 # TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS=DO_NOT_UNCOMMENT
 # TOWER_DATA_STUDIO_CONNECT_SSH_KEY_FINGERPRINT=DO_NOT_UNCOMMENT
+# TOWER_SSH_KEYS_SUPPORTED_TYPES=DO_NOT_UNCOMMENT
 
 %{ endif ~}
 

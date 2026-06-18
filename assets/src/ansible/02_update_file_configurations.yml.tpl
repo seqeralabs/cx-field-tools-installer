@@ -160,4 +160,5 @@
 
         mkdir -p /home/ec2-user/.tower/connect
         sudo chmod 777 /home/ec2-user/.tower/connect
+
 %{ endif ~}
