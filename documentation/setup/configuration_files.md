@@ -15,16 +15,16 @@ Configuration activities are split between two different categories:
 
 2. [`ssm_sensitive_values_tower.json`](../../templates//ssm_sensitive_values_tower.json)<br />Used to define secrets like credentials and passwords which the Seqera Platform needs to fulfill its duties.
 
-    This file exists to make SSM data population more convenient and **should not** be stored in source-control. 
+    This file exists to make SSM data population more convenient and **should not** be stored in source-control.
 
-3. [`ssm_sensitive_values_seqerakit.json`](../../templates//ssm_sensitive_values_seqerakit.json)  (Optional) <br />Used to define secrets like tokens and credentials which the [Seqerakit](https://github.com/seqeralabs/seqera-kit) tool needs to fulfill its duties.
+3. [`ssm_sensitive_values_seqerakit.json`](../../templates//ssm_sensitive_values_seqerakit.json)  (Optional; [deprecated as of Release 1.8](../../README.md#supported-versions--components)) <br />Used to define secrets like tokens and credentials which the [Seqerakit](https://github.com/seqeralabs/seqera-kit) tool needs to fulfill its duties. The file/SSM entry must still be created, but contents may be placeholder values.
 
-    This file exists to make SSM data population more convenient and **should not** be stored in source-control. 
+    This file exists to make SSM data population more convenient and **should not** be stored in source-control.
 
 4. [`ssm_sensitive_values_groundswell.json`](../../templates//ssm_sensitive_values_groundswell.json)  (Optional) <br />Used to define credentials for the Groundswell optimization service.
 
-    This file exists to make SSM data population more convenient and **should not** be stored in source-control. 
+    This file exists to make SSM data population more convenient and **should not** be stored in source-control.
 
 5. [`ssm_sensitive_values_wave_lite.json`](../../templates//ssm_sensitive_values_wave_lite.json)  (Optional) <br />Used to define credentials for the Groundswell optimization service.
 
-    This file exists to make SSM data population more convenient and **should not** be stored in source-control. 
+    This file exists to make SSM data population more convenient and **should not** be stored in source-control.
