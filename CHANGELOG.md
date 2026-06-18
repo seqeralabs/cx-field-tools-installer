@@ -12,7 +12,11 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 ## 1.8.0 (Upcoming Release -- Q1 2026)
 - **Forward Roadmap Guidance**
 
-    TBD
+    - **MySQL 8.0 → 8.4 upgrade pathway.**
+
+        MySQL 8.0 is approaching end-of-life and existing customer deployments using the RDS-backed 8.0 engine will need to migrate. Given the operational sensitivity of database migrations — and the matrix of deployment topologies this installer supports — the upgrade pathway will ship as a **dedicated out-of-band release with its own runbook and tooling** rather than being bundled into the 1.8 Release.
+
+        Existing deployments should continue to use `db_engine_version = "8.0"`. ([`#271`](https://github.com/seqeralabs/cx-field-tools-installer/issues/271))
 
 - **Notable Changes**
     - **CX Installer**
