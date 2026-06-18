@@ -509,26 +509,26 @@ data_studio_options = {
     status    = "recommended"
     container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.12.2"
   },
-  jupyter-4-2-5-0-12-1 = {
-    qualifier = "JUPYTER-4-2-5-0-12-1"
+  jupyter-4-2-5-0-12-2 = {
+    qualifier = "JUPYTER-4-2-5-0-12-2"
     icon      = "jupyter"
     tool      = "jupyter"
     status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.12.1"
+    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.12.2"
   },
-  ride-2025-04-1-0-12-1 = {
-    qualifier = "RIDE-2025-04-1-0-12-1"
+  ride-2025-04-1-0-12-2 = {
+    qualifier = "RIDE-2025-04-1-0-12-2"
     icon      = "rstudio"
     tool      = "rstudio"
     status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.12.1"
+    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.12.2"
   },
-  xpra-6-2-0-R2-1-0-12-1 = {
-    qualifier = "XPRA-6-2-0-R2-1-0-12-1"
+  xpra-6-2-0-R2-1-0-12-2 = {
+    qualifier = "XPRA-6-2-0-R2-1-0-12-2"
     icon      = "xpra"
     tool      = "xpra"
     status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.12.1"
+    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.12.2"
   }
 }
 
