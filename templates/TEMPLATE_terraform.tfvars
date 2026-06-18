@@ -441,7 +441,7 @@ NOTES:
 # Studios
 flag_enable_data_studio = true
 # TODO(#332): bump to the data-studio / connect-proxy version paired with the v26.1.x release set.
-data_studio_container_version             = "0.12.1"
+data_studio_container_version             = "0.11.1"
 flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""
 
@@ -502,33 +502,33 @@ data_studio_options = {
     status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.11.0"
   },
-  vscode-1-101-2-0-12-1 = {
-    qualifier = "VSCODE-1-101-2-0-12-1"
+  vscode-1-101-2-0-12-2 = {
+    qualifier = "VSCODE-1-101-2-0-12-2"
     icon      = "vscode"
     tool      = "vscode"
     status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.12.1"
+    container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.12.2"
   },
-  jupyter-4-2-5-0-12-1 = {
-    qualifier = "JUPYTER-4-2-5-0-12-1"
+  jupyter-4-2-5-0-12-2 = {
+    qualifier = "JUPYTER-4-2-5-0-12-2"
     icon      = "jupyter"
     tool      = "jupyter"
     status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.12.1"
+    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.12.2"
   },
-  ride-2025-04-1-0-12-1 = {
-    qualifier = "RIDE-2025-04-1-0-12-1"
+  ride-2025-04-1-0-12-2 = {
+    qualifier = "RIDE-2025-04-1-0-12-2"
     icon      = "rstudio"
     tool      = "rstudio"
     status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.12.1"
+    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.12.2"
   },
-  xpra-6-2-0-R2-1-0-12-1 = {
-    qualifier = "XPRA-6-2-0-R2-1-0-12-1"
+  xpra-6-2-0-R2-1-0-12-2 = {
+    qualifier = "XPRA-6-2-0-R2-1-0-12-2"
     icon      = "xpra"
     tool      = "xpra"
     status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.12.1"
+    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.12.2"
   }
 }
 
