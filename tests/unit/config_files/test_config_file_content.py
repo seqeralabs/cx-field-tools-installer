@@ -1,5 +1,7 @@
 import pytest
 from tests.unit.config_files.expected_deltas import (
+    AUDIT_LOG_V2_CLEANUP_DISABLED_ACTIVE,
+    AUDIT_LOG_V2_CLEANUP_DISABLED_ACTIVE_ASSERTIONS,
     AWS_SES_ACTIVE,
     AWS_SES_ACTIVE_ASSERTIONS,
     BASELINE,
@@ -192,6 +194,18 @@ def test_data_lineage_workspace_restriction_active(generated_test_files):
         DATA_LINEAGE_ACTIVE_ASSERTIONS,
         DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS,
     )
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Audit Log v2 — Cleanup Disabled
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.tower
+@pytest.mark.tfvars(BASELINE + AUDIT_LOG_V2_CLEANUP_DISABLED_ACTIVE)
+def test_audit_log_v2_cleanup_disabled(generated_test_files):
+    """Audit Log v2 with cleanup disabled: ENABLED flips to false, interval/delay/chunk_size disappear from tower.env."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, AUDIT_LOG_V2_CLEANUP_DISABLED_ACTIVE_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
 

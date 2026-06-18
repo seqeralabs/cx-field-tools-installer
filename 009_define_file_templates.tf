@@ -62,14 +62,7 @@ locals {
       flag_enable_data_lineage        = var.flag_enable_data_lineage,
       data_lineage_allowed_workspaces = var.data_lineage_allowed_workspaces,
 
-      tower_audit_log_v2_write_mode              = var.tower_audit_log_v2_write_mode,
-      tower_audit_log_v2_csv_export_max_logs     = var.tower_audit_log_v2_csv_export_max_logs,
-      tower_audit_log_v2_pre_post_change_enabled = var.tower_audit_log_v2_pre_post_change_enabled,
-
-      tower_cron_audit_log_clean_up_enabled    = var.tower_cron_audit_log_clean_up_enabled,
-      tower_cron_audit_log_clean_up_interval   = var.tower_cron_audit_log_clean_up_interval,
-      tower_cron_audit_log_clean_up_delay      = var.tower_cron_audit_log_clean_up_delay,
-      tower_cron_audit_log_clean_up_chunk_size = var.tower_cron_audit_log_clean_up_chunk_size,
+      tower_audit_log_v2 = var.tower_audit_log_v2,
     }
   )
 

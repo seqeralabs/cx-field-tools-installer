@@ -186,6 +186,23 @@ def verify_data_lineage_enabled(data: SimpleNamespace):
         log_error_and_exit("Data lineage can only be enabled on Platform v26.1.0+")
 
 
+def verify_audit_log_v2_platform_version(data: SimpleNamespace):
+    """Warn when Audit Log v2 settings will be emitted but ignored by Platform.
+
+    The `tower_audit_log_v2` block is a Platform v26.1.0+ feature. Defaults to
+    non-zero values (write_mode = "dual", cleanup.enabled = true), so its env
+    vars are always emitted to `tower.env`. Pre-v26.1 Platform versions silently
+    ignore unknown env vars — no functional harm, but worth flagging so deployers
+    aren't surprised when their settings have no effect.
+    """
+    if data.tower_container_version < "v26.1.0":
+        logger.warning(
+            "Platform version is < v26.1.0; Audit Log v2 settings (`tower_audit_log_v2`) "
+            "will be emitted to `tower.env` but ignored by your Platform version. "
+            "Upgrade to v26.1.0+ to use these features."
+        )
+
+
 def verify_subnet_privacy(data: SimpleNamespace):
     """Check that the assigned subnets in tfvars match the intended privacy of the Tower instance."""
     logger.info("Retrieving subnet information from AWS Account.")
@@ -554,7 +571,7 @@ if __name__ == "__main__":
     logger.info("Verifying container registry credentials")
     logger.info("-" * 50)
     verify_container_registry_credentials(data)
-    
+
     # Verify Tower application configurations
     print("\n")
     logger.info("Verifying Tower configurations")
@@ -564,6 +581,7 @@ if __name__ == "__main__":
     verify_email_login_disablement(data)
     verify_workflow_cleanup_enabled(data)
     verify_data_lineage_enabled(data)
+    verify_audit_log_v2_platform_version(data)
 
     # Verify AWS integrations
     print("\n")

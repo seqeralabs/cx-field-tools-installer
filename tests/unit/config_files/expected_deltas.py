@@ -163,6 +163,12 @@ DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE = """
     data_lineage_allowed_workspaces = "12,34"
 """
 
+AUDIT_LOG_V2_CLEANUP_DISABLED_ACTIVE = """
+    tower_audit_log_v2 = {
+      cleanup = { enabled = false }
+    }
+"""
+
 
 ## ------------------------------------------------------------------------------------
 ## MARK: ----- Assertions
@@ -841,6 +847,27 @@ DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {"TOWER_LINEAGE_ALLOWED_WORKSPACES": "12,34"},
         "omitted": set(),
+    },
+}
+
+
+# MARK: Audit Log v2 Cleanup Disabled
+# Overrides only the `cleanup.enabled` sub-field of `tower_audit_log_v2`. The other
+# audit-log-v2 settings (write_mode, csv_export_max_logs, pre_post_change_enabled)
+# fall through to their `optional()` defaults — identical to BASELINE. The cleanup
+# block in tower.env.tpl wraps the four cron-sub vars in `%{ if cleanup.enabled }`,
+# so disabling cleanup emits TOWER_CRON_AUDIT_LOG_CLEAN_UP_ENABLED=false and skips
+# the interval/delay/chunk_size lines entirely.
+AUDIT_LOG_V2_CLEANUP_DISABLED_ACTIVE_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_CRON_AUDIT_LOG_CLEAN_UP_ENABLED": "false",
+        },
+        "omitted": {
+            "TOWER_CRON_AUDIT_LOG_CLEAN_UP_INTERVAL",
+            "TOWER_CRON_AUDIT_LOG_CLEAN_UP_DELAY",
+            "TOWER_CRON_AUDIT_LOG_CLEAN_UP_CHUNK_SIZE",
+        },
     },
 }
 
