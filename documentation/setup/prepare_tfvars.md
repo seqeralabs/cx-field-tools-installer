@@ -18,11 +18,11 @@ Fulsome field-level documentation exists inside the `terraform.tfvars` file. Con
 2. Modify the root-level `terraform.tfvars` file as follows:
 
     1. Update the `app_name` with your chosen application name.
-    
+
     2. Update the following secrets values with your chosen SSM prefixes:
-        
+
         - `secrets_bootstrap_tower`
-        - `secrets_bootstrap_seqerakit`
+        - `secrets_bootstrap_seqerakit` — path required; contents may be placeholder ([seqerakit deprecated](../../README.md#supported-versions--components))
         - `secrets_bootstrap_groundswell`
         - `secrets_bootstrap_wave_lite`
 

@@ -1,5 +1,5 @@
 # Prepare SSM Secrets
-This page provides instructions on how to populate AWS Parameter Store secrets with your sensitive value payloads. 
+This page provides instructions on how to populate AWS Parameter Store secrets with your sensitive value payloads.
 
 
 ## STEPS
@@ -8,7 +8,7 @@ This page provides instructions on how to populate AWS Parameter Store secrets w
 
     Default values in `terraform.tfvars` are:
     - `/seqera/sensitive_values/tower_dev/tower`
-    - `/seqera/sensitive_values/tower_dev/seqerakit`
+    - `/seqera/sensitive_values/tower_dev/seqerakit` — path required; contents may be placeholder ([seqerakit deprecated](../../README.md#supported-versions--components)).
     - `/seqera/sensitive_values/tower_dev/groundswell`
     - `/seqera/sensitive_values/tower_dev/wave-lite`
 
