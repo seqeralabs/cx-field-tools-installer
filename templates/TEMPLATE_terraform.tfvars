@@ -835,15 +835,29 @@ tower_audit_retention_days     = 1095 # 3 years (value in days)
 tower_workflow_cleanup_enabled = true # only applicable for AWS Batch
 
 # Compute environment cleanup (v26.1.0+)
-# When enabled, a cron job periodically identifies and deletes compute environments stuck
-# in CREATING or DELETING states. Only active on the cron service container.
-tower_compute_env_cleanup_enabled              = false
-tower_compute_env_cleanup_delay                = "1m"
-tower_compute_env_cleanup_interval             = "1h"
-tower_compute_env_cleanup_batch_size           = "10"
-tower_compute_env_cleanup_time_offset          = "60s"
-tower_compute_env_cleanup_stuck_creating_timeout = "1h"
-tower_compute_env_cleanup_stuck_deleting_timeout = "1h"
+# Bundled object controlling the scheduled job that identifies and deletes compute
+# environments stuck in CREATING or DELETING states. Only active on the cron service
+# container. All sub-fields have sensible defaults and may be omitted.
+#
+# Fields:
+#   - enabled                : run the cleanup job. Default false.
+#   - delay                  : initial delay before the first run (duration). Default "1m".
+#   - interval               : how often the job runs (duration). Default "1h".
+#   - batch_size             : compute environments handled per pass. Default 10.
+#   - time_offset            : skip envs younger than this (duration). Default "60s".
+#   - stuck_creating_timeout : how long in CREATING before considered stuck. Default "1h".
+#   - stuck_deleting_timeout : how long in DELETING before considered stuck. Default "1h".
+#
+# See: https://docs.seqera.io/platform-enterprise/enterprise/configuration/overview
+tower_compute_env_cleanup = {
+  enabled                = false
+  delay                  = "1m"
+  interval               = "1h"
+  batch_size             = 10
+  time_offset            = "60s"
+  stuck_creating_timeout = "1h"
+  stuck_deleting_timeout = "1h"
+}
 
 tower_enable_openapi = true
 

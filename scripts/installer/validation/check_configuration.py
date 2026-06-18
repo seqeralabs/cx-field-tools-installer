@@ -186,6 +186,24 @@ def verify_data_lineage_enabled(data: SimpleNamespace):
         log_error_and_exit("Data lineage can only be enabled on Platform v26.1.0+")
 
 
+def verify_compute_env_cleanup_platform_version(data: SimpleNamespace):
+    """Warn when compute-env cleanup is enabled on pre-v26.1 Platform.
+
+    `tower_compute_env_cleanup` defaults to `enabled = false`, so the env vars
+    only render when the deployer explicitly opts in. Warn only when both
+    conditions are true: cleanup is enabled AND Platform version is too old.
+    Pre-v26.1 instances silently ignore unknown env vars — no functional harm,
+    but the deployer should know their setting is being ignored.
+    """
+    cleanup = getattr(data, "tower_compute_env_cleanup", {})
+    if cleanup.get("enabled", False) and data.tower_container_version < "v26.1.0":
+        logger.warning(
+            "tower_compute_env_cleanup.enabled = true but Platform version is < v26.1.0. "
+            "The TOWER_COMPUTE_ENV_CLEANUP_* env vars will be emitted but ignored by "
+            "your Platform version. Upgrade to v26.1.0+ to use this feature."
+        )
+
+
 def verify_subnet_privacy(data: SimpleNamespace):
     """Check that the assigned subnets in tfvars match the intended privacy of the Tower instance."""
     logger.info("Retrieving subnet information from AWS Account.")
@@ -554,7 +572,7 @@ if __name__ == "__main__":
     logger.info("Verifying container registry credentials")
     logger.info("-" * 50)
     verify_container_registry_credentials(data)
-    
+
     # Verify Tower application configurations
     print("\n")
     logger.info("Verifying Tower configurations")
@@ -564,6 +582,7 @@ if __name__ == "__main__":
     verify_email_login_disablement(data)
     verify_workflow_cleanup_enabled(data)
     verify_data_lineage_enabled(data)
+    verify_compute_env_cleanup_platform_version(data)
 
     # Verify AWS integrations
     print("\n")

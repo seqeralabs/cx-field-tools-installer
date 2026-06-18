@@ -164,7 +164,9 @@ DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE = """
 """
 
 COMPUTE_ENV_CLEANUP_ACTIVE = """
-    tower_compute_env_cleanup_enabled = true
+    tower_compute_env_cleanup = {
+      enabled = true
+    }
 """
 
 
