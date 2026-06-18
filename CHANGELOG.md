@@ -82,7 +82,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 | Modified | Platform | `tower_container_version` | Updated from v25.3.0 to v26.1.2 (v26.1.x release set). [`#332`](https://github.com/seqeralabs/cx-field-tools-installer/issues/332) |
 | Modified | Groundswell | `swell_container_version` | Updated from 0.4.6 to 0.4.15 (v26.1.x release set). [`#332`](https://github.com/seqeralabs/cx-field-tools-installer/issues/332) |
 | Modified | Studios | `data_studio_container_version` | Updated from 0.9.0 to 0.11.1. Note: Studios SSH requires connect-proxy >= 0.10.0. [`#332`](https://github.com/seqeralabs/cx-field-tools-installer/issues/332) |
-| Modified | Studios | `data_studio_options` | Removed 0.9.0 images. Added 0.11.0 (deprecated) and 0.12.1 (recommended) for Jupyter, RIDE, and Xpra. Xpra 0.12.1 qualifier uses the full `XPRA-6-2-0-R2-1-0-12-2` hyphenization. [`#332`](https://github.com/seqeralabs/cx-field-tools-installer/issues/332). Made VSCode 12.2 to get fix for AWS Batch executions. |
+| Modified | Studios | `data_studio_options` | Removed 0.9.0 images. Added 0.11.0 (deprecated) and 0.12.2 (recommended) for Jupyter, RIDE, and Xpra. Xpra 0.12.2 qualifier uses the full `XPRA-6-2-0-R2-1-0-12-2` hyphenization. [`#332`](https://github.com/seqeralabs/cx-field-tools-installer/issues/332). |
 | Modified | Wave-Lite | `wave_lite_container_version` | Updated from v1.29.1 to v1.33.0 (v26.1.x release set). [`#332`](https://github.com/seqeralabs/cx-field-tools-installer/issues/332) |
 ||||
 | New | Redis | `platform_redis_elasticache` | Configuration block (`node_type`, `num_cache_nodes`, `engine_version`, `port`) for the standalone Seqera Platform ElastiCache (Redis) cluster. Required when `flag_create_external_redis = true`. |
