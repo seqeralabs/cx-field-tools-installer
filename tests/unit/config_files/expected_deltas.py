@@ -476,10 +476,10 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_TOOL": "rstudio",
             "TOWER_DATA_STUDIO_TEMPLATES_RIDE-2025-04-1-0-11-0_STATUS": "deprecated",
             # Templates: VSCODE
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-1_ICON": "vscode",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-1_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.12.1",  # noqa: E501
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-1_TOOL": "vscode",
-            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-1_STATUS": "recommended",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-2_ICON": "vscode",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-2_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.12.2",  # noqa: E501
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-2_TOOL": "vscode",
+            "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-12-2_STATUS": "recommended",
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_ICON": "vscode",
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_REPOSITORY": "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.11.0",  # noqa: E501
             "TOWER_DATA_STUDIO_TEMPLATES_VSCODE-1-101-2-0-11-0_TOOL": "vscode",
