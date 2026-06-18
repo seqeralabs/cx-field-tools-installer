@@ -70,6 +70,8 @@ locals {
 
       flag_enable_data_lineage        = var.flag_enable_data_lineage,
       data_lineage_allowed_workspaces = var.data_lineage_allowed_workspaces,
+
+      tower_audit_log_v2 = var.tower_audit_log_v2,
     }
   )
 

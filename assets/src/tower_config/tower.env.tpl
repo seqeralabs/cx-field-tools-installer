@@ -242,6 +242,27 @@ TOWER_LINEAGE_ALLOWED_WORKSPACES=${data_lineage_allowed_workspaces}
 %{ endif }
 
 
+#-------------------------------------------------
+# AUDIT LOG V2 (v26.1.0+)
+# ------------------------------------------------
+TOWER_AUDIT_LOG_V2_WRITE_MODE=${tower_audit_log_v2.write_mode}
+TOWER_AUDIT_LOG_V2_CSV_EXPORT_MAX_LOGS=${tower_audit_log_v2.csv_export_max_logs}
+TOWER_AUDIT_LOG_V2_PRE_POST_CHANGE_ENABLED=${tower_audit_log_v2.pre_post_change_enabled}
+
+
+#-------------------------------------------------
+# CRON AUDIT LOG CLEANUP (v26.1.0+)
+# ------------------------------------------------
+%{ if tower_audit_log_v2.cleanup.enabled == true ~}
+TOWER_CRON_AUDIT_LOG_CLEAN_UP_ENABLED=true
+TOWER_CRON_AUDIT_LOG_CLEAN_UP_INTERVAL=${tower_audit_log_v2.cleanup.interval}
+TOWER_CRON_AUDIT_LOG_CLEAN_UP_DELAY=${tower_audit_log_v2.cleanup.delay}
+TOWER_CRON_AUDIT_LOG_CLEAN_UP_CHUNK_SIZE=${tower_audit_log_v2.cleanup.chunk_size}
+%{ else ~}
+TOWER_CRON_AUDIT_LOG_CLEAN_UP_ENABLED=false
+%{ endif ~}
+
+
 # ------------------------------------------------
 # TEMPORARY WORKAROUND FOR MIGRATION SCRIPT
 #  - Need to add database creds here due to migration script limitation (Dec 2023)

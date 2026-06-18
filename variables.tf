@@ -531,6 +531,40 @@ variable "flag_tower_enable_participant_auto_create_user" { type = bool }
 variable "flag_tower_enable_member_auto_create_user" { type = bool }
 
 variable "tower_audit_retention_days" { type = number }
+
+# Audit Log v2 (v26.1.0+) — bundled object with nested `cleanup` sub-object.
+# Pre-v26.1 Platform versions ignore the emitted env vars; `check_configuration.py`
+# emits a warning if `tower_container_version < v26.1.0`.
+variable "tower_audit_log_v2" {
+  type = object({
+    write_mode              = optional(string, "dual")
+    csv_export_max_logs     = optional(number, 500000)
+    pre_post_change_enabled = optional(bool, false)
+    cleanup = optional(object({
+      enabled    = optional(bool, true)
+      interval   = optional(string, "5m")
+      delay      = optional(string, "10s")
+      chunk_size = optional(number, 1000)
+    }), {})
+  })
+  default = {}
+
+  validation {
+    condition     = contains(["v1", "v2", "dual"], var.tower_audit_log_v2.write_mode)
+    error_message = "tower_audit_log_v2.write_mode must be one of: \"v1\", \"v2\", \"dual\"."
+  }
+
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_audit_log_v2.cleanup.interval))
+    error_message = "tower_audit_log_v2.cleanup.interval must be a duration like \"5m\", \"30s\", \"1h\", \"1d\" (digits followed by ms|s|m|h|d)."
+  }
+
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_audit_log_v2.cleanup.delay))
+    error_message = "tower_audit_log_v2.cleanup.delay must be a duration like \"10s\", \"5m\", \"1h\", \"1d\" (digits followed by ms|s|m|h|d)."
+  }
+}
+
 variable "tower_workflow_cleanup_enabled" { type = bool }
 
 variable "tower_enable_openapi" { type = bool }

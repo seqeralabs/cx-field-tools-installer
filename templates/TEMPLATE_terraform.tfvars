@@ -862,7 +862,26 @@ tower_email_trusted_users = "REPLACE_ME"
 flag_tower_enable_participant_auto_create_user = false
 flag_tower_enable_member_auto_create_user      = false
 
-tower_audit_retention_days     = 1095 # 3 years (value in days)
+tower_audit_retention_days = 1095 # 3 years (value in days)
+
+# Audit Log v2 (v26.1.0+)
+# Bundled object configuring Platform's audit-log-v2 behaviour. The `cleanup` sub-object
+# gates the scheduled purge job by its own flag — set `cleanup = { enabled = false }`
+# to disable purging entirely.
+#
+# See: https://docs.seqera.io/platform-enterprise/enterprise/configuration/overview
+tower_audit_log_v2 = {
+  write_mode              = "dual"
+  csv_export_max_logs     = 500000
+  pre_post_change_enabled = false
+  cleanup = {
+    enabled    = true
+    interval   = "5m"
+    delay      = "10s"
+    chunk_size = 1000
+  }
+}
+
 tower_workflow_cleanup_enabled = true # only applicable for AWS Batch
 
 tower_enable_openapi = true
