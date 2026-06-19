@@ -1,5 +1,7 @@
 import pytest
 from tests.unit.config_files.expected_deltas import (
+    AUDIT_LOG_V2_CLEANUP_DISABLED_ACTIVE,
+    AUDIT_LOG_V2_CLEANUP_DISABLED_ACTIVE_ASSERTIONS,
     AWS_SES_ACTIVE,
     AWS_SES_ACTIVE_ASSERTIONS,
     BASELINE,
@@ -40,6 +42,7 @@ from tests.unit.config_files.expected_deltas import (
     STUDIOS_SSH_ACTIVE_ASSERTIONS,
     STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE,
     STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS,
+    STUDIOS_WAVE_ACTIVE_ASSERTIONS,
     TOWER_OPT_IN_FLAGS_ACTIVE,
     TOWER_OPT_IN_FLAGS_ACTIVE_ASSERTIONS,
     WAVE_LITE_ACTIVE,
@@ -161,6 +164,23 @@ def test_studios_ssh_workspace_restriction_active(generated_test_files):
 
 
 ## ------------------------------------------------------------------------------------
+## MARK: Studios + Wave integration
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.studios
+@pytest.mark.tfvars(BASELINE + STUDIOS_ACTIVE + WAVE_SEQERA_HOSTED_ACTIVE)
+def test_studios_wave_active(generated_test_files):
+    """Studios + Wave: DATA STUDIO - WAVE INTEGRATION block renders with default Wave vars."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        STUDIOS_ACTIVE_ASSERTIONS,
+        WAVE_SEQERA_HOSTED_ACTIVE_ASSERTIONS,
+        STUDIOS_WAVE_ACTIVE_ASSERTIONS,
+    )
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
 ## MARK: Data Explorer: Active
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local
@@ -206,6 +226,17 @@ def test_data_lineage_workspace_restriction_active(generated_test_files):
 def test_compute_env_cleanup_active(generated_test_files):
     """Compute env cleanup enabled: all 7 TOWER_COMPUTE_ENV_CLEANUP_* vars surface with their defaults."""
     expected = merge_deltas(BASELINE_ASSERTIONS, COMPUTE_ENV_CLEANUP_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+## MARK: Audit Log v2 — Cleanup Disabled
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.tower
+@pytest.mark.tfvars(BASELINE + AUDIT_LOG_V2_CLEANUP_DISABLED_ACTIVE)
+def test_audit_log_v2_cleanup_disabled(generated_test_files):
+    """Audit Log v2 with cleanup disabled: ENABLED flips to false, interval/delay/chunk_size disappear from tower.env."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, AUDIT_LOG_V2_CLEANUP_DISABLED_ACTIVE_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
 

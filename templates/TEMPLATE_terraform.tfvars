@@ -441,7 +441,7 @@ NOTES:
 # Studios
 flag_enable_data_studio = true
 # TODO(#332): bump to the data-studio / connect-proxy version paired with the v26.1.x release set.
-data_studio_container_version             = "0.12.1"
+data_studio_container_version             = "0.11.1"
 flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""
 
@@ -452,6 +452,31 @@ data_studio_ssh_eligible_workspaces           = ""
 
 flag_studio_enable_path_routing = false
 data_studio_path_routing_url    = "REPLACE_ME_IF_NECESSARY"
+
+# NOTE: In addition to the Studios and Connect proxy variables below, there are additional optional variables that are intentionally omitted from this installer.
+# See Design Decisions #20 and #21 in documentation/design_decisions.md for the full list and rationale.
+
+# Studios - General behaviour (v26.1.0+)
+data_studio_default_lifespan           = "8"    # default lifespan in hours per Studio
+flag_studio_private_by_default         = false  # make Studios private by default
+data_studio_iframe_eligible_workspaces = ""     # comma-separated workspace IDs; empty = all
+
+# Studios - SSH (v26.1.0+)
+tower_ssh_keys_supported_types = "ssh-rsa,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521" # accepted SSH public key types
+
+# Studios - Metrics (v26.1.0+)
+data_studio_metrics_eligible_workspaces = "" # comma-separated workspace IDs; empty = all
+
+# Studios - Wave integration (v26.1.0+)
+# Requires flag_use_wave = true.
+data_studio_wave_disallowed_registries   = "community.wave.seqera.io" # registries blocked as Wave build destinations
+data_studio_wave_custom_image_registry   = ""  # leave empty to use Wave default
+data_studio_wave_custom_image_repository = ""  # leave empty to use Wave default (data-studios/<tool>)
+
+# Connect proxy - server config (v0.11.1+)
+connect_management_port     = ""      # port for metrics/readiness endpoints; leave empty to disable
+connect_management_auth_key = ""      # auth key for management endpoints; leave empty if not using management port
+connect_log_level           = "debug" # logging verbosity (debug, info, warn, error)
 
 
 
@@ -502,33 +527,33 @@ data_studio_options = {
     status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.11.0"
   },
-  vscode-1-101-2-0-12-1 = {
-    qualifier = "VSCODE-1-101-2-0-12-1"
+  vscode-1-101-2-0-12-2 = {
+    qualifier = "VSCODE-1-101-2-0-12-2"
     icon      = "vscode"
     tool      = "vscode"
     status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.12.1"
+    container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.12.2"
   },
-  jupyter-4-2-5-0-12-1 = {
-    qualifier = "JUPYTER-4-2-5-0-12-1"
+  jupyter-4-2-5-0-12-2 = {
+    qualifier = "JUPYTER-4-2-5-0-12-2"
     icon      = "jupyter"
     tool      = "jupyter"
     status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.12.1"
+    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.12.2"
   },
-  ride-2025-04-1-0-12-1 = {
-    qualifier = "RIDE-2025-04-1-0-12-1"
+  ride-2025-04-1-0-12-2 = {
+    qualifier = "RIDE-2025-04-1-0-12-2"
     icon      = "rstudio"
     tool      = "rstudio"
     status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.12.1"
+    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.12.2"
   },
-  xpra-6-2-0-R2-1-0-12-1 = {
-    qualifier = "XPRA-6-2-0-R2-1-0-12-1"
+  xpra-6-2-0-R2-1-0-12-2 = {
+    qualifier = "XPRA-6-2-0-R2-1-0-12-2"
     icon      = "xpra"
     tool      = "xpra"
     status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.12.1"
+    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.12.2"
   }
 }
 
@@ -584,6 +609,9 @@ This section added to handle new connection string requirements for Tower v24.1.
 */
 db_container_engine = "mysql"
 # TODO(#332): confirm the container DB engine version paired with the v26.1.x release set.
+# NOTE: MySQL 8.0 is approaching end-of-life. See CHANGELOG → 1.8.0 Forward Roadmap
+# Guidance and [#271](https://github.com/seqeralabs/cx-field-tools-installer/issues/271)
+# for the upgrade pathway (shipping out-of-band from this release).
 db_container_engine_version = "8.0"
 
 /*
@@ -609,6 +637,9 @@ WARNING:
 
 db_engine = "mysql"
 # TODO(#332): confirm the RDS engine version & matching param group paired with the v26.1.x release set.
+# NOTE: MySQL 8.0 is approaching end-of-life. See CHANGELOG → 1.8.0 Forward Roadmap
+# Guidance and [#271](https://github.com/seqeralabs/cx-field-tools-installer/issues/271)
+# for the upgrade pathway (shipping out-of-band from this release).
 db_engine_version    = "8.0"
 db_param_group       = "mysql8.0"
 db_instance_class    = "db.m5.large"
@@ -831,7 +862,26 @@ tower_email_trusted_users = "REPLACE_ME"
 flag_tower_enable_participant_auto_create_user = false
 flag_tower_enable_member_auto_create_user      = false
 
-tower_audit_retention_days     = 1095 # 3 years (value in days)
+tower_audit_retention_days = 1095 # 3 years (value in days)
+
+# Audit Log v2 (v26.1.0+)
+# Bundled object configuring Platform's audit-log-v2 behaviour. The `cleanup` sub-object
+# gates the scheduled purge job by its own flag — set `cleanup = { enabled = false }`
+# to disable purging entirely.
+#
+# See: https://docs.seqera.io/platform-enterprise/enterprise/configuration/overview
+tower_audit_log_v2 = {
+  write_mode              = "dual"
+  csv_export_max_logs     = 500000
+  pre_post_change_enabled = false
+  cleanup = {
+    enabled    = true
+    interval   = "5m"
+    delay      = "10s"
+    chunk_size = 1000
+  }
+}
+
 tower_workflow_cleanup_enabled = true # only applicable for AWS Batch
 
 # Compute environment cleanup (v26.1.0+)

@@ -201,6 +201,22 @@ def verify_compute_env_cleanup_platform_version(data: SimpleNamespace):
             "tower_compute_env_cleanup.enabled = true but Platform version is < v26.1.0. "
             "The TOWER_COMPUTE_ENV_CLEANUP_* env vars will be emitted but ignored by "
             "your Platform version. Upgrade to v26.1.0+ to use this feature."
+
+          
+def verify_audit_log_v2_platform_version(data: SimpleNamespace):
+    """Warn when Audit Log v2 settings will be emitted but ignored by Platform.
+
+    The `tower_audit_log_v2` block is a Platform v26.1.0+ feature. Defaults to
+    non-zero values (write_mode = "dual", cleanup.enabled = true), so its env
+    vars are always emitted to `tower.env`. Pre-v26.1 Platform versions silently
+    ignore unknown env vars — no functional harm, but worth flagging so deployers
+    aren't surprised when their settings have no effect.
+    """
+    if data.tower_container_version < "v26.1.0":
+        logger.warning(
+            "Platform version is < v26.1.0; Audit Log v2 settings (`tower_audit_log_v2`) "
+            "will be emitted to `tower.env` but ignored by your Platform version. "
+            "Upgrade to v26.1.0+ to use these features."
         )
 
 
@@ -583,6 +599,7 @@ if __name__ == "__main__":
     verify_workflow_cleanup_enabled(data)
     verify_data_lineage_enabled(data)
     verify_compute_env_cleanup_platform_version(data)
+    verify_audit_log_v2_platform_version(data)
 
     # Verify AWS integrations
     print("\n")
