@@ -457,9 +457,9 @@ data_studio_path_routing_url    = "REPLACE_ME_IF_NECESSARY"
 # See Design Decisions #20 and #21 in documentation/design_decisions.md for the full list and rationale.
 
 # Studios - General behaviour (v26.1.0+)
-data_studio_default_lifespan           = "8"    # default lifespan in hours per Studio
-flag_studio_private_by_default         = false  # make Studios private by default
-data_studio_iframe_eligible_workspaces = ""     # comma-separated workspace IDs; empty = all
+data_studio_default_lifespan           = "8"   # default lifespan in hours per Studio
+flag_studio_private_by_default         = false # make Studios private by default
+data_studio_iframe_eligible_workspaces = ""    # comma-separated workspace IDs; empty = all
 
 # Studios - SSH (v26.1.0+)
 tower_ssh_keys_supported_types = "ssh-rsa,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521" # accepted SSH public key types
@@ -470,8 +470,8 @@ data_studio_metrics_eligible_workspaces = "" # comma-separated workspace IDs; em
 # Studios - Wave integration (v26.1.0+)
 # Requires flag_use_wave = true.
 data_studio_wave_disallowed_registries   = "community.wave.seqera.io" # registries blocked as Wave build destinations
-data_studio_wave_custom_image_registry   = ""  # leave empty to use Wave default
-data_studio_wave_custom_image_repository = ""  # leave empty to use Wave default (data-studios/<tool>)
+data_studio_wave_custom_image_registry   = ""                         # leave empty to use Wave default
+data_studio_wave_custom_image_repository = ""                         # leave empty to use Wave default (data-studios/<tool>)
 
 # Connect proxy - server config (v0.11.1+)
 connect_management_port     = ""      # port for metrics/readiness endpoints; leave empty to disable

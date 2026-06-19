@@ -166,6 +166,7 @@ DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE = """
 COMPUTE_ENV_CLEANUP_ACTIVE = """
     tower_compute_env_cleanup = {
       enabled = true
+    }
 """
 
 AUDIT_LOG_V2_CLEANUP_DISABLED_ACTIVE = """
@@ -943,7 +944,7 @@ COMPUTE_ENV_CLEANUP_ACTIVE_ASSERTIONS = {
             "TOWER_COMPUTE_ENV_CLEANUP_STUCK_DELETING_TIMEOUT": "1h",
         },
         "omitted": {"# TOWER_COMPUTE_ENV_CLEANUP_NOT_ENABLED"},
-    }.
+    },
 }
 
 

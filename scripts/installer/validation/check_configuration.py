@@ -201,8 +201,9 @@ def verify_compute_env_cleanup_platform_version(data: SimpleNamespace):
             "tower_compute_env_cleanup.enabled = true but Platform version is < v26.1.0. "
             "The TOWER_COMPUTE_ENV_CLEANUP_* env vars will be emitted but ignored by "
             "your Platform version. Upgrade to v26.1.0+ to use this feature."
+        )
 
-          
+
 def verify_audit_log_v2_platform_version(data: SimpleNamespace):
     """Warn when Audit Log v2 settings will be emitted but ignored by Platform.
 
