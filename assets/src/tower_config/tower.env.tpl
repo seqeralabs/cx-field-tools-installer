@@ -243,6 +243,21 @@ TOWER_LINEAGE_ALLOWED_WORKSPACES=${data_lineage_allowed_workspaces}
 
 
 #-------------------------------------------------
+# COMPUTE ENVIRONMENT CLEANUP (v26.1.0+)
+# ------------------------------------------------
+%{ if tower_compute_env_cleanup.enabled == true ~}
+TOWER_COMPUTE_ENV_CLEANUP_ENABLED=true
+TOWER_COMPUTE_ENV_CLEANUP_DELAY=${tower_compute_env_cleanup.delay}
+TOWER_COMPUTE_ENV_CLEANUP_INTERVAL=${tower_compute_env_cleanup.interval}
+TOWER_COMPUTE_ENV_CLEANUP_BATCH_SIZE=${tower_compute_env_cleanup.batch_size}
+TOWER_COMPUTE_ENV_CLEANUP_TIME_OFFSET=${tower_compute_env_cleanup.time_offset}
+TOWER_COMPUTE_ENV_CLEANUP_STUCK_CREATING_TIMEOUT=${tower_compute_env_cleanup.stuck_creating_timeout}
+TOWER_COMPUTE_ENV_CLEANUP_STUCK_DELETING_TIMEOUT=${tower_compute_env_cleanup.stuck_deleting_timeout}
+%{ else ~}
+# TOWER_COMPUTE_ENV_CLEANUP_NOT_ENABLED=DO_NOT_UNCOMMENT
+%{ endif }
+
+
 # AUDIT LOG V2 (v26.1.0+)
 # ------------------------------------------------
 TOWER_AUDIT_LOG_V2_WRITE_MODE=${tower_audit_log_v2.write_mode}

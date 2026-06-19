@@ -163,6 +163,12 @@ DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE = """
     data_lineage_allowed_workspaces = "12,34"
 """
 
+COMPUTE_ENV_CLEANUP_ACTIVE = """
+    tower_compute_env_cleanup = {
+      enabled = true
+    }
+"""
+
 AUDIT_LOG_V2_CLEANUP_DISABLED_ACTIVE = """
     tower_audit_log_v2 = {
       cleanup = { enabled = false }
@@ -217,6 +223,8 @@ BASELINE_ASSERTIONS = {
             "# TOWER_PIPELINE_VERSIONING_NOT_ENABLED": "DO_NOT_UNCOMMENT",
             # DATA_LINEAGE
             "# TOWER_LINEAGE_NOT_ENABLED": "DO_NOT_UNCOMMENT",
+            # COMPUTE_ENV_CLEANUP
+            "# TOWER_COMPUTE_ENV_CLEANUP_NOT_ENABLED": "DO_NOT_UNCOMMENT",
             # AUDIT_LOG_V2
             "TOWER_AUDIT_LOG_V2_WRITE_MODE": "dual",
             "TOWER_AUDIT_LOG_V2_CSV_EXPORT_MAX_LOGS": "500000",
@@ -284,6 +292,14 @@ BASELINE_ASSERTIONS = {
             "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES",
             # DATA_LINEAGE
             "TOWER_LINEAGE_ALLOWED_WORKSPACES",
+            # COMPUTE_ENV_CLEANUP
+            "TOWER_COMPUTE_ENV_CLEANUP_ENABLED",
+            "TOWER_COMPUTE_ENV_CLEANUP_DELAY",
+            "TOWER_COMPUTE_ENV_CLEANUP_INTERVAL",
+            "TOWER_COMPUTE_ENV_CLEANUP_BATCH_SIZE",
+            "TOWER_COMPUTE_ENV_CLEANUP_TIME_OFFSET",
+            "TOWER_COMPUTE_ENV_CLEANUP_STUCK_CREATING_TIMEOUT",
+            "TOWER_COMPUTE_ENV_CLEANUP_STUCK_DELETING_TIMEOUT",
         },
     },
     "tower_yml": {
@@ -911,6 +927,23 @@ DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {"TOWER_LINEAGE_ALLOWED_WORKSPACES": "12,34"},
         "omitted": set(),
+    },
+}
+
+
+# MARK: Compute Environment Cleanup
+COMPUTE_ENV_CLEANUP_ACTIVE_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_COMPUTE_ENV_CLEANUP_ENABLED": "true",
+            "TOWER_COMPUTE_ENV_CLEANUP_DELAY": "1m",
+            "TOWER_COMPUTE_ENV_CLEANUP_INTERVAL": "1h",
+            "TOWER_COMPUTE_ENV_CLEANUP_BATCH_SIZE": "10",
+            "TOWER_COMPUTE_ENV_CLEANUP_TIME_OFFSET": "60s",
+            "TOWER_COMPUTE_ENV_CLEANUP_STUCK_CREATING_TIMEOUT": "1h",
+            "TOWER_COMPUTE_ENV_CLEANUP_STUCK_DELETING_TIMEOUT": "1h",
+        },
+        "omitted": {"# TOWER_COMPUTE_ENV_CLEANUP_NOT_ENABLED"},
     },
 }
 

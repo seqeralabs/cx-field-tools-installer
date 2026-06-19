@@ -304,9 +304,9 @@ variable "data_studio_wave_custom_image_registry" { type = string }
 variable "data_studio_wave_custom_image_repository" { type = string }
 
 # Connect proxy - server config (v0.11.1+)
-variable "connect_management_port"    { type = string }
+variable "connect_management_port" { type = string }
 variable "connect_management_auth_key" { type = string }
-variable "connect_log_level"          { type = string }
+variable "connect_log_level" { type = string }
 
 
 
@@ -566,6 +566,43 @@ variable "tower_audit_log_v2" {
 }
 
 variable "tower_workflow_cleanup_enabled" { type = bool }
+
+# Compute environment cleanup (v26.1.0+) — bundled object.
+# Pre-v26.1 Platform versions silently ignore the emitted env vars; `check_configuration.py`
+# emits a warning if cleanup is enabled alongside a pre-v26.1 `tower_container_version`.
+variable "tower_compute_env_cleanup" {
+  type = object({
+    enabled                = optional(bool, false)
+    delay                  = optional(string, "1m")
+    interval               = optional(string, "1h")
+    batch_size             = optional(number, 10)
+    time_offset            = optional(string, "60s")
+    stuck_creating_timeout = optional(string, "1h")
+    stuck_deleting_timeout = optional(string, "1h")
+  })
+  default = {}
+
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_compute_env_cleanup.delay))
+    error_message = "tower_compute_env_cleanup.delay must be a duration like \"1m\", \"30s\", \"1h\", \"1d\" (digits followed by ms|s|m|h|d)."
+  }
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_compute_env_cleanup.interval))
+    error_message = "tower_compute_env_cleanup.interval must be a duration like \"1m\", \"30s\", \"1h\", \"1d\" (digits followed by ms|s|m|h|d)."
+  }
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_compute_env_cleanup.time_offset))
+    error_message = "tower_compute_env_cleanup.time_offset must be a duration like \"1m\", \"30s\", \"1h\", \"1d\" (digits followed by ms|s|m|h|d)."
+  }
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_compute_env_cleanup.stuck_creating_timeout))
+    error_message = "tower_compute_env_cleanup.stuck_creating_timeout must be a duration like \"1m\", \"30s\", \"1h\", \"1d\" (digits followed by ms|s|m|h|d)."
+  }
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_compute_env_cleanup.stuck_deleting_timeout))
+    error_message = "tower_compute_env_cleanup.stuck_deleting_timeout must be a duration like \"1m\", \"30s\", \"1h\", \"1d\" (digits followed by ms|s|m|h|d)."
+  }
+}
 
 variable "tower_enable_openapi" { type = bool }
 

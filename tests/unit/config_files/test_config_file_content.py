@@ -6,6 +6,8 @@ from tests.unit.config_files.expected_deltas import (
     AWS_SES_ACTIVE_ASSERTIONS,
     BASELINE,
     BASELINE_ASSERTIONS,
+    COMPUTE_ENV_CLEANUP_ACTIVE,
+    COMPUTE_ENV_CLEANUP_ACTIVE_ASSERTIONS,
     DATA_EXPLORER_ACTIVE,
     DATA_EXPLORER_ACTIVE_ASSERTIONS,
     DATA_LINEAGE_ACTIVE,
@@ -216,6 +218,17 @@ def test_data_lineage_workspace_restriction_active(generated_test_files):
 
 
 ## ------------------------------------------------------------------------------------
+## MARK: Compute Environment Cleanup: Active
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.compute_env_cleanup
+@pytest.mark.tfvars(BASELINE + COMPUTE_ENV_CLEANUP_ACTIVE)
+def test_compute_env_cleanup_active(generated_test_files):
+    """Compute env cleanup enabled: all 7 TOWER_COMPUTE_ENV_CLEANUP_* vars surface with their defaults."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, COMPUTE_ENV_CLEANUP_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
 ## MARK: Audit Log v2 — Cleanup Disabled
 ## ------------------------------------------------------------------------------------
 @pytest.mark.local

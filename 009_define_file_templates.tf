@@ -53,13 +53,13 @@ locals {
       data_studio_options             = var.data_studio_options,
       flag_studio_enable_path_routing = var.flag_studio_enable_path_routing,
 
-      data_studio_default_lifespan           = var.data_studio_default_lifespan,
-      flag_studio_private_by_default         = var.flag_studio_private_by_default,
-      data_studio_iframe_eligible_workspaces = var.data_studio_iframe_eligible_workspaces,
-      tower_ssh_keys_supported_types         = var.tower_ssh_keys_supported_types,
-      data_studio_metrics_eligible_workspaces = var.data_studio_metrics_eligible_workspaces,
-      data_studio_wave_disallowed_registries  = var.data_studio_wave_disallowed_registries,
-      data_studio_wave_custom_image_registry  = var.data_studio_wave_custom_image_registry,
+      data_studio_default_lifespan             = var.data_studio_default_lifespan,
+      flag_studio_private_by_default           = var.flag_studio_private_by_default,
+      data_studio_iframe_eligible_workspaces   = var.data_studio_iframe_eligible_workspaces,
+      tower_ssh_keys_supported_types           = var.tower_ssh_keys_supported_types,
+      data_studio_metrics_eligible_workspaces  = var.data_studio_metrics_eligible_workspaces,
+      data_studio_wave_disallowed_registries   = var.data_studio_wave_disallowed_registries,
+      data_studio_wave_custom_image_registry   = var.data_studio_wave_custom_image_registry,
       data_studio_wave_custom_image_repository = var.data_studio_wave_custom_image_repository,
 
       flag_allow_aws_instance_credentials = var.flag_allow_aws_instance_credentials,
@@ -71,7 +71,8 @@ locals {
       flag_enable_data_lineage        = var.flag_enable_data_lineage,
       data_lineage_allowed_workspaces = var.data_lineage_allowed_workspaces,
 
-      tower_audit_log_v2 = var.tower_audit_log_v2,
+      tower_compute_env_cleanup = var.tower_compute_env_cleanup,
+      tower_audit_log_v2        = var.tower_audit_log_v2,
     }
   )
 
@@ -146,15 +147,15 @@ locals {
 
   data_studios_env = templatefile("assets/src/tower_config/data-studios.env.tpl",
     {
-      flag_enable_data_studio      = var.flag_enable_data_studio,
-      tower_server_url             = module.connection_strings.tower_server_url,
-      tower_redis_url              = module.connection_strings.tower_connect_redis_url,
-      tower_connect_server_url     = module.connection_strings.tower_connect_server_url,
-      flag_enable_data_studio_ssh  = var.flag_enable_data_studio_ssh,
-      connect_ssh_key_path         = "/data/ssh-host-key",
-      connect_management_port      = var.connect_management_port,
-      connect_management_auth_key  = var.connect_management_auth_key,
-      connect_log_level            = var.connect_log_level,
+      flag_enable_data_studio     = var.flag_enable_data_studio,
+      tower_server_url            = module.connection_strings.tower_server_url,
+      tower_redis_url             = module.connection_strings.tower_connect_redis_url,
+      tower_connect_server_url    = module.connection_strings.tower_connect_server_url,
+      flag_enable_data_studio_ssh = var.flag_enable_data_studio_ssh,
+      connect_ssh_key_path        = "/data/ssh-host-key",
+      connect_management_port     = var.connect_management_port,
+      connect_management_auth_key = var.connect_management_auth_key,
+      connect_log_level           = var.connect_log_level,
     }
   )
 
