@@ -189,27 +189,23 @@ def verify_data_lineage_enabled(data: SimpleNamespace):
 def verify_aws_instance_credentials_platform_version(data: SimpleNamespace):
     """Reject AWS instance credentials on Platform versions with the known bug.
 
-    `flag_allow_aws_instance_credentials = true` is ~broken on Platform v26.1.0,
-    v26.1.1, and v26.1.2. Crednentials must be created via API call and include
-    the `mode` key or else Platform will fail to successfully execute the AssumeRole
-    operation.
+    Platform v26.1.0 through v26.1.2 cant use new AWS credentials (assumed via instance 
+    role: `flag_allow_aws_instance_credentials = true`). Pre-existing credentials still work.
+    Throwing warning instead of exectpion. 
 
-    I'm defaulting to a hard error because the workaround is not an optimal workflow
-    and I don't fully know what happens with pre-existing credentials prior to the 
-    upgrade. If you absolutely must use an affected version with instance profile 
-    credentials, disaable this check and use the API call documented here:
+    If you must use an affected version with instance profile 
+    credentials and create a new role, use this API call:
     https://github.com/seqeralabs/cx-field-tools-installer/issues/378#issuecomment-4752651974
     
     Fixed in v26.1.3+. Pre-v26.1 versions (v25.x and earlier)
-    are unaffected. Hard-error to prevent a misconfigured stack.
+    are unaffected.
     """
     broken_versions = {"v26.1.0", "v26.1.1", "v26.1.2"}
     if data.flag_allow_aws_instance_credentials and data.tower_container_version in broken_versions:
-        log_error_and_exit(
-            f"flag_allow_aws_instance_credentials = true is broken on Platform "
-            f"{data.tower_container_version}. Fixed in v26.1.3+. Upgrade "
-            f"tower_container_version to v26.1.3 or later, or set "
-            f"flag_allow_aws_instance_credentials = false."
+        logger.warning(
+            f"{data.tower_container_version} is unable to assume newly-created credentials via AWS instance role."
+            f"Pre-exsiting roles still work."
+            f"Fix is in v26.1.3+. If you must use the affected version and create new credentials, do so via direct API call."
         )
 
 
