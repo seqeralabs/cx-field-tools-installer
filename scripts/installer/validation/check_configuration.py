@@ -195,7 +195,7 @@ def verify_aws_instance_credentials_platform_version(data: SimpleNamespace):
 
     If you must use an affected version with instance profile 
     credentials and create a new role, use this API call:
-    https://github.com/seqeralabs/cx-field-tools-installer/issues/378#issuecomment-4752651974
+    https://github.com/seqeralabs/cx-field-tools-installer/issues/378#issuecomment-4759501819
     
     Fixed in v26.1.3+. Pre-v26.1 versions (v25.x and earlier)
     are unaffected.
