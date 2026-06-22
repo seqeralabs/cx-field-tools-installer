@@ -2,6 +2,10 @@
 
 Enables Nextflow data lineage on a Seqera Platform deployment. Lineage records the provenance of pipeline runs at workflow, task, and file granularity. Public-preview feature; see [Seqera's Data Lineage docs](https://docs.seqera.io/platform-cloud/data/data-lineage) for the user-facing concepts and workspace-side setup.
 
+**WARNING**
+- Data Lineage is meant to persist over time (for traceability).
+- Any infrastructure created by Seqera Platform related to Data Lineage will persist between teardown/recreation of CX Installer deployments. Ensure your SOPs account for destruction of no-longer-necessary SQS queues and S3 buckets supporting the Lineage feature.
+
 ## Requirements
 
 - Seqera Platform **v26.1.0+**.
