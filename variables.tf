@@ -303,7 +303,7 @@ variable "data_studio_wave_disallowed_registries" { type = string }
 variable "data_studio_wave_custom_image_registry" { type = string }
 variable "data_studio_wave_custom_image_repository" { type = string }
 
-# Connect proxy - server config (v0.11.1+)
+# Connect proxy - server config (v0.11.0+)
 variable "connect_management_port" { type = string }
 variable "connect_management_auth_key" { type = string }
 variable "connect_log_level" { type = string }
