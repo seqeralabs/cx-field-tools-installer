@@ -46,9 +46,11 @@ services:
   groundswell:
     image: cr.seqera.io/enterprise/platform/pipeline-optimization:${swell_container_version}
 %{ if flag_use_container_db == true ~}
-    command: bash -c "pip install cryptography; bin/wait-for-it.sh db:3306 -t 60; bin/migrate-db.sh; bin/serve.sh"
+    # NOTE: `pipeline-optimization` (v26.1+) ships with sh only — no bash.
+    # The previously-named `groundswell` image had bash; renaming swapped to a slimmer base.
+    command: sh -c "pip install cryptography; bin/wait-for-it.sh db:3306 -t 60; bin/migrate-db.sh; bin/serve.sh"
 %{ else ~}
-    command: bash -c "pip install cryptography; bin/migrate-db.sh; bin/serve.sh"
+    command: sh -c "pip install cryptography; bin/migrate-db.sh; bin/serve.sh"
 %{ endif }
     networks:
       - backend
@@ -202,7 +204,7 @@ services:
 %{ endif ~}
 
 %{ if flag_use_private_cacert == true ~}
-  # Expectations: 
+  # Expectations:
   #   - docker-compose.yml in `/home/ec2-user/``
   #   - All custom cert files present / generated in `/home/ec2-user/customcerts``
   reverseproxy:
