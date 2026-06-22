@@ -186,6 +186,31 @@ def verify_data_lineage_enabled(data: SimpleNamespace):
         log_error_and_exit("Data lineage can only be enabled on Platform v26.1.0+")
 
 
+def verify_aws_instance_credentials_platform_version(data: SimpleNamespace):
+    """Reject AWS instance credentials on Platform versions with the known bug.
+
+    `flag_allow_aws_instance_credentials = true` is ~broken on Platform v26.1.0,
+    v26.1.1, and v26.1.2. Crednentials must be created via API call and include
+    the `mode` key or else Platform will fail to successfully execute the AssumeRole
+    operation.
+
+    I'm defaulting to a hard error because the workaround is not an optimal workflow
+    and I don't fully know what happens with pre-existing credentials prior to the 
+    upgrade.
+    
+    Fixed in v26.1.3+. Pre-v26.1 versions (v25.x and earlier)
+    are unaffected. Hard-error to prevent a misconfigured stack.
+    """
+    broken_versions = {"v26.1.0", "v26.1.1", "v26.1.2"}
+    if data.flag_allow_aws_instance_credentials and data.tower_container_version in broken_versions:
+        log_error_and_exit(
+            f"flag_allow_aws_instance_credentials = true is broken on Platform "
+            f"{data.tower_container_version}. Fixed in v26.1.3+. Upgrade "
+            f"tower_container_version to v26.1.3 or later, or set "
+            f"flag_allow_aws_instance_credentials = false."
+        )
+
+
 def verify_compute_env_cleanup_platform_version(data: SimpleNamespace):
     """Warn when compute-env cleanup is enabled on pre-v26.1 Platform.
 
@@ -599,6 +624,7 @@ if __name__ == "__main__":
     verify_email_login_disablement(data)
     verify_workflow_cleanup_enabled(data)
     verify_data_lineage_enabled(data)
+    verify_aws_instance_credentials_platform_version(data)
     verify_compute_env_cleanup_platform_version(data)
     verify_audit_log_v2_platform_version(data)
 
