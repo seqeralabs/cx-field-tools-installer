@@ -196,7 +196,9 @@ def verify_aws_instance_credentials_platform_version(data: SimpleNamespace):
 
     I'm defaulting to a hard error because the workaround is not an optimal workflow
     and I don't fully know what happens with pre-existing credentials prior to the 
-    upgrade.
+    upgrade. If you absolutely must use an affected version with instance profile 
+    credentials, disaable this check and use the API call documented here:
+    https://github.com/seqeralabs/cx-field-tools-installer/issues/378#issuecomment-4752651974
     
     Fixed in v26.1.3+. Pre-v26.1 versions (v25.x and earlier)
     are unaffected. Hard-error to prevent a misconfigured stack.
