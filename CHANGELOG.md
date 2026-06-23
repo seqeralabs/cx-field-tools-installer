@@ -18,6 +18,10 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 
         Existing deployments should continue to use `db_engine_version = "8.0"`. ([`#271`](https://github.com/seqeralabs/cx-field-tools-installer/issues/271))
 
+    2. **Upgrade Terraform AWS provider to version 6.** [`#158`](https://github.com/seqeralabs/cx-field-tools-installer/issues/158)
+
+        Update deferred for same reasons as MySQL 8.4 delay.
+
 - **Notable Changes**
     - **CX Installer**
         - General
