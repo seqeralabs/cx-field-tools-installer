@@ -44,11 +44,13 @@ services:
 
 %{ if flag_enable_groundswell == true ~}
   groundswell:
-    image: cr.seqera.io/private/nf-tower-enterprise/groundswell:${swell_container_version}
+    image: cr.seqera.io/enterprise/platform/pipeline-optimization:${swell_container_version}
 %{ if flag_use_container_db == true ~}
-    command: bash -c "pip install cryptography; bin/wait-for-it.sh db:3306 -t 60; bin/migrate-db.sh; bin/serve.sh"
+    # NOTE: `pipeline-optimization` (v26.1+) ships with sh only — no bash.
+    # The previously-named `groundswell` image had bash; renaming swapped to a slimmer base.
+    command: sh -c "pip install cryptography; bin/wait-for-it.sh db:3306 -t 60; bin/migrate-db.sh; bin/serve.sh"
 %{ else ~}
-    command: bash -c "pip install cryptography; bin/migrate-db.sh; bin/serve.sh"
+    command: sh -c "pip install cryptography; bin/migrate-db.sh; bin/serve.sh"
 %{ endif }
     networks:
       - backend
@@ -65,7 +67,7 @@ services:
 
 
   migrate:
-    image: cr.seqera.io/private/nf-tower-enterprise/migrate-db:${docker_version}
+    image: cr.seqera.io/enterprise/platform/migrate-db:${docker_version}
     platform: linux/amd64
     #command: -c "echo 'hello'; sleep 30; /migrate-db.sh"
     command: -c "/migrate-db.sh"
@@ -85,7 +87,7 @@ services:
 
 
   cron:
-    image: cr.seqera.io/private/nf-tower-enterprise/backend:${docker_version}
+    image: cr.seqera.io/enterprise/platform/backend:${docker_version}
     command: -c "/tower.sh"
     networks:
       - frontend
@@ -108,7 +110,7 @@ services:
 
 
   backend:
-    image: cr.seqera.io/private/nf-tower-enterprise/backend:${docker_version}
+    image: cr.seqera.io/enterprise/platform/backend:${docker_version}
 %{ if flag_use_container_db == true ~}
     command: -c "/wait-for-it.sh db:3306 -t 60; /tower.sh"
 %{ else ~}
@@ -140,7 +142,7 @@ services:
 
 
   frontend:
-    image: cr.seqera.io/private/nf-tower-enterprise/frontend:${docker_version}-unprivileged
+    image: cr.seqera.io/enterprise/platform/frontend:${docker_version}-unprivileged
     networks:
       - frontend
     ports:
@@ -158,7 +160,7 @@ services:
 
 %{ if flag_enable_data_studio == true ~}
   connect-proxy:
-    image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-proxy:${data_studio_container_version}
+    image: cr.seqera.io/enterprise/studios/proxy:${data_studio_container_version}
     platform: linux/amd64
     user: 65532:65532
     env_file:
@@ -185,7 +187,7 @@ services:
 
 
   connect-server:
-    image: cr.seqera.io/private/nf-tower-enterprise/data-studio/connect-server:${data_studio_container_version}
+    image: cr.seqera.io/enterprise/studios/server:${data_studio_container_version}
     platform: linux/amd64
     user: 65532:65532
     cap_drop:
@@ -202,7 +204,7 @@ services:
 %{ endif ~}
 
 %{ if flag_use_private_cacert == true ~}
-  # Expectations: 
+  # Expectations:
   #   - docker-compose.yml in `/home/ec2-user/``
   #   - All custom cert files present / generated in `/home/ec2-user/customcerts``
   reverseproxy:
@@ -236,7 +238,7 @@ services:
   wave-lite:
     labels:
       seqera: wave-lite
-    image: cr.seqera.io/private/nf-tower-enterprise/wave:${wave_lite_container_version}
+    image: cr.seqera.io/enterprise/wave/server:${wave_lite_container_version}
     # ports:
     #   - 9099:9090
     expose:

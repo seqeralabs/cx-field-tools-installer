@@ -88,6 +88,31 @@ def session_setup():
     AWS preflight is deliberately NOT part of this fixture — tests that need real AWS
     consume the separate `aws_preflight` fixture instead. See issue #351.
     """
+    # Preflight: terraform.tfvars must exist in project root before we start.
+    # session_setup backs up the deployer's real tfvars at session start and restores it
+    # on teardown — without that file as the starting point, `FileHelper.move_file` raises,
+    # session_setup partially completes, and downstream tests that depend on project-root
+    # state files (e.g. `prepare_plan`-based variable_validation tests) fail with confusing
+    # FileNotFoundError chains on entirely different files. Fail fast with an actionable
+    # error instead.
+    if not os.path.exists(FP.TFVARS_BASE):
+        backup_exists = os.path.exists(FP.TFVARS_BACKUP)
+        recovery_hint = (
+            f"A backup exists at `{FP.TFVARS_BACKUP}` (likely from a previous test run that crashed "
+            f"mid-teardown). Restore it manually: `mv {FP.TFVARS_BACKUP} {FP.TFVARS_BASE}`."
+            if backup_exists
+            else (
+                f"Copy `templates/TEMPLATE_terraform.tfvars` to `{FP.TFVARS_BASE}` "
+                f"and configure it for your deployment."
+            )
+        )
+        pytest.exit(
+            f"Precondition failed: `terraform.tfvars` not found at `{FP.TFVARS_BASE}`. "
+            f"The testing framework backs up this file at session start and restores it on teardown; "
+            f"without it, test execution cannot proceed.\n\nTo fix: {recovery_hint}",
+            returncode=2,
+        )
+
     # Create a fresh copy of the base testing terraform.tfvars file.
     subprocess.run("make generate_test_data", shell=True, check=True)  # noqa: S602, S607  (intentional shell command; relies on PATH; standard for test env)
 

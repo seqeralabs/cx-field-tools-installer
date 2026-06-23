@@ -277,4 +277,57 @@ In addition to the general design decisions noted above, there are a few decisio
 
     Both adapters defer to positive `-m` selection: invoking `make run_tests_variables_only` or `make run_tests_containers_only` bypasses the heuristic so explicit recipes always behave as the operator expects.
 
-    The motivation is LLM-driven verification loops that invoke `pytest` with no marker filter. Without these adapters, a Docker-less sandbox or a branch unrelated to `variables.tf` produces a wall of failures and errors that have nothing to do with the change under review — flooding the agent's context with red herrings and burning iteration budget. With them, the same indiscriminate invocation produces a clean log scoped to what's actually relevant. Contributors with Docker available and a `variables.tf`-touching branch see no change in behaviour.
+20. **Some Connect proxy environment variables are intentionally omitted from the installer**
+
+    The installer exposes only the Connect proxy variables that have practical value for standard deployments. The remaining variables documented in the [connect environment variables reference](https://docs.seqera.io/platform-enterprise/enterprise/install-studios#connect-environment-variables) are omitted for the reasons described below.
+
+    | Variable | Default | Reason omitted |
+    |----------|---------|----------------|
+    | `CONNECT_LISTENER_PORT` | `7777` | Compiled-in default in the Connect server. No value in rendering it explicitly for standard deployments. Only relevant if port conflicts exist. |
+    | `CONNECT_TUNNEL_PORT` | `7070` | Same as above. |
+    | `CONNECT_STORAGE_ROOT` | `/data` | Built-in Caddyfile default (`{$CONNECT_STORAGE_ROOT:/data}`). Only relevant if a custom volume mount path is required. |
+    | `CONNECT_HOST_DOMAIN` | `""` | The installer auto-derives and wires the Connect subdomain (`connect.<tower_server_url>`). No known standard deployment scenario requires this override. |
+    | `CONNECT_CLIENT_NAME` | `tower-connect-proxy-client` | The default is the only correct value for a Seqera Platform Studios deployment. Changing it would break the OIDC registration flow with Platform. |
+    | `CONNECT_GRANT_TYPE` | `authorization_code` | Same as above — changing this would break the OIDC auth flow. |
+    | `CONNECT_REDIS_PREFIX` | `connect:session` | The default is appropriate for all deployments. An override is only needed when running multiple Connect proxy instances against the same Redis database, which is beyond the scope of this installer. |
+    | `CONNECT_REDIS_TLS_ENABLE` | `false` | Redis TLS support is not yet implemented in the installer (`redis_security_mode_inferred = "insecure"` in the connection strings module). Exposing Connect TLS vars while Platform has no Redis TLS support would create an inconsistent configuration. |
+    | `CONNECT_REDIS_TLS_SKIP_VERIFY` | `false` | Dependent on `CONNECT_REDIS_TLS_ENABLE` — omitted for the same reason. |
+    | `CONNECT_REDIS_TLS_KEY_FILE` | `""` | Dependent on `CONNECT_REDIS_TLS_ENABLE` — omitted for the same reason. |
+    | `CONNECT_REDIS_TLS_CERT_FILE` | `""` | Dependent on `CONNECT_REDIS_TLS_ENABLE` — omitted for the same reason. |
+    | `CONNECT_REDIS_USER` | `""` | The installer has no Redis authentication mechanism. Platform connects to Redis without credentials (`TOWER_REDIS_URL` carries no auth). Since Connect shares the same Redis instance, Redis AUTH is equally inapplicable. |
+    | `CONNECT_REDIS_PASSWORD` | `""` | Same as above. |
+    | `CONNECT_SSH_KEY_VALUE_BASE64` | `""` | Base64-encoded alternative to the file-mounted SSH host key. The installer mounts the key as a file via `CONNECT_SSH_KEY_PATH=/data/ssh-host-key`, which is the correct default for all standard deployments. The base64 option exists for environments where file mounting is not possible — an edge case beyond the scope of this installer. |
+    | `CONNECT_SSH_MAX_CONNECTIONS` | `2000` | SSH tuning variable. Built-in default is appropriate for the vast majority of deployments. Only relevant under unusually high SSH load. |
+    | `CONNECT_SSH_MAX_CONN_CHANNELS` | `30` | Same as above. |
+    | `CONNECT_SSH_HANDSHAKE_TIMEOUT` | `1m` | Same as above. |
+
+    Deployers who need to override any of these values can do so by adding them directly to `data-studios.env` on the target instance after deployment. If you need assistance configuring any of these variables, reach out to Seqera and we can discuss your requirements. Full variable reference: [connect environment variables](https://docs.seqera.io/platform-enterprise/enterprise/install-studios#connect-environment-variables).
+
+21. **Some Studios platform environment variables are intentionally omitted from the installer**
+
+    The installer exposes only the Studios platform variables that have practical value for standard deployments. The remaining variables documented in the [configuration overview](https://docs.seqera.io/platform-enterprise/latest/enterprise/configuration/overview#data-features) are omitted for the reasons described below.
+
+    | Variable | Default | Reason omitted |
+    |----------|---------|----------------|
+    | `TOWER_DATA_STUDIO_LIST_MAX_ALLOWED` | `100` | Pagination tuning. 100 concurrent Studios per page is sufficient for all standard deployments. Only relevant at very high Studio volume. |
+    | `TOWER_DATA_STUDIO_FEATURE_MANIFEST_URL` | Platform default | Internal manifest URL for Studio template version compatibility. Platform provides its own default — a custom URL would only be provided by Seqera directly. |
+    | `TOWER_STUDIO_METRICS_RETENTION_DAYS` | `90` | Metrics storage tuning. 90 days is appropriate for all deployments. Only relevant if storage constraints require shorter retention. |
+    | `TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_NAME_STRATEGY` | `tagPrefix` | Advanced Wave image naming convention. The default `tagPrefix` is the only strategy used in standard Studio image builds. Changing this requires corresponding changes to the Wave build pipeline. |
+    | `TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_INITIAL_DELAY` | `5s` | Timing tuning for Wave build status polling. Default is appropriate for all deployments. |
+    | `TOWER_DATA_STUDIO_WAVE_STATUS_CHECK_RATE` | `30s` | Timing tuning for Wave build status polling. Default is appropriate for all deployments. |
+    | `TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES` | `""` (all workspaces) | Workspace-scoped iframe embedding control. The vast majority of deployments have no iframe embedding requirement — including this variable would prompt an unnecessary decision for every deployer. Teams who need to restrict iframe access can add it directly to `tower.env` after deployment. |
+    | `TOWER_SSH_KEYS_SUPPORTED_TYPES` | `ssh-rsa,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521` | The default covers all commonly used modern SSH key types and is hardcoded in the template. FIPS-constrained deployments requiring algorithm restriction are better served by editing `tower.env` post-deployment — introducing this as an installer variable would require validation logic and a migration path on every algorithm list change, for a use case that affects a very small subset of deployers. |
+
+    Deployers who need to override any of these values can do so by adding them directly to `tower.env` on the target instance after deployment. If you need assistance configuring any of these variables, reach out to Seqera and we can discuss your requirements. Full variable reference: [configuration overview](https://docs.seqera.io/platform-enterprise/latest/enterprise/configuration/overview#data-features).
+
+19. **Data Lineage SQS queue creation is Platform's responsibility, not the installer's**
+
+    Seqera Platform v26.1.0+ has built-in support for creating the SQS queue (and the paired S3 bucket + bucket-notification routing) required by the Data Lineage feature. Platform creates these per-workspace under the `seqera-lineage-*` resource-name prefix at the moment a workspace enables lineage via its UI.
+
+    Rather than replicate that functionality, the installer's role for lineage is intentionally scoped to **granting the EC2 instance role the IAM permissions Platform needs** to do the queue/bucket creation itself. The installer attaches a policy (`${global_prefix}_policy_lineage`) authorising the relevant S3 + SQS actions on `seqera-lineage-*` ARNs only — see [`assets/src/aws/iam_role_policy_lineage.json.tpl`](../../assets/src/aws/iam_role_policy_lineage.json.tpl).
+
+    Consequences of this division of labour:
+
+    - The installer does **not** provision an SQS queue, S3 bucket, or bucket-notification rule for lineage. Those resources don't appear in `terraform plan` and aren't part of `terraform destroy`.
+    - Queue/bucket lifecycle (creation, configuration, deletion) is owned entirely by Platform. Deployers cannot pre-create or pin specific ARNs from the installer side.
+    - If Platform's resource-naming convention or auto-provisioning behaviour changes in a future release, the only file that needs to update is the IAM policy template — not the installer's resource graph.

@@ -2,11 +2,8 @@
 # NOTE: Some checks that were previously here have been moved to variables.tf validation blocks.
 
 from pathlib import Path
-import re
 import sys
 from types import SimpleNamespace
-
-import yaml
 
 
 base_import_dir = Path(__file__).resolve().parents[2]
@@ -78,9 +75,7 @@ def verify_only_one_true_set(data: SimpleNamespace):
             data.flag_do_not_use_https,
         ]
     )
-    only_one_true_set(
-        [data.flag_use_aws_ses_iam_integration, data.flag_use_existing_smtp]
-    )
+    only_one_true_set([data.flag_use_aws_ses_iam_integration, data.flag_use_existing_smtp])
 
 
 def verify_sensitive_keys(data: SimpleNamespace, data_dictionary: dict):
@@ -103,9 +98,7 @@ def verify_sensitive_keys(data: SimpleNamespace, data_dictionary: dict):
     data_keys = data_dictionary.keys()
     for key in sensitive_keys:
         if key in data_keys:
-            log_error_and_exit(
-                f" Do not specify `{key}`. This value will be sourced from SSM."
-            )
+            log_error_and_exit(f" Do not specify `{key}`. This value will be sourced from SSM.")
 
 
 def verify_tfvars_config_dependencies(data: SimpleNamespace):
@@ -142,7 +135,6 @@ def verify_tfvars_config_dependencies(data: SimpleNamespace):
 
 def verify_tower_server_url(data: SimpleNamespace):
     """Verify the tower server url is correctly configured."""
-
     if data.tower_server_port != "8000":
         logger.warning(
             "Tower instance not using default port (8000). Ensure Docker-Compose file is updated accordingly."
@@ -151,11 +143,10 @@ def verify_tower_server_url(data: SimpleNamespace):
 
 def verify_tower_self_signed_certs(data: SimpleNamespace):
     """Check self-signed certificate settings (if necessary)."""
-
     if data.flag_use_private_cacert and not data.private_cacert_bucket_prefix.startswith("s3://"):
         log_error_and_exit(" Field `private_cacert_bucket_prefix` must start with `s3://`")
 
-      
+
 def verify_docker_daemon_loggin(data: SimpleNamespace):
     """Check Docker Daemon logging configuration."""
     logging_flags = [
@@ -177,23 +168,98 @@ def verify_email_login_disablement(data: SimpleNamespace):
             data.flag_oidc_use_github,
         ]
         if not any(oidc_flags):
-            log_error_and_exit(
-                " Email login cannot be disabled if you dont have an OIDC alternative configured."
-            )
+            log_error_and_exit(" Email login cannot be disabled if you dont have an OIDC alternative configured.")
 
         if data.flag_run_seqerakit:
-            logger.warning(
-                "Seqerakit step cannot execute if email login is not active."
-            )
+            logger.warning("Seqerakit step cannot execute if email login is not active.")
+
 
 def verify_workflow_cleanup_enabled(data: SimpleNamespace):
     """Check workflow cleanup enablement scenarios."""
-    if data.tower_workflow_cleanup_enabled:
+    if data.tower_workflow_cleanup_enabled and data.tower_container_version < "v25.1.0":
+        log_error_and_exit("Workflow cleanup can only be enabled on Platform v25.1.0+")
 
-        if data.tower_container_version < "v25.1.0":
-            log_error_and_exit(
-                "Workflow cleanup can only be enabled on Platform v25.1.0+"
-            )
+
+def verify_data_lineage_enabled(data: SimpleNamespace):
+    """Check data lineage enablement scenarios."""
+    if data.flag_enable_data_lineage and data.tower_container_version < "v26.1.0":
+        log_error_and_exit("Data lineage can only be enabled on Platform v26.1.0+")
+
+
+def verify_aws_instance_credentials_platform_version(data: SimpleNamespace):
+    """Reject AWS instance credentials on Platform versions with the known bug.
+
+    Platform v26.1.0 through v26.1.2 cant use new AWS credentials (assumed via instance
+    role: `flag_allow_aws_instance_credentials = true`). Pre-existing credentials still work.
+    Throwing warning instead of exectpion.
+
+    If you must use an affected version with instance profile
+    credentials and create a new role, use this API call:
+    https://github.com/seqeralabs/cx-field-tools-installer/issues/378#issuecomment-4759501819
+
+    Fixed in v26.1.3+. Pre-v26.1 versions (v25.x and earlier)
+    are unaffected.
+    """
+    broken_versions = {"v26.1.0", "v26.1.1", "v26.1.2"}
+    if data.flag_allow_aws_instance_credentials and data.tower_container_version in broken_versions:
+        logger.warning(
+            f"{data.tower_container_version} is unable to use instance credentials to assume "
+            f"newly-created and pre-existing IAM Role credentials."
+            f"IAM User credentials and IAM User credentials that assume an IAM Role still work."
+            f"Fix is in v26.1.3+. If you must use the affected version, create new credentials directly via API call."
+        )
+
+
+def verify_compute_env_cleanup_platform_version(data: SimpleNamespace):
+    """Warn when compute-env cleanup is enabled on pre-v26.1 Platform.
+
+    `tower_compute_env_cleanup` defaults to `enabled = false`, so the env vars
+    only render when the deployer explicitly opts in. Warn only when both
+    conditions are true: cleanup is enabled AND Platform version is too old.
+    Pre-v26.1 instances silently ignore unknown env vars — no functional harm,
+    but the deployer should know their setting is being ignored.
+    """
+    cleanup = getattr(data, "tower_compute_env_cleanup", {})
+    if cleanup.get("enabled", False) and data.tower_container_version < "v26.1.0":
+        logger.warning(
+            "tower_compute_env_cleanup.enabled = true but Platform version is < v26.1.0. "
+            "The TOWER_COMPUTE_ENV_CLEANUP_* env vars will be emitted but ignored by "
+            "your Platform version. Upgrade to v26.1.0+ to use this feature."
+        )
+
+
+def verify_audit_log_v2_platform_version(data: SimpleNamespace):
+    """Warn when Audit Log v2 settings will be emitted but ignored by Platform.
+
+    The `tower_audit_log_v2` block is a Platform v26.1.0+ feature. Defaults to
+    non-zero values (write_mode = "dual", cleanup.enabled = true), so its env
+    vars are always emitted to `tower.env`. Pre-v26.1 Platform versions silently
+    ignore unknown env vars — no functional harm, but worth flagging so deployers
+    aren't surprised when their settings have no effect.
+    """
+    if data.tower_container_version < "v26.1.0":
+        logger.warning(
+            "Platform version is < v26.1.0; Audit Log v2 settings (`tower_audit_log_v2`) "
+            "will be emitted to `tower.env` but ignored by your Platform version. "
+            "Upgrade to v26.1.0+ to use these features."
+        )
+
+
+def verify_nextflow_parser_v2_advisory(data: SimpleNamespace):
+    """Advisory: Platform v26.1.0+ ships with Nextflow 26.04 and the new syntax parser.
+
+    Configured pipelines may need to update their Nextflow parser version setting
+    to remain compatible. Not a hard error — pipelines run in customer-managed
+    compute environments, so the installer cannot validate them. Warn only so the
+    deployer knows to audit their pipeline configurations.
+    """
+    if data.tower_container_version >= "v26.1.0":
+        logger.warning(
+            f"Platform {data.tower_container_version} ships with Nextflow 26.04 and a new syntax parser. "
+            "Configured pipelines may need to update their Nextflow parser version setting to remain compatible. "
+            "See: https://docs.seqera.io/platform-enterprise/launch/advanced#enable-nextflow-syntax-parser-v2"
+        )
+
 
 def verify_subnet_privacy(data: SimpleNamespace):
     """Check that the assigned subnets in tfvars match the intended privacy of the Tower instance."""
@@ -262,6 +328,30 @@ def verify_ses_integration(data: SimpleNamespace):
             log_error_and_exit("SES integration requires port 587. Please fix.")
 
 
+def verify_pre_existing_role_attachments(data: SimpleNamespace):
+    """Warn when feature-attachable IAM policies can't be applied to a pre-existing role.
+
+    When `flag_iam_use_prexisting_role_arn = true`, the installer doesn't manage the
+    EC2 instance role, so optional policy attachments (SES, data lineage) can't be
+    auto-wired. Deployers must attach the corresponding policies to their own role
+    manually. See `documentation/setup/` for per-feature instructions.
+    """
+    if not data.flag_iam_use_prexisting_role_arn:
+        return
+
+    if data.flag_use_aws_ses_iam_integration:
+        logger.warning(
+            "`flag_use_aws_ses_iam_integration = true` but `flag_iam_use_prexisting_role_arn = true`. "
+            "The installer cannot attach the SES policy to your pre-existing role; attach it manually."
+        )
+
+    if getattr(data, "flag_enable_data_lineage", False):
+        logger.warning(
+            "`flag_enable_data_lineage = true` but `flag_iam_use_prexisting_role_arn = true`. "
+            "The installer cannot attach the data lineage policy to your pre-existing role; attach it manually."
+        )
+
+
 def verify_route53_integration(data: SimpleNamespace):
     """Check DNS settings."""
     mismatch = False
@@ -284,14 +374,10 @@ def verify_route53_integration(data: SimpleNamespace):
 def verify_ingress_and_egress(data: SimpleNamespace, data_dictionary: dict):
     """Issue reminders if ingress/egress rules seem overly loose."""
     if data.sg_ingress_cidrs == "0.0.0.0/0":
-        logger.warning(
-            "`sg_ingress_cidrs` is completely open (HTTPs) . Consider tightening."
-        )
+        logger.warning("`sg_ingress_cidrs` is completely open (HTTPs) . Consider tightening.")
 
     if data.sg_ssh_cidrs == "0.0.0.0/0":
-        logger.warning(
-            "`sg_ssh_cidrs` ingress is completly open (SSH). Consider tightening."
-        )
+        logger.warning("`sg_ssh_cidrs` ingress is completly open (SSH). Consider tightening.")
 
     # Forgoing `data...` approeach beause I'm too dumb to figure out how to get a variable name as a string.
     egress_sgs = [
@@ -309,9 +395,7 @@ def verify_ingress_and_egress(data: SimpleNamespace, data_dictionary: dict):
 def verify_flow_logs(data: SimpleNamespace):
     """Issue reminder about Flow logs cost."""
     if (data.flag_create_new_vpc) and (data.enable_vpc_flow_logs):
-        logger.warning(
-            "You have VPC Flow Logs activated. This will generate extra costs."
-        )
+        logger.warning("You have VPC Flow Logs activated. This will generate extra costs.")
 
 
 def verify_ami_update_behaviour(data: SimpleNamespace):
@@ -328,7 +412,7 @@ def verify_ami_update_behaviour(data: SimpleNamespace):
             )
 
 
-def verify_database_configuration(data: SimpleNamespace):  # noqa: C901  (sequence of validation gates; some logic to migrate to native Terraform variable enforcement)
+def verify_database_configuration(data: SimpleNamespace):
     """Verify / Warn about various database configuration items."""
     if (data.db_engine == "mysql") and ("8" in data.db_engine_version):
         logger.warning("MySQL 8 may need TOWER_DB_URL connection string modifiers.")
@@ -381,11 +465,8 @@ def verify_database_configuration(data: SimpleNamespace):  # noqa: C901  (sequen
 def verify_data_studio(data: SimpleNamespace):
     """Verify fields related to Data Studio."""
     if data.flag_enable_data_studio:
-
         if data.flag_use_private_cacert:
-            logger.warning(
-                "Please see documentation to understand how to make private certs work with Studios images."
-            )
+            logger.warning("Please see documentation to understand how to make private certs work with Studios images.")
 
         # Deferred until better solution comes along to get TF locals
         # - Add check that CONNECT_PROXY_URL and TOWER_DATA_STUDIO_CONNECT_URL are the same.
@@ -433,10 +514,7 @@ def verify_data_studio_ssh(data: SimpleNamespace):
 
 def verify_alb_settings(data: SimpleNamespace):
     """Verify that user does not have contradictory settings in case of ALB vs. no ALB."""
-    if (
-        data.flag_use_private_cacert
-        and data.flag_make_instance_private_behind_public_alb
-    ):
+    if data.flag_use_private_cacert and data.flag_make_instance_private_behind_public_alb:
         log_error_and_exit(
             "Use of private cert on EC2 cannot work with "
             "`flag_make_instance_private_behind_alb = true`. "
@@ -445,16 +523,12 @@ def verify_alb_settings(data: SimpleNamespace):
 
 
 def verify_wave(data: SimpleNamespace):
-    if (data.flag_use_wave == True) and (data.flag_use_wave_lite == True):
-        log_error_and_exit(
-            "`flag_use_wave` and `flag_use_wave_lite` cannot both be set to true."
-        )
+    """Check Wave / Wave-Lite mutual exclusion and private-cert interaction."""
+    if data.flag_use_wave and data.flag_use_wave_lite:
+        log_error_and_exit("`flag_use_wave` and `flag_use_wave_lite` cannot both be set to true.")
 
-    if data.flag_use_wave_lite == True:
-        if data.flag_use_private_cacert:
-            logger.warning(
-                "Please see documentation to understand how to make private certs work with Wave-Lite."
-            )
+    if data.flag_use_wave_lite and data.flag_use_private_cacert:
+        logger.warning("Please see documentation to understand how to make private certs work with Wave-Lite.")
 
 
 def verify_ssh_access(data: SimpleNamespace):
@@ -493,6 +567,18 @@ def verify_production_deployment(data: SimpleNamespace):
         )
 
 
+def verify_container_registry_credentials(data: SimpleNamespace):
+    """Warn about Harbor registry credential requirements for Platform v26.1+."""
+    if data.tower_container_version >= "v26.1":
+        logger.warning(
+            "Platform v26.1+ images are hosted at cr.seqera.io/enterprise/platform/ and require "
+            "new enterprise Harbor credentials. Credentials for cr.seqera.io/private/nf-tower-enterprise/ "
+            "will not grant access to v26.1+ images. "
+            "Note: pre-v26.1 images are also available at cr.seqera.io/enterprise/platform/ with the new credentials. "
+            "Contact your Seqera representative to obtain updated Harbor credentials."
+        )
+
+
 def verify_insecure_platform(data: SimpleNamespace):
     """Block feature combinations that require HTTPS when HTTPS is disabled."""
     if data.flag_do_not_use_https:
@@ -501,6 +587,7 @@ def verify_insecure_platform(data: SimpleNamespace):
 
         if data.flag_use_wave_lite:
             log_error_and_exit("Wave-Lite requires a secure Seqera Platform endpoint.")
+
 
 def warn_if_entra_id_error_possible(data: SimpleNamespace):
     """Warn that Platform < 25.3 with Entra ID (Azure AD) requires an extra config snippet."""
@@ -513,9 +600,8 @@ def warn_if_entra_id_error_possible(data: SimpleNamespace):
 
 def verify_pipeline_versioning(data: SimpleNamespace):
     """Conduct checks if pipeline versioning is active."""
-    if data.tower_enable_pipeline_versioning:
-        if data.tower_container_version < "v25.3.0":
-            logger.warning("Your Platform version is too old to support pipeline versioning. Must be >= v25.3.0.")
+    if data.tower_enable_pipeline_versioning and data.tower_container_version < "v25.3.0":
+        logger.warning("Your Platform version is too old to support pipeline versioning. Must be >= v25.3.0.")
 
 
 # -------------------------------------------------------------------------------
@@ -538,6 +624,12 @@ if __name__ == "__main__":
     verify_sensitive_keys(data, data_dictionary)
     verify_tfvars_config_dependencies(data)
 
+    # Verify container registry credentials
+    print("\n")
+    logger.info("Verifying container registry credentials")
+    logger.info("-" * 50)
+    verify_container_registry_credentials(data)
+
     # Verify Tower application configurations
     print("\n")
     logger.info("Verifying Tower configurations")
@@ -546,6 +638,11 @@ if __name__ == "__main__":
     verify_docker_daemon_loggin(data)
     verify_email_login_disablement(data)
     verify_workflow_cleanup_enabled(data)
+    verify_data_lineage_enabled(data)
+    verify_aws_instance_credentials_platform_version(data)
+    verify_compute_env_cleanup_platform_version(data)
+    verify_audit_log_v2_platform_version(data)
+    verify_nextflow_parser_v2_advisory(data)
 
     # Verify AWS integrations
     print("\n")
@@ -553,6 +650,7 @@ if __name__ == "__main__":
     logger.info("-" * 50)
     verify_subnet_privacy(data)
     verify_ses_integration(data)
+    verify_pre_existing_role_attachments(data)
     verify_route53_integration(data)
     verify_ingress_and_egress(data, data_dictionary)
     verify_flow_logs(data)

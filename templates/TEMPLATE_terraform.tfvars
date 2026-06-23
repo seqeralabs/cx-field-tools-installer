@@ -40,7 +40,7 @@ aws_region  = "REPLACE_ME"
 aws_profile = "REPLACE_ME"
 
 # TODO(#332): bump to the v26.1.x GA tag before merging. Master supports only v25+.
-tower_container_version = "v25.3.0"
+tower_container_version = "v26.1.3"
 
 
 /*
@@ -228,7 +228,7 @@ to work. e.g:
 flag_use_wave      = false
 flag_use_wave_lite = false
 # TODO(#332): bump to the wave-lite version paired with the v26.1.x release set.
-wave_lite_container_version = "v1.29.1"
+wave_lite_container_version = "v1.33.0"
 
 num_wave_lite_replicas = 2
 wave_server_url        = "wave.seqera.io"
@@ -390,7 +390,7 @@ Enable to allow pipeline optimization.
 flag_enable_groundswell = true
 
 # TODO(#332): bump to the groundswell version paired with the v26.1.x release set.
-swell_container_version = "0.4.6"
+swell_container_version = "0.4.15"
 swell_database_name     = "swell"
 ## swell_db_user                        = "DO_NOT_UNCOMMENT_ME"
 ## swell_db_password                    = "DO_NOT_UNCOMMENT_ME"
@@ -453,6 +453,27 @@ data_studio_ssh_eligible_workspaces           = ""
 flag_studio_enable_path_routing = false
 data_studio_path_routing_url    = "REPLACE_ME_IF_NECESSARY"
 
+# NOTE: In addition to the Studios and Connect proxy variables below, there are additional optional variables that are intentionally omitted from this installer.
+# See Design Decisions #20 and #21 in documentation/design_decisions.md for the full list and rationale.
+
+# Studios - General behaviour (v26.1.0+)
+data_studio_default_lifespan   = "8"   # default lifespan in hours per Studio
+flag_studio_private_by_default = false # make Studios private by default
+
+# Studios - Metrics (v26.1.0+)
+data_studio_metrics_eligible_workspaces = "" # comma-separated workspace IDs; empty = all
+
+# Studios - Wave integration (v26.1.0+)
+# Requires flag_use_wave = true.
+data_studio_wave_disallowed_registries   = "community.wave.seqera.io" # registries blocked as Wave build destinations
+data_studio_wave_custom_image_registry   = ""                         # leave empty to use Wave default
+data_studio_wave_custom_image_repository = ""                         # leave empty to use Wave default (data-studios/<tool>)
+
+# Connect proxy - server config (v0.11.0+)
+connect_management_port     = ""      # port for metrics/readiness endpoints; leave empty to disable
+connect_management_auth_key = ""      # auth key for management endpoints; leave empty if not using management port
+connect_log_level           = "debug" # logging verbosity (debug, info, warn, error)
+
 
 
 # For full list of images Seqera makes available, please see: https://public.cr.seqera.io/
@@ -466,69 +487,96 @@ data_studio_path_routing_url    = "REPLACE_ME_IF_NECESSARY"
 #   4. For the use of custom data studio images, ensure flag_use_wave = true.
 #   5. Acceptable status values are: "recommended", "deprecated", and "experimental". Anything else will be displayed as "unsupported".
 #   6. Current as of Platform v25.2.0, only VSCode, Jupyter, and R will work with path-based Studio routing (not Xpra). This must also be the 0.8.5 client version.
+#   7. Newer VSCode images ship with Docker-in-Docker. This will break AWS Batch CEs using stock AL2 AMIs.
+#        Ref: https://github.com/seqeralabs/studio-vscode/blob/vscode/1.101.2/connect/0.12.0/.seqera/Dockerfile#L93
 
 data_studio_options = {
   # DEPENDENCY
   # DEPRECATION NOTICE (March 13/26): Future versions will not list entries for connect-client v0.9.0.
   # (July 31/25) - `rstudio-...` removed due to license issues.
 
-  vscode-1-101-2-0-9-0 = {
-    qualifier = "VSCODE-1-101-2-0-9-0"
-    icon      = "vscode"
-    tool      = "vscode"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.9.0"
-  },
-  jupyter-4-2-5-0-9-0 = {
-    qualifier = "JUPYTER-4-2-5-0-9-0"
-    icon      = "jupyter"
-    tool      = "jupyter"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.9.0"
-  },
-  ride-2025-04-1-0-9-0 = {
-    qualifier = "RIDE-2025-04-1-0-9-0"
-    icon      = "rstudio"
-    tool      = "rstudio"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.9.0"
-  },
-  xpra-6-2-R2-1-0-9-0 = {
-    qualifier = "XPRA-6-2-R2-1-0-9-0"
-    icon      = "xpra"
-    tool      = "xpra"
-    status    = "deprecated"
-    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.9.0"
-  },
   vscode-1-101-2-0-11-0 = {
     qualifier = "VSCODE-1-101-2-0-11-0"
     icon      = "vscode"
     tool      = "vscode"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.11.0"
   },
   jupyter-4-2-5-0-11-0 = {
     qualifier = "JUPYTER-4-2-5-0-11-0"
     icon      = "jupyter"
     tool      = "jupyter"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.11.0"
   },
   ride-2025-04-1-0-11-0 = {
     qualifier = "RIDE-2025-04-1-0-11-0"
     icon      = "rstudio"
     tool      = "rstudio"
-    status    = "recommended"
+    status    = "deprecated"
     container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.11.0"
   },
-  xpra-6-2-R2-1-0-11-0 = {
-    qualifier = "XPRA-6-2-R2-1-0-11-0"
+  xpra-6-2-0-R2-1-0-11-0 = {
+    qualifier = "XPRA-6-2-0-R2-1-0-11-0"
+    icon      = "xpra"
+    tool      = "xpra"
+    status    = "deprecated"
+    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.11.0"
+  },
+  vscode-1-101-2-0-12-2 = {
+    qualifier = "VSCODE-1-101-2-0-12-2"
+    icon      = "vscode"
+    tool      = "vscode"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-vscode:1.101.2-0.12.2"
+  },
+  jupyter-4-2-5-0-12-2 = {
+    qualifier = "JUPYTER-4-2-5-0-12-2"
+    icon      = "jupyter"
+    tool      = "jupyter"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-jupyter:4.2.5-0.12.2"
+  },
+  ride-2025-04-1-0-12-2 = {
+    qualifier = "RIDE-2025-04-1-0-12-2"
+    icon      = "rstudio"
+    tool      = "rstudio"
+    status    = "recommended"
+    container = "public.cr.seqera.io/platform/data-studio-ride:2025.04.1-0.12.2"
+  },
+  xpra-6-2-0-R2-1-0-12-2 = {
+    qualifier = "XPRA-6-2-0-R2-1-0-12-2"
     icon      = "xpra"
     tool      = "xpra"
     status    = "recommended"
-    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.11.0"
+    container = "public.cr.seqera.io/platform/data-studio-xpra:6.2.0-r2-1-0.12.2"
   }
 }
+
+
+/*
+## ------------------------------------------------------------------------------------
+## Data Lineage - Feature Gated (v26.1.0+)
+## ------------------------------------------------------------------------------------
+Enable Nextflow data lineage tracking. Records the provenance of pipeline runs at
+workflow, task, and file levels.
+
+Currently a public-preview feature; requires Platform v26.1.0+ and Nextflow v25.04+
+(v26.04+ recommended).
+
+NOTES:
+  All workspaces:       data_lineage_allowed_workspaces = ""
+  Specific workspaces:  data_lineage_allowed_workspaces = "12,34,56"
+
+When enabled, the EC2 instance role gains permissions to create/manage S3 buckets
+and SQS queues with the `seqera-lineage-*` prefix, so Platform can auto-provision
+per-workspace lineage infrastructure.
+
+See: https://docs.seqera.io/platform-cloud/data/data-lineage
+*/
+flag_enable_data_lineage        = false
+data_lineage_allowed_workspaces = ""
+
 
 /*
 ## ------------------------------------------------------------------------------------
@@ -557,6 +605,9 @@ This section added to handle new connection string requirements for Tower v24.1.
 */
 db_container_engine = "mysql"
 # TODO(#332): confirm the container DB engine version paired with the v26.1.x release set.
+# NOTE: MySQL 8.0 is approaching end-of-life. See CHANGELOG → 1.8.0 Forward Roadmap
+# Guidance and [#271](https://github.com/seqeralabs/cx-field-tools-installer/issues/271)
+# for the upgrade pathway (shipping out-of-band from this release).
 db_container_engine_version = "8.0"
 
 /*
@@ -582,6 +633,9 @@ WARNING:
 
 db_engine = "mysql"
 # TODO(#332): confirm the RDS engine version & matching param group paired with the v26.1.x release set.
+# NOTE: MySQL 8.0 is approaching end-of-life. See CHANGELOG → 1.8.0 Forward Roadmap
+# Guidance and [#271](https://github.com/seqeralabs/cx-field-tools-installer/issues/271)
+# for the upgrade pathway (shipping out-of-band from this release).
 db_engine_version    = "8.0"
 db_param_group       = "mysql8.0"
 db_instance_class    = "db.m5.large"
@@ -805,7 +859,51 @@ flag_tower_enable_participant_auto_create_user = false
 flag_tower_enable_member_auto_create_user      = false
 
 tower_audit_retention_days = 1095 # 3 years (value in days)
-tower_workflow_cleanup_enabled          = true      # only applicable for AWS Batch
+
+# Audit Log v2 (v26.1.0+)
+# Bundled object configuring Platform's audit-log-v2 behaviour. The `cleanup` sub-object
+# gates the scheduled purge job by its own flag — set `cleanup = { enabled = false }`
+# to disable purging entirely.
+#
+# See: https://docs.seqera.io/platform-enterprise/enterprise/configuration/overview
+tower_audit_log_v2 = {
+  write_mode              = "dual"
+  csv_export_max_logs     = 500000
+  pre_post_change_enabled = false
+  cleanup = {
+    enabled    = true
+    interval   = "5m"
+    delay      = "10s"
+    chunk_size = 1000
+  }
+}
+
+tower_workflow_cleanup_enabled = true # only applicable for AWS Batch
+
+# Compute environment cleanup (v26.1.0+)
+# Bundled object controlling the scheduled job that identifies and deletes compute
+# environments stuck in CREATING or DELETING states. Only active on the cron service
+# container. All sub-fields have sensible defaults and may be omitted.
+#
+# Fields:
+#   - enabled                : run the cleanup job. Default false.
+#   - delay                  : initial delay before the first run (duration). Default "1m".
+#   - interval               : how often the job runs (duration). Default "1h".
+#   - batch_size             : compute environments handled per pass. Default 10.
+#   - time_offset            : skip envs younger than this (duration). Default "60s".
+#   - stuck_creating_timeout : how long in CREATING before considered stuck. Default "1h".
+#   - stuck_deleting_timeout : how long in DELETING before considered stuck. Default "1h".
+#
+# See: https://docs.seqera.io/platform-enterprise/enterprise/configuration/overview
+tower_compute_env_cleanup = {
+  enabled                = false
+  delay                  = "1m"
+  interval               = "1h"
+  batch_size             = 10
+  time_offset            = "60s"
+  stuck_creating_timeout = "1h"
+  stuck_deleting_timeout = "1h"
+}
 
 tower_enable_openapi = true
 
@@ -875,6 +973,13 @@ docker_cidr_range = "172.80.0.0/16"
 ## ------------------------------------------------------------------------------------
 ## seqerakit
 ## ------------------------------------------------------------------------------------
+DEPRECATED as of Release 1.8 — Seqerakit components are no longer actively maintained and
+will be replaced by the Seqera Terraform provider. See `README.md` → "Supported Versions
+& Components". The SSM entry referenced by `secrets_bootstrap_seqerakit` (below) must
+still be created — the installer reads its path at plan time — but its contents may be
+placeholder values if you don't intend to run the seqerakit step
+(`flag_run_seqerakit = false`).
+
 This section is an optional post-configuration activity. Once infrastructure is provisioned
 and the Seqera Platform instance is running, you can create a compute environment and execute
 a small pipeline run to verify if the environment is properly configured.

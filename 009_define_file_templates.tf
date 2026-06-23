@@ -53,11 +53,24 @@ locals {
       data_studio_options             = var.data_studio_options,
       flag_studio_enable_path_routing = var.flag_studio_enable_path_routing,
 
+      data_studio_default_lifespan             = var.data_studio_default_lifespan,
+      flag_studio_private_by_default           = var.flag_studio_private_by_default,
+      data_studio_metrics_eligible_workspaces  = var.data_studio_metrics_eligible_workspaces,
+      data_studio_wave_disallowed_registries   = var.data_studio_wave_disallowed_registries,
+      data_studio_wave_custom_image_registry   = var.data_studio_wave_custom_image_registry,
+      data_studio_wave_custom_image_repository = var.data_studio_wave_custom_image_repository,
+
       flag_allow_aws_instance_credentials = var.flag_allow_aws_instance_credentials,
       tower_enable_openapi                = var.tower_enable_openapi,
 
       tower_enable_pipeline_versioning        = var.tower_enable_pipeline_versioning,
       pipeline_versioning_eligible_workspaces = var.pipeline_versioning_eligible_workspaces,
+
+      flag_enable_data_lineage        = var.flag_enable_data_lineage,
+      data_lineage_allowed_workspaces = var.data_lineage_allowed_workspaces,
+
+      tower_compute_env_cleanup = var.tower_compute_env_cleanup,
+      tower_audit_log_v2        = var.tower_audit_log_v2,
     }
   )
 
@@ -138,6 +151,9 @@ locals {
       tower_connect_server_url    = module.connection_strings.tower_connect_server_url,
       flag_enable_data_studio_ssh = var.flag_enable_data_studio_ssh,
       connect_ssh_key_path        = "/data/ssh-host-key",
+      connect_management_port     = var.connect_management_port,
+      connect_management_auth_key = var.connect_management_auth_key,
+      connect_log_level           = var.connect_log_level,
     }
   )
 
@@ -428,5 +444,3 @@ resource "tls_private_key" "connect_pem" {
 resource "tls_private_key" "connect_ssh_host_key" {
   algorithm = "ED25519"
 }
-
-

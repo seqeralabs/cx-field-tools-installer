@@ -276,6 +276,49 @@ variable "data_studio_options" {
   }))
 }
 
+# Studios general behaviour (v26.1.0+)
+variable "data_studio_default_lifespan" { type = string }
+variable "flag_studio_private_by_default" { type = bool }
+# Studios metrics (v26.1.0+)
+variable "data_studio_metrics_eligible_workspaces" {
+  type = string
+  validation {
+    condition     = var.data_studio_metrics_eligible_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_studio_metrics_eligible_workspaces))
+    error_message = "data_studio_metrics_eligible_workspaces must be empty or a comma-separated list of numeric workspace IDs (e.g., \"123\" or \"123,456,789\")."
+  }
+}
+# Studios Wave integration (v26.1.0+)
+variable "data_studio_wave_disallowed_registries" { type = string }
+variable "data_studio_wave_custom_image_registry" { type = string }
+variable "data_studio_wave_custom_image_repository" { type = string }
+
+# Connect proxy - server config (v0.11.0+)
+variable "connect_management_port" { type = string }
+variable "connect_management_auth_key" { type = string }
+variable "connect_log_level" { type = string }
+
+
+
+# ------------------------------------------------------------------------------------
+# Data Lineage - Feature Gated (v26.1.0+)
+# ------------------------------------------------------------------------------------
+
+variable "flag_enable_data_lineage" {
+  type        = bool
+  default     = false
+  description = "Enable Nextflow data lineage tracking (Platform v26.1.0+). When true, the EC2 instance role gains S3+SQS permissions scoped to seqera-lineage-* resources so Platform can auto-provision per-workspace lineage infrastructure."
+}
+
+variable "data_lineage_allowed_workspaces" {
+  type        = string
+  default     = ""
+  description = "Comma-separated list of numeric workspace IDs allowed to use data lineage. Empty string = all workspaces (when flag_enable_data_lineage = true). Ignored when flag_enable_data_lineage = false."
+  validation {
+    condition     = var.data_lineage_allowed_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_lineage_allowed_workspaces))
+    error_message = "data_lineage_allowed_workspaces must be empty or a comma-separated list of numeric workspace IDs (e.g., \"123\" or \"123,456,789\")."
+  }
+}
+
 
 # ------------------------------------------------------------------------------------
 # Database (Generic)
@@ -477,7 +520,78 @@ variable "flag_tower_enable_participant_auto_create_user" { type = bool }
 variable "flag_tower_enable_member_auto_create_user" { type = bool }
 
 variable "tower_audit_retention_days" { type = number }
+
+# Audit Log v2 (v26.1.0+) — bundled object with nested `cleanup` sub-object.
+# Pre-v26.1 Platform versions ignore the emitted env vars; `check_configuration.py`
+# emits a warning if `tower_container_version < v26.1.0`.
+variable "tower_audit_log_v2" {
+  type = object({
+    write_mode              = optional(string, "dual")
+    csv_export_max_logs     = optional(number, 500000)
+    pre_post_change_enabled = optional(bool, false)
+    cleanup = optional(object({
+      enabled    = optional(bool, true)
+      interval   = optional(string, "5m")
+      delay      = optional(string, "10s")
+      chunk_size = optional(number, 1000)
+    }), {})
+  })
+  default = {}
+
+  validation {
+    condition     = contains(["v1", "v2", "dual"], var.tower_audit_log_v2.write_mode)
+    error_message = "tower_audit_log_v2.write_mode must be one of: \"v1\", \"v2\", \"dual\"."
+  }
+
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_audit_log_v2.cleanup.interval))
+    error_message = "tower_audit_log_v2.cleanup.interval must be a duration like \"5m\", \"30s\", \"1h\", \"1d\" (digits followed by ms|s|m|h|d)."
+  }
+
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_audit_log_v2.cleanup.delay))
+    error_message = "tower_audit_log_v2.cleanup.delay must be a duration like \"10s\", \"5m\", \"1h\", \"1d\" (digits followed by ms|s|m|h|d)."
+  }
+}
+
 variable "tower_workflow_cleanup_enabled" { type = bool }
+
+# Compute environment cleanup (v26.1.0+) — bundled object.
+# Pre-v26.1 Platform versions silently ignore the emitted env vars; `check_configuration.py`
+# emits a warning if cleanup is enabled alongside a pre-v26.1 `tower_container_version`.
+variable "tower_compute_env_cleanup" {
+  type = object({
+    enabled                = optional(bool, false)
+    delay                  = optional(string, "1m")
+    interval               = optional(string, "1h")
+    batch_size             = optional(number, 10)
+    time_offset            = optional(string, "60s")
+    stuck_creating_timeout = optional(string, "1h")
+    stuck_deleting_timeout = optional(string, "1h")
+  })
+  default = {}
+
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_compute_env_cleanup.delay))
+    error_message = "tower_compute_env_cleanup.delay must be a duration like \"1m\", \"30s\", \"1h\", \"1d\" (digits followed by ms|s|m|h|d)."
+  }
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_compute_env_cleanup.interval))
+    error_message = "tower_compute_env_cleanup.interval must be a duration like \"1m\", \"30s\", \"1h\", \"1d\" (digits followed by ms|s|m|h|d)."
+  }
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_compute_env_cleanup.time_offset))
+    error_message = "tower_compute_env_cleanup.time_offset must be a duration like \"1m\", \"30s\", \"1h\", \"1d\" (digits followed by ms|s|m|h|d)."
+  }
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_compute_env_cleanup.stuck_creating_timeout))
+    error_message = "tower_compute_env_cleanup.stuck_creating_timeout must be a duration like \"1m\", \"30s\", \"1h\", \"1d\" (digits followed by ms|s|m|h|d)."
+  }
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_compute_env_cleanup.stuck_deleting_timeout))
+    error_message = "tower_compute_env_cleanup.stuck_deleting_timeout must be a duration like \"1m\", \"30s\", \"1h\", \"1d\" (digits followed by ms|s|m|h|d)."
+  }
+}
 
 variable "tower_enable_openapi" { type = bool }
 

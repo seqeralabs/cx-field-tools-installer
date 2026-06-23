@@ -11,7 +11,7 @@ The Seqera CX team has developed a field tool to simplify deployment in two ways
 
 ## Table of Contents
 - [Disclaimer](#disclaimer)
-- [Supported Seqera Platform Versions](#supported-seqera-platform-versions)
+- [Supported Versions & Components](#supported-versions--components)
 - [Appropriateness Criteria](#appropriateness-criteria)
 - [Prerequisites](#prerequisites)
   - [01: Tool Dependencies](#01-tool-dependencies)
@@ -29,6 +29,8 @@ The Seqera CX team has developed a field tool to simplify deployment in two ways
   - [03: Update your Git repo settings](#03-update-your-git-repo-settings)
   - [04: Initiate Crypto secret rotation](#04-initiate-crypto-secret-rotation-advanced)
   - [05: Using a Private Certificate Authority](#05-using-a-private-certificate-authority-advanced)
+  - [06: Enable EC2 Instance Role Authentication](#06-enable-ec2-instance-role-authentication)
+  - [07: Enable Data Lineage (Platform v26.1.0+)](#07-enable-data-lineage-platform-v2610)
 - [Execution Steps](#execution-steps)
   - [Deployment](#deployment)
   - [Teardown](#teardown)
@@ -60,17 +62,19 @@ For further information on how the project is managed, please see:
     Ensure you are compliant with software licenses.
 
 
-## Supported Seqera Platform Versions
+## Supported Versions & Components
 
-This repository supports **Seqera Platform v25 and later only**. Earlier versions are no longer maintained here.
+This section calls out the version floors and component-lifecycle notices that affect what you can expect from this installer.
 
-If you need to deploy a pre-v25 version of Seqera Platform — for example, to reproduce an existing customer environment — check out the `legacy-final-pre-v25` tag (_created May 6/26_), which marks the final commit that supported the legacy version range:
+- **Seqera Platform v25 or later.** Earlier versions are no longer maintained here. If you need to deploy a pre-v25 version of Seqera Platform — for example, to reproduce an existing customer environment — check out the `legacy-final-pre-v25` tag (_created May 6/26_), which marks the final commit that supported the legacy version range:
 
-```bash
-git checkout legacy-final-pre-v25
-```
+    ```bash
+    git checkout legacy-final-pre-v25
+    ```
 
-New features and fixes are not backported to that tag.
+    New features and fixes are not backported to that tag.
+
+- **Seqerakit components are deprecated (as of Release 1.8, circa 2026-06-17).** The existing `seqerakit_*` tfvars, the post-deployment seqerakit step, and the generated `seqerakit.yml` template remain in the repo to avoid breaking in-flight deployments, but they are **no longer actively maintained** and are not guaranteed to work out of the box. This functionality will be replaced in future with the [seqera Terraform provider](https://registry.terraform.io/providers/seqeralabs/seqera/latest/docs).
 
 
 ## Appropriateness Criteria
@@ -83,7 +87,7 @@ You must meet the following criteria to use this solution successfully.
 5. You can use [Terraform](https://www.terraform.io/) to provision infrastructure.
 6. You use OpenSSH and can maintain a `~/.ssh/config` file.
 7. **(New as of May 21, 2025)** You have access to a local container runtime (_e.g. [Docker](https://www.docker.com/)_).
-8. **(New as of 2026-05-06)** You are deploying Seqera Platform v25 or later. For pre-v25 deployments, see [Supported Seqera Platform Versions](#supported-seqera-platform-versions).
+8. **(New as of 2026-05-06)** You are deploying Seqera Platform v25 or later. For pre-v25 deployments, see [Supported Versions & Components](#supported-versions--components).
 
 <br />
 
@@ -157,6 +161,9 @@ The following configuration actions are encouraged but not mandatory.
 
 #### 06: Enable EC2 Instance Role Authentication
 1. Follow the instructions in [Using AWS EC2 Instance Role](./documentation/setup/optional_allow_instance_credentials.md)
+
+#### 07: Enable Data Lineage (Platform v26.1.0+)
+1. Follow the instructions in [Data Lineage](./documentation/setup/optional_data_lineage.md).
 
 <br />
 

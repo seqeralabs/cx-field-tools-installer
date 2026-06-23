@@ -3,13 +3,13 @@ This page provides instructions on how to populate the secrets payload your Seqe
 
 
 ## NOTE
-In our experience, modifying large JSON objects directly within the AWS Parameter Store console is an unpleasant process which can easily introduce typos in the resulting object. 
+In our experience, modifying large JSON objects directly within the AWS Parameter Store console is an unpleasant process which can easily introduce typos in the resulting object.
 
-To streamline your deployment effort, these templated files have been provided as scratch work files: **They are NOT expected to be checked into source control!!**. Instead, we assume you will make the modifications within your IDE (_taking advantage of its native liniting capabilities_) before executing a one-shot copy directly into the corresponding AWS Parameter Store key. 
+To streamline your deployment effort, these templated files have been provided as scratch work files: **They are NOT expected to be checked into source control!!**. Instead, we assume you will make the modifications within your IDE (_taking advantage of its native liniting capabilities_) before executing a one-shot copy directly into the corresponding AWS Parameter Store key.
 
 
-## WARNING 
-Some deployments may choose not to activate particular platform features (_e.g. Wave-Lite_). Regardless of which features you enable, **ALL** secrets objects must be created in AWS Parameter Store for the application to deploy successfully (_this is a result of how the deployment solution was written)_. 
+## WARNING
+Some deployments may choose not to activate particular platform features (_e.g. Wave-Lite_). Regardless of which features you enable, **ALL** secrets objects must be created in AWS Parameter Store for the application to deploy successfully (_this is a result of how the deployment solution was written)_.
 
 If you do not intend to use a specific feature, we suggest simply retaining the templated text. Although the keys will exist in your Parameter Store, the feature will not be activated until you explicitly choose to do so via your deployment's [terraform.tfvars](../../templates/TEMPLATE_terraform.tfvars) file.
 
@@ -23,20 +23,22 @@ If you do not intend to use a specific feature, we suggest simply retaining the 
 
     2. Replace every instance of `CHANGE_ME` in the file with the values supplied to you during your Seqera onboarding.
 
-    3. Replace every instance of `CHANGE_ME_SEE_SEQERA_DOCS` with your own values. 
-    
+    3. Replace every instance of `CHANGE_ME_SEE_SEQERA_DOCS` with your own values.
+
         Configuration value guidance can be found at [Seqera Platform Enterprise configuration](https://docs.seqera.io/platform/latest/enterprise/configuration/overview).
 
     4. Review each instance of `CHANGE_ME_IF_NECESSARY` and [replace as needed](https://docs.seqera.io/platform/latest/enterprise/configuration/authentication).
 
 
-    **WARNING:** 
+    **WARNING:**
     1. Do not change `ssm_key` entries apart from the application name. Path changes will prevent the application from booting.
 
     2. SSM entries have a limit of 4096 characters. Very long client-supplied values may result in errors when you try to create the entry.
 
 
 ### Prepare Seqerakit Secrets
+
+> **Deprecated as of Release 1.8** — see [Supported Versions & Components](../../README.md#supported-versions--components). The SSM entry must still be created (the installer reads its path at plan time), but its contents may be placeholder values if you don't intend to run the seqerakit step.
 
 1. Modify the [`ssm_sensitive_values_seqerakit.json`](templates/ssm_sensitive_values_seqerakit.json) in the `templates` folder:
 
@@ -46,10 +48,10 @@ If you do not intend to use a specific feature, we suggest simply retaining the 
 
     3. Review each instance of `CHANGE_ME_IF_NECESSARY` and [replace as needed]((https://docs.seqera.io/platform/23.3.0/credentials/overview)).
 
-          An AWS credential set is a mandatory minimum. The `terraform.tfvars` file has flags that can enable/disable expectations regarding the AWS IAM role, Github credential, and Docker credential. 
+          An AWS credential set is a mandatory minimum. The `terraform.tfvars` file has flags that can enable/disable expectations regarding the AWS IAM role, Github credential, and Docker credential.
 
 
-        **WARNING:** 
+        **WARNING:**
         1. Do not change `ssm_key` entries apart from the application name. Path changes will prevent the application from booting.
 
 
@@ -68,10 +70,10 @@ If you do not intend to use a specific feature, we suggest simply retaining the 
 
     1. Perform a find-and-replace on `tower-template` if you select a different application name.
 
-    2. Replace every instance of `CHANGE_ME_SEE_SEQERA_DOCS` with your own values. 
-    
+    2. Replace every instance of `CHANGE_ME_SEE_SEQERA_DOCS` with your own values.
+
         Configuration value guidance can be found at [Seqera Platform Enterprise configuration](https://docs.seqera.io/platform/latest/enterprise/configuration/overview).
 
 
-    **WARNING:** 
+    **WARNING:**
     1. Do not change `ssm_key` entries apart from the application name. Path changes will prevent the application from booting.
