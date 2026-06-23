@@ -457,12 +457,8 @@ data_studio_path_routing_url    = "REPLACE_ME_IF_NECESSARY"
 # See Design Decisions #20 and #21 in documentation/design_decisions.md for the full list and rationale.
 
 # Studios - General behaviour (v26.1.0+)
-data_studio_default_lifespan           = "8"   # default lifespan in hours per Studio
-flag_studio_private_by_default         = false # make Studios private by default
-data_studio_iframe_eligible_workspaces = ""    # comma-separated workspace IDs; empty = all
-
-# Studios - SSH (v26.1.0+)
-tower_ssh_keys_supported_types = "ssh-rsa,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521" # accepted SSH public key types
+data_studio_default_lifespan   = "8"   # default lifespan in hours per Studio
+flag_studio_private_by_default = false # make Studios private by default
 
 # Studios - Metrics (v26.1.0+)
 data_studio_metrics_eligible_workspaces = "" # comma-separated workspace IDs; empty = all
