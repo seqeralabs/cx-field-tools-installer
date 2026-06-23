@@ -6,6 +6,8 @@ import time
 import urllib.error  # TODO: Assess if this is right or should use urllib3?
 import urllib.request  # TODO: Assess if this is right or should use urllib3?
 
+import yaml
+
 import pytest
 from testcontainers.compose import DockerCompose
 from testcontainers.mysql import MySqlContainer
@@ -284,8 +286,8 @@ def test_wave_containers(generated_test_files):
 
     # Generate the Wave-Lite-only content
     wave_content = prepare_wave_only_docker_compose()
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as wave_docker_compose:
-        wave_docker_compose.write(str(wave_content))
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as wave_docker_compose:
+        wave_docker_compose.write(yaml.dump(wave_content))
         wave_docker_compose_path = wave_docker_compose.name
 
     folder_path = os.path.dirname(wave_docker_compose_path)
