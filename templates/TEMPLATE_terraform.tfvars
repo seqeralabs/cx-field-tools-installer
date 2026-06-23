@@ -40,7 +40,7 @@ aws_region  = "REPLACE_ME"
 aws_profile = "REPLACE_ME"
 
 # TODO(#332): bump to the v26.1.x GA tag before merging. Master supports only v25+.
-tower_container_version = "v26.1.2"
+tower_container_version = "v26.1.3"
 
 
 /*
