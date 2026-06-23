@@ -189,14 +189,14 @@ def verify_data_lineage_enabled(data: SimpleNamespace):
 def verify_aws_instance_credentials_platform_version(data: SimpleNamespace):
     """Reject AWS instance credentials on Platform versions with the known bug.
 
-    Platform v26.1.0 through v26.1.2 cant use new AWS credentials (assumed via instance
+    Platform v26.1.0 through v26.1.2 cant use new AWS credentials (assumed via instance 
     role: `flag_allow_aws_instance_credentials = true`). Pre-existing credentials still work.
-    Throwing warning instead of exectpion.
+    Throwing warning instead of exectpion. 
 
-    If you must use an affected version with instance profile
+    If you must use an affected version with instance profile 
     credentials and create a new role, use this API call:
     https://github.com/seqeralabs/cx-field-tools-installer/issues/378#issuecomment-4759501819
-
+    
     Fixed in v26.1.3+. Pre-v26.1 versions (v25.x and earlier)
     are unaffected.
     """
