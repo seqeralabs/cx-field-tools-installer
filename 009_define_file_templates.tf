@@ -55,8 +55,6 @@ locals {
 
       data_studio_default_lifespan             = var.data_studio_default_lifespan,
       flag_studio_private_by_default           = var.flag_studio_private_by_default,
-      data_studio_iframe_eligible_workspaces   = var.data_studio_iframe_eligible_workspaces,
-      tower_ssh_keys_supported_types           = var.tower_ssh_keys_supported_types,
       data_studio_metrics_eligible_workspaces  = var.data_studio_metrics_eligible_workspaces,
       data_studio_wave_disallowed_registries   = var.data_studio_wave_disallowed_registries,
       data_studio_wave_custom_image_registry   = var.data_studio_wave_custom_image_registry,

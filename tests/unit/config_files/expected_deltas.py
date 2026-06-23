@@ -528,7 +528,6 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "TOWER_DATA_STUDIO_TEMPLATES_XPRA-6-2-0-R2-1-0-11-0_STATUS": "deprecated",
             "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES": "DO_NOT_UNCOMMENT",
             # Optional v26.1 vars — renders commented marker when set to empty string (the default).
-            "# TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES_NOT_SET": "DO_NOT_UNCOMMENT",
             "# TOWER_STUDIO_METRICS_ENABLED_WORKSPACES_NOT_SET": "DO_NOT_UNCOMMENT",
         },
         "omitted": {
@@ -540,8 +539,10 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "TOWER_DATA_STUDIO_CONNECT_SSH_PORT",
             "TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS",
             # Active var names are absent — only the _NOT_SET markers render (see present above).
-            "TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES",
             "TOWER_STUDIO_METRICS_ENABLED_WORKSPACES",
+            # iframe and SSH key type vars not exposed by installer — omitted entirely (see Design Decision #21).
+            "TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES",
+            "# TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES_NOT_SET",
             # Wave Studios vars — only emitted when flag_use_wave=true.
             "TOWER_DATA_STUDIO_WAVE_DISALLOWED_REGISTRIES",
             # Vars not exposed by installer — omitted entirely (see Design Decision #21).

@@ -144,12 +144,6 @@ TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN="ipsemlorem"
 
 TOWER_DATA_STUDIO_DEFAULT_LIFESPAN=${data_studio_default_lifespan}
 TOWER_DATA_STUDIO_PRIVATE_STUDIO_BY_DEFAULT=${flag_studio_private_by_default}
-%{ if data_studio_iframe_eligible_workspaces != "" ~}
-TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES="${data_studio_iframe_eligible_workspaces}"
-%{ else ~}
-# TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES_NOT_SET=DO_NOT_UNCOMMENT
-%{ endif ~}
-
 #-------------------------------------------------
 # DATA STUDIO - METRICS
 # ------------------------------------------------
@@ -200,7 +194,7 @@ TOWER_DATA_STUDIO_SSH_ALLOWED_WORKSPACES=
 %{ endif ~}
 TOWER_DATA_STUDIO_CONNECT_SSH_ADDRESS=${data_studio_ssh_address}
 TOWER_DATA_STUDIO_CONNECT_SSH_KEY_FINGERPRINT=${connect_ssh_fingerprint}
-TOWER_SSH_KEYS_SUPPORTED_TYPES=${tower_ssh_keys_supported_types}
+TOWER_SSH_KEYS_SUPPORTED_TYPES=ssh-rsa,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521
 
 %{ else ~}
 
