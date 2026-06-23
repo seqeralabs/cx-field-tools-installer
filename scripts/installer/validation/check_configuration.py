@@ -189,21 +189,22 @@ def verify_data_lineage_enabled(data: SimpleNamespace):
 def verify_aws_instance_credentials_platform_version(data: SimpleNamespace):
     """Reject AWS instance credentials on Platform versions with the known bug.
 
-    Platform v26.1.0 through v26.1.2 cant use new AWS credentials (assumed via instance 
+    Platform v26.1.0 through v26.1.2 cant use new AWS credentials (assumed via instance
     role: `flag_allow_aws_instance_credentials = true`). Pre-existing credentials still work.
-    Throwing warning instead of exectpion. 
+    Throwing warning instead of exectpion.
 
-    If you must use an affected version with instance profile 
+    If you must use an affected version with instance profile
     credentials and create a new role, use this API call:
     https://github.com/seqeralabs/cx-field-tools-installer/issues/378#issuecomment-4759501819
-    
+
     Fixed in v26.1.3+. Pre-v26.1 versions (v25.x and earlier)
     are unaffected.
     """
     broken_versions = {"v26.1.0", "v26.1.1", "v26.1.2"}
     if data.flag_allow_aws_instance_credentials and data.tower_container_version in broken_versions:
         logger.warning(
-            f"{data.tower_container_version} is unable to use instance credentials to assume newly-created and pre-existing IAM Role credentials."
+            f"{data.tower_container_version} is unable to use instance credentials to assume "
+            f"newly-created and pre-existing IAM Role credentials."
             f"IAM User credentials and IAM User credentials that assume an IAM Role still work."
             f"Fix is in v26.1.3+. If you must use the affected version, create new credentials directly via API call."
         )
@@ -241,6 +242,22 @@ def verify_audit_log_v2_platform_version(data: SimpleNamespace):
             "Platform version is < v26.1.0; Audit Log v2 settings (`tower_audit_log_v2`) "
             "will be emitted to `tower.env` but ignored by your Platform version. "
             "Upgrade to v26.1.0+ to use these features."
+        )
+
+
+def verify_nextflow_parser_v2_advisory(data: SimpleNamespace):
+    """Advisory: Platform v26.1.0+ ships with Nextflow 26.04 and the new syntax parser.
+
+    Configured pipelines may need to update their Nextflow parser version setting
+    to remain compatible. Not a hard error — pipelines run in customer-managed
+    compute environments, so the installer cannot validate them. Warn only so the
+    deployer knows to audit their pipeline configurations.
+    """
+    if data.tower_container_version >= "v26.1.0":
+        logger.warning(
+            f"Platform {data.tower_container_version} ships with Nextflow 26.04 and a new syntax parser. "
+            "Configured pipelines may need to update their Nextflow parser version setting to remain compatible. "
+            "See: https://docs.seqera.io/platform-enterprise/launch/advanced#enable-nextflow-syntax-parser-v2"
         )
 
 
@@ -625,6 +642,7 @@ if __name__ == "__main__":
     verify_aws_instance_credentials_platform_version(data)
     verify_compute_env_cleanup_platform_version(data)
     verify_audit_log_v2_platform_version(data)
+    verify_nextflow_parser_v2_advisory(data)
 
     # Verify AWS integrations
     print("\n")
