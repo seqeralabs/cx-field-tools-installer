@@ -441,7 +441,7 @@ NOTES:
 # Studios
 flag_enable_data_studio = true
 # TODO(#332): bump to the data-studio / connect-proxy version paired with the v26.1.x release set.
-data_studio_container_version             = "0.11.1"
+data_studio_container_version             = "0.11.0"
 flag_limit_data_studio_to_some_workspaces = false
 data_studio_eligible_workspaces           = ""
 
@@ -473,7 +473,7 @@ data_studio_wave_disallowed_registries   = "community.wave.seqera.io" # registri
 data_studio_wave_custom_image_registry   = ""                         # leave empty to use Wave default
 data_studio_wave_custom_image_repository = ""                         # leave empty to use Wave default (data-studios/<tool>)
 
-# Connect proxy - server config (v0.11.1+)
+# Connect proxy - server config (v0.11.0+)
 connect_management_port     = ""      # port for metrics/readiness endpoints; leave empty to disable
 connect_management_auth_key = ""      # auth key for management endpoints; leave empty if not using management port
 connect_log_level           = "debug" # logging verbosity (debug, info, warn, error)

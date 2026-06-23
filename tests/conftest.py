@@ -101,7 +101,10 @@ def session_setup():
             f"A backup exists at `{FP.TFVARS_BACKUP}` (likely from a previous test run that crashed "
             f"mid-teardown). Restore it manually: `mv {FP.TFVARS_BACKUP} {FP.TFVARS_BASE}`."
             if backup_exists
-            else f"Copy `templates/TEMPLATE_terraform.tfvars` to `{FP.TFVARS_BASE}` and configure it for your deployment."
+            else (
+                f"Copy `templates/TEMPLATE_terraform.tfvars` to `{FP.TFVARS_BASE}` "
+                f"and configure it for your deployment."
+            )
         )
         pytest.exit(
             f"Precondition failed: `terraform.tfvars` not found at `{FP.TFVARS_BASE}`. "

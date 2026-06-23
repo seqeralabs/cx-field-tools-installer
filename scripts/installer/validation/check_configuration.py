@@ -186,6 +186,29 @@ def verify_data_lineage_enabled(data: SimpleNamespace):
         log_error_and_exit("Data lineage can only be enabled on Platform v26.1.0+")
 
 
+def verify_aws_instance_credentials_platform_version(data: SimpleNamespace):
+    """Reject AWS instance credentials on Platform versions with the known bug.
+
+    Platform v26.1.0 through v26.1.2 cant use new AWS credentials (assumed via instance 
+    role: `flag_allow_aws_instance_credentials = true`). Pre-existing credentials still work.
+    Throwing warning instead of exectpion. 
+
+    If you must use an affected version with instance profile 
+    credentials and create a new role, use this API call:
+    https://github.com/seqeralabs/cx-field-tools-installer/issues/378#issuecomment-4759501819
+    
+    Fixed in v26.1.3+. Pre-v26.1 versions (v25.x and earlier)
+    are unaffected.
+    """
+    broken_versions = {"v26.1.0", "v26.1.1", "v26.1.2"}
+    if data.flag_allow_aws_instance_credentials and data.tower_container_version in broken_versions:
+        logger.warning(
+            f"{data.tower_container_version} is unable to assume newly-created credentials via AWS instance role."
+            f"Pre-exsiting roles still work."
+            f"Fix is in v26.1.3+. If you must use the affected version and create new credentials, do so via direct API call."
+        )
+
+
 def verify_compute_env_cleanup_platform_version(data: SimpleNamespace):
     """Warn when compute-env cleanup is enabled on pre-v26.1 Platform.
 
@@ -599,6 +622,7 @@ if __name__ == "__main__":
     verify_email_login_disablement(data)
     verify_workflow_cleanup_enabled(data)
     verify_data_lineage_enabled(data)
+    verify_aws_instance_credentials_platform_version(data)
     verify_compute_env_cleanup_platform_version(data)
     verify_audit_log_v2_platform_version(data)
 
