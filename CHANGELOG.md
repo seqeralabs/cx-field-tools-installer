@@ -1,7 +1,7 @@
 # CHANGELOG
-> Last updated: Dec 11, 2025
+> Last updated: June 23, 2026
 
-This file was updated as part of the 1.7.0 Release.
+This file was updated as part of the 1.8.0 Release.
 
 ```bash
 # Example:
@@ -9,7 +9,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 ```
 
 
-## 1.8.0 (Upcoming Release -- Q1 2026)
+## 1.8.0 (June 2026)
 - **Forward Roadmap Guidance**
 
     - **MySQL 8.0 → 8.4 upgrade pathway.**
