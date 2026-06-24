@@ -3,7 +3,7 @@
 module "vpc" {
   # https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/latest?tab=dependencies
   source  = "terraform-aws-modules/vpc/aws"
-  version = "5.1.2"
+  version = "5.21.0"
 
   count = var.flag_create_new_vpc == true ? 1 : 0
 
