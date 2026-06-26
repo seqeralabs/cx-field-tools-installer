@@ -9,6 +9,20 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 ```
 
 
+## 1.8.1 (June 2026)
+
+- **Notable Changes**
+
+    - Documentation
+        - Fixed `pipeline_versioning_eligible_workspaces` default value in `TEMPLATE_terraform.tfvars` from `null` to `""`. [`#401`](https://github.com/seqeralabs/cx-field-tools-installer/issues/401)
+
+### Configuration File Changes
+#### `terraform.tfvars`
+| Status | Component | Parameter Name | Description |
+| ------ | --------- | -------------- | ----------- |
+| Modified | Platform | `pipeline_versioning_eligible_workspaces` | Corrected default value from `null` to `""`. Deployers with `null` set should update to `""` to avoid unexpected behaviour in template rendering. [`#401`](https://github.com/seqeralabs/cx-field-tools-installer/issues/401) |
+
+
 ## 1.8.0 (June 2026)
 - **Forward Roadmap Guidance**
 
