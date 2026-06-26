@@ -15,6 +15,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
     - **CX Installer**
         - General
             - Added logger config in `tower.yml` to disable noisy (but benign) JWT validation stack traces.
+            - Security groups now attach to the EC2 instance directly, not only via the launch template — toggling SG-gating flags (e.g., `flag_enable_data_studio_ssh`) after the initial deploy now propagates to running instances on the next `terraform apply`. Affected sites will see a one-time in-place SG attachment update with no instance replacement. [`#404`](https://github.com/seqeralabs/cx-field-tools-installer/issues/404)
 
     - Documentation
         - Fixed `pipeline_versioning_eligible_workspaces` default value in `TEMPLATE_terraform.tfvars` from `null` to `""`. [`#401`](https://github.com/seqeralabs/cx-field-tools-installer/issues/401)

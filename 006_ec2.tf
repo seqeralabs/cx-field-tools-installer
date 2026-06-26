@@ -104,6 +104,14 @@ resource "aws_instance" "ec2" {
 
   subnet_id = module.subnet_collector.subnet_ids_ec2[0]
 
+  # Attach SGs directly to the instance, not only via the launch template.
+  # Launch-template SG changes do not propagate to running instances (LT is creation-time
+  # only, and `version = "$Latest"` is a literal string that produces no Terraform diff),
+  # so toggling SG-gating flags post-deploy was silently a no-op on the live ENI. Setting
+  # `vpc_security_group_ids` here lets the provider call ModifyInstanceAttribute on drift.
+  # See #404.
+  vpc_security_group_ids = local.sg_ec2_final
+
   launch_template {
     # id      = aws_launch_template.lt.id
     id = (var.ec2_update_ami_if_available == true ?
@@ -122,8 +130,16 @@ resource "aws_instance" "ec2" {
   # when it actually hasn't (triggered by `depends_on` or `data` read). See:
   #  - https://github.com/hashicorp/terraform-provider-aws/issues/5011
   #  - https://github.com/hashicorp/terraform/issues/11806
+  #
+  # `launch_template[0].version` is ignored for a different reason: in this provider
+  # version (~> 5.12.0), `launch_template.version` is ForceNew. When the LT is bumped
+  # (e.g., a new SG is added to its `vpc_security_group_ids`), the provider resolves the
+  # `"$Latest"` sentinel and surfaces the v_n -> v_(n+1) drift as a forced replacement of
+  # the running instance. Since SGs are now attached directly via `vpc_security_group_ids`
+  # above (no longer only via the LT), the LT version drift is harmless and the
+  # replacement is undesirable. Suppressing the diff keeps SG updates in-place. See #404.
   lifecycle {
-    ignore_changes = [user_data]
+    ignore_changes = [user_data, launch_template[0].version]
   }
 
   metadata_options {
