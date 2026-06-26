@@ -15,6 +15,9 @@ logger:
     io.micronaut.security: DEBUG
     io.seqera.tower: DEBUG
     io.seqera.tower.security.oidc: DEBUG
+    # See https://github.com/seqeralabs/cx-field-tools-installer/issues/403
+    # Suppresses very noisy (but benign) stack traces in backend when Studios active.
+    io.micronaut.security.token.jwt.nimbus.NimbusReactiveSignatureConfigurationAdapter: 'OFF'
 
 
 mail:
