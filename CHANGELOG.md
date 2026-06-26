@@ -12,6 +12,9 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 ## 1.8.1 (June 2026)
 
 - **Notable Changes**
+    - **CX Installer**
+        - General
+            - Added logger config in `tower.yml` to disable noisy (but benign) JWT validation stack traces.
 
     - Documentation
         - Fixed `pipeline_versioning_eligible_workspaces` default value in `TEMPLATE_terraform.tfvars` from `null` to `""`. [`#401`](https://github.com/seqeralabs/cx-field-tools-installer/issues/401)
