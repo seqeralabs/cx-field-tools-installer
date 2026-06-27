@@ -183,10 +183,16 @@ module "alb" {
 resource "aws_lb" "nlb_ssh" {
   count = var.flag_enable_data_studio_ssh && var.flag_create_load_balancer ? 1 : 0
 
-  name               = "${local.global_prefix}-ssh"
+  name               = "${substr(local.global_prefix, 0, 28)}-ssh"
   load_balancer_type = "network"
   internal           = var.flag_make_instance_private == true || var.flag_private_tower_without_eice == true ? true : false
   subnets            = module.subnet_collector.subnet_ids_alb
+
+  # AWS added security-group support to NLBs in August 2023. The NLB is the public-facing
+  # boundary for Studios SSH — only clients in var.sg_studio_ssh_cidrs can reach it
+  # (enforced by sg_nlb_ssh). The EC2 SG (sg_from_nlb_ssh) only allows traffic from this
+  # SG, not from CIDRs. See 002_security_groups.tf.
+  security_groups = [module.sg_nlb_ssh[0].security_group_id]
 }
 
 resource "aws_lb_target_group" "nlb_ssh" {

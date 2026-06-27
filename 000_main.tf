@@ -132,11 +132,12 @@ locals {
   sg_from_alb_core                      = try([module.sg_from_alb_core[0].security_group_id], [])
   sg_from_alb_connect                   = try([module.sg_from_alb_connect[0].security_group_id], [])
   sg_from_alb_wave                      = try([module.sg_from_alb_wave[0].security_group_id], [])
-  # Studios SSH — see 002_security_groups.tf for why two separate rules are needed
-  # (one for direct EC2 access, one for NLB path; NLBs don't have security groups
-  # so both use CIDR-based rules rather than source_security_group_id)
-  sg_ec2_noalb_ssh = try([module.sg_ec2_noalb_ssh[0].security_group_id], [])
-  sg_from_nlb_ssh  = try([module.sg_from_nlb_ssh[0].security_group_id], [])
+  sg_ec2_noalb_ssh                      = try([module.sg_ec2_noalb_ssh[0].security_group_id], [])
+  # Fix delay where Studio SSH rule doesn't show up until n+1 deploy after NLB created.
+  # Claude suggest "splat" as replacement for try().
+  # Explanation:  Splat gives you [] when count is 0 and [<id>] when count is 1, and propagates unknown values correctly when count is being changed in the current apply. Same shape, no try-on-unknown trap.
+  # sg_from_nlb_ssh  = try([module.sg_from_nlb_ssh[0].security_group_id], [])
+  sg_from_nlb_ssh = module.sg_from_nlb_ssh[*].security_group_id
 
   sg_ec2_final = concat(
     local.sg_ec2_core,
@@ -148,7 +149,6 @@ locals {
     local.sg_from_alb_wave,
     local.sg_ec2_noalb_ssh,
     local.sg_from_nlb_ssh,
-
   )
   ec2_sg_final_raw = join(",", [for sg in local.sg_ec2_final : jsonencode(sg)]) # Needed?
 

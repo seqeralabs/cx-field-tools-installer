@@ -186,6 +186,22 @@ def verify_data_lineage_enabled(data: SimpleNamespace):
         log_error_and_exit("Data lineage can only be enabled on Platform v26.1.0+")
 
 
+def verify_studio_ssh_cidrs_set(data: SimpleNamespace):
+    """Fail if Studios SSH is enabled but no client CIDRs were configured.
+
+    `sg_studio_ssh_cidrs` is the source-of-truth for who can reach Studios SSH (it
+    governs the NLB SG when an LB is used, and the EC2 SG directly when not). An empty
+    list combined with `flag_enable_data_studio_ssh = true` would silently create a
+    deployment with no working SSH access — fail loudly at validation instead.
+    """
+    if data.flag_enable_data_studio_ssh and not data.sg_studio_ssh_cidrs:
+        log_error_and_exit(
+            "flag_enable_data_studio_ssh = true requires `sg_studio_ssh_cidrs` to be set "
+            "to a non-empty list of CIDRs. This list defines which clients can reach "
+            "Studios SSH (port 2222)."
+        )
+
+
 def verify_aws_instance_credentials_platform_version(data: SimpleNamespace):
     """Reject AWS instance credentials on Platform versions with the known bug.
 
@@ -639,6 +655,7 @@ if __name__ == "__main__":
     verify_email_login_disablement(data)
     verify_workflow_cleanup_enabled(data)
     verify_data_lineage_enabled(data)
+    verify_studio_ssh_cidrs_set(data)
     verify_aws_instance_credentials_platform_version(data)
     verify_compute_env_cleanup_platform_version(data)
     verify_audit_log_v2_platform_version(data)
