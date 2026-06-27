@@ -374,6 +374,12 @@ See: https://github.com/terraform-aws-modules/terraform-aws-security-group/blob/
 sg_ingress_cidrs = ["0.0.0.0/0"]
 sg_ssh_cidrs     = ["0.0.0.0/0"]
 
+# CIDRs allowed to reach Studios SSH (port 2222). Governs the NLB's own security group.
+# Studios SSH is NLB-only: flag_enable_data_studio_ssh = true requires
+# flag_create_load_balancer = true. Must be non-empty when Studios SSH is enabled
+# (validated at plan time by check_configuration.py).
+sg_studio_ssh_cidrs = ["0.0.0.0/0"]
+
 sg_egress_eice               = ["all-all"]
 sg_egress_tower_ec2          = ["all-all"]
 sg_egress_tower_alb          = ["all-all"]

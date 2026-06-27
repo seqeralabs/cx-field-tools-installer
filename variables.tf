@@ -208,6 +208,7 @@ variable "vpc_interface_endpoints_batch" { type = list(any) }
 
 variable "sg_ingress_cidrs" { type = list(string) }
 variable "sg_ssh_cidrs" { type = list(string) }
+variable "sg_studio_ssh_cidrs" { type = list(string) }
 
 variable "sg_egress_eice" { type = list(string) }
 variable "sg_egress_tower_ec2" { type = list(string) }
