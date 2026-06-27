@@ -178,6 +178,7 @@ module "alb" {
 resource "aws_lb" "nlb_ssh" {
   count = var.flag_enable_data_studio_ssh && var.flag_create_load_balancer ? 1 : 0
 
+  # Max length 32 characters
   name               = "${substr(local.global_prefix, 0, 28)}-ssh"
   load_balancer_type = "network"
   internal           = var.flag_make_instance_private == true || var.flag_private_tower_without_eice == true ? true : false
