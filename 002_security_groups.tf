@@ -139,51 +139,6 @@ module "sg_from_alb_core" {
 
 
 ## ------------------------------------------------------------------------------------
-## SSH (Studios) — Direct EC2 access (no ALB/NLB)
-##
-## NOTE: This rule is the SSH equivalent of sg_ec2_noalb_connect above.
-##
-## WHY THIS EXISTS:
-##   When flag_create_load_balancer = false, there is no NLB in front of the EC2
-##   instance. SSH traffic on port 2222 must be allowed directly from the permitted
-##   Studios SSH client CIDRs (var.sg_studio_ssh_cidrs) to the EC2 instance.
-##
-##   Docker's 2222:2222 port mapping in docker-compose.yml then forwards the traffic
-##   from the EC2 host port into the connect-proxy container. The security group
-##   operates at the EC2 network level — before Docker sees the traffic.
-##
-## DIFFERENCE FROM sg_from_nlb_ssh (below):
-##   This rule allows direct CIDR access. sg_from_nlb_ssh is used when an NLB is
-##   present (flag_create_load_balancer = true); there the EC2 only accepts traffic
-##   from the NLB's security group, not from CIDRs directly. Both consume
-##   var.sg_studio_ssh_cidrs as the source-of-truth for "who can reach Studios SSH"
-##   — the difference is whether that CIDR list governs the EC2 SG directly (this
-##   resource) or the NLB SG (sg_nlb_ssh, which then fronts the EC2).
-## ------------------------------------------------------------------------------------
-module "sg_ec2_noalb_ssh" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
-
-  count = var.flag_create_load_balancer == false && var.flag_enable_data_studio_ssh == true ? 1 : 0
-
-  name        = "${local.global_prefix}_ec2_direct_ssh"
-  description = "Direct TCP (2222) traffic to EC2 for Studios SSH."
-
-  vpc_id = local.vpc_id
-  ingress_with_cidr_blocks = [
-    {
-      from_port   = 2222
-      to_port     = 2222
-      protocol    = "tcp"
-      description = "Studios SSH client traffic (direct, no NLB)"
-      cidr_blocks = join(",", var.sg_studio_ssh_cidrs)
-    }
-  ]
-  number_of_computed_ingress_with_source_security_group_id = 0
-}
-
-
-## ------------------------------------------------------------------------------------
 ## SSH (Studios) — NLB security group
 ##
 ## WHY THIS EXISTS:
@@ -218,20 +173,13 @@ module "sg_nlb_ssh" {
 
 
 ## ------------------------------------------------------------------------------------
-## SSH (Studios) — via NLB (flag_create_load_balancer = true)
+## SSH (Studios) — EC2 ingress from NLB
 ##
-## NOTE: This rule is the SSH equivalent of sg_from_alb_connect below.
-##
-## WHY THIS EXISTS:
-##   When flag_create_load_balancer = true, SSH traffic arrives at the EC2 instance
-##   via the NLB created in 007_load_balancer.tf. The EC2 security group must allow
-##   inbound TCP 2222 so the NLB can forward connections through.
-##
-## WHY SOURCE-SG-BASED (NOT CIDR):
-##   AWS added SG support for NLBs in August 2023. sg_nlb_ssh (above) is attached to
-##   the NLB and is the public-facing boundary; this SG only allows traffic from
-##   sg_nlb_ssh — no CIDR rules on the EC2. NLB health checks also flow through
-##   the NLB's SG context, so a VPC CIDR carve-out is no longer required.
+## Studios SSH is NLB-only.
+## All Studios SSH traffic enters via the NLB created in 007_load_balancer.tf; this SG allows
+## the EC2 to accept that traffic from the NLB's own security group (sg_nlb_ssh above) —
+## no CIDR-based rules on the EC2. NLB health checks also flow through the NLB SG
+## context, so a VPC-CIDR carve-out is unnecessary.
 ## ------------------------------------------------------------------------------------
 module "sg_from_nlb_ssh" {
   source  = "terraform-aws-modules/security-group/aws"

@@ -160,16 +160,11 @@ module "alb" {
 ## NLB — Data Studios SSH
 ##
 ## WHY A SEPARATE NLB:
-##   The ALB above is a Layer 7 (HTTP/HTTPS) load balancer. It cannot handle raw TCP
-##   traffic. SSH operates at Layer 4 (raw TCP) on port 2222, so it requires a Network
-##   Load Balancer (NLB) to pass TCP connections through to connect-proxy on the EC2
-##   instance.
+##   The ALB above is a Layer 7 (HTTP/HTTPS) load balancer; SSH is raw TCP (Layer 4)
+##   on port 2222 and requires a Network Load Balancer for passthrough to connect-proxy
+##   on the EC2 instance.
 ##
-##   The NLB is only created when flag_enable_data_studio_ssh = true AND
-##   flag_create_load_balancer = true. If flag_create_load_balancer = false, no NLB
-##   is created — instead, a Route53 A record points connect-ssh.<tower_server_url>
-##   directly to the EC2 instance IP (see 008_route53.tf aws_route53_record.ec2_ssh).
-##   SSH still works in that case via direct EC2 access on port 2222.
+##   Studios SSH is NLB-only.
 ##
 ## WHAT IT DOES:
 ##   - Creates an NLB listening on TCP port 2222

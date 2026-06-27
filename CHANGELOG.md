@@ -18,7 +18,8 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Security groups now attach to the EC2 instance directly, not only via the launch template — toggling SG-gating flags (e.g., `flag_enable_data_studio_ssh`) after the initial deploy now propagates to running instances on the next `terraform apply`. Affected sites will see a one-time in-place SG attachment update with no instance replacement. [`#404`](https://github.com/seqeralabs/cx-field-tools-installer/issues/404)
 
     - Security
-        - Restricted Studios SSH (port 2222) ingress so the EC2 SG only accepts traffic from the NLB's own security group instead of from `var.sg_ingress_cidrs` directly. Previously, deployers using `sg_ingress_cidrs = ["0.0.0.0/0"]` for general HTTP traffic were also exposing SSH to the world. New `sg_studio_ssh_cidrs` tfvars variable is the source-of-truth for "who can reach Studios SSH" — governs the NLB SG when an LB is in use, governs the EC2 SG directly when not. `check_configuration.py` fails at plan time if `flag_enable_data_studio_ssh = true` and `sg_studio_ssh_cidrs` is empty. **Existing sites with Studios SSH enabled will see the affected security groups replaced on next apply** (the underlying rules change shape from CIDR-based to source-SG-based).
+        - Restricted Studios SSH (port 2222) ingress so the EC2 SG only accepts traffic from the NLB's own security group instead of from `var.sg_ingress_cidrs` directly. Previously, deployers using `sg_ingress_cidrs = ["0.0.0.0/0"]` for general HTTP traffic were also exposing SSH to the world. New `sg_studio_ssh_cidrs` tfvars variable is the source-of-truth for "who can reach Studios SSH" and governs the NLB's security group. `check_configuration.py` fails at plan time if `flag_enable_data_studio_ssh = true` and `sg_studio_ssh_cidrs` is empty. **Existing sites with Studios SSH enabled will see the affected security groups replaced on next apply** (the underlying rules change shape from CIDR-based to source-SG-based).
+        - **Breaking change.** Studios SSH is now NLB-only. Removed the previously-undocumented direct-to-EC2 path (`module.sg_ec2_noalb_ssh`). No documented or tested deployments used this combo, so impact is expected to be zero, but flagging as breaking for honesty's sake.
 
     - Documentation
         - Fixed `pipeline_versioning_eligible_workspaces` default value in `TEMPLATE_terraform.tfvars` from `null` to `""`. [`#401`](https://github.com/seqeralabs/cx-field-tools-installer/issues/401)
@@ -27,7 +28,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 #### `terraform.tfvars`
 | Status | Component | Parameter Name | Description |
 | ------ | --------- | -------------- | ----------- |
-| New | Studios SSH | `sg_studio_ssh_cidrs` | List of CIDRs allowed to reach Studios SSH on TCP 2222. Required (non-empty) when `flag_enable_data_studio_ssh = true`. When `flag_create_load_balancer = true`, governs the NLB's security group; when `false`, governs the EC2 security group directly. Validated at plan time by `check_configuration.py`. |
+| New | Studios SSH | `sg_studio_ssh_cidrs` | List of CIDRs allowed to reach Studios SSH on TCP 2222. Required (non-empty) when `flag_enable_data_studio_ssh = true`. Governs the NLB's security group. Validated at plan time by `check_configuration.py`. |
 | Modified | Platform | `pipeline_versioning_eligible_workspaces` | Corrected default value from `null` to `""`. Deployers with `null` set should update to `""` to avoid unexpected behaviour in template rendering. [`#401`](https://github.com/seqeralabs/cx-field-tools-installer/issues/401) |
 
 

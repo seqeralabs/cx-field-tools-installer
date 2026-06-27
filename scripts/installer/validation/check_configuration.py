@@ -189,8 +189,7 @@ def verify_data_lineage_enabled(data: SimpleNamespace):
 def verify_studio_ssh_cidrs_set(data: SimpleNamespace):
     """Fail if Studios SSH is enabled but no client CIDRs were configured.
 
-    `sg_studio_ssh_cidrs` is the source-of-truth for who can reach Studios SSH (it
-    governs the NLB SG when an LB is used, and the EC2 SG directly when not). An empty
+    `sg_studio_ssh_cidrs` is the source-of-truth for who can reach Studios SSH. An empty
     list combined with `flag_enable_data_studio_ssh = true` would silently create a
     deployment with no working SSH access — fail loudly at validation instead.
     """
