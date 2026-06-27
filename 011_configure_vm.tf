@@ -20,8 +20,11 @@ resource "null_resource" "ssh_connectivity_check" {
     quiet       = true
     command     = <<-EOT
       set -e
+
+      echo "[$(date)] Ensuring .ssh-control folder exists."
+      mkdir -p ${path.module}/.ssh-control && chmod 700 ${path.module}/.ssh-control
+
       echo "[$(date)] Starting SSH connectivity check for ${var.app_name}"
-      
       counter=0
       until ssh -T ${var.app_name} || [ $counter -gt 60 ]; do
         echo "[$(date)] Waiting for SSH connection to be available."
