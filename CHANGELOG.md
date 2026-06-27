@@ -9,7 +9,35 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 ```
 
 
-## 1.8.1 (June 2026)
+## 1.9.0 (TBD)
+
+- **Notable Changes**
+    - **CX Installer**
+        - General
+            - Enabled SSH `ControlMaster` multiplexing in the rendered SSH config so the 10 `null_resource` provisioners share a single tunnel instead of opening a fresh one each. Roughly halves `terraform apply` wall-clock on private (EICE-tunneled) deployments. Sockets live at `~/.ssh/cm-%C` with a 10-minute persist timeout.
+            - `ec2-user` is now added to the `docker` group at instance launch via `launch_template_ec2.tpl` (cloud-init), before any SSH session opens. Avoids the staleness interaction between `ControlMaster` and mid-apply group membership changes that surfaced as `permission denied … /var/run/docker.sock`. **Existing sites: this is a fresh-deploy fix only.** Running EC2s will not pick up the new user_data without instance replacement (`terraform taint aws_instance.ec2 && terraform apply`); AMI pin is preserved across the replace. In-place workaround: `sudo usermod -aG docker ec2-user` on the host, then `ssh -O exit <host>; rm -f ~/.ssh/cm-*` locally.
+        <br /><br />
+
+        - Security
+            - TBD
+        <br /><br />
+
+        - Documentation
+            - TBD
+        <br /><br />
+
+        - Testing
+            - TBD
+
+
+### Configuration File Changes
+#### `terraform.tfvars`
+| Status | Component | Parameter Name | Description |
+| ------ | --------- | -------------- | ----------- |
+| TBD |  |  |  |
+
+
+## 1.8.1 (July 2026)
 
 - **Notable Changes**
     - **CX Installer**
