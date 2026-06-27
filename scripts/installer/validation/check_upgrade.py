@@ -1,33 +1,14 @@
 #!/usr/bin/env python3
-"""Schema-driven completeness check for `terraform.tfvars` during upgrades.
+"""Check terraform.tfvars completeness and runtime readiness before an upgrade apply.
 
-Compares the customer's `terraform.tfvars` against the authoritative schema in
-`variables.tf` (and the suggested-defaults source `templates/TEMPLATE_terraform.tfvars`)
-and reports:
+Read-only. For each missing variable, the report shows the comment block above
+its TEMPLATE entry plus the full TEMPLATE assignment (including multi-line
+objects) so the customer can paste it into their tfvars without opening
+TEMPLATE_terraform.tfvars themselves.
 
-  - MISSING — variables declared in `variables.tf` but absent from the customer's tfvars.
-              Required variables (no `default` in `variables.tf`) will block
-              `terraform plan`; optional ones won't, but are still flagged so the
-              customer can opt in.
-  - EXTRA   — assignments in the customer's tfvars for variables no longer declared
-              upstream. Terraform will warn or error depending on version.
-  - TYPE    — variables present in both but with a value whose top-level shape does
-              not match the declared type (e.g. upstream changed `string` to `object`).
-
-The script is **strictly read-only**. It never modifies the customer's tfvars,
-TEMPLATE, or any other project file. Output goes to stdout; missing-variable entries
-include a copy-paste-ready snippet harvested from TEMPLATE_terraform.tfvars together
-with the comment block immediately above each declaration.
-
-Exit codes:
-    0 — no required-missing variables and no type issues
-    1 — at least one required variable missing or one type-incompatibility
-        (optional-missing and extra entries do not affect the exit code)
-
-Usage:
-    python scripts/installer/validation/check_upgrade.py
-    python scripts/installer/validation/check_upgrade.py --tfvars path/to/customer.tfvars
-    python scripts/installer/validation/check_upgrade.py --no-color
+Exit code:
+  0 — clean (no required-missing variables, backend OK, auth OK)
+  1 — at least one required variable missing, backend unreachable, or auth failed
 """
 
 import argparse
@@ -39,693 +20,506 @@ import subprocess
 import sys
 
 
-# Locate the project root (..) and inject `scripts/` so we can import `installer.utils.*`.
-BASE_IMPORT_DIR = Path(__file__).resolve().parents[2]
-if str(BASE_IMPORT_DIR) not in sys.path:
-    sys.path.append(str(BASE_IMPORT_DIR))
+# Standard project import-path setup.
+base_import_dir = Path(__file__).resolve().parents[2]
+if str(base_import_dir) not in sys.path:
+    sys.path.append(str(base_import_dir))
 
 from installer.utils.extractors import hcl_to_json  # noqa: E402  (sys.path manipulation above)
 
 
-# Project root — `..` from this file's directory.
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 VARIABLES_TF = PROJECT_ROOT / "variables.tf"
 TEMPLATE_TFVARS = PROJECT_ROOT / "templates" / "TEMPLATE_terraform.tfvars"
-DEFAULT_CUSTOMER_TFVARS = PROJECT_ROOT / "terraform.tfvars"
 MAIN_TF = PROJECT_ROOT / "000_main.tf"
-
-# Static list of AWS regions for sanity-checking `aws_region`. Kept here rather than
-# fetched dynamically because (a) regions change rarely, (b) we don't want this script
-# making API calls before we've verified auth, and (c) the failure mode for a typo is
-# obvious enough that the customer can self-correct.
-_KNOWN_AWS_REGIONS = frozenset(
-    {
-        "us-east-1",
-        "us-east-2",
-        "us-west-1",
-        "us-west-2",
-        "af-south-1",
-        "ap-east-1",
-        "ap-northeast-1",
-        "ap-northeast-2",
-        "ap-northeast-3",
-        "ap-south-1",
-        "ap-south-2",
-        "ap-southeast-1",
-        "ap-southeast-2",
-        "ap-southeast-3",
-        "ap-southeast-4",
-        "ca-central-1",
-        "ca-west-1",
-        "eu-central-1",
-        "eu-central-2",
-        "eu-north-1",
-        "eu-south-1",
-        "eu-south-2",
-        "eu-west-1",
-        "eu-west-2",
-        "eu-west-3",
-        "il-central-1",
-        "me-central-1",
-        "me-south-1",
-        "sa-east-1",
-    }
-)
-
-# `${var.aws_profile}` style interpolation in `provider "aws"` block — used to map
-# provider config back to the tfvars var that supplies it.
-_VAR_INTERPOLATION_RE = re.compile(r"^\$\{var\.([A-Za-z_][A-Za-z0-9_]*)\}$")
+DEFAULT_TFVARS = PROJECT_ROOT / "terraform.tfvars"
 
 
-# ANSI colour helpers — neutralised by `--no-color`.
-class Colour:
-    RED = "\033[31m"
-    GREEN = "\033[32m"
-    YELLOW = "\033[33m"
-    CYAN = "\033[36m"
-    BOLD = "\033[1m"
-    DIM = "\033[2m"
-    RESET = "\033[0m"
-
-    @classmethod
-    def disable(cls) -> None:
-        for attr in ("RED", "GREEN", "YELLOW", "CYAN", "BOLD", "DIM", "RESET"):
-            setattr(cls, attr, "")
+# ANSI colour codes. Zeroed by `disable_colour()` for non-TTY / --no-color.
+RED = "\033[31m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+CYAN = "\033[36m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+RESET = "\033[0m"
 
 
-# -------------------------------------------------------------------------------
-# Schema extraction
-# -------------------------------------------------------------------------------
-_TYPE_EXPR_RE = re.compile(r"^\$\{(.*)\}$", re.DOTALL)
-_TYPE_HEAD_RE = re.compile(r"^([A-Za-z_]+)")
+def disable_colour():
+    """Zero out the ANSI colour globals so all print() calls render plain text.
 
-
-def parse_schema(variables_tf_path: Path) -> dict[str, dict]:
-    """Parse `variables.tf` and return `{name: {type, type_head, has_default, default}}`.
-
-    `type_head` is the outermost type constructor name (`list`, `object`, `string`, …),
-    used for the type-compat check. We deliberately do not recurse into composite type
-    arguments — that would require an HCL type-expression parser and the failure modes
-    we care about (e.g. `string` → `object`) are caught at the top level.
+    Called from main() when stdout isn't a TTY or `--no-color` is passed. Avoids
+    ANSI escape sequences leaking into piped output, log files, or CI logs.
     """
-    parsed = hcl_to_json(str(variables_tf_path))
-    raw = parsed.get("variable", {})
-    schema: dict[str, dict] = {}
-    for name, attrs_list in raw.items():
-        # HCL allows multiple `variable "foo" {}` blocks; hcl2json returns a list. In
-        # this codebase each name is declared once — take the first entry.
+    global RED, GREEN, YELLOW, CYAN, BOLD, DIM, RESET
+    RED = GREEN = YELLOW = CYAN = BOLD = DIM = RESET = ""
+
+
+# -------------------------------------------------------------------------------
+# Loaders
+# -------------------------------------------------------------------------------
+def load_schema():
+    """Return {varname: has_default_bool} from variables.tf.
+
+    hcl2json parses variables.tf into:
+        {"variable": {
+            "<varname>": [{"type": "${string}", "default": "x", "description": "...", ...}],
+            ...
+        }}
+    Each value is a 1-element list (HCL allows multiple blocks with the same name
+    — this codebase never does). We unwrap it and check for a "default" key:
+    present  -> variable is OPTIONAL (Terraform falls back to the default if unset)
+    absent   -> variable is REQUIRED (Terraform refuses to plan without it).
+    """
+    parsed = hcl_to_json(str(VARIABLES_TF))
+    schema = {}
+    for name, attrs_list in parsed.get("variable", {}).items():
         attrs = attrs_list[0] if isinstance(attrs_list, list) and attrs_list else {}
-        type_raw = attrs.get("type", "")
-        # Strip the `${...}` Terraform-expression wrapper hcl2json applies to type exprs.
-        m = _TYPE_EXPR_RE.match(type_raw)
-        type_inner = (m.group(1) if m else type_raw).strip()
-        head_match = _TYPE_HEAD_RE.match(type_inner)
-        type_head = head_match.group(1) if head_match else type_inner
-        schema[name] = {
-            "type": type_inner,
-            "type_head": type_head,
-            "has_default": "default" in attrs,
-            "default": attrs.get("default"),
-            "description": attrs.get("description", ""),
-        }
+        schema[name] = "default" in attrs
     return schema
 
 
-# -------------------------------------------------------------------------------
-# Customer / TEMPLATE assignment extraction
-# -------------------------------------------------------------------------------
-def parse_assignments(tfvars_path: Path) -> dict:
-    """Parse a tfvars file and return a flat `{name: value}` dict."""
-    return hcl_to_json(str(tfvars_path))
+def load_template_lines():
+    """Return {varname: lineno} for each top-level assignment in TEMPLATE_terraform.tfvars.
 
+    Scans for `^<identifier>\\s*=` at column 0 — i.e. assignments with no leading
+    whitespace. This deliberately skips indented assignments (which belong to
+    nested object/map values like `tower_compute_env_cleanup.enabled`), comment
+    lines, and blank lines.
 
-def index_template_lines(template_path: Path) -> dict[str, int]:
-    """Index the line number at which each top-level assignment starts in TEMPLATE.
-
-    Detects assignments by `^<identifier>\\s*=` at column 0 (no indentation). Skips
-    comment lines and indented assignments (which belong to nested object/map values).
+    The line number is used in the report's "(TEMPLATE:<lineno>)" reference and
+    as the starting point for `get_template_comment_context()` and
+    `get_full_assignment()` below.
     """
-    line_index: dict[str, int] = {}
     pattern = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=")
-    text = template_path.read_text()
-    for lineno, line in enumerate(text.splitlines(), start=1):
+    index = {}
+    for lineno, line in enumerate(TEMPLATE_TFVARS.read_text().splitlines(), start=1):
         m = pattern.match(line)
         if m:
-            name = m.group(1)
-            # If the same name appears twice (shouldn't, in a well-formed template),
-            # prefer the first occurrence.
-            line_index.setdefault(name, lineno)
-    return line_index
+            index.setdefault(m.group(1), lineno)
+    return index
 
 
-def get_template_comment_context(template_path: Path, assignment_line: int) -> list[str]:
-    """Walk backwards from an assignment line to collect its leading comment block.
+def get_template_comment_context(line_num):
+    """Return the contiguous comment block immediately above `line_num` in TEMPLATE.
 
-    Stops at:
-      - a blank line
-      - a non-comment line (including the previous variable's assignment)
-      - line 1 (top of file)
+    Walks backwards from `line_num` collecting consecutive `#`-prefixed lines.
+    Stops at the first blank line, non-comment line, or the top of the file.
+    Returned list is in original (top-to-bottom) order with the leading `#`
+    preserved on each line — the caller renders it verbatim under "context:".
 
-    Returns the comment lines in original (top-to-bottom) order, stripped of trailing
-    whitespace but with leading `#` intact for caller formatting.
+    Example for TEMPLATE around line 481:
+        478:   # Connect proxy - server config (v0.11.0+)
+        479:   connect_management_port     = ""    # ...
+        480:   connect_management_auth_key = ""    # ...
+        481:   connect_log_level           = "debug"  # ...
+    Calling with line_num=479 returns ["# Connect proxy - server config (v0.11.0+)"].
+    Calling with line_num=480 returns [] (line above is an assignment, not a comment).
     """
-    text = template_path.read_text()
-    all_lines = text.splitlines()
-    context: list[str] = []
-    # `assignment_line` is 1-based; `all_lines` is 0-based; the line directly above
-    # the assignment is at index `assignment_line - 2`.
-    i = assignment_line - 2
+    all_lines = TEMPLATE_TFVARS.read_text().splitlines()
+    context = []
+    i = line_num - 2  # 1-based line_num -> 0-based index of the line directly above
     while i >= 0:
         stripped = all_lines[i].strip()
-        if not stripped:
-            break
-        if not stripped.startswith("#"):
+        if not stripped or not stripped.startswith("#"):
             break
         context.insert(0, all_lines[i].rstrip())
         i -= 1
     return context
 
 
-# -------------------------------------------------------------------------------
-# Type-compatibility check
-# -------------------------------------------------------------------------------
-def value_top_shape(value) -> str:
-    """Return the top-level shape of a (post-hcl2json) value, matching HCL type heads.
+def get_full_assignment(line_num, max_lines=200):
+    """Return the full TEMPLATE text of an assignment starting at `line_num`.
 
-    hcl2json maps:
-      - HCL string         → Python str   → "string"
-      - HCL number         → Python int/float → "number"
-      - HCL bool           → Python bool  → "bool"
-      - HCL list/tuple     → Python list  → "list"
-      - HCL map/object     → Python dict  → "object" (we conflate map and object — both
-                                                      look the same post-parse and the
-                                                      distinction rarely affects compat)
-      - HCL null           → Python None  → "null"
+    Handles both single-line (`foo = "x"`) and multi-line (`foo = { ... }` or
+    `foo = [ ... ]`) assignments by tracking brace/bracket depth as it walks
+    forward. The first line is always captured; subsequent lines are captured
+    until `{`/`[` count balances `}`/`]` count. `max_lines` is a safety bound
+    against malformed TEMPLATE input.
+
+    Returns lines verbatim from TEMPLATE, INCLUDING any inline `# ...` comments
+    — the caller (_print_missing_variable) strips those via
+    `split_trailing_comment()` so the copy-paste block is pasteable.
+
+    Example for a multi-line object:
+        Input  (starting at the `tower_compute_env_cleanup = {` line):
+            tower_compute_env_cleanup = {
+              enabled  = false  # run the cleanup job
+              ...
+            }
+        Returns the list of all those lines, brace-balanced.
     """
-    if value is None:
-        return "null"
-    if isinstance(value, bool):
-        # NB: must precede `int` check — booleans are ints in Python.
-        return "bool"
-    if isinstance(value, (int, float)):
-        return "number"
-    if isinstance(value, str):
-        return "string"
-    if isinstance(value, list):
-        return "list"
-    if isinstance(value, dict):
-        return "object"
-    return "unknown"
+    all_lines = TEMPLATE_TFVARS.read_text().splitlines()
+    start = line_num - 1  # 1-based -> 0-based
+    if start >= len(all_lines):
+        return []
+
+    depth = 0
+    captured = []
+    for i in range(start, min(start + max_lines, len(all_lines))):
+        line = all_lines[i]
+        captured.append(line)
+        for ch in line:
+            if ch in "{[":
+                depth += 1
+            elif ch in "}]":
+                depth -= 1
+        if depth == 0:
+            # Either a single-line assignment (no braces) or we've closed all opened blocks.
+            break
+    return captured
 
 
-# Top-level heads that are interchangeable for the purposes of this check.
-_HEAD_ALIASES = {
-    "tuple": "list",
-    "set": "list",
-    "map": "object",
-}
+def split_trailing_comment(line):
+    """Split `line` into (code, comment) where comment is None or starts with `#`.
 
+    Naive HCL tokeniser: scans for the first `#` that isn't inside a single- or
+    double-quoted string. Tracks `\\`-escaped quote characters. The code half
+    is rstrip()-ed so removing a trailing comment doesn't leave whitespace.
 
-def normalise_head(head: str) -> str:
-    return _HEAD_ALIASES.get(head, head)
-
-
-def is_type_compatible(value, declared_type_head: str) -> bool:
-    """True if the value's top-level shape matches the declared type's outermost head.
-
-    Treats `any`, `dynamic`, and an empty declared head as wildcards (always compat) —
-    these signal the schema is deliberately permissive.
-    `null` values are always considered compatible because Terraform allows null for
-    any optional variable.
+    Examples:
+        'foo = "bar"        # explanation'  -> ('foo = "bar"', '# explanation')
+        'foo = "x # y"'                     -> ('foo = "x # y"', None)
+        'foo = 42'                          -> ('foo = 42', None)
     """
-    if declared_type_head in {"", "any", "dynamic"}:
-        return True
-    if value is None:
-        return True
-    return normalise_head(value_top_shape(value)) == normalise_head(declared_type_head)
+    in_string = False
+    quote = None
+    for i, ch in enumerate(line):
+        if in_string:
+            if ch == quote and line[i - 1] != "\\":
+                in_string = False
+        elif ch in ('"', "'"):
+            in_string = True
+            quote = ch
+        elif ch == "#":
+            return line[:i].rstrip(), line[i:].strip()
+    return line, None
 
 
 # -------------------------------------------------------------------------------
-# Reporting
+# Checks — each prints its own report block and returns the blocking-error count.
 # -------------------------------------------------------------------------------
-def fmt_default(value) -> str:
-    """Render a default value in a copy-paste-ready form.
+def check_missing_variables(schema, customer, template_lines):
+    """Report variables declared in variables.tf but absent from the customer's tfvars.
 
-    Strings get quoted with double quotes; bools/numbers as-is; null as `null`; lists
-    and objects via a minimal Python `repr` substitute that approximates HCL syntax.
-    For complex defaults (objects with nested structure) the rendering won't be
-    perfectly HCL-formatted, but the customer can compare against the TEMPLATE source
-    line referenced in the report.
+    Inputs:
+        schema:         {varname: has_default_bool}  (from `load_schema()`)
+        customer:       {varname: value}             (raw hcl2json of customer's tfvars)
+        template_lines: {varname: lineno}            (from `load_template_lines()`)
+
+    Splits the missing-variable set into:
+        REQUIRED — no default declared upstream; blocks `terraform plan`. Each
+                   one increments the error counter that drives exit code.
+        OPTIONAL — has a default upstream; informational only, doesn't count
+                   toward the exit code.
+
+    Returns the count of REQUIRED-missing variables.
+
+    Variables within each group (REQUIRED, OPTIONAL) are listed in TEMPLATE
+    order — not alphabetical — so that section headers, master flags, and
+    their dependent keys stay grouped the way the maintainer arranged them.
     """
-    if value is None:
-        return "null"
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if isinstance(value, (int, float)):
-        return str(value)
-    if isinstance(value, str):
-        return f'"{value}"'
-    if isinstance(value, list):
-        return "[" + ", ".join(fmt_default(v) for v in value) + "]"
-    if isinstance(value, dict):
-        if not value:
-            return "{}"
-        # Inline rendering for small objects; falls back to multi-line for clarity if any
-        # value is itself complex.
-        if any(isinstance(v, (list, dict)) for v in value.values()):
-            return "{ … see TEMPLATE for full structure … }"
-        inner = ", ".join(f"{k} = {fmt_default(v)}" for k, v in value.items())
-        return "{ " + inner + " }"
-    return repr(value)
+    missing = set(schema) - set(customer)
+
+    # Sort key: TEMPLATE line number, with anything not in TEMPLATE pushed to the end.
+    def template_order(n):
+        return template_lines.get(n, float("inf"))
+
+    required = sorted([n for n in missing if not schema[n]], key=template_order)
+    optional = sorted([n for n in missing if schema[n]], key=template_order)
+
+    if required:
+        print(f"\n{RED}{BOLD}━━━ Missing — REQUIRED ({len(required)}) ━━━{RESET}")
+        for name in required:
+            _print_missing_variable(name, template_lines, f"{RED}[REQUIRED]{RESET}")
+
+    if optional:
+        print(f"\n{YELLOW}{BOLD}━━━ Missing — OPTIONAL ({len(optional)}) ━━━{RESET}")
+        for name in optional:
+            _print_missing_variable(name, template_lines, f"{YELLOW}[optional]{RESET}")
+
+    return len(required)
 
 
-def print_section_header(title: str, count: int, colour: str) -> None:
-    if count == 0:
-        return
-    print(f"\n{colour}{Colour.BOLD}━━━ {title} ({count}) ━━━{Colour.RESET}")
+def _print_missing_variable(name, template_lines, marker):
+    """Render one missing-variable block to stdout.
 
+    Output layout (per missing variable):
+        [MARKER] <name>  (TEMPLATE:<line>)
+            context:
+                # comment lines harvested from above the TEMPLATE assignment
+                # plus any inline `# ...` comments stripped off assignment lines
+            copy-paste:
+                <assignment text with trailing `# ...` comments removed>
 
-def print_missing(
-    missing: list[str],
-    schema: dict[str, dict],
-    template: dict,
-    template_lines: dict[str, int],
-    template_path: Path,
-    required_only: bool,
-) -> None:
-    selected = [name for name in sorted(missing) if schema[name]["has_default"] is not required_only]
-    title_word = "REQUIRED" if required_only else "OPTIONAL"
-    title_colour = Colour.RED if required_only else Colour.YELLOW
-    print_section_header(f"Missing — {title_word}", len(selected), title_colour)
-    if not selected:
-        return
+    The trailing-comment split is what makes the copy-paste block pasteable
+    verbatim into a tfvars file — explanatory inline comments move into
+    `context:` (informational) instead of cluttering the assignment.
 
-    for name in selected:
-        info = schema[name]
-        template_value = template.get(name)
-        template_line = template_lines.get(name)
-        line_ref = (
-            f"templates/TEMPLATE_terraform.tfvars:{template_line}"
-            if template_line is not None
-            else "not found in TEMPLATE"
-        )
-        suggested = fmt_default(template_value) if template_value is not None else "<no template default>"
-
-        marker = (
-            f"{Colour.RED}[REQUIRED]{Colour.RESET}" if required_only else f"{Colour.YELLOW}[optional]{Colour.RESET}"
-        )
-        print(f"\n  {marker} {Colour.BOLD}{name}{Colour.RESET}")
-        print(f"      type:        {info['type'] or '<not specified>'}")
-        print(f"      template:    {suggested}   {Colour.DIM}({line_ref}){Colour.RESET}")
-
-        # Show the comment block above the template entry, if any.
-        if template_line is not None:
-            ctx = get_template_comment_context(template_path, template_line)
-            if ctx:
-                print(f"      {Colour.DIM}context:{Colour.RESET}")
-                for ctx_line in ctx:
-                    print(f"          {Colour.DIM}{ctx_line}{Colour.RESET}")
-
-        # Copy-paste snippet — only when we have a template value to suggest.
-        if template_value is not None:
-            print(f"      {Colour.CYAN}copy-paste:{Colour.RESET}")
-            print(f"          {name} = {suggested}")
-
-
-def print_extra(extra: list[str]) -> None:
-    print_section_header("Extra — assigned in your tfvars but not declared in variables.tf", len(extra), Colour.YELLOW)
-    if not extra:
-        return
-    for name in sorted(extra):
-        print(f"  {Colour.YELLOW}-{Colour.RESET} {name}")
-    print(
-        f"\n  {Colour.DIM}These variables are no longer declared upstream. Terraform may "
-        f"emit warnings or errors; consider removing them.{Colour.RESET}"
-    )
-
-
-def print_type_issues(issues: list[tuple[str, str, str]]) -> None:
-    print_section_header("Type mismatches", len(issues), Colour.RED)
-    if not issues:
-        return
-    for name, declared, actual in issues:
-        print(f"  {Colour.RED}!{Colour.RESET} {Colour.BOLD}{name}{Colour.RESET}")
-        print(f"      declared (variables.tf): {declared}")
-        print(f"      actual   (your tfvars):  {actual}")
-    print(
-        f"\n  {Colour.DIM}A type mismatch will fail `terraform plan` or apply. "
-        f"Migrate the value to match the declared type.{Colour.RESET}"
-    )
-
-
-# -------------------------------------------------------------------------------
-# Backend + provider extraction (from 000_main.tf)
-# -------------------------------------------------------------------------------
-def parse_main_tf(main_tf_path: Path) -> dict:
-    """Parse 000_main.tf and return its hcl2json-decoded body.
-
-    The shape we care about:
-      out["terraform"][0]["backend"]["local" | "s3"][0] → {path, bucket, key, ...}
-      out["provider"]["aws"][0] → {profile, region, ...}
+    If the variable isn't in TEMPLATE at all (e.g. test-only `use_mocks`),
+    only the header line is printed.
     """
-    return hcl_to_json(str(main_tf_path))
+    line = template_lines.get(name)
+    ref = f" {DIM}(TEMPLATE:{line}){RESET}" if line is not None else f" {DIM}(not in TEMPLATE){RESET}"
+    print(f"\n  {marker} {BOLD}{name}{RESET}{ref}")
 
+    if line is None:
+        return  # No TEMPLATE entry to harvest comment/assignment from.
 
-def extract_backend(main_tf: dict) -> tuple[str, dict]:
-    """Return `(backend_type, backend_config)` from the active (uncommented) backend block.
+    # Comments BEFORE the assignment, plus inline comments harvested below.
+    above = get_template_comment_context(line)
 
-    Returns `("none", {})` if no backend block is declared. Returns the *first* backend
-    type found if multiple are declared (shouldn't happen — Terraform forbids it).
-    """
-    terraform_blocks = main_tf.get("terraform", [])
-    if not terraform_blocks:
-        return "none", {}
-    backend = terraform_blocks[0].get("backend", {})
-    for kind, configs in backend.items():
-        if isinstance(configs, list) and configs:
-            return kind, configs[0]
-        if isinstance(configs, dict):
-            return kind, configs
-    return "none", {}
-
-
-def extract_provider_var_refs(main_tf: dict) -> dict[str, str]:
-    """Return `{provider_attr: tfvars_var_name}` for each `${var.X}`-interpolated value
-    in the `provider "aws"` block.
-
-    Lets us figure out *which* tfvars variable supplies `profile`, `region`, etc.,
-    rather than hard-coding those names here.
-    """
-    providers = main_tf.get("provider", {})
-    aws_configs = providers.get("aws", [])
-    if not aws_configs:
-        return {}
-    cfg = aws_configs[0] if isinstance(aws_configs, list) else aws_configs
-    refs: dict[str, str] = {}
-    for attr, value in cfg.items():
-        if isinstance(value, str):
-            m = _VAR_INTERPOLATION_RE.match(value)
-            if m:
-                refs[attr] = m.group(1)
-    return refs
-
-
-# -------------------------------------------------------------------------------
-# Backend readiness check
-# -------------------------------------------------------------------------------
-def check_backend(backend_type: str, backend_config: dict, customer_tfvars: dict) -> list[tuple[str, str]]:
-    """Return a list of `(level, message)` tuples describing backend readiness.
-
-    `level` is one of `"ok"`, `"warn"`, `"fail"`. Caller decides exit-code impact.
-    """
-    results: list[tuple[str, str]] = []
-
-    if backend_type == "none":
-        results.append(("warn", "No backend block declared in 000_main.tf — Terraform will use ephemeral state."))
-        return results
-
-    if backend_type == "local":
-        rel_path = backend_config.get("path", "terraform.tfstate")
-        abs_path = (PROJECT_ROOT / rel_path).resolve()
-        results.append(("ok", f"Backend: local — path={rel_path}"))
-        if abs_path.exists():
-            size_kb = abs_path.stat().st_size / 1024
-            results.append(("ok", f"State file present at {abs_path} ({size_kb:.1f} KB)"))
+    cleaned_assignment = []
+    inline_comments = []
+    for raw in get_full_assignment(line):
+        code, comment = split_trailing_comment(raw)
+        if comment:
+            cleaned_assignment.append(code)
+            inline_comments.append(comment)
         else:
-            results.append(
-                (
-                    "warn",
-                    f"State file NOT found at {abs_path}. "
-                    "Fresh-deploy this is expected; an upgrade copy-over may be incomplete.",
-                ),
-            )
-        return results
+            cleaned_assignment.append(raw)
 
-    if backend_type == "s3":
-        bucket = backend_config.get("bucket")
-        key = backend_config.get("key")
-        region = backend_config.get("region")
-        profile = backend_config.get("profile")
-        shared_creds = backend_config.get("shared_credentials_file")
-        results.append(("ok", f"Backend: s3 — bucket={bucket} key={key} region={region}"))
-        if profile:
-            results.append(("ok", f"Backend uses explicit profile: {profile}"))
+    context = above + inline_comments
+    if context:
+        print(f"      {DIM}context:{RESET}")
+        for ctx_line in context:
+            print(f"          {DIM}{ctx_line}{RESET}")
+
+    if cleaned_assignment:
+        print(f"      {CYAN}copy-paste:{RESET}")
+        for assn_line in cleaned_assignment:
+            print(f"          {assn_line}")
+
+
+def check_extra_variables(schema, customer):
+    """Report variables in customer's tfvars but not declared in variables.tf.
+
+    Inputs:
+        schema:   {varname: has_default_bool}  (from `load_schema()`)
+        customer: {varname: value}             (raw hcl2json of customer's tfvars)
+
+    Informational only — always returns 0. Terraform itself warns or errors on
+    undeclared variables at plan time (behaviour varies by version); we surface
+    them here so the customer can clean them up proactively during an upgrade.
+    """
+    extra = sorted(set(customer) - set(schema))
+    if not extra:
+        return 0
+
+    print(f"\n{YELLOW}{BOLD}━━━ Extra — assigned but not declared upstream ({len(extra)}) ━━━{RESET}")
+    for name in extra:
+        print(f"  {YELLOW}-{RESET} {name}")
+    print(
+        f"\n  {DIM}These variables are no longer declared in variables.tf. Terraform may warn or error; consider removing.{RESET}"
+    )
+    return 0
+
+
+def check_backend(customer):
+    """Verify the active (uncommented) backend block in 000_main.tf is reachable.
+
+    hcl2json shape of 000_main.tf:
+        {"terraform": [{
+            "backend": {"local"|"s3": [{path|bucket|key|region|profile|...}]},
+            "required_providers": [...],
+            ...
+        }]}
+
+    Branches by backend kind:
+      - local: check the state file exists at the configured path (relative to
+               project root). Missing file is a WARNING, not a failure — fresh
+               deploys legitimately don't have one yet.
+      - s3:    run `aws s3api head-bucket` (using the backend's own `profile`
+               if set, else falling back to the customer's tfvars `aws_profile`).
+               Inaccessible bucket is a FAILURE. Also checks
+               `shared_credentials_file` existence if specified.
+
+    Returns 1 if the backend is unreachable / misconfigured, 0 otherwise.
+    """
+    main_tf = hcl_to_json(str(MAIN_TF))
+    terraform_blocks = main_tf.get("terraform", [])
+    backend = terraform_blocks[0].get("backend", {}) if terraform_blocks else {}
+
+    print(f"\n{CYAN}{BOLD}━━━ Backend readiness ━━━{RESET}")
+
+    if not backend:
+        print(f"  {YELLOW}⚠{RESET} No backend block declared in 000_main.tf — Terraform will use ephemeral state.")
+        return 0
+
+    if "local" in backend:
+        cfg = backend["local"]
+        if isinstance(cfg, list):
+            cfg = cfg[0]
+        rel = cfg.get("path", "terraform.tfstate")
+        state_path = (PROJECT_ROOT / rel).resolve()
+        if state_path.exists():
+            kb = state_path.stat().st_size / 1024
+            print(f"  {GREEN}✓{RESET} Local backend: state file at {state_path} ({kb:.1f} KB)")
+            return 0
+        print(f"  {YELLOW}⚠{RESET} Local backend: state file NOT found at {state_path}.")
+        print(f"      {DIM}Fresh deploy = expected. Upgrade copy-over = check if state file was brought across.{RESET}")
+        return 0
+
+    if "s3" in backend:
+        cfg = backend["s3"]
+        if isinstance(cfg, list):
+            cfg = cfg[0]
+        bucket = cfg.get("bucket")
+        region = cfg.get("region")
+        # Backend's own profile wins; fall back to tfvars `aws_profile` if not set.
+        profile = cfg.get("profile") or customer.get("aws_profile")
+        print(f"  {GREEN}✓{RESET} S3 backend: bucket={bucket} key={cfg.get('key')} region={region}")
+
+        shared_creds = cfg.get("shared_credentials_file")
         if shared_creds:
-            results.append(("ok", f"Backend uses explicit shared_credentials_file: {shared_creds}"))
-            # Best-effort existence check — `~` expansion handled.
             expanded = Path(os.path.expanduser(shared_creds))
             if not expanded.exists():
-                results.append(
-                    ("fail", f"shared_credentials_file does not exist on this host: {expanded}"),
-                )
-        # Verify the bucket itself is reachable. Uses the backend's profile if set,
-        # otherwise the customer's tfvars-provided profile.
-        effective_profile = profile or customer_tfvars.get("aws_profile")
-        results.extend(_check_s3_bucket(bucket, region, effective_profile))
-        return results
+                print(f"  {RED}✗{RESET} shared_credentials_file does not exist: {expanded}")
+                return 1
+            print(f"  {GREEN}✓{RESET} Using shared_credentials_file={expanded}")
 
-    results.append(("warn", f"Unrecognised backend type: {backend_type}"))
-    return results
+        if not bucket:
+            print(f"  {RED}✗{RESET} S3 backend declared but `bucket` is empty.")
+            return 1
 
-
-def _check_s3_bucket(bucket: str | None, region: str | None, profile: str | None) -> list[tuple[str, str]]:
-    """Run `aws s3api head-bucket` to verify the backend bucket is reachable + accessible."""
-    if not bucket:
-        return [("fail", "S3 backend declared but `bucket` is empty.")]
-    cmd = ["aws", "s3api", "head-bucket", "--bucket", bucket]
-    if region:
-        cmd.extend(["--region", region])
-    if profile:
-        cmd.extend(["--profile", profile])
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15, check=False)  # noqa: S603
-    except (FileNotFoundError, PermissionError) as exc:
-        return [("warn", f"`aws` CLI unavailable ({exc.__class__.__name__}) — skipping bucket reachability check.")]
-    except subprocess.TimeoutExpired:
-        return [("fail", f"`aws s3api head-bucket` timed out reaching bucket {bucket}.")]
-    if result.returncode == 0:
-        return [("ok", f"S3 backend bucket {bucket} is reachable.")]
-    err_summary = (result.stderr or result.stdout).strip().splitlines()
-    err_first = err_summary[-1] if err_summary else "(no error message)"
-    return [("fail", f"Cannot access S3 bucket {bucket}: {err_first}")]
-
-
-# -------------------------------------------------------------------------------
-# AWS auth check
-# -------------------------------------------------------------------------------
-def detect_env_auth_conflicts(provider_refs: dict[str, str], customer_tfvars: dict) -> list[str]:
-    """Return human-readable warnings when env vars override/conflict with tfvars-supplied
-    auth config. Returning a string means "show this warning"; empty list means no issues.
-    """
-    warnings: list[str] = []
-    tfvars_profile_var = provider_refs.get("profile")
-    tfvars_profile = customer_tfvars.get(tfvars_profile_var) if tfvars_profile_var else None
-    env_access_key = os.environ.get("AWS_ACCESS_KEY_ID")
-    env_profile = os.environ.get("AWS_PROFILE")
-    env_region = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION")
-
-    if env_access_key:
-        warnings.append(
-            "AWS_ACCESS_KEY_ID is set in your environment. Terraform's AWS provider will "
-            "use those env credentials and ignore the profile in your tfvars. The identity "
-            "reported below reflects the env credentials, not the profile.",
-        )
-    if env_profile and tfvars_profile and env_profile != tfvars_profile:
-        warnings.append(
-            f"AWS_PROFILE env var ({env_profile!r}) differs from tfvars aws_profile "
-            f"({tfvars_profile!r}). The tfvars value wins for `terraform apply`, but ad-hoc "
-            f"`aws` CLI commands you run will follow the env var — easy to be looking at "
-            f"the wrong account during debugging.",
-        )
-    if env_region:
-        tfvars_region_var = provider_refs.get("region")
-        tfvars_region = customer_tfvars.get(tfvars_region_var) if tfvars_region_var else None
-        if tfvars_region and env_region != tfvars_region:
-            warnings.append(
-                f"AWS_REGION env var ({env_region!r}) differs from tfvars aws_region "
-                f"({tfvars_region!r}). Same gotcha as above for ad-hoc `aws` CLI commands.",
+        cmd = ["aws", "s3api", "head-bucket", "--bucket", bucket]
+        if region:
+            cmd.extend(["--region", region])
+        if profile:
+            cmd.extend(["--profile", profile])
+        try:
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=15, check=False)  # noqa: S603
+        except (FileNotFoundError, PermissionError) as exc:
+            print(
+                f"  {YELLOW}⚠{RESET} aws CLI unavailable ({exc.__class__.__name__}) — skipping bucket reachability check."
             )
-    return warnings
+            return 0
+        except subprocess.TimeoutExpired:
+            print(f"  {RED}✗{RESET} head-bucket timed out reaching {bucket}.")
+            return 1
+
+        if r.returncode == 0:
+            print(f"  {GREEN}✓{RESET} S3 bucket {bucket} reachable.")
+            return 0
+        err = (r.stderr or r.stdout).strip().splitlines()
+        print(f"  {RED}✗{RESET} Cannot access S3 bucket {bucket}: {err[-1] if err else '(no error)'}")
+        return 1
+
+    print(f"  {YELLOW}⚠{RESET} Unrecognised backend type: {next(iter(backend))}")
+    return 0
 
 
-def check_aws_auth(profile: str | None, region: str | None) -> tuple[str, str]:
-    """Run `aws sts get-caller-identity` to verify the configured profile/region authenticate.
+def check_aws_auth(customer):
+    """Run `aws sts get-caller-identity` to confirm AWS auth resolves correctly.
 
-    Returns `(level, message)` where `level` is `"ok"`, `"warn"`, or `"fail"`.
-    `"warn"` is reserved for "aws CLI not installed" — we can't check, but don't fail.
+    Uses `aws_profile` and `aws_region` from the customer's tfvars (passed in
+    as the `customer` dict via hcl2json — flat {varname: value}). Before the
+    probe, surfaces two env-var gotchas as warnings:
+      - AWS_ACCESS_KEY_ID set → Terraform's AWS provider will use env credentials
+                                and ignore aws_profile from tfvars.
+      - AWS_PROFILE set and differs from tfvars `aws_profile` → operator's ad-hoc
+                                `aws` commands will target a different profile
+                                than `terraform apply` will.
+
+    Returns 1 on auth failure (sts non-zero / timeout). Returns 0 if the aws
+    CLI isn't available on PATH or is sandbox-blocked — we can't probe in
+    that case, but `terraform plan` will surface the same error later.
     """
+    profile = customer.get("aws_profile")
+    region = customer.get("aws_region")
+
+    print(f"\n{CYAN}{BOLD}━━━ AWS authentication ━━━{RESET}")
+
+    if os.environ.get("AWS_ACCESS_KEY_ID"):
+        print(
+            f"  {YELLOW}⚠{RESET} AWS_ACCESS_KEY_ID is set in your env. Terraform will use env credentials "
+            f"and ignore aws_profile from tfvars. The identity below reflects env credentials.",
+        )
+    env_profile = os.environ.get("AWS_PROFILE")
+    if env_profile and profile and env_profile != profile:
+        print(f"  {YELLOW}⚠{RESET} AWS_PROFILE env ({env_profile!r}) differs from tfvars aws_profile ({profile!r}).")
+
     cmd = ["aws", "sts", "get-caller-identity", "--output", "json"]
     if profile:
         cmd.extend(["--profile", profile])
     if region:
         cmd.extend(["--region", region])
+
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15, check=False)  # noqa: S603
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=15, check=False)  # noqa: S603
     except (FileNotFoundError, PermissionError) as exc:
-        return (
-            "warn",
-            f"`aws` CLI unavailable ({exc.__class__.__name__}) — skipping auth probe. "
-            "Terraform will surface auth errors at plan time.",
+        print(
+            f"  {YELLOW}⚠{RESET} aws CLI unavailable ({exc.__class__.__name__}) — skipping auth probe. "
+            f"Terraform will surface auth errors at plan time.",
         )
+        return 0
     except subprocess.TimeoutExpired:
-        return "fail", "`aws sts get-caller-identity` timed out (>15s). Check VPN/proxy/STS endpoint reachability."
-    if result.returncode == 0:
-        try:
-            ident = json.loads(result.stdout)
-        except json.JSONDecodeError:
-            return "warn", f"sts returned non-JSON output: {result.stdout[:200]!r}"
-        return (
-            "ok",
-            f"Authenticated as {ident.get('Arn', '<unknown>')} (Account: {ident.get('Account', '<unknown>')})",
-        )
-    err = (result.stderr or result.stdout).strip()
-    # Compact the error to the last meaningful line for the summary.
-    err_last = err.splitlines()[-1] if err else "(no error output)"
-    return "fail", f"sts get-caller-identity failed: {err_last}"
+        print(f"  {RED}✗{RESET} sts get-caller-identity timed out (>15s).")
+        return 1
 
-
-# -------------------------------------------------------------------------------
-# Runtime-readiness reporting
-# -------------------------------------------------------------------------------
-_LEVEL_GLYPH = {
-    "ok": ("✓", lambda: Colour.GREEN),
-    "warn": ("⚠", lambda: Colour.YELLOW),
-    "fail": ("✗", lambda: Colour.RED),
-}
-
-
-def print_runtime_line(level: str, message: str) -> None:
-    glyph, colour_fn = _LEVEL_GLYPH.get(level, ("•", lambda: Colour.DIM))
-    print(f"  {colour_fn()}{glyph}{Colour.RESET} {message}")
-
-
-def print_runtime_section(
-    title: str,
-    results: list[tuple[str, str]],
-) -> None:
-    # Tally for the section header coloration.
-    failures = sum(1 for level, _ in results if level == "fail")
-    warnings = sum(1 for level, _ in results if level == "warn")
-    if failures:
-        header_colour = Colour.RED
-    elif warnings:
-        header_colour = Colour.YELLOW
-    else:
-        header_colour = Colour.GREEN
-    print(f"\n{header_colour}{Colour.BOLD}━━━ {title} ━━━{Colour.RESET}")
-    for level, message in results:
-        print_runtime_line(level, message)
+    if r.returncode == 0:
+        ident = json.loads(r.stdout)
+        print(f"  {GREEN}✓{RESET} Authenticated as {ident.get('Arn')} (Account: {ident.get('Account')})")
+        return 0
+    err = (r.stderr or r.stdout).strip().splitlines()
+    print(f"  {RED}✗{RESET} sts get-caller-identity failed: {err[-1] if err else '(no error)'}")
+    return 1
 
 
 # -------------------------------------------------------------------------------
 # Entrypoint
 # -------------------------------------------------------------------------------
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Check terraform.tfvars completeness against variables.tf (read-only).",
-    )
+def main():
+    """CLI entrypoint. Returns the exit code (0 if clean, 1 if blocking issues).
+
+    Sequence:
+      1. Parse args, decide on colour.
+      2. Sanity-check that all input files exist.
+      3. Load the three input sources: schema (variables.tf), customer tfvars,
+         template line index.
+      4. Run each check_* in order. Each prints its own section and returns the
+         count of blocking errors (REQUIRED-missing, backend unreachable, auth
+         failed). Extra-variables is informational only.
+      5. Sum the errors. Non-zero → exit 1.
+    """
+    parser = argparse.ArgumentParser(description="Check tfvars completeness and runtime readiness (read-only).")
     parser.add_argument(
         "--tfvars",
         type=Path,
-        default=DEFAULT_CUSTOMER_TFVARS,
-        help=f"Path to customer's terraform.tfvars (default: {DEFAULT_CUSTOMER_TFVARS}).",
+        default=DEFAULT_TFVARS,
+        help=f"Path to customer's terraform.tfvars (default: {DEFAULT_TFVARS}).",
     )
-    parser.add_argument(
-        "--no-color",
-        action="store_true",
-        help="Disable ANSI colour codes in output.",
-    )
+    parser.add_argument("--no-color", action="store_true", help="Disable ANSI colour codes.")
     args = parser.parse_args()
 
     if args.no_color or not sys.stdout.isatty():
-        Colour.disable()
+        disable_colour()
 
-    for path in (VARIABLES_TF, TEMPLATE_TFVARS, args.tfvars):
-        if not path.exists():
-            print(f"{Colour.RED}Error:{Colour.RESET} required file not found: {path}", file=sys.stderr)
+    for p in (VARIABLES_TF, TEMPLATE_TFVARS, MAIN_TF, args.tfvars):
+        if not p.exists():
+            print(f"{RED}Error:{RESET} required file not found: {p}", file=sys.stderr)
             return 1
 
-    schema = parse_schema(VARIABLES_TF)
-    template = parse_assignments(TEMPLATE_TFVARS)
-    customer = parse_assignments(args.tfvars)
-    template_lines = index_template_lines(TEMPLATE_TFVARS)
+    schema = load_schema()
+    customer = hcl_to_json(str(args.tfvars))
+    template_lines = load_template_lines()
 
-    declared = set(schema.keys())
-    assigned = set(customer.keys())
-
-    missing = sorted(declared - assigned)
-    extra = sorted(assigned - declared)
-
-    type_issues: list[tuple[str, str, str]] = []
-    for name in sorted(declared & assigned):
-        head = schema[name]["type_head"]
-        if not is_type_compatible(customer[name], head):
-            type_issues.append((name, schema[name]["type"], value_top_shape(customer[name])))
-
-    required_missing = [n for n in missing if not schema[n]["has_default"]]
-    optional_missing = [n for n in missing if schema[n]["has_default"]]
-
-    # --- Header / summary ---
-    print(f"{Colour.BOLD}check_upgrade — terraform.tfvars completeness check{Colour.RESET}")
+    print(f"{BOLD}check_upgrade — terraform.tfvars completeness check{RESET}")
     print(f"  schema:   {VARIABLES_TF}")
     print(f"  template: {TEMPLATE_TFVARS}")
     print(f"  tfvars:   {args.tfvars}")
+
+    errors = 0
+    errors += check_missing_variables(schema, customer, template_lines)
+    errors += check_extra_variables(schema, customer)
+    errors += check_backend(customer)
+    errors += check_aws_auth(customer)
+
     print()
-    print(f"  {Colour.BOLD}Summary:{Colour.RESET} ", end="")
-    print(
-        f"{len(required_missing)} required missing, "
-        f"{len(optional_missing)} optional missing, "
-        f"{len(extra)} extra, "
-        f"{len(type_issues)} type mismatch{'es' if len(type_issues) != 1 else ''}.",
-    )
-
-    # --- Detail sections ---
-    print_missing(missing, schema, template, template_lines, TEMPLATE_TFVARS, required_only=True)
-    print_missing(missing, schema, template, template_lines, TEMPLATE_TFVARS, required_only=False)
-    print_extra(extra)
-    print_type_issues(type_issues)
-
-    # --- Runtime readiness (backend + AWS auth) ---
-    runtime_failures = 0
-    if MAIN_TF.exists():
-        main_tf = parse_main_tf(MAIN_TF)
-        backend_type, backend_config = extract_backend(main_tf)
-        provider_refs = extract_provider_var_refs(main_tf)
-
-        backend_results = check_backend(backend_type, backend_config, customer)
-        print_runtime_section("Backend readiness", backend_results)
-        runtime_failures += sum(1 for level, _ in backend_results if level == "fail")
-
-        # Resolve aws_profile and aws_region from tfvars via the provider's `${var.X}` refs.
-        profile_var = provider_refs.get("profile")
-        region_var = provider_refs.get("region")
-        profile = customer.get(profile_var) if profile_var else None
-        region = customer.get(region_var) if region_var else None
-
-        auth_results: list[tuple[str, str]] = []
-        # Env-var conflicts (warnings only).
-        for warning in detect_env_auth_conflicts(provider_refs, customer):
-            auth_results.append(("warn", warning))
-        # Region sanity.
-        if region and region not in _KNOWN_AWS_REGIONS:
-            auth_results.append(
-                (
-                    "warn",
-                    f"aws_region={region!r} is not in this script's known-regions list; verify it's a real AWS region.",
-                )
-            )
-        # The actual probe.
-        level, message = check_aws_auth(profile, region)
-        auth_results.append((level, message))
-        print_runtime_section("AWS authentication (sts get-caller-identity)", auth_results)
-        runtime_failures += sum(1 for lev, _ in auth_results if lev == "fail")
-    else:
-        print(f"\n{Colour.YELLOW}{Colour.BOLD}━━━ Runtime readiness ━━━{Colour.RESET}")
-        print_runtime_line("warn", f"{MAIN_TF} not found — skipping backend + AWS auth checks.")
-
-    print()  # trailing newline before exit
-    if required_missing or type_issues or runtime_failures:
+    if errors:
+        print(f"{RED}{BOLD}check_upgrade: {errors} blocking issue(s) found.{RESET}")
         return 1
+    print(f"{GREEN}{BOLD}check_upgrade: all checks passed.{RESET}")
     return 0
 
 
