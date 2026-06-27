@@ -19,13 +19,6 @@
         # Chown files
         chown -R ec2-user:ec2-user $HOME/target
 
-    - name: Switch primary group to docker to avoid need to logout.
-      # https://stackoverflow.com/questions/49434650/how-to-add-a-user-to-a-group-without-logout-login-bash-script
-      become: true
-      become_user: ec2-user
-      ansible.builtin.shell: |
-        newgrp docker
-
     - name: Reinstall Ansible community docker package
       become: true
       become_user: ec2-user
