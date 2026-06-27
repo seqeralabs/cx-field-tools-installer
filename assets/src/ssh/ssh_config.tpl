@@ -3,6 +3,10 @@ Host ${app_name}
     Hostname ${dns_instance_ip}
     User ${user}
     IdentityFile ${pemfile}
+    # Multiplex over a single master tunnel — subsequent ssh/scp invocations skip the SSH/EICE handshake.
+    ControlMaster auto
+    ControlPath ~/.ssh/cm-%C
+    ControlPersist 10m
     StrictHostKeyChecking no
     # Explicit mitigation for CVE-2025-26465. See: https://github.com/seqeralabs/cx-field-tools-installer/issues/180
     VerifyHostKeyDNS no
@@ -12,6 +16,10 @@ Host ${app_name}
     User ${user}
     IdentityFile ${pemfile}
     ProxyCommand aws --region ${region} --profile ${profile} ec2-instance-connect open-tunnel --instance-id %h
+    # Multiplex over a single master tunnel — subsequent ssh/scp invocations skip the SSH/EICE handshake.
+    ControlMaster auto
+    ControlPath ~/.ssh/cm-%C
+    ControlPersist 10m
     StrictHostKeyChecking no
     # Explicit mitigation for CVE-2025-26465. See: https://github.com/seqeralabs/cx-field-tools-installer/issues/180
     VerifyHostKeyDNS no
