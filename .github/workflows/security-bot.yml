@@ -54,8 +54,9 @@ jobs:
               timeout-minutes: 60
               with:
                   comment-pr: true
-                  anthropic_api_key: ${{ secrets.ENG_ANTHROPIC_API_KEY }}
-                  timeout_minutes: "60" # TODO: Why is timeout here again?
+                  # anthropic_api_key: ${{ secrets.ENG_ANTHROPIC_API_KEY }}
+                  claude-api-key: ${{ secrets.ENG_ANTHROPIC_API_KEY }}
+                  # timeout_minutes: "60" # TODO: Why is timeout here again?
                   # TODO: Build this out later
                   settings: |
                       {
