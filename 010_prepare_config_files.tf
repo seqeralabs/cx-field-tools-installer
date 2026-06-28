@@ -14,7 +14,7 @@ resource "null_resource" "generate_independent_config_files" {
 
       set -e
 
-      # NOTE: 
+      # NOTE:
       #  - DO NOT `cd <PATH>` or else that will set very subsequent path.module to folder cd-ed to.
       #  - DONT be clever. Leave paths long, dumb, and relative to PROJECT_ROOT (unless absoutely necessary like certs)
 
@@ -182,9 +182,17 @@ resource "null_resource" "aws_batch_forge" {
 
 
 ## ------------------------------------------------------------------------------------
-## Flag for file transfer to start
+## Gate for VM-side pipeline
+##
+## Acts as both:
+##   - A barrier that waits for all asset-generation steps to complete (depends_on).
+##   - The single `count` gate for the VM-side pipeline. Downstream resources in
+##     011_configure_vm.tf derive their count from `length(null_resource.allow_file_copy_to_start)`
+##     so the gate is defined in exactly one place.
 # -------------------------------------------------------------------------------------
 resource "null_resource" "allow_file_copy_to_start" {
+  count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
+
   triggers = { always_run = "${timestamp()}" }
 
   depends_on = [

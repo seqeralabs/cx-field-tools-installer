@@ -1,103 +1,63 @@
 /* NOTE
-June 28/26: Re-monolithised the mid-pipeline stages back into a single null_resource
-that delegates to `assets/src/bash/remote/orchestrate.sh` on the host. The orchestrator
-wraps each stage in bracketed log markers (STAGE START / OK / FAILED), so failure
-attribution survives despite the collapse — the original reason for atomising into
-8 null_resources is now solved at the script level instead of the Terraform level.
+June 28/26: Collapsed the VM-side pipeline into ONE null_resource. Failure attribution
+moves entirely to bracketed log markers — both at the local stages here (ssh_probe /
+file_transfer / remote_orchestrator) and at the remote orchestrator (see
+`assets/src/bash/remote/orchestrate.sh`).
 
-The first two null_resources (ssh_connectivity_check, file_transfer) remain as
-separate Terraform-side steps: they're local-side prerequisites that can't be folded
-into a remote orchestrator (the orchestrator script doesn't exist on the host until
-file_transfer completes).
+The gate that decides whether the VM-side pipeline runs at all is
+`var.flag_vm_copy_files_to_instance`. Same expression is used on
+`null_resource.allow_file_copy_to_start` in 010_prepare_config_files.tf (the
+asset-generation barrier).
 
 See https://github.com/seqeralabs/cx-field-tools-installer/issues/410.
-
-Historical note (July 28/25): the original monolithic resource was split into 10
-sequential null_resources to improve failure attribution. That trade-off is now
-unnecessary because orchestrate.sh emits structured stage markers — see the
-on-host log at /home/ec2-user/tower-installer-logs/apply-*.log for forensics.
 */
 
 ## ------------------------------------------------------------------------------------
-## SSH Connectivity Check (local-side prerequisite)
+## VM-side pipeline — probe SSH, copy files, run remote orchestrator.
+##
+## Three local-side phases bracketed by STAGE START / STAGE OK markers (same
+## convention as orchestrate.sh on the host):
+##   1. ssh_probe          : poll the EC2 over SSH until reachable
+##   2. file_transfer      : scp assets/target/ to /home/ec2-user/target on the host
+##   3. remote_orchestrator: ssh + bash orchestrate.sh on the host (full Ansible reconcile)
+##
+## On failure, `set -e` aborts. The last STAGE START line without a matching
+## STAGE OK identifies the failing phase. The remote orchestrator's own log at
+## /home/ec2-user/tower-installer-logs/apply-*.log provides further detail for
+## any failure that happens once it's running.
 ## ------------------------------------------------------------------------------------
-resource "null_resource" "ssh_connectivity_check" {
+resource "null_resource" "configure_vm" {
   count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
 
   triggers   = { always_run = "${timestamp()}" }
   depends_on = [null_resource.allow_file_copy_to_start]
 
   provisioner "local-exec" {
-    quiet       = true
+    quiet       = false # let stage markers stream to terraform output
     command     = <<-EOT
       set -e
 
-      echo "[$(date)] Ensuring .ssh-control folder exists."
+      # --- Phase 1: SSH connectivity probe ---
+      echo "==== STAGE START: ssh_probe ===="
       mkdir -p ${path.module}/.ssh-control && chmod 700 ${path.module}/.ssh-control
-
-      echo "[$(date)] Starting SSH connectivity check for ${var.app_name}"
       counter=0
       until ssh -T ${var.app_name} || [ $counter -gt 60 ]; do
         echo "[$(date)] Waiting for SSH connection to be available."
         sleep 5
         counter=$((counter+5))
       done
+      echo "==== STAGE OK:    ssh_probe ===="
 
-      echo "[$(date)] SSH connectivity established successfully"
-    EOT
-    interpreter = ["/bin/bash", "-c"]
-  }
-}
-
-## ------------------------------------------------------------------------------------
-## File Transfer (local-side prerequisite — ships assets/target/ including orchestrate.sh)
-## ------------------------------------------------------------------------------------
-resource "null_resource" "file_transfer" {
-  count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
-
-  triggers   = { always_run = "${timestamp()}" }
-  depends_on = [null_resource.ssh_connectivity_check]
-
-  provisioner "local-exec" {
-    quiet       = true
-    command     = <<-EOT
-      set -e
-      echo "[$(date)] Starting file transfer to ${var.app_name}"
-      echo "[$(date)] Purging old target folder on remote VM"
+      # --- Phase 2: File transfer ---
+      echo "==== STAGE START: file_transfer ===="
       ssh -T ${var.app_name} 'cd /home/ec2-user && rm -rf target || true'
-
-      echo "[$(date)] Transferring new target folder"
       scp -r assets/target ${var.app_name}:/home/ec2-user/target
-      echo "[$(date)] File transfer completed successfully"
-    EOT
-    interpreter = ["/bin/bash", "-c"]
-  }
-}
+      echo "==== STAGE OK:    file_transfer ===="
 
-## ------------------------------------------------------------------------------------
-## Configure VM — single remote orchestrator step
-##
-## Replaces the previous chain of host_configuration, ansible_setup, system_packages,
-## update_configuration_files, pull_containers_run_tower, wait_for_tower,
-## patch_groundswell, run_seqerkit.
-##
-## The remote orchestrate.sh script prints per-stage markers to stdout and to a
-## persistent log file at /home/ec2-user/tower-installer-logs/apply-<UTC>.log. If a
-## stage fails, the last "STAGE FAILED" line names the failing stage and exit code.
-## ------------------------------------------------------------------------------------
-resource "null_resource" "configure_vm" {
-  count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
-
-  triggers   = { always_run = "${timestamp()}" }
-  depends_on = [null_resource.file_transfer]
-
-  provisioner "local-exec" {
-    quiet       = false # let orchestrate.sh's stage markers stream to terraform output
-    command     = <<-EOT
-      set -e
-      echo "[$(date)] Invoking remote orchestrator on ${var.app_name}"
+      # --- Phase 3: Remote orchestrator ---
+      echo "==== STAGE START: remote_orchestrator ===="
       ssh -T ${var.app_name} 'RUN_SEQERAKIT=${var.flag_run_seqerakit} bash /home/ec2-user/target/bash/remote/orchestrate.sh'
-      echo "[$(date)] Remote orchestrator completed successfully"
+      echo "==== STAGE OK:    remote_orchestrator ===="
     EOT
     interpreter = ["/bin/bash", "-c"]
   }
