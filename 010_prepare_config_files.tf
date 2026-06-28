@@ -138,7 +138,10 @@ resource "null_resource" "generate_config_files_with_dependencies" {
 ##         Use count and local shell rather than local_file resource.
 ## ------------------------------------------------------------------------------------
 resource "null_resource" "aws_batch_manual" {
-  count = var.seqerakit_aws_use_forge == false && var.seqerakit_aws_use_batch == true ? 1 : 0
+  count = (
+    var.flag_run_seqerakit == true && var.seqerakit_aws_use_forge == false && var.seqerakit_aws_use_batch == true ?
+    1 : 0
+  )
 
   triggers = { always_run = "${timestamp()}" }
   depends_on = [
@@ -157,7 +160,10 @@ resource "null_resource" "aws_batch_manual" {
 
 
 resource "null_resource" "aws_batch_forge" {
-  count = var.seqerakit_aws_use_forge == true && var.seqerakit_aws_use_batch == true ? 1 : 0
+  count = (
+    var.flag_run_seqerakit == true && var.seqerakit_aws_use_forge == true && var.seqerakit_aws_use_batch == true ?
+    1 : 0
+  )
 
   triggers = { always_run = "${timestamp()}" }
   depends_on = [
