@@ -396,6 +396,8 @@ locals {
 
       app_name = var.app_name,
       profile  = var.aws_profile,
+
+      ssh_control_path = "${path.module}/.ssh-control",
     }
   )
 

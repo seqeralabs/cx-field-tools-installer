@@ -12,8 +12,15 @@ write_files:
     content: |
       #!/usr/bin/env bash
       set -euo pipefail
-      
+
       exec > >(tee /var/log/tower-forge.log|logger -t TowerForge -s 2>/dev/console) 2>&1
+
+      # Pre-create docker group and add ec2-user before anything else so that
+      # any SSH session — including the ControlMaster opened by Terraform's
+      # provisioners — inherits the docker group at auth time. Docker (installed
+      # later by Ansible) reuses the existing group. See issue #XYZ.
+      groupadd -f docker
+      usermod -aG docker ec2-user
 
       ## Install packages
       yum update -y

@@ -90,10 +90,8 @@ resource "aws_route53_record" "ec2_connect" {
 }
 
 
-# Tower Connect SSH
-# NLB record (flag_create_load_balancer = true): points to the NLB for TCP passthrough on port 2222.
-# EC2 record (flag_create_load_balancer = false): points directly to the EC2 instance IP.
-# Both resolve to connect-ssh.<tower_server_url>, which Platform shows users as the SSH address.
+# Tower Connect SSH — NLB-only path. Resolves connect-ssh.<tower_server_url> to the NLB
+# created in 007_load_balancer.tf for TCP passthrough on port 2222.
 resource "aws_route53_record" "nlb_ssh" {
   count = local.dns_create_alb_record == true && var.flag_enable_data_studio_ssh == true ? 1 : 0
 
@@ -106,17 +104,6 @@ resource "aws_route53_record" "nlb_ssh" {
     zone_id                = aws_lb.nlb_ssh[0].zone_id
     evaluate_target_health = true
   }
-}
-
-resource "aws_route53_record" "ec2_ssh" {
-  count = local.dns_create_ec2_record == true && var.flag_enable_data_studio_ssh == true ? 1 : 0
-
-  zone_id = local.dns_zone_id
-  name    = module.connection_strings.tower_connect_ssh_dns
-  type    = "A"
-
-  ttl     = "5"
-  records = [local.dns_instance_ip]
 }
 
 
