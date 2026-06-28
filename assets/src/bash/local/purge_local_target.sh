@@ -30,5 +30,7 @@ find $TARGET -name '*.tpl' -delete
 # Purge unnecessary folders from target
 rm -rf $TARGET/seqerakit/compute-envs   || true
 
-# Copy over static Bash script
+# Copy over static Bash scripts
 cp -R $SRC/bash/remote/codecommit_create_credential.sh $TARGET/bash/remote/
+cp -R $SRC/bash/remote/orchestrate.sh $TARGET/bash/remote/
+chmod +x $TARGET/bash/remote/orchestrate.sh
