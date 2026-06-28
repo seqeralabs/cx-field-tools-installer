@@ -1,14 +1,25 @@
 /* NOTE
-July 28/25: This was originally a monolithic resource, with all Bash commands stored within for convenience.
+June 28/26: Re-monolithised the mid-pipeline stages back into a single null_resource
+that delegates to `assets/src/bash/remote/orchestrate.sh` on the host. The orchestrator
+wraps each stage in bracketed log markers (STAGE START / OK / FAILED), so failure
+attribution survives despite the collapse — the original reason for atomising into
+8 null_resources is now solved at the script level instead of the Terraform level.
 
-While useful from an administrative view, had coarse runtime granularity -- you could not easily see 
-what command was executing and stack traces from failed executions.
+The first two null_resources (ssh_connectivity_check, file_transfer) remain as
+separate Terraform-side steps: they're local-side prerequisites that can't be folded
+into a remote orchestrator (the orchestrator script doesn't exist on the host until
+file_transfer completes).
 
-Accepting repetitive boilerplate in return for finer granularity and more visibility.
+See https://github.com/seqeralabs/cx-field-tools-installer/issues/410.
+
+Historical note (July 28/25): the original monolithic resource was split into 10
+sequential null_resources to improve failure attribution. That trade-off is now
+unnecessary because orchestrate.sh emits structured stage markers — see the
+on-host log at /home/ec2-user/tower-installer-logs/apply-*.log for forensics.
 */
 
 ## ------------------------------------------------------------------------------------
-## SSH Connectivity Check
+## SSH Connectivity Check (local-side prerequisite)
 ## ------------------------------------------------------------------------------------
 resource "null_resource" "ssh_connectivity_check" {
   count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
@@ -31,7 +42,7 @@ resource "null_resource" "ssh_connectivity_check" {
         sleep 5
         counter=$((counter+5))
       done
-      
+
       echo "[$(date)] SSH connectivity established successfully"
     EOT
     interpreter = ["/bin/bash", "-c"]
@@ -39,7 +50,7 @@ resource "null_resource" "ssh_connectivity_check" {
 }
 
 ## ------------------------------------------------------------------------------------
-## File Transfer
+## File Transfer (local-side prerequisite — ships assets/target/ including orchestrate.sh)
 ## ------------------------------------------------------------------------------------
 resource "null_resource" "file_transfer" {
   count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
@@ -64,168 +75,29 @@ resource "null_resource" "file_transfer" {
 }
 
 ## ------------------------------------------------------------------------------------
-## Host Configuration
+## Configure VM — single remote orchestrator step
+##
+## Replaces the previous chain of host_configuration, ansible_setup, system_packages,
+## update_configuration_files, pull_containers_run_tower, wait_for_tower,
+## patch_groundswell, run_seqerkit.
+##
+## The remote orchestrate.sh script prints per-stage markers to stdout and to a
+## persistent log file at /home/ec2-user/tower-installer-logs/apply-<UTC>.log. If a
+## stage fails, the last "STAGE FAILED" line names the failing stage and exit code.
 ## ------------------------------------------------------------------------------------
-resource "null_resource" "host_configuration" {
+resource "null_resource" "configure_vm" {
   count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
 
   triggers   = { always_run = "${timestamp()}" }
   depends_on = [null_resource.file_transfer]
 
   provisioner "local-exec" {
-    quiet       = true
+    quiet       = false # let orchestrate.sh's stage markers stream to terraform output
     command     = <<-EOT
       set -e
-      echo "[$(date)] Starting host configuration for ${var.app_name}"
-      ssh -T ${var.app_name} '/bin/bash /home/ec2-user/target/bash/remote/cleanse_and_configure_host.sh'
-      echo "[$(date)] Host configuration completed successfully"
-    EOT
-    interpreter = ["/bin/bash", "-c"]
-  }
-}
-
-## ------------------------------------------------------------------------------------
-## Ansible Setup
-## ------------------------------------------------------------------------------------
-resource "null_resource" "ansible_setup" {
-  count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
-
-  triggers   = { always_run = "${timestamp()}" }
-  depends_on = [null_resource.host_configuration]
-
-  provisioner "local-exec" {
-    quiet       = true
-    command     = <<-EOT
-      set -e
-      echo "[$(date)] Waiting for Ansible to be ready on ${var.app_name}"
-      ssh -T ${var.app_name} 'cd ${local.playbook_dir} && chmod u+x 00_wait_for_ansible.sh && ./00_wait_for_ansible.sh'
-      echo "[$(date)] Ansible setup completed successfully"
-    EOT
-    interpreter = ["/bin/bash", "-c"]
-  }
-}
-
-## ------------------------------------------------------------------------------------
-## System Packages Installation
-## ------------------------------------------------------------------------------------
-resource "null_resource" "system_packages" {
-  count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
-
-  triggers   = { always_run = "${timestamp()}" }
-  depends_on = [null_resource.ansible_setup]
-
-  provisioner "local-exec" {
-    quiet       = true
-    command     = <<-EOT
-      set -e
-      echo "[$(date)] Loading System Packages on ${var.app_name}"
-      ssh -T ${var.app_name} 'set -e && cd ${local.playbook_dir} && ansible-playbook -i inventory.ini 01_load_system_packages.yml'
-      echo "[$(date)] System packages installation completed successfully"
-    EOT
-    interpreter = ["/bin/bash", "-c"]
-  }
-}
-
-## ------------------------------------------------------------------------------------
-## Update Configuration Files
-## ------------------------------------------------------------------------------------
-resource "null_resource" "update_configuration_files" {
-  count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
-
-  triggers   = { always_run = "${timestamp()}" }
-  depends_on = [null_resource.system_packages]
-
-  provisioner "local-exec" {
-    quiet       = true
-    command     = <<-EOT
-      set -e
-      echo "[$(date)] Updating Configuration Files on ${var.app_name}"
-      ssh -T ${var.app_name} 'cd ${local.playbook_dir} && ansible-playbook -i inventory.ini  02_update_file_configurations.yml'
-      echo "[$(date)] Configuration files updated successfully"
-    EOT
-    interpreter = ["/bin/bash", "-c"]
-  }
-}
-
-## ------------------------------------------------------------------------------------
-## Pull Containers and Run Tower
-## ------------------------------------------------------------------------------------
-resource "null_resource" "pull_containers_run_tower" {
-  count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
-
-  triggers   = { always_run = "${timestamp()}" }
-  depends_on = [null_resource.update_configuration_files]
-
-  provisioner "local-exec" {
-    quiet       = true
-    command     = <<-EOT
-      set -e
-      echo "[$(date)] Pulling containers and running Tower on ${var.app_name}"
-      ssh -T ${var.app_name} 'cd ${local.playbook_dir} && ansible-playbook -i inventory.ini 03_pull_containers_and_run_tower.yml'
-      echo "[$(date)] Containers pulled and Tower started successfully"
-    EOT
-    interpreter = ["/bin/bash", "-c"]
-  }
-}
-
-## ------------------------------------------------------------------------------------
-## Wait for Tower Containers
-## ------------------------------------------------------------------------------------
-resource "null_resource" "wait_for_tower" {
-  count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
-
-  triggers   = { always_run = "${timestamp()}" }
-  depends_on = [null_resource.pull_containers_run_tower]
-
-  provisioner "local-exec" {
-    quiet       = true
-    command     = <<-EOT
-      set -e
-      echo "[$(date)] Waiting for Tower containers to be ready on ${var.app_name}"
-      ssh -T ${var.app_name} 'cd ${local.playbook_dir} && ansible-playbook -i inventory.ini 04_wait_for_tower.yml'
-      echo "[$(date)] Tower containers are ready successfully"
-    EOT
-    interpreter = ["/bin/bash", "-c"]
-  }
-}
-
-## ------------------------------------------------------------------------------------
-## Patch Groundswell
-## ------------------------------------------------------------------------------------
-resource "null_resource" "patch_groundswell" {
-  count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
-
-  triggers   = { always_run = "${timestamp()}" }
-  depends_on = [null_resource.wait_for_tower]
-
-  provisioner "local-exec" {
-    quiet       = true
-    command     = <<-EOT
-      set -e
-      echo "[$(date)] Patching Groundswell (if necessary) on ${var.app_name}"
-      ssh -T ${var.app_name} 'cd ${local.playbook_dir} && ansible-playbook -i inventory.ini  05_patch_groundswell.yml'
-      echo "[$(date)] Groundswell patching completed successfully"
-    EOT
-    interpreter = ["/bin/bash", "-c"]
-  }
-}
-
-
-## ------------------------------------------------------------------------------------
-## Run Seqerakit (if allowed)
-## ------------------------------------------------------------------------------------
-resource "null_resource" "run_seqerkit" {
-  count = var.flag_vm_copy_files_to_instance == true && var.flag_run_seqerakit == true ? 1 : 0
-
-  triggers   = { always_run = "${timestamp()}" }
-  depends_on = [null_resource.patch_groundswell]
-
-  provisioner "local-exec" {
-    quiet       = true
-    command     = <<-EOT
-      set -e
-      echo "Running Seqerakit"
-      ssh -T ${var.app_name} 'cd ${local.playbook_dir} && ansible-playbook -i inventory.ini  06_run_seqerakit.yml'
+      echo "[$(date)] Invoking remote orchestrator on ${var.app_name}"
+      ssh -T ${var.app_name} 'RUN_SEQERAKIT=${var.flag_run_seqerakit} bash /home/ec2-user/target/bash/remote/orchestrate.sh'
+      echo "[$(date)] Remote orchestrator completed successfully"
     EOT
     interpreter = ["/bin/bash", "-c"]
   }
