@@ -208,6 +208,7 @@ variable "vpc_interface_endpoints_batch" { type = list(any) }
 
 variable "sg_ingress_cidrs" { type = list(string) }
 variable "sg_ssh_cidrs" { type = list(string) }
+variable "sg_studio_ssh_cidrs" { type = list(string) }
 
 variable "sg_egress_eice" { type = list(string) }
 variable "sg_egress_tower_ec2" { type = list(string) }
@@ -305,13 +306,11 @@ variable "connect_log_level" { type = string }
 
 variable "flag_enable_data_lineage" {
   type        = bool
-  default     = false
   description = "Enable Nextflow data lineage tracking (Platform v26.1.0+). When true, the EC2 instance role gains S3+SQS permissions scoped to seqera-lineage-* resources so Platform can auto-provision per-workspace lineage infrastructure."
 }
 
 variable "data_lineage_allowed_workspaces" {
   type        = string
-  default     = ""
   description = "Comma-separated list of numeric workspace IDs allowed to use data lineage. Empty string = all workspaces (when flag_enable_data_lineage = true). Ignored when flag_enable_data_lineage = false."
   validation {
     condition     = var.data_lineage_allowed_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_lineage_allowed_workspaces))
@@ -536,7 +535,6 @@ variable "tower_audit_log_v2" {
       chunk_size = optional(number, 1000)
     }), {})
   })
-  default = {}
 
   validation {
     condition     = contains(["v1", "v2", "dual"], var.tower_audit_log_v2.write_mode)
@@ -569,7 +567,6 @@ variable "tower_compute_env_cleanup" {
     stuck_creating_timeout = optional(string, "1h")
     stuck_deleting_timeout = optional(string, "1h")
   })
-  default = {}
 
   validation {
     condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_compute_env_cleanup.delay))

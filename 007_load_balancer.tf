@@ -160,16 +160,11 @@ module "alb" {
 ## NLB — Data Studios SSH
 ##
 ## WHY A SEPARATE NLB:
-##   The ALB above is a Layer 7 (HTTP/HTTPS) load balancer. It cannot handle raw TCP
-##   traffic. SSH operates at Layer 4 (raw TCP) on port 2222, so it requires a Network
-##   Load Balancer (NLB) to pass TCP connections through to connect-proxy on the EC2
-##   instance.
+##   The ALB above is a Layer 7 (HTTP/HTTPS) load balancer; SSH is raw TCP (Layer 4)
+##   on port 2222 and requires a Network Load Balancer for passthrough to connect-proxy
+##   on the EC2 instance.
 ##
-##   The NLB is only created when flag_enable_data_studio_ssh = true AND
-##   flag_create_load_balancer = true. If flag_create_load_balancer = false, no NLB
-##   is created — instead, a Route53 A record points connect-ssh.<tower_server_url>
-##   directly to the EC2 instance IP (see 008_route53.tf aws_route53_record.ec2_ssh).
-##   SSH still works in that case via direct EC2 access on port 2222.
+##   Studios SSH is NLB-only.
 ##
 ## WHAT IT DOES:
 ##   - Creates an NLB listening on TCP port 2222
@@ -183,10 +178,16 @@ module "alb" {
 resource "aws_lb" "nlb_ssh" {
   count = var.flag_enable_data_studio_ssh && var.flag_create_load_balancer ? 1 : 0
 
-  name               = "${local.global_prefix}-ssh"
+  name               = "${substr(local.global_prefix, 0, 28)}-ssh"
   load_balancer_type = "network"
   internal           = var.flag_make_instance_private == true || var.flag_private_tower_without_eice == true ? true : false
   subnets            = module.subnet_collector.subnet_ids_alb
+
+  # AWS added security-group support to NLBs in August 2023. The NLB is the public-facing
+  # boundary for Studios SSH — only clients in var.sg_studio_ssh_cidrs can reach it
+  # (enforced by sg_nlb_ssh). The EC2 SG (sg_from_nlb_ssh) only allows traffic from this
+  # SG, not from CIDRs. See 002_security_groups.tf.
+  security_groups = [module.sg_nlb_ssh[0].security_group_id]
 }
 
 resource "aws_lb_target_group" "nlb_ssh" {
