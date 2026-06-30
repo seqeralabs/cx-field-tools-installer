@@ -31,11 +31,11 @@ def log_error_and_exit(message: str):
     sys.exit(1)
 
 
-def only_one_true_set(flags: list) -> None:
+def only_one_true_set(flags: list, qualifier: str) -> None:
     """Ensure only 1 entry per flag grouping is `true`. Aggregate values of all specified values and then count."""
     values = list(flags)
     if values.count(True) != 1:
-        log_error_and_exit(f"Only one of these flags may be true: {flags!s}.")
+        log_error_and_exit(qualifier)
 
 
 def subnet_privacy(tfvars_subnets: list, vpc_subnets: list, qualifier: str) -> None:
@@ -59,23 +59,26 @@ def ensure_dependency_populated(flag: bool, child: str, qualifier: str) -> None:
 # -------------------------------------------------------------------------------
 def verify_only_one_true_set(data: SimpleNamespace):
     """Check that related config blocks only have 1 true and * false."""
-    only_one_true_set([data.flag_create_new_vpc, data.flag_use_existing_vpc])
     only_one_true_set(
-        [
-            data.flag_create_external_db,
-            data.flag_use_existing_external_db,
-            data.flag_use_container_db,
-        ]
+        [data.flag_create_new_vpc, data.flag_use_existing_vpc],
+        "Exactly one of flag_create_new_vpc / flag_use_existing_vpc must be true.",
     )
-    only_one_true_set([data.flag_create_external_redis, data.flag_use_container_redis])
     only_one_true_set(
-        [
-            data.flag_create_load_balancer,
-            data.flag_use_private_cacert,
-            data.flag_do_not_use_https,
-        ]
+        [data.flag_create_external_db, data.flag_use_existing_external_db, data.flag_use_container_db],
+        "Exactly one of flag_create_external_db / flag_use_existing_external_db / flag_use_container_db must be true.",
     )
-    only_one_true_set([data.flag_use_aws_ses_iam_integration, data.flag_use_existing_smtp])
+    only_one_true_set(
+        [data.flag_create_external_redis, data.flag_use_container_redis],
+        "Exactly one of flag_create_external_redis / flag_use_container_redis must be true.",
+    )
+    only_one_true_set(
+        [data.flag_create_load_balancer, data.flag_use_private_cacert, data.flag_do_not_use_https],
+        "Exactly one of flag_create_load_balancer / flag_use_private_cacert / flag_do_not_use_https must be true.",
+    )
+    only_one_true_set(
+        [data.flag_use_aws_ses_iam_integration, data.flag_use_existing_smtp],
+        "Exactly one of flag_use_aws_ses_iam_integration / flag_use_existing_smtp must be true.",
+    )
 
 
 def verify_sensitive_keys(data: SimpleNamespace, data_dictionary: dict):
@@ -517,6 +520,9 @@ def verify_data_studio_ssh(data: SimpleNamespace):
     if data.flag_enable_data_studio_ssh:
         if not data.flag_enable_data_studio:
             log_error_and_exit("`flag_enable_data_studio_ssh` requires `flag_enable_data_studio` to also be true.")
+
+        if not data.flag_create_load_balancer:
+            log_error_and_exit("`flag_enable_data_studio_ssh = true` requires `flag_create_load_balancer = true`. Studios SSH requires NLB.")
 
         if data.tower_container_version < "v25.3.3":
             log_error_and_exit("Studios SSH (`flag_enable_data_studio_ssh`) requires Platform v25.3.3 or higher.")
