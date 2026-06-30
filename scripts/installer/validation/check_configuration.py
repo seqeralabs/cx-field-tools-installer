@@ -521,6 +521,9 @@ def verify_data_studio_ssh(data: SimpleNamespace):
         if not data.flag_enable_data_studio:
             log_error_and_exit("`flag_enable_data_studio_ssh` requires `flag_enable_data_studio` to also be true.")
 
+        if not data.flag_create_load_balancer:
+            log_error_and_exit("`flag_enable_data_studio_ssh = true` requires `flag_create_load_balancer = true`. Studios SSH requires NLB.")
+
         if data.tower_container_version < "v25.3.3":
             log_error_and_exit("Studios SSH (`flag_enable_data_studio_ssh`) requires Platform v25.3.3 or higher.")
 
