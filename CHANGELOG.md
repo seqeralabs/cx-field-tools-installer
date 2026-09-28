@@ -24,14 +24,19 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - `tower.sql` and `groundswell.sql` now create the database and user with `IF NOT EXISTS`, so the re-run on every `terraform apply` succeeds. Previously the re-run stopped at the first statement and the error was hidden. [`#434`](https://github.com/seqeralabs/cx-field-tools-installer/issues/434)
             - The DB population steps no longer ignore failures (`|| true` removed in `02_update_file_configurations.yml.tpl` and `05_patch_groundswell.yml.tpl`). **Existing external DB sites:** if the SSM `db-master-user` / `db-master-password` values are placeholders or lack privileges, `terraform apply` now fails at this step instead of skipping it silently. [`#434`](https://github.com/seqeralabs/cx-field-tools-installer/issues/434)
             - `tower.sql` and `groundswell.sql` (`ALTER USER … IDENTIFIED BY …`) and `wave-lite-rds.sql` (`ALTER ROLE … PASSWORD …`) now reset the DB user's password on every apply, so it always matches SSM. **DBA-managed databases:** a password changed directly in the DB, and not in SSM, is reset to the SSM value on the next apply. [`#434`](https://github.com/seqeralabs/cx-field-tools-installer/issues/434)
+            - The EC2 boot script (`launch_template_ec2.tpl`) now installs and starts `amazon-ssm-agent`, which the `al2023-ami-minimal` AMI does not include. The installer-created EC2 role gets a new `AllowSSMSessionManagerAgent` statement (`ssm:UpdateInstanceInformation` plus four `ssmmessages:*` actions), so the instance registers with SSM and supports Session Manager.
+                - **Existing sites:** the IAM change applies on the next `terraform apply`. The agent only installs on new instances (`user_data` changes are ignored). On a running instance, run `sudo dnf install -y amazon-ssm-agent && sudo systemctl enable --now amazon-ssm-agent`.
+                - **Pre-existing IAM role** (`flag_iam_use_prexisting_role_arn = true`): add the same five actions to your role.
+                - **Private instances without a NAT:** add `ssm` and `ssmmessages` to `vpc_interface_endpoints_tower`.
         <br /><br />
 
         - Security
             - Temporarily suppressed 10 Checkov checks repo-wide in a new root `.checkov.yaml`, pending review. The file lists each check ID and why it is skipped. No infrastructure change.
+            - SSM Session Manager is now a supported access path to the EC2 instance. The installer does not restrict who can connect: anyone in the AWS account with `ssm:StartSession` on the instance can open a shell as `ssm-user` (which has `sudo`). Control access, and set up session logging, at the account level. The role deliberately does not get `AmazonSSMManagedInstanceCore`, which would allow reading every SSM parameter in the account. See Design Decision 22.
         <br /><br />
 
         - Documentation
-            - TBD
+            - Added Design Decision 22 (`documentation/design_decisions.md`): the installer enables SSM Session Manager on the instance, and the AWS account owner controls who can connect.
         <br /><br />
 
         - Testing
