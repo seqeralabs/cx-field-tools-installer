@@ -194,6 +194,17 @@ locals {
   # Fed into the connection_strings module to select the correct JDBC suffix.
   db_engine = var.flag_use_container_db ? var.db_container_engine_version : var.db_engine_version
 
+  # Frontend image tag suffix.
+  # Before v26.2.0, the unprivileged frontend shipped as a separate `<version>-unprivileged` tag.
+  # From v26.2.0, the default tag is unprivileged, so no suffix is needed.
+  # Only major.minor are compared, so a pre-release like "v26.2.0-RC16" counts as v26.2.
+  # shape: "v26.1.3" -> ["26", "1"]
+  tower_version_major_minor = regex("^v([0-9]+)\\.([0-9]+)", var.tower_container_version)
+  tower_version_major       = tonumber(local.tower_version_major_minor[0])
+  tower_version_minor       = tonumber(local.tower_version_major_minor[1])
+  tower_version_before_26_2 = local.tower_version_major < 26 || (local.tower_version_major == 26 && local.tower_version_minor < 2)
+  frontend_image_suffix     = local.tower_version_before_26_2 ? "-unprivileged" : ""
+
 
   # OIDC
   # ---------------------------------------------------------------------------------------

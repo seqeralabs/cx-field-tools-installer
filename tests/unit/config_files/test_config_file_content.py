@@ -22,6 +22,8 @@ from tests.unit.config_files.expected_deltas import (
     DB_EXTERNAL_NEW_ACTIVE_ASSERTIONS,
     DB_EXTERNAL_NEW_X_GROUNDSWELL_DELTA,
     DB_EXTERNAL_NEW_X_WAVE_LITE_DELTA,
+    FRONTEND_PRE_26_2_ACTIVE,
+    FRONTEND_PRE_26_2_ACTIVE_ASSERTIONS,
     GROUNDSWELL_ACTIVE,
     GROUNDSWELL_ACTIVE_ASSERTIONS,
     HOSTS_FILE_ENTRY_ACTIVE,
@@ -84,6 +86,15 @@ def test_tower_opt_in_flags_active(generated_test_files):
     workspace-restriction logic), break it out into its own `_active` test.
     """
     expected = merge_deltas(BASELINE_ASSERTIONS, TOWER_OPT_IN_FLAGS_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+@pytest.mark.local
+@pytest.mark.tower
+@pytest.mark.tfvars(BASELINE + FRONTEND_PRE_26_2_ACTIVE)
+def test_frontend_pre_26_2_active(generated_test_files):
+    """Platform < v26.2.0: the frontend image uses the `-unprivileged` tag."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, FRONTEND_PRE_26_2_ACTIVE_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
 
@@ -235,7 +246,7 @@ def test_compute_env_cleanup_active(generated_test_files):
 @pytest.mark.tower
 @pytest.mark.tfvars(BASELINE + AUDIT_LOG_V2_CLEANUP_DISABLED_ACTIVE)
 def test_audit_log_v2_cleanup_disabled(generated_test_files):
-    """Audit Log v2 with cleanup disabled: ENABLED flips to false, interval/delay/chunk_size disappear from tower.env."""
+    """Audit Log v2, cleanup disabled: ENABLED flips to false; interval/delay/chunk_size disappear from tower.env."""
     expected = merge_deltas(BASELINE_ASSERTIONS, AUDIT_LOG_V2_CLEANUP_DISABLED_ACTIVE_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
