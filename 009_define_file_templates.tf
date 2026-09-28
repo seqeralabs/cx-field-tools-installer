@@ -123,7 +123,6 @@ locals {
       swell_db_user       = local.groundswell_secrets["SWELL_DB_USER"]["value"],
       swell_db_password   = local.groundswell_secrets["SWELL_DB_PASSWORD"]["value"],
       swell_database_name = var.swell_database_name,
-      db_database_name    = var.db_database_name,
     }
   )
 

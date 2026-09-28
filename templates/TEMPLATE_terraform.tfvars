@@ -805,8 +805,7 @@ detailed configuration guidance.
 
 # Ensure this aligns with the values specified in `Flags - DNS` section above.
 # Do not include http prefix. e.g. `autodc.dev-seqera.net`.
-tower_server_url  = "REPLACE_ME"
-tower_server_port = "8000"
+tower_server_url = "REPLACE_ME"
 
 # This must be a verified identity / domain.
 tower_contact_email = "REPLACE_ME"

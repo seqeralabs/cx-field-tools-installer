@@ -136,14 +136,6 @@ def verify_tfvars_config_dependencies(data: SimpleNamespace):
     )
 
 
-def verify_tower_server_url(data: SimpleNamespace):
-    """Verify the tower server url is correctly configured."""
-    if data.tower_server_port != "8000":
-        logger.warning(
-            "Tower instance not using default port (8000). Ensure Docker-Compose file is updated accordingly."
-        )
-
-
 def verify_tower_self_signed_certs(data: SimpleNamespace):
     """Check self-signed certificate settings (if necessary)."""
     if data.flag_use_private_cacert and not data.private_cacert_bucket_prefix.startswith("s3://"):
@@ -522,7 +514,10 @@ def verify_data_studio_ssh(data: SimpleNamespace):
             log_error_and_exit("`flag_enable_data_studio_ssh` requires `flag_enable_data_studio` to also be true.")
 
         if not data.flag_create_load_balancer:
-            log_error_and_exit("`flag_enable_data_studio_ssh = true` requires `flag_create_load_balancer = true`. Studios SSH requires NLB.")
+            log_error_and_exit(
+                "`flag_enable_data_studio_ssh = true` requires `flag_create_load_balancer = true`. "
+                "Studios SSH requires NLB."
+            )
 
         if data.tower_container_version < "v25.3.3":
             log_error_and_exit("Studios SSH (`flag_enable_data_studio_ssh`) requires Platform v25.3.3 or higher.")

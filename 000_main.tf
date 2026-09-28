@@ -9,6 +9,23 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.12.0"
     }
+
+    # Pins are the lowest version our features need, and block the next major version.
+    # Kept low so existing sites' local lock files still satisfy them (no forced `init -upgrade`).
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.0"
+    }
+
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1" # floor set by terraform-aws-modules/rds (>= 3.1)
+    }
+
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0" # ED25519 in tls_private_key.connect_ssh_host_key needs tls >= 4.0
+    }
   }
 
   backend "local" {
@@ -67,18 +84,12 @@ locals {
   # ---------------------------------------------------------------------------------------
   vpc_id                      = var.flag_create_new_vpc == true ? module.vpc[0].vpc_id : var.vpc_existing_id
   vpc_private_route_table_ids = var.flag_create_new_vpc == true ? module.vpc[0].private_route_table_ids : data.aws_route_tables.preexisting[0].ids
-  # Required for sg_from_nlb_ssh in 002_security_groups.tf.
-  # NLB health checks originate from NLB nodes within the VPC — not from external IPs in sg_ingress_cidrs.
-  # Without the VPC CIDR in the EC2 security group, health checks are blocked, the target shows unhealthy,
-  # and the NLB stops forwarding real SSH traffic even though connect-proxy is running correctly.
-  vpc_cidr_block = var.flag_create_new_vpc == true ? var.vpc_new_cidr_range : data.aws_vpc.preexisting[0].cidr_block
 
   flag_map_public_ip_on_launch = var.flag_map_public_ip_on_launch == true || var.flag_make_instance_public == true ? true : false
 
   # SSM
   # ---------------------------------------------------------------------------------------
-  # Load bootstrapped secrets and define target for TF-generated SSM values. Magical - don't know why it works but it does.
-  ssm_root = "/config/${var.app_name}"
+  # Load bootstrapped secrets.
 
   tower_secrets     = jsondecode(data.aws_ssm_parameter.tower_secrets.value)
   tower_secret_keys = nonsensitive(toset([for k, v in local.tower_secrets : k]))
@@ -147,7 +158,6 @@ locals {
     local.sg_from_alb_wave,
     local.sg_from_nlb_ssh,
   )
-  ec2_sg_final_raw = join(",", [for sg in local.sg_ec2_final : jsonencode(sg)]) # Needed?
 
 
   # ALB - Determine which CIDR Blocks to attach to allowed ports
@@ -210,8 +220,7 @@ locals {
   # Miscellaneous
   # ---------------------------------------------------------------------------------------
   # These are needed to handle templatefile rendering to Bash echoing to file craziness.
-  dollar      = "$"
-  singlequote = "'"
+  dollar = "$"
 
 
   # connection_strings (cs_*)

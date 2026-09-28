@@ -166,7 +166,6 @@
 | <a name="input_tower_email_trusted_users"></a> [tower\_email\_trusted\_users](#input\_tower\_email\_trusted\_users) | n/a | `string` | n/a | yes |
 | <a name="input_tower_enable_platforms"></a> [tower\_enable\_platforms](#input\_tower\_enable\_platforms) | n/a | `string` | n/a | yes |
 | <a name="input_tower_root_users"></a> [tower\_root\_users](#input\_tower\_root\_users) | n/a | `string` | n/a | yes |
-| <a name="input_tower_server_port"></a> [tower\_server\_port](#input\_tower\_server\_port) | n/a | `string` | n/a | yes |
 | <a name="input_tower_server_url"></a> [tower\_server\_url](#input\_tower\_server\_url) | n/a | `string` | n/a | yes |
 | <a name="input_tower_smtp_auth"></a> [tower\_smtp\_auth](#input\_tower\_smtp\_auth) | n/a | `bool` | n/a | yes |
 | <a name="input_tower_smtp_host"></a> [tower\_smtp\_host](#input\_tower\_smtp\_host) | n/a | `string` | n/a | yes |
@@ -236,4 +235,4 @@
 | <a name="output_wave_lite_db_url"></a> [wave\_lite\_db\_url](#output\_wave\_lite\_db\_url) | The database URL for Wave-Lite |
 | <a name="output_wave_lite_redis_dns"></a> [wave\_lite\_redis\_dns](#output\_wave\_lite\_redis\_dns) | The Redis DNS for Wave-Lite |
 | <a name="output_wave_lite_redis_url"></a> [wave\_lite\_redis\_url](#output\_wave\_lite\_redis\_url) | The Redis URL for Wave-Lite |
-<!-- END_TF_DOCS -->    
+<!-- END_TF_DOCS -->  
