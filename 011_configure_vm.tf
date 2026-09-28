@@ -30,7 +30,7 @@ resource "null_resource" "configure_vm" {
   # 1 when the gate in 010 is on, 0 when off. Keeps the gate in one place.
   count = length(null_resource.allow_file_copy_to_start)
 
-  triggers   = { always_run = "${timestamp()}" }
+  triggers   = { always_run = timestamp() }
   depends_on = [null_resource.allow_file_copy_to_start]
 
   provisioner "local-exec" {

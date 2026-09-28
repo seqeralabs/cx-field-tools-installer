@@ -109,7 +109,7 @@ module "sg_ec2_noalb_connect" {
       to_port     = 9090
       protocol    = "tcp"
       description = "Connect-Proxy"
-      cidr_blocks = "${join(",", var.sg_ingress_cidrs)}"
+      cidr_blocks = join(",", var.sg_ingress_cidrs)
     }
   ]
   # number_of_computed_ingress_with_source_security_group_id = 1
