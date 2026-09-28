@@ -6,6 +6,10 @@ Host ${app_name}
     StrictHostKeyChecking no
     # Explicit mitigation for CVE-2025-26465. See: https://github.com/seqeralabs/cx-field-tools-installer/issues/180
     VerifyHostKeyDNS no
+    # Multiplex over a single master tunnel — subsequent ssh/scp invocations skip the SSH/EICE handshake.
+    ControlMaster auto
+    ControlPath ${ssh_control_path}/cm-%C
+    ControlPersist 10m
 %{~ else ~}
 Host ${app_name}
     Hostname ${node_id}
@@ -15,4 +19,8 @@ Host ${app_name}
     StrictHostKeyChecking no
     # Explicit mitigation for CVE-2025-26465. See: https://github.com/seqeralabs/cx-field-tools-installer/issues/180
     VerifyHostKeyDNS no
+    # Multiplex over a single master tunnel — subsequent ssh/scp invocations skip the SSH/EICE handshake.
+    ControlMaster auto
+    ControlPath ${ssh_control_path}/cm-%C
+    ControlPersist 10m
 %{ endif }

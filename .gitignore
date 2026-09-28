@@ -38,3 +38,5 @@ tests/.scenario_cache/
 
 .github/issue-drafts
 .github/pr-drafts
+
+.ssh-control

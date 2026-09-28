@@ -132,19 +132,6 @@
         daemon_reload: true
         enabled: true
 
-    - name: Sudoless Docker - Create Group
-      # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/group_module.html
-      ansible.builtin.group:
-        name: docker
-        state: present
-
-    - name: Sudoless Docker - Add ec2-user to docker
-      # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/user_module.html
-      ansible.builtin.user:
-        name: ec2-user
-        groups: docker
-        append: yes
-
     - name: Install Java Corretto 17
       # tw relies on Java Corretto
       ansible.builtin.yum:
