@@ -18,15 +18,19 @@ write_files:
       # Pre-create docker group and add ec2-user before anything else so that
       # any SSH session — including the ControlMaster opened by Terraform's
       # provisioners — inherits the docker group at auth time. Docker (installed
-      # later by Ansible) reuses the existing group. 
+      # later by Ansible) reuses the existing group.
       # See https://github.com/seqeralabs/cx-field-tools-installer/issues/407.
-      
+
       groupadd -f docker
       usermod -aG docker ec2-user
 
       ## Install packages
       yum update -y
       yum install -y nano ec2-instance-connect tree dnsutils traceroute
+
+      # SSM agent: not included in the al2023-ami-minimal AMI (006_ec2.tf). Needed for SSM Session Manager access.
+      yum install -y amazon-ssm-agent
+      systemctl enable --now amazon-ssm-agent
 
       # Install pip via the system package manager.
       #

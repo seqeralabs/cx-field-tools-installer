@@ -191,7 +191,7 @@ variable "vpc_existing_alb_subnets" { type = list(string) }
 
 # ------------------------------------------------------------------------------------
 # VPC Endpoints
-# ssmmessages,ec2messages,cloudwatch-monitoring,cloudwatch-logs,smtp-ses,
+# ssm,ssmmessages,ec2messages,cloudwatch-monitoring,cloudwatch-logs,smtp-ses,
 # awsbatch,secretsmanager,rds,ecr-dkr,codecommit,git-codecommit,
 # ecs-agent,ecs-telemetry,ecs
 # ------------------------------------------------------------------------------------

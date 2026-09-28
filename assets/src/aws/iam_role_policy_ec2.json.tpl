@@ -19,12 +19,12 @@
                 "arn:aws:s3:::${seqerakit_root_bucket}/*"
             ]
         },
-        { 
+        {
             "Sid": "EnableInstanceConnect",
             "Effect":"Allow",
             "Action":"ec2-instance-connect:SendSSHPublicKey",
             "Resource": "arn:aws:ec2:${aws_region}:${aws_account}:instance/*",
-            "Condition":{ 
+            "Condition":{
                 "StringEquals":{ "aws:ResourceTag/tag-key":"${tag_key}" }
             }
         },
@@ -47,6 +47,18 @@
                 "logs:CreateLogStream",
                 "logs:CreateLogGroup",
                 "logs:PutRetentionPolicy"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowSSMSessionManagerAgent",
+            "Effect": "Allow",
+            "Action": [
+                "ssm:UpdateInstanceInformation",
+                "ssmmessages:CreateControlChannel",
+                "ssmmessages:CreateDataChannel",
+                "ssmmessages:OpenControlChannel",
+                "ssmmessages:OpenDataChannel"
             ],
             "Resource": "*"
         },
@@ -75,7 +87,7 @@
             ],
             "Effect": "Allow",
 			"Resource": [ "${ssm_key_arn}" ]
-            
+
 %{ if flag_allow_aws_instance_credentials == false }
         }
     ]

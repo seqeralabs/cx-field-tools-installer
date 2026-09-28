@@ -277,6 +277,18 @@ In addition to the general design decisions noted above, there are a few decisio
 
     Both adapters defer to positive `-m` selection: invoking `make run_tests_variables_only` or `make run_tests_containers_only` bypasses the heuristic so explicit recipes always behave as the operator expects.
 
+19. **Data Lineage SQS queue creation is Platform's responsibility, not the installer's**
+
+    Seqera Platform v26.1.0+ has built-in support for creating the SQS queue (and the paired S3 bucket + bucket-notification routing) required by the Data Lineage feature. Platform creates these per-workspace under the `seqera-lineage-*` resource-name prefix at the moment a workspace enables lineage via its UI.
+
+    Rather than replicate that functionality, the installer's role for lineage is intentionally scoped to **granting the EC2 instance role the IAM permissions Platform needs** to do the queue/bucket creation itself. The installer attaches a policy (`${global_prefix}_policy_lineage`) authorising the relevant S3 + SQS actions on `seqera-lineage-*` ARNs only — see [`assets/src/aws/iam_role_policy_lineage.json.tpl`](../../assets/src/aws/iam_role_policy_lineage.json.tpl).
+
+    Consequences of this division of labour:
+
+    - The installer does **not** provision an SQS queue, S3 bucket, or bucket-notification rule for lineage. Those resources don't appear in `terraform plan` and aren't part of `terraform destroy`.
+    - Queue/bucket lifecycle (creation, configuration, deletion) is owned entirely by Platform. Deployers cannot pre-create or pin specific ARNs from the installer side.
+    - If Platform's resource-naming convention or auto-provisioning behaviour changes in a future release, the only file that needs to update is the IAM policy template — not the installer's resource graph.
+
 20. **Some Connect proxy environment variables are intentionally omitted from the installer**
 
     The installer exposes only the Connect proxy variables that have practical value for standard deployments. The remaining variables documented in the [connect environment variables reference](https://docs.seqera.io/platform-enterprise/enterprise/install-studios#connect-environment-variables) are omitted for the reasons described below.
@@ -320,14 +332,17 @@ In addition to the general design decisions noted above, there are a few decisio
 
     Deployers who need to override any of these values can do so by adding them directly to `tower.env` on the target instance after deployment. If you need assistance configuring any of these variables, reach out to Seqera and we can discuss your requirements. Full variable reference: [configuration overview](https://docs.seqera.io/platform-enterprise/latest/enterprise/configuration/overview#data-features).
 
-19. **Data Lineage SQS queue creation is Platform's responsibility, not the installer's**
+22. **Enable SSM Session Manager on the instance; leave access control to the AWS account owner.**<br />
 
-    Seqera Platform v26.1.0+ has built-in support for creating the SQS queue (and the paired S3 bucket + bucket-notification routing) required by the Data Lineage feature. Platform creates these per-workspace under the `seqera-lineage-*` resource-name prefix at the moment a workspace enables lineage via its UI.
+    The installer installs and starts `amazon-ssm-agent`, which the `al2023-ami-minimal` AMI does not include. It also grants the EC2 instance role the five actions the agent needs to register and serve sessions: `ssm:UpdateInstanceInformation` and the four `ssmmessages:*` channel actions (statement `AllowSSMSessionManagerAgent` in [`iam_role_policy_ec2.json.tpl`](../assets/src/aws/iam_role_policy_ec2.json.tpl)).
 
-    Rather than replicate that functionality, the installer's role for lineage is intentionally scoped to **granting the EC2 instance role the IAM permissions Platform needs** to do the queue/bucket creation itself. The installer attaches a policy (`${global_prefix}_policy_lineage`) authorising the relevant S3 + SQS actions on `seqera-lineage-*` ARNs only — see [`assets/src/aws/iam_role_policy_lineage.json.tpl`](../../assets/src/aws/iam_role_policy_lineage.json.tpl).
+    The installer does not decide who may connect. The account owner controls that on the principal side, through `ssm:StartSession` permissions in IAM policies, SSO permission sets, SCPs, or tag conditions. This follows AWS's own model (Quick Setup, Default Host Management Configuration) and matches the EC2 Instance Connect Endpoint approach in decision 4: the installer creates the access path, and the account's IAM governs who uses it. Deployers rarely know every role or user that needs access, so an installer setting would put an account-level decision in the wrong place.
 
-    Consequences of this division of labour:
+    We deliberately do not attach the AWS-managed `AmazonSSMManagedInstanceCore` policy. It grants `ssm:GetParameter` and `ssm:GetParameters` on all resources. Combined with the role's existing `kms:Decrypt` on the default `aws/ssm` key, a compromised instance could then read every SecureString parameter in the account and region, not only this deployment's secrets (see decision 2). The minimal statement supports Session Manager only. Run Command, Patch Manager, and inventory need more actions and are out of scope.
 
-    - The installer does **not** provision an SQS queue, S3 bucket, or bucket-notification rule for lineage. Those resources don't appear in `terraform plan` and aren't part of `terraform destroy`.
-    - Queue/bucket lifecycle (creation, configuration, deletion) is owned entirely by Platform. Deployers cannot pre-create or pin specific ARNs from the installer side.
-    - If Platform's resource-naming convention or auto-provisioning behaviour changes in a future release, the only file that needs to update is the IAM policy template — not the installer's resource graph.
+    Consequences:
+
+    - Anyone in the account with `ssm:StartSession` on the instance can open a shell. Sessions run as `ssm-user`, which has `sudo`.
+    - Session logging (S3 or CloudWatch) and session encryption are account-level Session Manager preferences, not installer settings.
+    - Sites that set `flag_iam_use_prexisting_role_arn = true` must add the five actions to their own role.
+    - Private instances without a NAT need VPC interface endpoints for `ssm` and `ssmmessages` (add them to `vpc_interface_endpoints_tower`).
