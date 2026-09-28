@@ -8,6 +8,9 @@ WHERE NOT EXISTS (
 )
 \gexec
 
+-- Reset the password on every run, so it always matches SSM (same as tower.sql and groundswell.sql).
+ALTER ROLE replace_me_wave_lite_db_limited_user WITH LOGIN PASSWORD 'replace_me_wave_lite_db_limited_password';
+
 SELECT 'CREATE DATABASE wave'
 WHERE NOT EXISTS (
   SELECT FROM pg_database WHERE datname = 'wave'

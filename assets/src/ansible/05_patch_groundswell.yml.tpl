@@ -22,7 +22,7 @@
 
         echo "Patching container db with groundswell init script."
 
-        # If Groundswell is not enabled on first run, the swell db and user wont be created. 
+        # If Groundswell is not enabled on first run, the swell db and user wont be created.
         # Patch here in order to ensure it will always work.
-        docker exec ec2-user-db-1 /bin/sh -c "mysql --user=root < /docker-entrypoint-initdb.d/init.sql"  || true
+        docker exec ec2-user-db-1 /bin/sh -c "mysql --user=root < /docker-entrypoint-initdb.d/init.sql"
 %{ endif ~}

@@ -21,6 +21,9 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Removed the unused `tower_server_port` variable (no effect since 1.6.0). See `Configuration File Changes`.
             - Cleared all `tflint` warnings: removed 4 unused locals, a duplicate map key in each of 2 templatefile arg maps, and deprecated `"${...}"` wrappers. No behaviour change.
             - Pinned the `null` (`~> 3.0`), `random` (`~> 3.1`), and `tls` (`~> 4.0`) providers to block untested major versions. Existing lock files still satisfy these pins.
+            - `tower.sql` and `groundswell.sql` now create the database and user with `IF NOT EXISTS`, so the re-run on every `terraform apply` succeeds. Previously the re-run stopped at the first statement and the error was hidden. [`#434`](https://github.com/seqeralabs/cx-field-tools-installer/issues/434)
+            - The DB population steps no longer ignore failures (`|| true` removed in `02_update_file_configurations.yml.tpl` and `05_patch_groundswell.yml.tpl`). **Existing external DB sites:** if the SSM `db-master-user` / `db-master-password` values are placeholders or lack privileges, `terraform apply` now fails at this step instead of skipping it silently. [`#434`](https://github.com/seqeralabs/cx-field-tools-installer/issues/434)
+            - `tower.sql` and `groundswell.sql` (`ALTER USER … IDENTIFIED BY …`) and `wave-lite-rds.sql` (`ALTER ROLE … PASSWORD …`) now reset the DB user's password on every apply, so it always matches SSM. **DBA-managed databases:** a password changed directly in the DB, and not in SSM, is reset to the SSM value on the next apply. [`#434`](https://github.com/seqeralabs/cx-field-tools-installer/issues/434)
         <br /><br />
 
         - Security
@@ -32,7 +35,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
         <br /><br />
 
         - Testing
-            - TBD
+            - Added testcontainer tests that run each SQL file twice (`test_tower_sql_rerun`, `test_groundswell_sql_rerun`, `test_wave_sql_rds_rerun`), plus `test_groundswell_sql_population` and `test_tower_sql_rerun_resets_password` (a re-run restores a password changed in the DB). `groundswell.sql` content is now checked in the baseline assertions. [`#434`](https://github.com/seqeralabs/cx-field-tools-installer/issues/434)
 
 
 ### Configuration File Changes

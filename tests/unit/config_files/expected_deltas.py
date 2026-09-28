@@ -377,8 +377,12 @@ BASELINE_ASSERTIONS = {
         },
         "omitted": set(),
     },
+    "groundswell_sql": {
+        # Whole expected file as one substring (same sentinel pattern as `tower_sql`).
+        "present": {FileHelper.read_file(f"{expected_sql_dir}/groundswell.sql")},
+        "omitted": set(),
+    },
     # TODO: Build out stubs OR identify as not-in-scope due to other testing method.
-    "groundswell_sql": {"present": {}, "omitted": set()},
     "seqerakit_yml": {"present": {}, "omitted": set()},
     "cleanse_and_configure_host": {"present": {}, "omitted": set()},
     "ansible_02_update_file_configurations": {
