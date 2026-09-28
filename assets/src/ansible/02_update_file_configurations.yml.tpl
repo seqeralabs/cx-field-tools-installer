@@ -35,9 +35,9 @@
       # TO DO: Remove this step when migration script can pull directly from SSM.
       # Consider abstracting the SSM prefixes to an environment variable for cleaner maintenance.
       #
-      # Update tower.env. 
+      # Update tower.env.
       # Look for uncommented keys. Add key if not present; update key if it is present.
-      # It is unlikely there will ever be an overwrite since the files are copied fresh from source every time, but 
+      # It is unlikely there will ever be an overwrite since the files are copied fresh from source every time, but
       # I feel it is good to build-in the defensiveness just in case.
       ansible.builtin.shell: |
         cd /home/ec2-user && source ~/.bashrc
@@ -74,7 +74,7 @@
         # https://unix.stackexchange.com/questions/205180/how-to-pass-password-to-mysql-command-line
         docker run --rm -t -v $(pwd)/target/tower_config/tower.sql:/tower.sql -e \
         MYSQL_PWD=$db_master_password --entrypoint /bin/bash mysql:8.0 \
-        -c "mysql --host ${tower_db_dns} --port=3306 --user=$db_master_user < tower.sql" || true
+        -c "mysql --host ${tower_db_dns} --port=3306 --user=$db_master_user < tower.sql"
 %{ endif ~}
 
 %{ if flag_use_wave_lite && populate_external_db ~}
@@ -109,7 +109,7 @@
 
         docker run --rm -t -v $(pwd)/target/groundswell_config/groundswell.sql:/groundswell.sql -e \
         MYSQL_PWD=$db_master_password --entrypoint /bin/bash mysql:8.0 \
-        -c "mysql --host ${tower_db_dns} --port=3306 --user=$db_master_user < groundswell.sql" || true
+        -c "mysql --host ${tower_db_dns} --port=3306 --user=$db_master_user < groundswell.sql"
 %{ endif ~}
 
 %{ if flag_use_private_cacert ~}
@@ -124,11 +124,11 @@
 
         if [[ ! -f "/etc/pki/ca-trust/source/anchors/rootCA.crt" ]]; then
 
-          # Add root CA cert to EC2 instance truststore. 
+          # Add root CA cert to EC2 instance truststore.
           # ASSUMPTION -- Root CA cert (new or existing) is called rootCA.crt
           cd /tmp
           aws s3 cp ${private_cacert_bucket_prefix}/rootCA.crt .
-          
+
           sudo keytool -import -trustcacerts -cacerts -storepass changeit -noprompt -alias TARGET_ALIAS -file rootCA.crt
           sudo cp rootCA.crt /etc/pki/ca-trust/source/anchors/
           sudo update-ca-trust
@@ -138,7 +138,7 @@
 
         # Grab leaf cert and stash in target/ folder
         cd /home/ec2-user/target/customcerts
-        aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.crt ${tower_base_url}.crt 
+        aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.crt ${tower_base_url}.crt
         aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.key ${tower_base_url}.key
 %{ endif ~}
 
