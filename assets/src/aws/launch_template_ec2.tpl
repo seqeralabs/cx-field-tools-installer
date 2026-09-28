@@ -18,7 +18,9 @@ write_files:
       # Pre-create docker group and add ec2-user before anything else so that
       # any SSH session — including the ControlMaster opened by Terraform's
       # provisioners — inherits the docker group at auth time. Docker (installed
-      # later by Ansible) reuses the existing group. See issue #XYZ.
+      # later by Ansible) reuses the existing group. 
+      # See https://github.com/seqeralabs/cx-field-tools-installer/issues/407.
+      
       groupadd -f docker
       usermod -aG docker ec2-user
 

@@ -14,7 +14,7 @@
 # Operators can clean old logs with:
 #   find /home/ec2-user/tower-installer-logs -mtime +30 -delete
 
-set -euo pipefail
+set -Eeuo pipefail
 
 LOG_DIR=/home/ec2-user/tower-installer-logs
 LOG="${LOG_DIR}/apply-$(date -u +%Y%m%dT%H%M%SZ).log"
@@ -46,9 +46,7 @@ stage() {
 cd /home/ec2-user
 
 # --- pipeline ---
-# Mirrors the order of the original 011_configure_vm.tf chain (host_configuration
-# through run_seqerakit). Path conventions match the original `cd ${playbook_dir}`
-# style (everything is under /home/ec2-user/target/...).
+# Mirrors the order of the original 011_configure_vm.tf chain.
 
 stage host_configuration  bash target/bash/remote/cleanse_and_configure_host.sh
 stage ansible_wait        bash target/ansible/00_wait_for_ansible.sh

@@ -214,11 +214,6 @@ locals {
   singlequote = "'"
 
 
-  # Ansible
-  # ---------------------------------------------------------------------------------------
-  playbook_dir = "/home/ec2-user/target/ansible"
-
-
   # connection_strings (cs_*)
   # ---------------------------------------------------------------------------------------
   cs_platform_security_mode = (
