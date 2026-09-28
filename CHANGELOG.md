@@ -24,7 +24,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
         <br /><br />
 
         - Security
-            - TBD
+            - Temporarily suppressed 10 Checkov checks repo-wide in a new root `.checkov.yaml`, pending review. The file lists each check ID and why it is skipped. No infrastructure change.
         <br /><br />
 
         - Documentation
