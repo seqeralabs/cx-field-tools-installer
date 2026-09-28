@@ -5,9 +5,9 @@ file_transfer / remote_orchestrator) and at the remote orchestrator (see
 `assets/src/bash/remote/orchestrate.sh`).
 
 The gate that decides whether the VM-side pipeline runs at all is
-`var.flag_vm_copy_files_to_instance`. Same expression is used on
+`var.flag_vm_copy_files_to_instance`. It is defined once, on
 `null_resource.allow_file_copy_to_start` in 010_prepare_config_files.tf (the
-asset-generation barrier).
+asset-generation barrier). `configure_vm` copies it via `length(...)`.
 
 See https://github.com/seqeralabs/cx-field-tools-installer/issues/410.
 */
@@ -27,7 +27,8 @@ See https://github.com/seqeralabs/cx-field-tools-installer/issues/410.
 ## any failure that happens once it's running.
 ## ------------------------------------------------------------------------------------
 resource "null_resource" "configure_vm" {
-  count = var.flag_vm_copy_files_to_instance == true ? 1 : 0
+  # 1 when the gate in 010 is on, 0 when off. Keeps the gate in one place.
+  count = length(null_resource.allow_file_copy_to_start)
 
   triggers   = { always_run = "${timestamp()}" }
   depends_on = [null_resource.allow_file_copy_to_start]
@@ -46,6 +47,16 @@ resource "null_resource" "configure_vm" {
         sleep 5
         counter=$((counter+5))
       done
+
+      # cloud-init adds ec2-user to the `docker` group (launch_template_ec2.tpl). Wait for it to
+      # finish (max 10 min), then close the ControlMaster so the next SSH session picks up the group.
+      # `cloud-init status` exit codes: 0 = done, 2 = done with non-fatal warnings, 124 = timeout.
+      ssh -T ${var.app_name} '
+        timeout 600 cloud-init status --wait > /dev/null; rc=$?
+        if [ $rc -ne 0 ] && [ $rc -ne 2 ]; then
+          echo "cloud-init did not finish cleanly (exit=$rc)"; cloud-init status --long; exit 1
+        fi'
+      ssh -O exit ${var.app_name} 2>/dev/null || true
       echo "==== STAGE OK:    ssh_probe ===="
 
       # --- Phase 2: File transfer ---
