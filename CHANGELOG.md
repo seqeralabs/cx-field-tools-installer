@@ -1,5 +1,5 @@
 # CHANGELOG
-> Last updated: June 23, 2026
+> Last updated: Sept 28, 2026
 
 This file was updated as part of the 1.8.0 Release.
 
@@ -18,6 +18,9 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - `ec2-user` is now added to the `docker` group at instance launch via `launch_template_ec2.tpl` (cloud-init). The `ssh_probe` phase now waits for cloud-init to finish (`cloud-init status --wait`, 10-minute timeout) and then closes the `ControlMaster`, so the SSH session that runs Ansible always has the `docker` group. This avoids the staleness interaction between `ControlMaster` and mid-apply group membership changes that surfaced as `permission denied … /var/run/docker.sock`. An unfinished or failed cloud-init now stops the apply with a clear error. **Existing sites: this is a fresh-deploy fix only.** Running EC2s will not pick up the new user_data without instance replacement (`terraform taint aws_instance.ec2 && terraform apply`); AMI pin is preserved across the replace. In-place workaround: `sudo usermod -aG docker ec2-user` on the host, then `ssh -O exit <host>; rm -f .ssh-control/cm-*` locally (from the project root). **Custom launch templates:** the Ansible tasks that added `ec2-user` to `docker` were removed. If you maintain your own `launch_template_ec2.tpl`, copy in the `groupadd -f docker` / `usermod -aG docker ec2-user` lines, or `ec2-user` will have no docker access.
             - Re-monolithised the VM-configuration pipeline in `011_configure_vm.tf` (issue #410). The previous chain of 10 sequential `null_resource` blocks (`ssh_connectivity_check` → `file_transfer` → 8 mid-pipeline Ansible steps) is now a **single** `null_resource` (`configure_vm`) with three locally-bracketed phases (`ssh_probe` / `file_transfer` / `remote_orchestrator`) and a remote orchestrator (`assets/src/bash/remote/orchestrate.sh`) that runs the 7 Ansible stages on the host. Failure attribution survives via bracketed log markers (`STAGE START` / `STAGE OK` / `STAGE FAILED`) at both layers — search terraform output / on-host log for `STAGE FAILED` to find the failure point. Persistent on-host log at `/home/ec2-user/tower-installer-logs/apply-<UTC>.log`. The `count` gate (`flag_vm_copy_files_to_instance`) lives on `null_resource.allow_file_copy_to_start` in `010_prepare_config_files.tf`; `configure_vm` derives its count via `length(...)`. Net plan output: 1 `null_resource` line per apply instead of 10. **Drift defence is unchanged** — `always_run = timestamp()` triggers a full Ansible reconcile every apply. [`#410`](https://github.com/seqeralabs/cx-field-tools-installer/issues/410)
             - `aws_batch_manual` / `aws_batch_forge` (`010_prepare_config_files.tf`) now also require `flag_run_seqerakit = true`. When Seqerakit is off, the compute-environment block is no longer appended to `setup.yml`. No functional impact: only Seqerakit reads that file.
+            - Removed the unused `tower_server_port` variable (no effect since 1.6.0). See `Configuration File Changes`.
+            - Cleared all `tflint` warnings: removed 4 unused locals, a duplicate map key in each of 2 templatefile arg maps, and deprecated `"${...}"` wrappers. No behaviour change.
+            - Pinned the `null` (`~> 3.0`), `random` (`~> 3.1`), and `tls` (`~> 4.0`) providers to block untested major versions. Existing lock files still satisfy these pins.
         <br /><br />
 
         - Security
@@ -36,7 +39,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 #### `terraform.tfvars`
 | Status | Component | Parameter Name | Description |
 | ------ | --------- | -------------- | ----------- |
-| TBD |  |  |  |
+| Deleted | Platform | `tower_server_port` | Unused since 1.6.0: the HTTP-only URL always uses port `8000`, so this value had no effect. Delete the line from your `terraform.tfvars`. If you keep it, Terraform prints a non-fatal "Value for undeclared variable" warning. |
 
 
 ## 1.8.1 (July 2026)
