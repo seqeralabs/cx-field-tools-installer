@@ -183,8 +183,9 @@ locals {
   ## ------------------------------------------------------------------------------------
   docker_compose = templatefile("assets/src/docker_compose/docker-compose.yml.tpl",
     {
-      docker_version    = var.tower_container_version,
-      oidc_consolidated = local.oidc_consolidated,
+      docker_version        = var.tower_container_version,
+      frontend_image_suffix = local.frontend_image_suffix,
+      oidc_consolidated     = local.oidc_consolidated,
 
       db_database_name  = var.db_database_name,
       db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"],

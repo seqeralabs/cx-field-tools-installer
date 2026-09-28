@@ -142,7 +142,7 @@ services:
 
 
   frontend:
-    image: cr.seqera.io/enterprise/platform/frontend:${docker_version}-unprivileged
+    image: cr.seqera.io/enterprise/platform/frontend:${docker_version}${frontend_image_suffix}
     networks:
       - frontend
     ports:

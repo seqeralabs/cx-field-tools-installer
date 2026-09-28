@@ -28,6 +28,9 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
                 - **Existing sites:** the IAM change applies on the next `terraform apply`. The agent only installs on new instances (`user_data` changes are ignored). On a running instance, run `sudo dnf install -y amazon-ssm-agent && sudo systemctl enable --now amazon-ssm-agent`.
                 - **Pre-existing IAM role** (`flag_iam_use_prexisting_role_arn = true`): add the same five actions to your role.
                 - **Private instances without a NAT:** add `ssm` and `ssmmessages` to `vpc_interface_endpoints_tower`.
+            - Default images for Platform v26.2: `tower_container_version` `v26.2.0-RC16`, `data_studio_container_version` `0.14.0` (Connect proxy and server), `wave_lite_container_version` `v1.38.0`. Groundswell stays at `0.4.15`.
+            - The frontend image tag now follows the Platform version: `<version>-unprivileged` before v26.2.0, and `<version>` from v26.2.0, where the default image is unprivileged. Pre-release tags such as `v26.2.0-RC16` count as v26.2.
+            - Studio templates: added the Connect 0.14.0 images (VSCode 1.105.1, Jupyter 4.6.0, RStudio 2026.01.2, Xpra 6.3.6) as `recommended`. The 0.12.2 images are now `deprecated`, and the 0.11.0 images are removed.
         <br /><br />
 
         - Security
@@ -41,6 +44,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 
         - Testing
             - Added testcontainer tests that run each SQL file twice (`test_tower_sql_rerun`, `test_groundswell_sql_rerun`, `test_wave_sql_rds_rerun`), plus `test_groundswell_sql_population` and `test_tower_sql_rerun_resets_password` (a re-run restores a password changed in the DB). `groundswell.sql` content is now checked in the baseline assertions. [`#434`](https://github.com/seqeralabs/cx-field-tools-installer/issues/434)
+            - Test data now pins `tower_container_version = "v26.2.0-RC16"`. The baseline checks the frontend image, and the Xpra keys in the baseline's omitted list are fixed (they had typos). Added `test_frontend_pre_26_2_active` for the `-unprivileged` tag on Platform < v26.2.0.
 
 
 ### Configuration File Changes
@@ -48,6 +52,10 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 | Status | Component | Parameter Name | Description |
 | ------ | --------- | -------------- | ----------- |
 | Deleted | Platform | `tower_server_port` | Unused since 1.6.0: the HTTP-only URL always uses port `8000`, so this value had no effect. Delete the line from your `terraform.tfvars`. If you keep it, Terraform prints a non-fatal "Value for undeclared variable" warning. |
+| Modified | Platform | `tower_container_version` | Default `v26.1.3` → `v26.2.0-RC16`. Switch to `v26.2.0` once it is published. |
+| Modified | Studios | `data_studio_container_version` | Default `0.11.0` → `0.14.0` (Connect proxy and server). |
+| Modified | Wave-Lite | `wave_lite_container_version` | Default `v1.33.0` → `v1.38.0`. |
+| Modified | Studios | `data_studio_options` | Added the 0.14.0 templates (`recommended`), marked 0.12.2 `deprecated`, and removed 0.11.0. Copy the new block from `TEMPLATE_terraform.tfvars` into your `terraform.tfvars`. |
 
 
 ## 1.8.1 (July 2026)
