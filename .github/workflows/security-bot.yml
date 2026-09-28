@@ -1,73 +1,102 @@
 # Source: Inspired by https://github.com/anthropics/claude-code-security-review
+#
+# What this does:
+#   On every PR, runs Anthropic's Claude Code Security Review action, which uses
+#   Claude to scan the PR diff for security issues and posts findings as inline
+#   review comments. The check-membership job below gates execution so only PRs
+#   from seqeralabs org members consume API quota.
+#
+# Heads up: the upstream action's input schema has changed between commits in
+# the past. If the claude-code-security-action job fails fast with
+# "Unexpected input(s) ...", compare against action.yml at the SHA pinned below:
+#   https://github.com/anthropics/claude-code-security-review/blob/<sha>/action.yml
 name: Claude Security Review Bot
-
-# Fire fairly indiscrimately, but exit if the body doesn't contain the @claude keyword.
+# `pull_request` fires on open, synchronize (new commits), and reopen by default.
+# See: https://docs.github.com/actions/using-workflows/events-that-trigger-workflows#pull_request
 on:
-    pull_request:
-
+  pull_request:
 jobs:
-    check-membership:
-        if: |
-            github.actor != 'claude[bot]'
-        runs-on: ubuntu-latest
-        outputs:
-            is-member: ${{ steps.check.outputs.allowed }}
-        steps:
-            - name: Check if actor is an org member
-              id: check
-              uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
-              with:
-                  script: |
-                      const org = 'seqeralabs';
-                      const user = context.actor;
+  # Gate the review on org membership so we don't burn API quota on PRs from
+  # external contributors. The `claude[bot]` guard also stops the bot's own
+  # follow-up commits/comments from re-triggering the workflow recursively.
+  check-membership:
+    if: |
+      github.actor != 'claude[bot]'
+    runs-on: ubuntu-latest
+    outputs:
+      is-member: ${{ steps.check.outputs.allowed }}
+    steps:
+      # Pinning convention for every `uses:` in this file:
+      #   Third-party actions are pinned to a full 40-char commit SHA
+      #   (immutable). The trailing comment records the human-readable
+      #   version so the next maintainer knows what they're looking at.
+      # To bump: open the action's GitHub Releases page, pick a release,
+      #   copy the commit SHA the release points to, replace both the SHA
+      #   and the trailing `# vX.Y.Z` comment. Dependabot can automate
+      #   this — add a `github-actions` ecosystem entry to dependabot.yml.
+      - name: Check if actor is an org member
+        id: check
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const org = 'seqeralabs';
+            const user = context.actor;
 
-                      try {
-                        await github.rest.orgs.checkMembershipForUser({
-                          org,
-                          username: user
-                        });
-                        core.setOutput('allowed', 'true');
-                        console.log(`✓ User ${user} is a member of ${org}`);
-                      } catch (err) {
-                        core.setOutput('allowed', 'false');
-                        console.log(`✗ User ${user} is not a member of ${org}`);
-                      }
-
-    claude-code-security-action:
-        needs: check-membership
-        if: needs.check-membership.outputs.is-member == 'true'
-        runs-on: ubuntu-latest
-        # TODO: Add more details on where this came from
-        permissions:
-            pull-requests: write # Needed for leaving PR comments
-            contents: read
-
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4 # TODO: why not v6?
-              with:
-                  ref: ${{ github.event.pull_request.head.sha || github.sha }}
-                  fetch-depth: 2
-
-            - name: Run Claude Code Security Action
-              uses: anthropics/claude-code-security-review@0c6a49f1fa56a1d472575da86a94dbc1edb78eda # main
-              timeout-minutes: 60
-              with:
-                  comment-pr: true
-                  anthropic_api_key: ${{ secrets.ENG_ANTHROPIC_API_KEY }}
-                  timeout_minutes: "60" # TODO: Why is timeout here again?
-                  # TODO: Build this out later
-                  settings: |
-                      {
-                      "hooks": {}
-                      }
-                  # mode: tag  # Default: responds to @claude mentions
-                  # Optional: Restrict network access to specific domains only
-                  # experimental_allowed_domains: |
-                  #   .anthropic.com
-                  #   .github.com
-                  #   api.github.com
-                  #   .githubusercontent.com
-                  #   bun.sh
-                  #   registry.npmjs.org
-                  #   .blob.core.windows.net
+            try {
+              await github.rest.orgs.checkMembershipForUser({
+                org,
+                username: user
+              });
+              core.setOutput('allowed', 'true');
+              console.log(`✓ User ${user} is a member of ${org}`);
+            } catch (err) {
+              core.setOutput('allowed', 'false');
+              console.log(`✗ User ${user} is not a member of ${org}`);
+            }
+  claude-code-security-action:
+    needs: check-membership
+    if: needs.check-membership.outputs.is-member == 'true'
+    runs-on: ubuntu-latest
+    # Least-privilege GITHUB_TOKEN scoping for this job:
+    #   - pull-requests: write  → so the action can post review comments
+    #   - contents: read        → so it can fetch the diff
+    # Nothing else is needed. Default scope is broader, so we narrow it
+    # explicitly here. Docs:
+    #   https://docs.github.com/actions/security-guides/automatic-token-authentication
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          # On a PR event, check out the PR head (the actual commits to
+          # review); fall back to the workflow's own commit otherwise.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # Only need the last commit and its parent to compute the diff.
+          fetch-depth: 2
+      # No upstream version tags on this action yet — the trailing
+      # `# main` records that the pinned SHA was the tip of `main` at pin
+      # time. Bump cautiously: this action has renamed inputs between
+      # commits (e.g. `anthropic_api_key` → `claude-api-key`), so verify
+      # `action.yml` at the new SHA after bumping. The full input list
+      # lives there; query the failing run's annotations to see what the
+      # action accepts at the currently-pinned SHA.
+      - name: Run Claude Code Security Action
+        uses: anthropics/claude-code-security-review@0c6a49f1fa56a1d472575da86a94dbc1edb78eda # main
+        # Two timeout layers, independent — keep both if you want belt
+        # and suspenders:
+        #   - `timeout-minutes` here = GitHub Actions hard kill for the
+        #     whole step (process is SIGTERM'd).
+        #   - `claudecode-timeout` (action input, not currently set) =
+        #     budget for the inner Claude Code run itself.
+        timeout-minutes: 60
+        with:
+          # Post findings as PR review comments instead of only logging.
+          comment-pr: true
+          # API key for the underlying Claude call. Secret is configured
+          # at the org/repo level (Settings → Secrets and variables →
+          # Actions). NOTE: input name was renamed upstream from
+          # `anthropic_api_key` → `claude-api-key`; watch for similar
+          # renames whenever you bump the SHA above.
+          claude-api-key: ${{ secrets.ENG_ANTHROPIC_API_KEY }}
