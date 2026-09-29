@@ -577,6 +577,39 @@ variable "tower_aws_secrets_kms_key_id" {
   }
 }
 
+variable "tower_actions" {
+  description = "Actions (v26.2.0+). Per-trigger workspace allow-lists (\"\" = all workspaces, \"0\" = off, or workspace IDs) for the bucket, schedule and pipeline-run triggers, plus the trigger rate limit. Platform turns all three triggers on everywhere by default."
+  type = object({
+    bucket_trigger_allowed_workspaces   = string
+    cron_trigger_allowed_workspaces     = string
+    pipeline_trigger_allowed_workspaces = string
+    trigger_rate_max_per_window         = number
+    trigger_rate_window                 = string
+  })
+
+  # "0" passes this check: it's how a trigger is turned off (no workspace has ID 0).
+  validation {
+    condition = alltrue([
+      for v in [
+        var.tower_actions.bucket_trigger_allowed_workspaces,
+        var.tower_actions.cron_trigger_allowed_workspaces,
+        var.tower_actions.pipeline_trigger_allowed_workspaces,
+      ] : v == "" || can(regex("^[0-9]+(,[0-9]+)*$", v))
+    ])
+    error_message = "tower_actions.*_allowed_workspaces must be \"\" (all workspaces), \"0\" (off), or a comma-separated list of numeric workspace IDs (e.g. \"123,456\")."
+  }
+
+  validation {
+    condition     = var.tower_actions.trigger_rate_max_per_window >= 1 && floor(var.tower_actions.trigger_rate_max_per_window) == var.tower_actions.trigger_rate_max_per_window
+    error_message = "tower_actions.trigger_rate_max_per_window must be a whole number of 1 or more."
+  }
+
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.tower_actions.trigger_rate_window))
+    error_message = "tower_actions.trigger_rate_window must be a duration like \"30m\", \"1h\", \"1d\" (digits followed by ms|s|m|h|d)."
+  }
+}
+
 variable "tower_workflow_cleanup_enabled" { type = bool }
 
 # Compute environment cleanup (v26.1.0+) — bundled object.
