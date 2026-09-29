@@ -264,9 +264,13 @@ TOWER_COMPUTE_ENV_CLEANUP_STUCK_DELETING_TIMEOUT=${tower_compute_env_cleanup.stu
 %{ endif }
 
 
-# AUDIT LOG V2 (v26.1.0+)
+# AUDIT LOG V2 (v26.1.0+). From v26.2.0, v2 is the only audit log and the write mode is removed.
 # ------------------------------------------------
+%{ if tower_version_before_26_2 ~}
 TOWER_AUDIT_LOG_V2_WRITE_MODE=${tower_audit_log_v2.write_mode}
+%{ else ~}
+# TOWER_AUDIT_LOG_V2_WRITE_MODE=NOT_AVAILABLE_DO_NOT_UNCOMMENT
+%{ endif ~}
 TOWER_AUDIT_LOG_V2_CSV_EXPORT_MAX_LOGS=${tower_audit_log_v2.csv_export_max_logs}
 TOWER_AUDIT_LOG_V2_PRE_POST_CHANGE_ENABLED=${tower_audit_log_v2.pre_post_change_enabled}
 

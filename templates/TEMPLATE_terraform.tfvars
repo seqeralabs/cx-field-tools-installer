@@ -893,6 +893,11 @@ tower_audit_retention_days = 1095 # 3 years (value in days)
 # gates the scheduled purge job by its own flag — set `cleanup = { enabled = false }`
 # to disable purging entirely.
 #
+# write_mode applies to Platform v26.1 only ("dual" or "v2"). From v26.2.0, Platform writes
+# only to the v2 table and ignores this value. Existing v1 rows stay readable until
+# tower_audit_retention_days removes them. Move any readers of the tw_audit_log table to
+# the v2 schema before upgrading.
+#
 # See: https://docs.seqera.io/platform-enterprise/enterprise/configuration/overview
 tower_audit_log_v2 = {
   write_mode              = "dual"

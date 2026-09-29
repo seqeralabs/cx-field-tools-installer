@@ -76,7 +76,7 @@ BASELINE = """
     tower_aws_secrets_kms_key_id                   = ""
     # tower_actions is written on one line so the fragment dedup ("last wins", per line) can override it.
     tower_actions = { bucket_trigger_allowed_workspaces = "", cron_trigger_allowed_workspaces = "", pipeline_trigger_allowed_workspaces = "", trigger_rate_max_per_window = 20, trigger_rate_window = "1h" }
-"""
+"""  # noqa: E501
 
 REDIS_EXTERNAL_ACTIVE = """
     flag_create_external_redis = true
@@ -144,10 +144,9 @@ TOWER_OPT_IN_FLAGS_ACTIVE = """
     flag_tower_enable_member_auto_create_user      = true
     tower_workflow_cleanup_enabled                 = true
     flag_enable_preflight_checks                   = true
-    tower_aws_secrets_kms_key_id                   = "arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab"
     tower_actions = { bucket_trigger_allowed_workspaces = "0", cron_trigger_allowed_workspaces = "12,34", pipeline_trigger_allowed_workspaces = "56", trigger_rate_max_per_window = 50, trigger_rate_window = "2h" }
     tower_aws_secrets_kms_key_id = "arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab"
-"""
+"""  # noqa: E501
 
 PRIVATE_CA_REVERSE_PROXY_ACTIVE = """
     flag_create_load_balancer = false
@@ -258,7 +257,8 @@ BASELINE_ASSERTIONS = {
             # COMPUTE_ENV_CLEANUP
             "# TOWER_COMPUTE_ENV_CLEANUP_NOT_ENABLED": "DO_NOT_UNCOMMENT",
             # AUDIT_LOG_V2
-            "TOWER_AUDIT_LOG_V2_WRITE_MODE": "dual",
+            # v26.2.0+ (test pin `v26.2.0-RC16`): the write mode is removed upstream.
+            "# TOWER_AUDIT_LOG_V2_WRITE_MODE": "NOT_AVAILABLE_DO_NOT_UNCOMMENT",
             "TOWER_AUDIT_LOG_V2_CSV_EXPORT_MAX_LOGS": "500000",
             "TOWER_AUDIT_LOG_V2_PRE_POST_CHANGE_ENABLED": "false",
             # CRON_AUDIT_LOG_CLEANUP
@@ -357,6 +357,8 @@ BASELINE_ASSERTIONS = {
             "TOWER_LINEAGE_SNS_MAX_DELAY_SECONDS",
             "TOWER_LINEAGE_MIGRATE_SQS_TRANSPORT",
             "TOWER_GLOBAL_SEARCH_ENABLED",
+            # AUDIT_LOG_V2
+            "TOWER_AUDIT_LOG_V2_WRITE_MODE",
             # COMPUTE_ENV_CLEANUP
             "TOWER_COMPUTE_ENV_CLEANUP_ENABLED",
             "TOWER_COMPUTE_ENV_CLEANUP_DELAY",
@@ -908,7 +910,6 @@ TOWER_OPT_IN_FLAGS_ACTIVE_ASSERTIONS = {
             "TOWER_ENABLE_OPENAPI": "true",
             "TOWER_PREFLIGHT_CHECK_ENABLED": "true",
             "TOWER_CREDENTIALS_VALIDATION_ENABLED": "true",
-            "TOWER_AWS_SECRETS_KMS_KEY_ID": "arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab",
             "TOWER_ACTIONS_BUCKET_TRIGGER_ALLOWED_WORKSPACES": "0",
             "TOWER_ACTIONS_CRON_TRIGGER_ALLOWED_WORKSPACES": "12,34",
             "TOWER_ACTIONS_PIPELINE_TRIGGER_ALLOWED_WORKSPACES": "56",
@@ -1097,8 +1098,11 @@ FRONTEND_PRE_26_2_ACTIVE_ASSERTIONS = {
         "omitted": set(),
     },
     "tower_env": {
-        "present": {"# TOWER_LINEAGE_NOT_ENABLED": "DO_NOT_UNCOMMENT"},
-        "omitted": {"TOWER_LINEAGE_ALLOWED_WORKSPACES"},
+        "present": {
+            "# TOWER_LINEAGE_NOT_ENABLED": "DO_NOT_UNCOMMENT",
+            "TOWER_AUDIT_LOG_V2_WRITE_MODE": "dual",
+        },
+        "omitted": {"TOWER_LINEAGE_ALLOWED_WORKSPACES", "# TOWER_AUDIT_LOG_V2_WRITE_MODE"},
     },
 }
 
