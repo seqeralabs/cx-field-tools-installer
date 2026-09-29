@@ -181,6 +181,15 @@ def verify_data_lineage_enabled(data: SimpleNamespace):
         log_error_and_exit("Data lineage can only be enabled on Platform v26.1.0+")
 
 
+def verify_pipeline_secrets_kms_key(data: SimpleNamespace):
+    """Check the pipeline secrets KMS key is only set on Platform versions that read it.
+
+    The key format is validated in variables.tf.
+    """
+    if data.tower_aws_secrets_kms_key_id and data.tower_container_version < "v26.2.0":
+        log_error_and_exit("`tower_aws_secrets_kms_key_id` can only be set on Platform v26.2.0+")
+
+
 def verify_studio_ssh_cidrs_set(data: SimpleNamespace):
     """Fail if Studios SSH is enabled but no client CIDRs were configured.
 
@@ -655,6 +664,7 @@ if __name__ == "__main__":
     verify_email_login_disablement(data)
     verify_workflow_cleanup_enabled(data)
     verify_data_lineage_enabled(data)
+    verify_pipeline_secrets_kms_key(data)
     verify_studio_ssh_cidrs_set(data)
     verify_aws_instance_credentials_platform_version(data)
     verify_compute_env_cleanup_platform_version(data)

@@ -192,6 +192,8 @@ tower_enable_openapi = true
 
 flag_enable_preflight_checks = true
 
+tower_aws_secrets_kms_key_id = "arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+
 tower_enable_pipeline_versioning        = true
 pipeline_versioning_eligible_workspaces = ""
 

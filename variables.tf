@@ -566,6 +566,17 @@ variable "flag_enable_preflight_checks" {
   description = "Platform preflight checks (v26.2.0+). When true, Platform runs preflight checks and validates credentials before a pipeline launch (TOWER_PREFLIGHT_CHECK_ENABLED, TOWER_CREDENTIALS_VALIDATION_ENABLED). Upstream default: true."
 }
 
+variable "tower_aws_secrets_kms_key_id" {
+  type        = string
+  description = "Installation-wide customer-managed KMS key for pipeline secrets (v26.2.0+), written as TOWER_AWS_SECRETS_KMS_KEY_ID. Key ARN or key ID, not an alias. Empty uses the AWS-managed key. A compute environment's own key takes precedence."
+
+  # Mirrors Platform's KMS_KEY_ARN_OR_ID_PATTERN (AwsHelper.groovy). Platform refuses to start on a value that fails it.
+  validation {
+    condition     = can(regex("^((arn:aws[a-z0-9-]*:kms:[a-z0-9-]+:[0-9]{12}:key/)?(mrk-[0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}))?$", var.tower_aws_secrets_kms_key_id))
+    error_message = "tower_aws_secrets_kms_key_id must be empty, a KMS key ARN (arn:aws:kms:<region>:<account-id>:key/<key-id>), or a key ID (lowercase UUID or mrk-<32 hex>). Aliases are not accepted."
+  }
+}
+
 variable "tower_workflow_cleanup_enabled" { type = bool }
 
 # Compute environment cleanup (v26.1.0+) — bundled object.
