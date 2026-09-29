@@ -226,6 +226,42 @@ def verify_pipeline_secrets_kms_key(data: SimpleNamespace):
         log_error_and_exit("`tower_aws_secrets_kms_key_id` can only be set on Platform v26.2.0+")
 
 
+def verify_actions_bucket_trigger(data: SimpleNamespace):
+    """Warn when bucket-event Actions are on but can't work on this deployment.
+
+    Platform turns the bucket trigger on everywhere unless
+    `tower_actions.bucket_trigger_allowed_workspaces = "0"`. AWS SNS pushes each bucket event to
+    `${TOWER_SERVER_URL}/api/actions/<id>/bucket` over HTTPS and only accepts publicly trusted
+    certificates, and the trigger needs Data Explorer. Warnings only: schedule and pipeline-run
+    triggers are unaffected.
+    """
+    actions = getattr(data, "tower_actions", {})
+    if data.tower_container_version < "v26.2.0" or actions.get("bucket_trigger_allowed_workspaces") == "0":
+        return
+
+    blockers = [
+        name
+        for name in (
+            "flag_do_not_use_https",
+            "flag_private_tower_without_eice",
+            "flag_make_instance_private",
+            "flag_use_private_cacert",
+        )
+        if getattr(data, name, False)
+    ]
+    if blockers:
+        logger.warning(
+            f"Bucket-event Actions are on but cannot work with {', '.join(blockers)}: AWS SNS must reach "
+            "Platform over public HTTPS with a publicly trusted certificate. "
+            'Set tower_actions.bucket_trigger_allowed_workspaces = "0" to turn them off.'
+        )
+    if not data.flag_data_explorer_enabled:
+        logger.warning(
+            "Bucket-event Actions are on but need Data Explorer: set flag_data_explorer_enabled = true, "
+            'or set tower_actions.bucket_trigger_allowed_workspaces = "0" to turn them off.'
+        )
+
+
 def verify_studio_ssh_cidrs_set(data: SimpleNamespace):
     """Fail if Studios SSH is enabled but no client CIDRs were configured.
 
@@ -768,6 +804,7 @@ if __name__ == "__main__":
     verify_workflow_cleanup_enabled(data)
     verify_data_lineage_enabled(data)
     verify_pipeline_secrets_kms_key(data)
+    verify_actions_bucket_trigger(data)
     verify_studio_ssh_cidrs_set(data)
     verify_aws_instance_credentials_platform_version(data)
     verify_compute_env_cleanup_platform_version(data)

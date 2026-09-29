@@ -955,6 +955,33 @@ flag_enable_preflight_checks = true
 # kms:Decrypt on the key, and the compute environment execution role needs kms:Decrypt.
 tower_aws_secrets_kms_key_id = ""
 
+# Actions (v26.2.0+). Platform 26.2 adds three Action triggers, and turns all three ON by
+# default in every workspace, including personal workspaces:
+#   bucket   = launch a pipeline when a marker file is created/deleted in an S3 data repository.
+#              Needs flag_data_explorer_enabled = true, and Platform reachable from AWS over public
+#              HTTPS with a publicly trusted certificate (so not private, HTTP-only or private-CA
+#              installs). The data repository's credential needs s3:Get/PutBucketNotificationConfiguration
+#              and sns:CreateTopic/SetTopicAttributes/Subscribe/DeleteTopic (not the EC2 instance role).
+#   cron     = launch a pipeline on a schedule.
+#   pipeline = launch a pipeline when a watched pipeline's run succeeds, fails or is cancelled.
+#
+# To turn a trigger on or off, set its *_allowed_workspaces value:
+#   ""          on in every workspace (Platform default)
+#   "0"         off everywhere
+#   "123,456"   on only in these numeric workspace IDs (`tw workspaces list`)
+# Restricting a trigger pauses that trigger's existing Actions in the excluded workspaces.
+# GitHub webhook and Tower launch hook Actions are not affected.
+#
+# Rate limit: an Action that fires trigger_rate_max_per_window times within trigger_rate_window
+# is paused until someone resumes it. The values below are Platform's defaults.
+tower_actions = {
+  bucket_trigger_allowed_workspaces   = ""
+  cron_trigger_allowed_workspaces     = ""
+  pipeline_trigger_allowed_workspaces = ""
+  trigger_rate_max_per_window         = 20
+  trigger_rate_window                 = "1h"
+}
+
 # If enabled, set eligibility to "" for all workspaces, or "WSP1_ID,WSP2_ID,..."
 tower_enable_pipeline_versioning        = false
 pipeline_versioning_eligible_workspaces = ""
