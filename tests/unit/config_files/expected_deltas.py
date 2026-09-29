@@ -74,6 +74,8 @@ BASELINE = """
     tower_workflow_cleanup_enabled                 = false
     flag_enable_preflight_checks                   = false
     tower_aws_secrets_kms_key_id                   = ""
+    # tower_actions is written on one line so the fragment dedup ("last wins", per line) can override it.
+    tower_actions = { bucket_trigger_allowed_workspaces = "", cron_trigger_allowed_workspaces = "", pipeline_trigger_allowed_workspaces = "", trigger_rate_max_per_window = 20, trigger_rate_window = "1h" }
 """
 
 REDIS_EXTERNAL_ACTIVE = """
@@ -142,6 +144,8 @@ TOWER_OPT_IN_FLAGS_ACTIVE = """
     flag_tower_enable_member_auto_create_user      = true
     tower_workflow_cleanup_enabled                 = true
     flag_enable_preflight_checks                   = true
+    tower_aws_secrets_kms_key_id                   = "arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+    tower_actions = { bucket_trigger_allowed_workspaces = "0", cron_trigger_allowed_workspaces = "12,34", pipeline_trigger_allowed_workspaces = "56", trigger_rate_max_per_window = 50, trigger_rate_window = "2h" }
     tower_aws_secrets_kms_key_id = "arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab"
 """
 
@@ -266,12 +270,22 @@ BASELINE_ASSERTIONS = {
             "TOWER_CREDENTIALS_VALIDATION_ENABLED": "false",
             # PIPELINE SECRETS KMS KEY (unset in BASELINE)
             "# TOWER_AWS_SECRETS_KMS_KEY_ID_NOT_SET": "DO_NOT_UNCOMMENT",
+            # ACTIONS (Platform defaults in BASELINE: all triggers on everywhere, 20 per 1h)
+            "# TOWER_ACTIONS_BUCKET_TRIGGER_ALL_WORKSPACES": "DO_NOT_UNCOMMENT",
+            "# TOWER_ACTIONS_CRON_TRIGGER_ALL_WORKSPACES": "DO_NOT_UNCOMMENT",
+            "# TOWER_ACTIONS_PIPELINE_TRIGGER_ALL_WORKSPACES": "DO_NOT_UNCOMMENT",
+            "TOWER_ACTIONS_TRIGGER_RATE_MAX_PER_WINDOW": "20",
+            "TOWER_ACTIONS_TRIGGER_RATE_WINDOW": "1h",
             # STUDIOS PRIVATE CA (off in BASELINE)
             "# TOWER_SSL_CUSTOM_CA_CERT_FILE_NOT_SET": "DO_NOT_UNCOMMENT",
         },
         "omitted": {
             # PIPELINE SECRETS KMS KEY
             "TOWER_AWS_SECRETS_KMS_KEY_ID",
+            # ACTIONS (allow-lists only written when they restrict)
+            "TOWER_ACTIONS_BUCKET_TRIGGER_ALLOWED_WORKSPACES",
+            "TOWER_ACTIONS_CRON_TRIGGER_ALLOWED_WORKSPACES",
+            "TOWER_ACTIONS_PIPELINE_TRIGGER_ALLOWED_WORKSPACES",
             # STUDIOS PRIVATE CA
             "TOWER_SSL_CUSTOM_CA_CERT_FILE",
             # DB                      Never generated in file
@@ -881,10 +895,22 @@ TOWER_OPT_IN_FLAGS_ACTIVE_ASSERTIONS = {
             "TOWER_ENABLE_OPENAPI": "true",
             "TOWER_PREFLIGHT_CHECK_ENABLED": "true",
             "TOWER_CREDENTIALS_VALIDATION_ENABLED": "true",
+            "TOWER_AWS_SECRETS_KMS_KEY_ID": "arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab",
+            "TOWER_ACTIONS_BUCKET_TRIGGER_ALLOWED_WORKSPACES": "0",
+            "TOWER_ACTIONS_CRON_TRIGGER_ALLOWED_WORKSPACES": "12,34",
+            "TOWER_ACTIONS_PIPELINE_TRIGGER_ALLOWED_WORKSPACES": "56",
+            "TOWER_ACTIONS_TRIGGER_RATE_MAX_PER_WINDOW": "50",
+            "TOWER_ACTIONS_TRIGGER_RATE_WINDOW": "2h",
             "TOWER_AWS_SECRETS_KMS_KEY_ID": "arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab",  # noqa: E501
             "TOWER_PIPELINE_VERSIONING_ALLOWED_WORKSPACES": "",
         },
-        "omitted": {"# TOWER_PIPELINE_VERSIONING_NOT_ENABLED", "# TOWER_AWS_SECRETS_KMS_KEY_ID_NOT_SET"},
+        "omitted": {
+            "# TOWER_PIPELINE_VERSIONING_NOT_ENABLED",
+            "# TOWER_AWS_SECRETS_KMS_KEY_ID_NOT_SET",
+            "# TOWER_ACTIONS_BUCKET_TRIGGER_ALL_WORKSPACES",
+            "# TOWER_ACTIONS_CRON_TRIGGER_ALL_WORKSPACES",
+            "# TOWER_ACTIONS_PIPELINE_TRIGGER_ALL_WORKSPACES",
+        },
     },
     "tower_yml": {
         "present": {

@@ -59,6 +59,7 @@ locals {
       data_studio_wave_disallowed_registries   = var.data_studio_wave_disallowed_registries,
       data_studio_wave_custom_image_registry   = var.data_studio_wave_custom_image_registry,
       data_studio_wave_custom_image_repository = var.data_studio_wave_custom_image_repository,
+      studios_private_ca_active      = local.studios_private_ca_active,  
 
       flag_allow_aws_instance_credentials = var.flag_allow_aws_instance_credentials,
       tower_enable_openapi                = var.tower_enable_openapi,
@@ -75,7 +76,7 @@ locals {
       flag_enable_standard_telemetry = var.flag_enable_standard_telemetry,
       flag_enable_preflight_checks   = var.flag_enable_preflight_checks,
       tower_aws_secrets_kms_key_id   = var.tower_aws_secrets_kms_key_id,
-      studios_private_ca_active      = local.studios_private_ca_active,
+      tower_actions                  = var.tower_actions,
     }
   )
 

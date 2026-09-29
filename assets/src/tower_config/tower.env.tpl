@@ -305,6 +305,30 @@ TOWER_AWS_SECRETS_KMS_KEY_ID=${tower_aws_secrets_kms_key_id}
 
 
 #-------------------------------------------------
+# ACTIONS (v26.2.0+)
+# Bucket, schedule (cron) and pipeline-run triggers are on in every workspace unless an
+# allow-list is set. "0" turns a trigger off everywhere; a comma-separated list limits it
+# to those workspace IDs. An allow-list is only written when it restricts something.
+# ------------------------------------------------
+%{ if tower_actions.bucket_trigger_allowed_workspaces != "" ~}
+TOWER_ACTIONS_BUCKET_TRIGGER_ALLOWED_WORKSPACES=${tower_actions.bucket_trigger_allowed_workspaces}
+%{ else ~}
+# TOWER_ACTIONS_BUCKET_TRIGGER_ALL_WORKSPACES=DO_NOT_UNCOMMENT
+%{ endif ~}
+%{ if tower_actions.cron_trigger_allowed_workspaces != "" ~}
+TOWER_ACTIONS_CRON_TRIGGER_ALLOWED_WORKSPACES=${tower_actions.cron_trigger_allowed_workspaces}
+%{ else ~}
+# TOWER_ACTIONS_CRON_TRIGGER_ALL_WORKSPACES=DO_NOT_UNCOMMENT
+%{ endif ~}
+%{ if tower_actions.pipeline_trigger_allowed_workspaces != "" ~}
+TOWER_ACTIONS_PIPELINE_TRIGGER_ALLOWED_WORKSPACES=${tower_actions.pipeline_trigger_allowed_workspaces}
+%{ else ~}
+# TOWER_ACTIONS_PIPELINE_TRIGGER_ALL_WORKSPACES=DO_NOT_UNCOMMENT
+%{ endif ~}
+TOWER_ACTIONS_TRIGGER_RATE_MAX_PER_WINDOW=${tower_actions.trigger_rate_max_per_window}
+TOWER_ACTIONS_TRIGGER_RATE_WINDOW=${tower_actions.trigger_rate_window}
+
+
 # STUDIOS PRIVATE CA (v26.2.0+, Connect 0.12.2+)
 # Path of the private root CA inside backend and cron (mounted by docker-compose).
 # ------------------------------------------------
