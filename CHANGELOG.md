@@ -31,6 +31,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Default images for Platform v26.2: `tower_container_version` `v26.2.0-RC16`, `data_studio_container_version` `0.14.0` (Connect proxy and server), `wave_lite_container_version` `v1.38.0`. Groundswell stays at `0.4.15`.
             - The frontend image tag now follows the Platform version: `<version>-unprivileged` before v26.2.0, and `<version>` from v26.2.0, where the default image is unprivileged. Pre-release tags such as `v26.2.0-RC16` count as v26.2.
             - Studio templates: added the Connect 0.14.0 images (VSCode 1.105.1, Jupyter 4.6.0, RStudio 2026.01.2, Xpra 6.3.6) as `recommended`. The 0.12.2 images are now `deprecated`, and the 0.11.0 images are removed.
+            - New `flag_enable_standard_telemetry` (Platform v26.2.0+): `"standard"` (default) sends standard and basic telemetry; `"basic"` sends basic telemetry only; `"air-gapped"` sends both and also writes usage-metric files every 24h (kept 90 days). In air-gapped mode, Ansible creates `/home/ec2-user/.tower/usage-metrics` on the host and mounts it into the `cron` container at `/usage-metrics`, outside `~/target`, which each apply replaces.
         <br /><br />
 
         - Security
@@ -45,6 +46,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
         - Testing
             - Added testcontainer tests that run each SQL file twice (`test_tower_sql_rerun`, `test_groundswell_sql_rerun`, `test_wave_sql_rds_rerun`), plus `test_groundswell_sql_population` and `test_tower_sql_rerun_resets_password` (a re-run restores a password changed in the DB). `groundswell.sql` content is now checked in the baseline assertions. [`#434`](https://github.com/seqeralabs/cx-field-tools-installer/issues/434)
             - Test data now pins `tower_container_version = "v26.2.0-RC16"`. The baseline checks the frontend image, and the Xpra keys in the baseline's omitted list are fixed (they had typos). Added `test_frontend_pre_26_2_active` for the `-unprivileged` tag on Platform < v26.2.0.
+            - Added `test_telemetry_basic_active` and `test_telemetry_air_gapped_active`. The baseline checks the telemetry keys for the default `"standard"` mode. The variable-validation suite rejects values other than `standard` / `basic` / `air-gapped`.
 
 
 ### Configuration File Changes
@@ -56,6 +58,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 | Modified | Studios | `data_studio_container_version` | Default `0.11.0` → `0.14.0` (Connect proxy and server). |
 | Modified | Wave-Lite | `wave_lite_container_version` | Default `v1.33.0` → `v1.38.0`. |
 | Modified | Studios | `data_studio_options` | Added the 0.14.0 templates (`recommended`), marked 0.12.2 `deprecated`, and removed 0.11.0. Copy the new block from `TEMPLATE_terraform.tfvars` into your `terraform.tfvars`. |
+| New | Telemetry | `flag_enable_standard_telemetry` | Telemetry mode for Platform v26.2.0+: `"standard"`, `"basic"`, or `"air-gapped"`. Required: add `flag_enable_standard_telemetry = "standard"` to your `terraform.tfvars` to keep Platform's default behaviour. |
 
 
 ## 1.8.1 (July 2026)
