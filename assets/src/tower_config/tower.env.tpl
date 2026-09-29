@@ -304,6 +304,17 @@ TOWER_AWS_SECRETS_KMS_KEY_ID=${tower_aws_secrets_kms_key_id}
 %{ endif ~}
 
 
+#-------------------------------------------------
+# STUDIOS PRIVATE CA (v26.2.0+, Connect 0.12.2+)
+# Path of the private root CA inside backend and cron (mounted by docker-compose).
+# ------------------------------------------------
+%{ if studios_private_ca_active ~}
+TOWER_SSL_CUSTOM_CA_CERT_FILE=/private-ca/rootCA.crt
+%{ else ~}
+# TOWER_SSL_CUSTOM_CA_CERT_FILE_NOT_SET=DO_NOT_UNCOMMENT
+%{ endif ~}
+
+
 # ------------------------------------------------
 # TEMPORARY WORKAROUND FOR MIGRATION SCRIPT
 #  - Need to add database creds here due to migration script limitation (Dec 2023)

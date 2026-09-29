@@ -34,6 +34,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - New `flag_enable_standard_telemetry` (Platform v26.2.0+): `"standard"` (default) sends standard and basic telemetry; `"basic"` sends basic telemetry only; `"air-gapped"` sends both and also writes usage-metric files every 24h (kept 90 days). In air-gapped mode, Ansible creates `/home/ec2-user/.tower/usage-metrics` on the host and mounts it into the `cron` container at `/usage-metrics`, outside `~/target`, which each apply replaces.
             - New `flag_enable_preflight_checks` (Platform v26.2.0+) sets both `TOWER_PREFLIGHT_CHECK_ENABLED` and `TOWER_CREDENTIALS_VALIDATION_ENABLED`. The template default, `true`, matches the upstream default.
             - New `tower_aws_secrets_kms_key_id` (Platform v26.2.0+) sets `TOWER_AWS_SECRETS_KMS_KEY_ID`, an installation-wide customer-managed KMS key that encrypts the temporary AWS Secrets Manager secrets Platform creates for pipeline runs. It applies to every AWS Batch and AWS Cloud compute environment that does not set its own key (Advanced options > Pipeline secrets KMS key), including existing ones. Key ARN or key ID only; aliases are rejected. Empty (the template default) keeps the AWS-managed key. `variables.tf` validates the format, because Platform will not start with an invalid value. No installer IAM change: the compute environment credentials and execution role use the key, not the installer's EC2 role. [`#435`](https://github.com/seqeralabs/cx-field-tools-installer/issues/435)
+            - New `flag_run_studios_via_private_ca` (Platform v26.2.0+) mounts the private root CA (`rootCA.crt`, PEM) into the `backend` and `cron` containers at `/private-ca/rootCA.crt` and sets `TOWER_SSL_CUSTOM_CA_CERT_FILE`, so Platform and Studios trust services signed by the private CA. Requires `flag_use_private_cacert = true`, `tower_container_version` >= v26.2.0, and `data_studio_container_version` >= 0.12.2; `make verify` enforces these (the matching `variables.tf` validations are commented out until the minimum Terraform version supports cross-variable checks). `make verify` also warns for each Studio template whose image is older than Connect 0.13.0, because those sessions won't trust the CA. Ansible now fails early if `rootCA.crt` is not PEM-encoded. [`#435`](https://github.com/seqeralabs/cx-field-tools-installer/issues/435)
         <br /><br />
 
         - Security
@@ -43,6 +44,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 
         - Documentation
             - Added Design Decision 22 (`documentation/design_decisions.md`): the installer enables SSM Session Manager on the instance, and the AWS account owner controls who can connect.
+            - `documentation/setup/optional_private_certificates.md`: `rootCA.crt` must be PEM-encoded, with a DER conversion command.
         <br /><br />
 
         - Testing
@@ -51,6 +53,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Added `test_telemetry_basic_active` and `test_telemetry_air_gapped_active`. The baseline checks the telemetry keys for the default `"standard"` mode. The variable-validation suite rejects values other than `standard` / `basic` / `air-gapped`.
             - `test_tower_opt_in_flags_active` now also covers `flag_enable_preflight_checks` (`true`), and the baseline covers `false`.
             - `test_tower_opt_in_flags_active` now also covers `tower_aws_secrets_kms_key_id` (set), and the baseline covers it unset. The variable-validation suite rejects an alias name, an alias ARN, and an uppercase key ID.
+            - Added `test_studios_private_ca_active` (the `rootCA.crt` mount, `TOWER_SSL_CUSTOM_CA_CERT_FILE`, and the PEM check render together) and `test_studios_private_ca_without_private_cacert` (nothing renders without the private CA).
 
 
 ### Configuration File Changes
@@ -65,6 +68,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 | New | Telemetry | `flag_enable_standard_telemetry` | Telemetry mode for Platform v26.2.0+: `"standard"`, `"basic"`, or `"air-gapped"`. Required: add `flag_enable_standard_telemetry = "standard"` to your `terraform.tfvars` to keep Platform's default behaviour. |
 | New | Platform | `flag_enable_preflight_checks` | Enables Platform preflight checks and credential validation before pipeline launch (v26.2.0+). Required: add `flag_enable_preflight_checks = true` to your `terraform.tfvars` to keep Platform's default behaviour. |
 | New | Platform | `tower_aws_secrets_kms_key_id` | Installation-wide customer-managed KMS key for pipeline secrets (v26.2.0+). Key ARN or key ID; aliases are rejected. Required: add `tower_aws_secrets_kms_key_id = ""` to your `terraform.tfvars` to keep the AWS-managed key. |
+| New | Studios | `flag_run_studios_via_private_ca` | Make Platform and Studios trust the private root CA (v26.2.0+). Requires `flag_use_private_cacert = true`. Required: add `flag_run_studios_via_private_ca = false` to your `terraform.tfvars` unless you use a private CA with Studios. |
 
 
 ## 1.8.1 (July 2026)
