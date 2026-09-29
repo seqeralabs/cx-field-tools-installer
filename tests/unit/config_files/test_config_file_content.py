@@ -45,6 +45,10 @@ from tests.unit.config_files.expected_deltas import (
     STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE,
     STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS,
     STUDIOS_WAVE_ACTIVE_ASSERTIONS,
+    TELEMETRY_AIR_GAPPED_ACTIVE,
+    TELEMETRY_AIR_GAPPED_ACTIVE_ASSERTIONS,
+    TELEMETRY_BASIC_ACTIVE,
+    TELEMETRY_BASIC_ACTIVE_ASSERTIONS,
     TOWER_OPT_IN_FLAGS_ACTIVE,
     TOWER_OPT_IN_FLAGS_ACTIVE_ASSERTIONS,
     WAVE_LITE_ACTIVE,
@@ -95,6 +99,28 @@ def test_tower_opt_in_flags_active(generated_test_files):
 def test_frontend_pre_26_2_active(generated_test_files):
     """Platform < v26.2.0: the frontend image uses the `-unprivileged` tag."""
     expected = merge_deltas(BASELINE_ASSERTIONS, FRONTEND_PRE_26_2_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Telemetry (v26.2.0+)
+## ------------------------------------------------------------------------------------
+## `standard` is the TEMPLATE default and is covered by `test_confirm_baseline`.
+@pytest.mark.local
+@pytest.mark.tower
+@pytest.mark.tfvars(BASELINE + TELEMETRY_BASIC_ACTIVE)
+def test_telemetry_basic_active(generated_test_files):
+    """Basic telemetry: standard telemetry off, basic on, file collector off."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, TELEMETRY_BASIC_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+@pytest.mark.local
+@pytest.mark.tower
+@pytest.mark.tfvars(BASELINE + TELEMETRY_AIR_GAPPED_ACTIVE)
+def test_telemetry_air_gapped_active(generated_test_files):
+    """Air-gapped: telemetry on, file collector on, host folder created by Ansible and mounted into cron."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, TELEMETRY_AIR_GAPPED_ACTIVE_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
 

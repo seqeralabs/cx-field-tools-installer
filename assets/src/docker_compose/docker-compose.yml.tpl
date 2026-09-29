@@ -97,6 +97,11 @@ services:
 %{ if flag_enable_data_studio == true ~}
       - $HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem
 %{ endif ~}
+%{ if flag_enable_standard_telemetry == "air-gapped" ~}
+      # Usage-metric files for air-gapped sites. Host folder is created by Ansible (02) and kept
+      # outside ~/target, which each apply wipes.
+      - $HOME/.tower/usage-metrics:/usage-metrics
+%{ endif ~}
     env_file:
       # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
       - $HOME/target/tower_config/tower.env

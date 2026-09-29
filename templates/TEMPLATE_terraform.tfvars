@@ -909,6 +909,13 @@ tower_compute_env_cleanup = {
 
 tower_enable_openapi = true
 
+# Telemetry (v26.2.0+). One of: "standard" | "basic" | "air-gapped".
+#   standard   : standard + basic telemetry is sent to Seqera.
+#   basic      : only basic telemetry is sent.
+#   air-gapped : standard + basic telemetry, plus usage metrics written to files on the instance
+#                (/home/ec2-user/.tower/usage-metrics) every 24h and kept for 90 days.
+flag_enable_standard_telemetry = "standard"
+
 # If enabled, set eligibility to "" for all workspaces, or "WSP1_ID,WSP2_ID,..."
 tower_enable_pipeline_versioning        = false
 pipeline_versioning_eligible_workspaces = ""

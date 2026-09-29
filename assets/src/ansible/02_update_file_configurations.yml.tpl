@@ -155,3 +155,16 @@
         sudo chmod 777 /home/ec2-user/.tower/connect
 
 %{ endif ~}
+
+%{ if flag_enable_standard_telemetry == "air-gapped" ~}
+    - name: Create usage-metrics data folder.
+      # Act as root, same as the Studios folder above.
+      # Mounted into the cron container as /usage-metrics (docker-compose.yml.tpl). Lives outside
+      # ~/target so metrics survive the per-apply target refresh.
+      ansible.builtin.shell: |
+        echo "Creating usage-metrics directory on host."
+
+        mkdir -p /home/ec2-user/.tower/usage-metrics
+        sudo chmod 777 /home/ec2-user/.tower/usage-metrics
+
+%{ endif ~}

@@ -179,6 +179,14 @@ FRONTEND_PRE_26_2_ACTIVE = """
     tower_container_version = "v26.1.3"
 """
 
+TELEMETRY_BASIC_ACTIVE = """
+    flag_enable_standard_telemetry = "basic"
+"""
+
+TELEMETRY_AIR_GAPPED_ACTIVE = """
+    flag_enable_standard_telemetry = "air-gapped"
+"""
+
 
 ## ------------------------------------------------------------------------------------
 ## MARK: ----- Assertions
@@ -238,6 +246,13 @@ BASELINE_ASSERTIONS = {
             "TOWER_CRON_AUDIT_LOG_CLEAN_UP_INTERVAL": "5m",
             "TOWER_CRON_AUDIT_LOG_CLEAN_UP_DELAY": "10s",
             "TOWER_CRON_AUDIT_LOG_CLEAN_UP_CHUNK_SIZE": "1000",
+            # TELEMETRY (TEMPLATE default: "standard")
+            "TOWER_TELEMETRY_STANDARD_ENABLED": "true",
+            "TOWER_TELEMETRY_BASIC_ENABLED": "true",
+            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_ENABLED": "false",
+            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_INTERVAL": "24h",
+            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_DIR": "/usage-metrics",
+            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_HISTORY": "90",
         },
         "omitted": {
             # DB                      Never generated in file
@@ -357,6 +372,8 @@ BASELINE_ASSERTIONS = {
             "services.wave-lite-reverse-proxy",
             "services.wave-db",
             "services.wave-redis",
+            # Air-gapped telemetry only: the cron container's usage-metrics mount.
+            "services.cron.volumes[.%usage-metrics]",
         },
     },
     "wave_lite_yml": {
@@ -403,6 +420,7 @@ BASELINE_ASSERTIONS = {
             "Populating external DB with Groundswell.",
             "Configuring private certificates.",
             "Creating data directory on host for Studios.",
+            "Creating usage-metrics directory on host.",
         },
     },
     "ansible_03_pull_containers_and_run_tower": {"present": {}, "omitted": set()},
@@ -988,6 +1006,33 @@ FRONTEND_PRE_26_2_ACTIVE_ASSERTIONS = {
         "present": {
             "services.frontend.image": "cr.seqera.io/enterprise/platform/frontend:v26.1.3-unprivileged",
         },
+        "omitted": set(),
+    },
+}
+
+
+# Telemetry "basic": standard telemetry off. Basic stays on, and the file collector stays off.
+TELEMETRY_BASIC_ACTIVE_ASSERTIONS = {
+    "tower_env": {
+        "present": {"TOWER_TELEMETRY_STANDARD_ENABLED": "false"},
+        "omitted": set(),
+    },
+}
+
+
+# Telemetry "air-gapped": standard + basic stay on, and the usage-metrics file collector turns on.
+# Ansible (02) creates the host folder, and docker-compose mounts it into cron at /usage-metrics.
+TELEMETRY_AIR_GAPPED_ACTIVE_ASSERTIONS = {
+    "tower_env": {
+        "present": {"TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_ENABLED": "true"},
+        "omitted": set(),
+    },
+    "docker_compose": {
+        "present": {"services.cron.volumes[.%usage-metrics]": "$HOME/.tower/usage-metrics:/usage-metrics"},
+        "omitted": set(),
+    },
+    "ansible_02_update_file_configurations": {
+        "present": {"Creating usage-metrics directory on host."},
         "omitted": set(),
     },
 }

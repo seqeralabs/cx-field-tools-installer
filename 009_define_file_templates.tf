@@ -71,6 +71,8 @@ locals {
 
       tower_compute_env_cleanup = var.tower_compute_env_cleanup,
       tower_audit_log_v2        = var.tower_audit_log_v2,
+
+      flag_enable_standard_telemetry = var.flag_enable_standard_telemetry,
     }
   )
 
@@ -183,9 +185,10 @@ locals {
   ## ------------------------------------------------------------------------------------
   docker_compose = templatefile("assets/src/docker_compose/docker-compose.yml.tpl",
     {
-      docker_version        = var.tower_container_version,
-      frontend_image_suffix = local.frontend_image_suffix,
-      oidc_consolidated     = local.oidc_consolidated,
+      docker_version                 = var.tower_container_version,
+      frontend_image_suffix          = local.frontend_image_suffix,
+      oidc_consolidated              = local.oidc_consolidated,
+      flag_enable_standard_telemetry = var.flag_enable_standard_telemetry,
 
       db_database_name  = var.db_database_name,
       db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"],
@@ -348,6 +351,8 @@ locals {
       flag_enable_data_studio      = var.flag_enable_data_studio,
       flag_use_wave_lite           = var.flag_use_wave_lite,
       wave_lite_db_dns             = module.connection_strings.wave_lite_db_dns,
+
+      flag_enable_standard_telemetry = var.flag_enable_standard_telemetry,
     }
   )
 
