@@ -94,6 +94,40 @@ variable "flag_use_container_redis" { type = bool }
 
 variable "flag_create_load_balancer" { type = bool }
 variable "flag_use_private_cacert" { type = bool }
+
+variable "flag_run_studios_via_private_ca" {
+  type        = bool
+  description = "Make Platform and Studios trust the private root CA (Platform v26.2.0+, data_studio_container_version 0.12.2+, Studio images on Connect 0.13.0+). Mounts rootCA.crt into backend and cron and sets TOWER_SSL_CUSTOM_CA_CERT_FILE. Requires flag_use_private_cacert = true."
+
+  # TODO: uncomment when the minimum Terraform version supports cross-variable checks (Terraform 1.9+;
+  # 000_main.tf currently allows >= 1.1.0). Until then, check_configuration.py (verify_studios_private_ca)
+  # enforces the same rules at `make verify` and exits with an error on a violation.
+  #
+  # validation {
+  #   condition     = !var.flag_run_studios_via_private_ca || var.flag_use_private_cacert
+  #   error_message = "flag_run_studios_via_private_ca = true requires flag_use_private_cacert = true."
+  # }
+  #
+  # # Platform major.minor must be >= 26.2 ("v26.2.0-RC16" counts as 26.2).
+  # validation {
+  #   condition = !var.flag_run_studios_via_private_ca || (
+  #     tonumber(regex("^v([0-9]+)\\.([0-9]+)", var.tower_container_version)[0]) > 26 ||
+  #     (tonumber(regex("^v([0-9]+)\\.([0-9]+)", var.tower_container_version)[0]) == 26 &&
+  #     tonumber(regex("^v([0-9]+)\\.([0-9]+)", var.tower_container_version)[1]) >= 2)
+  #   )
+  #   error_message = "flag_run_studios_via_private_ca = true requires tower_container_version >= v26.2.0."
+  # }
+  #
+  # # Connect version must be >= 0.12.2.
+  # validation {
+  #   condition = !var.flag_run_studios_via_private_ca || (
+  #     tonumber(split(".", var.data_studio_container_version)[0]) > 0 ||
+  #     tonumber(split(".", var.data_studio_container_version)[1]) > 12 ||
+  #     (tonumber(split(".", var.data_studio_container_version)[1]) == 12 && tonumber(split(".", var.data_studio_container_version)[2]) >= 2)
+  #   )
+  #   error_message = "flag_run_studios_via_private_ca = true requires data_studio_container_version >= 0.12.2."
+  # }
+}
 variable "flag_do_not_use_https" { type = bool }
 
 variable "flag_use_aws_ses_iam_integration" { type = bool }

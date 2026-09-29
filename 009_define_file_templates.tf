@@ -59,6 +59,7 @@ locals {
       data_studio_wave_disallowed_registries   = var.data_studio_wave_disallowed_registries,
       data_studio_wave_custom_image_registry   = var.data_studio_wave_custom_image_registry,
       data_studio_wave_custom_image_repository = var.data_studio_wave_custom_image_repository,
+      studios_private_ca_active      = local.studios_private_ca_active,  
 
       flag_allow_aws_instance_credentials = var.flag_allow_aws_instance_credentials,
       tower_enable_openapi                = var.tower_enable_openapi,
@@ -192,6 +193,7 @@ locals {
       frontend_image_suffix          = local.frontend_image_suffix,
       oidc_consolidated              = local.oidc_consolidated,
       flag_enable_standard_telemetry = var.flag_enable_standard_telemetry,
+      studios_private_ca_active      = local.studios_private_ca_active,
 
       db_database_name  = var.db_database_name,
       db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"],
@@ -356,6 +358,7 @@ locals {
       wave_lite_db_dns             = module.connection_strings.wave_lite_db_dns,
 
       flag_enable_standard_telemetry = var.flag_enable_standard_telemetry,
+      studios_private_ca_active      = local.studios_private_ca_active,
     }
   )
 

@@ -40,6 +40,8 @@ from tests.unit.config_files.expected_deltas import (
     STUDIOS_ACTIVE_ASSERTIONS,
     STUDIOS_PATH_ROUTING_ACTIVE,
     STUDIOS_PATH_ROUTING_ACTIVE_ASSERTIONS,
+    STUDIOS_PRIVATE_CA_ACTIVE,
+    STUDIOS_PRIVATE_CA_ACTIVE_ASSERTIONS,
     STUDIOS_SSH_ACTIVE,
     STUDIOS_SSH_ACTIVE_ASSERTIONS,
     STUDIOS_SSH_WORKSPACE_RESTRICTION_ACTIVE,
@@ -84,7 +86,6 @@ def test_confirm_baseline(generated_test_files):
 @pytest.mark.tfvars(BASELINE + TOWER_OPT_IN_FLAGS_ACTIVE)
 def test_tower_opt_in_flags_active(generated_test_files):
     """Nine Tower-level settings on: instance creds, OpenAPI, pipeline versioning, auto-create users, cleanup, preflight, secrets KMS key, Actions trigger restrictions.
-
     Grouped as a single test for compactness — these are independent knobs with no
     cross-feature interactions. If any one grows complex (e.g. pipeline versioning gets
     workspace-restriction logic), break it out into its own `_active` test.
@@ -139,6 +140,31 @@ def test_private_ca_reverse_proxy_active(generated_test_files):
         BASELINE_ASSERTIONS,
         PRIVATE_CA_REVERSE_PROXY_ACTIVE_ASSERTIONS,
     )
+    assert_all_deltas(generated_test_files, expected)
+
+
+@pytest.mark.local
+@pytest.mark.private_ca
+@pytest.mark.studios
+@pytest.mark.tfvars(BASELINE + PRIVATE_CA_REVERSE_PROXY_ACTIVE + STUDIOS_ACTIVE + STUDIOS_PRIVATE_CA_ACTIVE)
+def test_studios_private_ca_active(generated_test_files):
+    """Private CA + Studios + flag on: rootCA.crt mounted into backend and cron, CA path set, PEM check runs."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        PRIVATE_CA_REVERSE_PROXY_ACTIVE_ASSERTIONS,
+        STUDIOS_ACTIVE_ASSERTIONS,
+        STUDIOS_PRIVATE_CA_ACTIVE_ASSERTIONS,
+    )
+    assert_all_deltas(generated_test_files, expected)
+
+
+@pytest.mark.local
+@pytest.mark.private_ca
+@pytest.mark.studios
+@pytest.mark.tfvars(BASELINE + STUDIOS_ACTIVE + STUDIOS_PRIVATE_CA_ACTIVE)
+def test_studios_private_ca_without_private_cacert(generated_test_files):
+    """Flag on but no private CA: Terraform writes neither the mount nor the variable (backend would not start)."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, STUDIOS_ACTIVE_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
 

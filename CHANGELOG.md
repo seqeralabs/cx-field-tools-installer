@@ -35,6 +35,8 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - New `flag_enable_preflight_checks` (Platform v26.2.0+) sets both `TOWER_PREFLIGHT_CHECK_ENABLED` and `TOWER_CREDENTIALS_VALIDATION_ENABLED`. The template default, `true`, matches the upstream default.
             - New `tower_aws_secrets_kms_key_id` (Platform v26.2.0+) sets `TOWER_AWS_SECRETS_KMS_KEY_ID`, an installation-wide customer-managed KMS key that encrypts the temporary AWS Secrets Manager secrets Platform creates for pipeline runs. It applies to every AWS Batch and AWS Cloud compute environment that does not set its own key (Advanced options > Pipeline secrets KMS key), including existing ones. Key ARN or key ID only; aliases are rejected. Empty (the template default) keeps the AWS-managed key. `variables.tf` validates the format, because Platform will not start with an invalid value. No installer IAM change: the compute environment credentials and execution role use the key, not the installer's EC2 role. [`#435`](https://github.com/seqeralabs/cx-field-tools-installer/issues/435)
             - New `tower_actions` (Platform v26.2.0+) restricts the three new Action triggers (bucket event, schedule, pipeline run event), which Platform turns on in every workspace by default, including personal workspaces. Set each `*_allowed_workspaces` to `""` (all workspaces, the default), `"0"` (off everywhere), or a comma-separated list of workspace IDs. Restricting a trigger pauses its existing Actions in the excluded workspaces. `trigger_rate_max_per_window` / `trigger_rate_window` set the limit after which an Action is paused (Platform default: 20 per `1h`). `check_configuration.py` warns when bucket triggers are on but can't work: Platform must be reachable from AWS over public HTTPS with a publicly trusted certificate, and Data Explorer must be on. No installer IAM change: bucket triggers use the data repository's credential, not the EC2 instance role. [`#435`](https://github.com/seqeralabs/cx-field-tools-installer/issues/435)
+            - New `flag_run_studios_via_private_ca` (Platform v26.2.0+) mounts the private root CA (`rootCA.crt`, PEM) into the `backend` and `cron` containers at `/private-ca/rootCA.crt` and sets `TOWER_SSL_CUSTOM_CA_CERT_FILE`, so Platform and Studios trust services signed by the private CA. Requires `flag_use_private_cacert = true`, `tower_container_version` >= v26.2.0, and `data_studio_container_version` >= 0.12.2; `make verify` enforces these (the matching `variables.tf` validations are commented out until the minimum Terraform version supports cross-variable checks). `make verify` also warns for each Studio template whose image is older than Connect 0.13.0, because those sessions won't trust the CA. Ansible now fails early if `rootCA.crt` is not PEM-encoded. [`#435`](https://github.com/seqeralabs/cx-field-tools-installer/issues/435)
+            - Wave-Lite config (`wave-lite.yml.tpl`) updated for v1.38.0: explicit `wave.capabilities` ( set one to `false` to harden, or add `strict` to `MICRONAUT_ENVIRONMENTS`), a dedicated streaming thread pool for blob transfers, `INFO` level for the trace loggers that 1.38 prints at DEBUG, and a commented egress-proxy block. None of these are exposed as tfvars. [`#435`](https://github.com/seqeralabs/cx-field-tools-installer/issues/435)
         <br /><br />
 
         - Security
@@ -44,6 +46,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 
         - Documentation
             - Added Design Decision 22 (`documentation/design_decisions.md`): the installer enables SSM Session Manager on the instance, and the AWS account owner controls who can connect.
+            - `documentation/setup/optional_private_certificates.md`: `rootCA.crt` must be PEM-encoded, with a DER conversion command.
         <br /><br />
 
         - Testing
@@ -53,6 +56,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - `test_tower_opt_in_flags_active` now also covers `flag_enable_preflight_checks` (`true`), and the baseline covers `false`.
             - `test_tower_opt_in_flags_active` now also covers `tower_aws_secrets_kms_key_id` (set), and the baseline covers it unset. The variable-validation suite rejects an alias name, an alias ARN, and an uppercase key ID.
             - `test_tower_opt_in_flags_active` now also covers `tower_actions` (bucket `"0"`, schedule and pipeline-run restricted to workspace IDs, rate limit `50` per `2h`), and the baseline covers Platform's defaults (no allow-lists written, `20` per `1h`).
+            - Added `test_studios_private_ca_active` (the `rootCA.crt` mount, `TOWER_SSL_CUSTOM_CA_CERT_FILE`, and the PEM check render together) and `test_studios_private_ca_without_private_cacert` (nothing renders without the private CA).
 
 
 ### Configuration File Changes
@@ -68,6 +72,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 | New | Platform | `flag_enable_preflight_checks` | Enables Platform preflight checks and credential validation before pipeline launch (v26.2.0+). Required: add `flag_enable_preflight_checks = true` to your `terraform.tfvars` to keep Platform's default behaviour. |
 | New | Platform | `tower_aws_secrets_kms_key_id` | Installation-wide customer-managed KMS key for pipeline secrets (v26.2.0+). Key ARN or key ID; aliases are rejected. Required: add `tower_aws_secrets_kms_key_id = ""` to your `terraform.tfvars` to keep the AWS-managed key. |
 | New | Actions | `tower_actions` | Per-trigger workspace allow-lists and trigger rate limit for Actions (v26.2.0+). Required: copy the `tower_actions` block from `TEMPLATE_terraform.tfvars` into your `terraform.tfvars`. The template values keep Platform's defaults (all triggers on everywhere, 20 per `1h`). |
+| New | Studios | `flag_run_studios_via_private_ca` | Make Platform and Studios trust the private root CA (v26.2.0+). Requires `flag_use_private_cacert = true`. Required: add `flag_run_studios_via_private_ca = false` to your `terraform.tfvars` unless you use a private CA with Studios. |
 
 
 ## 1.8.1 (July 2026)

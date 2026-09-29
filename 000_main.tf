@@ -227,6 +227,11 @@ locals {
   private_ca_cert = "${module.connection_strings.tower_base_url}.crt"
   private_ca_key  = "${module.connection_strings.tower_base_url}.key"
 
+  # Studios trust the private root CA only when the private CA itself is in use. The rootCA.crt
+  # mount (docker-compose) and TOWER_SSL_CUSTOM_CA_CERT_FILE (tower.env) both follow this local,
+  # so the variable is never written without the file. A missing file stops the backend.
+  studios_private_ca_active = var.flag_run_studios_via_private_ca && var.flag_use_private_cacert
+
 
   # Miscellaneous
   # ---------------------------------------------------------------------------------------
