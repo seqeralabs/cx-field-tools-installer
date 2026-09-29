@@ -340,15 +340,22 @@ variable "connect_log_level" { type = string }
 
 variable "flag_enable_data_lineage" {
   type        = bool
-  description = "Enable Nextflow data lineage tracking (Platform v26.1.0+). When true, the EC2 instance role gains S3+SQS permissions scoped to seqera-lineage-* resources so Platform can auto-provision per-workspace lineage infrastructure."
+  description = "Enable Nextflow data lineage tracking (Platform v26.1.0+). When true, the EC2 instance role gains S3+SQS permissions (plus SNS on v26.2.0+) so Platform can auto-provision per-workspace lineage infrastructure. When false on v26.2.0+, tower.env sets TOWER_LINEAGE_ALLOWED_WORKSPACES=-1 to keep lineage off."
 }
 
-variable "data_lineage_allowed_workspaces" {
-  type        = string
-  description = "Comma-separated list of numeric workspace IDs allowed to use data lineage. Empty string = all workspaces (when flag_enable_data_lineage = true). Ignored when flag_enable_data_lineage = false."
+variable "data_lineage_options" {
+  type = object({
+    allowed_workspaces    = string
+    store_prefix          = string
+    sns_max_retries       = number
+    sns_max_delay_seconds = number
+    migrate_sqs_transport = bool
+    global_search_enabled = bool
+  })
+  description = "Data lineage settings, rendered to tower.env when flag_enable_data_lineage = true. allowed_workspaces: comma-separated numeric workspace IDs; empty = all workspaces. The other keys apply to Platform v26.2.0+ only."
   validation {
-    condition     = var.data_lineage_allowed_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_lineage_allowed_workspaces))
-    error_message = "data_lineage_allowed_workspaces must be empty or a comma-separated list of numeric workspace IDs (e.g., \"123\" or \"123,456,789\")."
+    condition     = var.data_lineage_options.allowed_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.data_lineage_options.allowed_workspaces))
+    error_message = "data_lineage_options.allowed_workspaces must be empty or a comma-separated list of numeric workspace IDs (e.g., \"123\" or \"123,456,789\")."
   }
 }
 

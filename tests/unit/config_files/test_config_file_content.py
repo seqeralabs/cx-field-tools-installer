@@ -14,6 +14,7 @@ from tests.unit.config_files.expected_deltas import (
     DATA_LINEAGE_ACTIVE_ASSERTIONS,
     DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE,
     DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS,
+    DATA_LINEAGE_X_PRE_26_2_DELTA,
     DB_EXTERNAL_EXISTING_ACTIVE,
     DB_EXTERNAL_EXISTING_ACTIVE_ASSERTIONS,
     DB_EXTERNAL_EXISTING_X_GROUNDSWELL_DELTA,
@@ -263,7 +264,7 @@ def test_data_explorer_active(generated_test_files):
 @pytest.mark.data_lineage
 @pytest.mark.tfvars(BASELINE + DATA_LINEAGE_ACTIVE)
 def test_data_lineage_active(generated_test_files):
-    """Data Lineage on, no workspace restriction: TOWER_LINEAGE_ALLOWED_WORKSPACES surfaces empty (= all workspaces)."""
+    """Data Lineage on (v26.2): allowlist empty (= all workspaces), plus the v26.2 lineage keys."""
     expected = merge_deltas(BASELINE_ASSERTIONS, DATA_LINEAGE_ACTIVE_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
@@ -277,6 +278,20 @@ def test_data_lineage_workspace_restriction_active(generated_test_files):
         BASELINE_ASSERTIONS,
         DATA_LINEAGE_ACTIVE_ASSERTIONS,
         DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS,
+    )
+    assert_all_deltas(generated_test_files, expected)
+
+
+@pytest.mark.local
+@pytest.mark.data_lineage
+@pytest.mark.tfvars(BASELINE + FRONTEND_PRE_26_2_ACTIVE + DATA_LINEAGE_ACTIVE)
+def test_data_lineage_pre_26_2_active(generated_test_files):
+    """Data Lineage on, Platform < v26.2.0: only TOWER_LINEAGE_ALLOWED_WORKSPACES renders."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        FRONTEND_PRE_26_2_ACTIVE_ASSERTIONS,
+        DATA_LINEAGE_ACTIVE_ASSERTIONS,
+        DATA_LINEAGE_X_PRE_26_2_DELTA,
     )
     assert_all_deltas(generated_test_files, expected)
 

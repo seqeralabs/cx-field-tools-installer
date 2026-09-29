@@ -25,8 +25,10 @@ locals {
 
   instance_role_policy_lineage = templatefile("assets/src/aws/iam_role_policy_lineage.json.tpl",
     {
-      aws_region  = var.aws_region,
-      aws_account = var.aws_account,
+      aws_region                = var.aws_region,
+      aws_account               = var.aws_account,
+      tower_version_before_26_2 = local.tower_version_before_26_2,
+      lineage_store_prefix      = var.data_lineage_options.store_prefix,
     }
   )
 

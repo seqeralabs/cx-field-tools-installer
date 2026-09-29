@@ -164,7 +164,14 @@ DATA_LINEAGE_ACTIVE = """
 """
 
 DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE = """
-    data_lineage_allowed_workspaces = "12,34"
+    data_lineage_options = {
+        allowed_workspaces    = "12,34"
+        store_prefix          = "seqera-lineage"
+        sns_max_retries       = 17
+        sns_max_delay_seconds = 300
+        migrate_sqs_transport = true
+        global_search_enabled = true
+    }
 """
 
 COMPUTE_ENV_CLEANUP_ACTIVE = """
@@ -242,7 +249,8 @@ BASELINE_ASSERTIONS = {
             # PIPELINE_VERSIONING
             "# TOWER_PIPELINE_VERSIONING_NOT_ENABLED": "DO_NOT_UNCOMMENT",
             # DATA_LINEAGE
-            "# TOWER_LINEAGE_NOT_ENABLED": "DO_NOT_UNCOMMENT",
+            # v26.2.0+ (test pin `v26.2.0-RC16`): lineage off renders `-1`, since unset means all workspaces.
+            "TOWER_LINEAGE_ALLOWED_WORKSPACES": "-1",
             # COMPUTE_ENV_CLEANUP
             "# TOWER_COMPUTE_ENV_CLEANUP_NOT_ENABLED": "DO_NOT_UNCOMMENT",
             # AUDIT_LOG_V2
@@ -329,7 +337,12 @@ BASELINE_ASSERTIONS = {
             # ---
             "# TOWER_DATA_STUDIO_ALLOWED_WORKSPACES",
             # DATA_LINEAGE
-            "TOWER_LINEAGE_ALLOWED_WORKSPACES",
+            "# TOWER_LINEAGE_NOT_ENABLED",
+            "TOWER_LINEAGE_STORE_PREFIX",
+            "TOWER_LINEAGE_SNS_MAX_RETRIES",
+            "TOWER_LINEAGE_SNS_MAX_DELAY_SECONDS",
+            "TOWER_LINEAGE_MIGRATE_SQS_TRANSPORT",
+            "TOWER_GLOBAL_SEARCH_ENABLED",
             # COMPUTE_ENV_CLEANUP
             "TOWER_COMPUTE_ENV_CLEANUP_ENABLED",
             "TOWER_COMPUTE_ENV_CLEANUP_DELAY",
@@ -962,16 +975,38 @@ INSECURE_HTTP_ACTIVE_ASSERTIONS = {
 
 
 # MARK: Data Lineage
-# Activates Nextflow data lineage. The off-state renders a `# TOWER_LINEAGE_NOT_ENABLED`
-# comment marker; activation flips that into a real `TOWER_LINEAGE_ALLOWED_WORKSPACES`
-# entry. Workspace restriction is a separate constant (see below) that overrides the
-# empty allowlist with a specific CSV.
+# Activates Nextflow data lineage. On v26.2.0+ the off-state renders `-1`; activation
+# swaps it for the empty allowlist (all workspaces) and adds the v26.2 keys. Workspace
+# restriction is a separate constant (see below) that overrides the empty allowlist
+# with a specific CSV.
 DATA_LINEAGE_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_LINEAGE_ALLOWED_WORKSPACES": "",
+            "TOWER_LINEAGE_STORE_PREFIX": "seqera-lineage",
+            "TOWER_LINEAGE_SNS_MAX_RETRIES": "17",
+            "TOWER_LINEAGE_SNS_MAX_DELAY_SECONDS": "300",
+            "TOWER_LINEAGE_MIGRATE_SQS_TRANSPORT": "true",
+            "TOWER_GLOBAL_SEARCH_ENABLED": "true",
         },
-        "omitted": {"# TOWER_LINEAGE_NOT_ENABLED"},
+        "omitted": set(),
+    },
+}
+
+
+# Platform < v26.2.0 with lineage on: only the allowlist renders. Stack after
+# `FRONTEND_PRE_26_2_ACTIVE_ASSERTIONS` and `DATA_LINEAGE_ACTIVE_ASSERTIONS`.
+DATA_LINEAGE_X_PRE_26_2_DELTA = {
+    "tower_env": {
+        "present": {},
+        "omitted": {
+            "# TOWER_LINEAGE_NOT_ENABLED",
+            "TOWER_LINEAGE_STORE_PREFIX",
+            "TOWER_LINEAGE_SNS_MAX_RETRIES",
+            "TOWER_LINEAGE_SNS_MAX_DELAY_SECONDS",
+            "TOWER_LINEAGE_MIGRATE_SQS_TRANSPORT",
+            "TOWER_GLOBAL_SEARCH_ENABLED",
+        },
     },
 }
 
@@ -1026,13 +1061,18 @@ AUDIT_LOG_V2_CLEANUP_DISABLED_ACTIVE_ASSERTIONS = {
 
 
 # Platform < v26.2.0: the unprivileged frontend ships as a separate `-unprivileged` tag
-# (see `local.frontend_image_suffix` in 000_main.tf).
+# (see `local.frontend_image_suffix` in 000_main.tf). Lineage off renders the comment
+# marker instead of `-1`.
 FRONTEND_PRE_26_2_ACTIVE_ASSERTIONS = {
     "docker_compose": {
         "present": {
             "services.frontend.image": "cr.seqera.io/enterprise/platform/frontend:v26.1.3-unprivileged",
         },
         "omitted": set(),
+    },
+    "tower_env": {
+        "present": {"# TOWER_LINEAGE_NOT_ENABLED": "DO_NOT_UNCOMMENT"},
+        "omitted": {"TOWER_LINEAGE_ALLOWED_WORKSPACES"},
     },
 }
 
