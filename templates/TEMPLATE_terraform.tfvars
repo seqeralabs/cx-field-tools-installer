@@ -573,18 +573,38 @@ workflow, task, and file levels.
 Currently a public-preview feature; requires Platform v26.1.0+ and Nextflow v25.04+
 (v26.04+ recommended).
 
-NOTES:
-  All workspaces:       data_lineage_allowed_workspaces = ""
-  Specific workspaces:  data_lineage_allowed_workspaces = "12,34,56"
+PLATFORM v26.2.0+:
+  - AWS SNS pushes lineage events to Platform over public HTTPS. `make verify` fails if
+    the site is private, uses HTTP or a private CA, or has private-only DNS.
+  - An unset TOWER_LINEAGE_ALLOWED_WORKSPACES now means "all workspaces". When
+    `flag_enable_data_lineage = false`, the installer sets it to `-1` to keep lineage off.
+  - Before v26.2.0, only `allowed_workspaces` is used.
+
+data_lineage_options (tower.env variable in brackets):
+  allowed_workspaces     "" = all workspaces; "12,34,56" = only those. (TOWER_LINEAGE_ALLOWED_WORKSPACES)
+  store_prefix           Name prefix of the buckets and SNS topics Platform creates;
+                         also limits the IAM policy.                   (TOWER_LINEAGE_STORE_PREFIX)
+  sns_max_retries        SNS delivery retries.                         (TOWER_LINEAGE_SNS_MAX_RETRIES)
+  sns_max_delay_seconds  Longest wait between SNS retries.             (TOWER_LINEAGE_SNS_MAX_DELAY_SECONDS)
+  migrate_sqs_transport  One-off move of v26.1 SQS workspaces to SNS.  (TOWER_LINEAGE_MIGRATE_SQS_TRANSPORT)
+  global_search_enabled  Global search.                                (TOWER_GLOBAL_SEARCH_ENABLED)
 
 When enabled, the EC2 instance role gains permissions to create/manage S3 buckets
-and SQS queues with the `seqera-lineage-*` prefix, so Platform can auto-provision
-per-workspace lineage infrastructure.
+and SQS queues with the `seqera-lineage-*` prefix and, on v26.2.0+, S3 buckets and SNS
+topics with the `store_prefix` prefix, so Platform can auto-provision per-workspace
+lineage infrastructure.
 
-See: https://docs.seqera.io/platform-cloud/data/data-lineage
+See: https://docs.seqera.io/platform-enterprise/data/data-lineage
 */
-flag_enable_data_lineage        = false
-data_lineage_allowed_workspaces = ""
+flag_enable_data_lineage = false
+data_lineage_options = {
+  allowed_workspaces    = ""
+  store_prefix          = "seqera-lineage"
+  sns_max_retries       = 17
+  sns_max_delay_seconds = 300
+  migrate_sqs_transport = true
+  global_search_enabled = true
+}
 
 
 /*

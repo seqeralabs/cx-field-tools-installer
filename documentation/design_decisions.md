@@ -277,16 +277,19 @@ In addition to the general design decisions noted above, there are a few decisio
 
     Both adapters defer to positive `-m` selection: invoking `make run_tests_variables_only` or `make run_tests_containers_only` bypasses the heuristic so explicit recipes always behave as the operator expects.
 
-19. **Data Lineage SQS queue creation is Platform's responsibility, not the installer's**
+19. **Data Lineage infrastructure is Platform's responsibility, not the installer's**
 
-    Seqera Platform v26.1.0+ has built-in support for creating the SQS queue (and the paired S3 bucket + bucket-notification routing) required by the Data Lineage feature. Platform creates these per-workspace under the `seqera-lineage-*` resource-name prefix at the moment a workspace enables lineage via its UI.
+    In **Automatic** mode, Seqera Platform creates each workspace's lineage resources itself when the workspace turns lineage on:
 
-    Rather than replicate that functionality, the installer's role for lineage is intentionally scoped to **granting the EC2 instance role the IAM permissions Platform needs** to do the queue/bucket creation itself. The installer attaches a policy (`${global_prefix}_policy_lineage`) authorising the relevant S3 + SQS actions on `seqera-lineage-*` ARNs only — see [`assets/src/aws/iam_role_policy_lineage.json.tpl`](../../assets/src/aws/iam_role_policy_lineage.json.tpl).
+    - **v26.1:** an S3 bucket, an SQS queue, and the bucket-notification rule, named `seqera-lineage-*`.
+    - **v26.2+:** an S3 bucket, an SNS topic, the webhook subscription, and the bucket-notification rule, named `<data_lineage_options.store_prefix>-*`.
+
+    The installer only grants the EC2 instance role the IAM permissions Platform needs to do this, through the `${global_prefix}_policy_lineage` policy (see [`assets/src/aws/iam_role_policy_lineage.json.tpl`](../../assets/src/aws/iam_role_policy_lineage.json.tpl)). Decision 23 describes what that policy contains on v26.2+.
 
     Consequences of this division of labour:
 
-    - The installer does **not** provision an SQS queue, S3 bucket, or bucket-notification rule for lineage. Those resources don't appear in `terraform plan` and aren't part of `terraform destroy`.
-    - Queue/bucket lifecycle (creation, configuration, deletion) is owned entirely by Platform. Deployers cannot pre-create or pin specific ARNs from the installer side.
+    - The installer does **not** provision a lineage bucket, SQS queue, SNS topic, or bucket-notification rule. Those resources don't appear in `terraform plan` and aren't part of `terraform destroy`.
+    - Platform owns the whole lifecycle of those resources (creation, configuration, deletion). Deployers cannot pre-create or pin specific ARNs from the installer side.
     - If Platform's resource-naming convention or auto-provisioning behaviour changes in a future release, the only file that needs to update is the IAM policy template — not the installer's resource graph.
 
 20. **Some Connect proxy environment variables are intentionally omitted from the installer**
@@ -346,3 +349,13 @@ In addition to the general design decisions noted above, there are a few decisio
     - Session logging (S3 or CloudWatch) and session encryption are account-level Session Manager preferences, not installer settings.
     - Sites that set `flag_iam_use_prexisting_role_arn = true` must add the five actions to their own role.
     - Private instances without a NAT need VPC interface endpoints for `ssm` and `ssmmessages` (add them to `vpc_interface_endpoints_tower`).
+
+23. **Data lineage on Platform v26.2.0+**
+
+    Platform v26.2 changed lineage in ways the installer has to handle. Each change below applies only when `tower_container_version` is v26.2.0 or later (checked with `local.tower_version_before_26_2` in Terraform and `LINEAGE_SNS_MIN_PLATFORM` in `check_configuration.py`). Pre-release tags such as `v26.2.0-RC16` count as v26.2.
+
+    - **Keeping lineage off.** An unset or empty `TOWER_LINEAGE_ALLOWED_WORKSPACES` now means "all workspaces", and Platform documents no value that means "off". When `flag_enable_data_lineage = false`, the installer sets `TOWER_LINEAGE_ALLOWED_WORKSPACES=-1`, which matches no workspace. Without this, upgrading to v26.2 would turn lineage on in every workspace. `make verify` warns that this is done. `-1` is not documented, so it must be confirmed on a live deployment.
+    - **Public HTTPS is required.** Lineage events now arrive by AWS SNS push to a Platform webhook, not by Platform polling SQS. AWS must be able to reach `tower_server_url` over public HTTPS with a publicly trusted certificate. `make verify` fails when lineage is on together with any of `flag_private_tower_without_eice`, `flag_make_instance_private`, `flag_do_not_use_https`, `flag_use_private_cacert`, `flag_create_route53_private_zone`, or `flag_create_hosts_file_entry`, and warns when `sg_ingress_cidrs` does not include `0.0.0.0/0`. These checks don't run on v26.1, where polling SQS works from private sites.
+    - **The SQS→SNS migration is Platform's job.** On its first start, v26.2 runs a one-off migration that moves Automatic-mode workspaces from SQS to SNS. The installer does no migration work; it only exposes `data_lineage_options.migrate_sqs_transport` (`TOWER_LINEAGE_MIGRATE_SQS_TRANSPORT`). Platform cannot migrate Manual-mode workspaces; their owners must do it.
+    - **IAM.** On v26.2+, the lineage policy keeps the v26.1 SQS and S3 statements and adds the `LineageEnhancedPermissionsforv2620*` statements: SNS topic management, S3 `GetObject` / `ListBucket`, and `sqs:DeleteQueue` for the migration's queue teardown. The SQS and SNS permissions are always both included, whatever `migrate_sqs_transport` is set to. This keeps the policy simple to maintain, at the cost of a few permissions that may be unnecessary once the migration is done. SNS and the new S3 statements are limited to `data_lineage_options.store_prefix`. SQS stays limited to `seqera-lineage-*`, the only prefix v26.1 used.
+    - **Policy description unchanged.** The `lineage_policy` description in `004_iam.tf` still reads "S3 + SQS". Changing an `aws_iam_policy` description replaces the policy, which would briefly remove lineage permissions from the role during an apply.

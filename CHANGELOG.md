@@ -37,16 +37,22 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - New `tower_actions` (Platform v26.2.0+) restricts the three new Action triggers (bucket event, schedule, pipeline run event), which Platform turns on in every workspace by default, including personal workspaces. Set each `*_allowed_workspaces` to `""` (all workspaces, the default), `"0"` (off everywhere), or a comma-separated list of workspace IDs. Restricting a trigger pauses its existing Actions in the excluded workspaces. `trigger_rate_max_per_window` / `trigger_rate_window` set the limit after which an Action is paused (Platform default: 20 per `1h`). `check_configuration.py` warns when bucket triggers are on but can't work: Platform must be reachable from AWS over public HTTPS with a publicly trusted certificate, and Data Explorer must be on. No installer IAM change: bucket triggers use the data repository's credential, not the EC2 instance role. [`#435`](https://github.com/seqeralabs/cx-field-tools-installer/issues/435)
             - New `flag_run_studios_via_private_ca` (Platform v26.2.0+) mounts the private root CA (`rootCA.crt`, PEM) into the `backend` and `cron` containers at `/private-ca/rootCA.crt` and sets `TOWER_SSL_CUSTOM_CA_CERT_FILE`, so Platform and Studios trust services signed by the private CA. Requires `flag_use_private_cacert = true`, `tower_container_version` >= v26.2.0, and `data_studio_container_version` >= 0.12.2; `make verify` enforces these (the matching `variables.tf` validations are commented out until the minimum Terraform version supports cross-variable checks). `make verify` also warns for each Studio template whose image is older than Connect 0.13.0, because those sessions won't trust the CA. Ansible now fails early if `rootCA.crt` is not PEM-encoded. [`#435`](https://github.com/seqeralabs/cx-field-tools-installer/issues/435)
             - Wave-Lite config (`wave-lite.yml.tpl`) updated for v1.38.0: explicit `wave.capabilities` ( set one to `false` to harden, or add `strict` to `MICRONAUT_ENVIRONMENTS`), a dedicated streaming thread pool for blob transfers, `INFO` level for the trace loggers that 1.38 prints at DEBUG, and a commented egress-proxy block. None of these are exposed as tfvars. [`#435`](https://github.com/seqeralabs/cx-field-tools-installer/issues/435)
+            - Data lineage updated for Platform v26.2.0, which uses SNS in place of SQS (see Design Decision 23). On v26.2.0+: [`#435`](https://github.com/seqeralabs/cx-field-tools-installer/issues/435)
+                - `flag_enable_data_lineage = false` now renders `TOWER_LINEAGE_ALLOWED_WORKSPACES=-1`, because v26.2 treats an unset value as "all workspaces". **Existing sites:** without this, upgrading to v26.2 would turn lineage on in every workspace.
+                - `flag_enable_data_lineage = true` also renders `TOWER_LINEAGE_STORE_PREFIX`, `TOWER_LINEAGE_SNS_MAX_RETRIES`, `TOWER_LINEAGE_SNS_MAX_DELAY_SECONDS`, `TOWER_LINEAGE_MIGRATE_SQS_TRANSPORT`, and `TOWER_GLOBAL_SEARCH_ENABLED` from the new `data_lineage_options`, which replaces `data_lineage_allowed_workspaces`.
+                - `make verify` fails when lineage is on and AWS SNS can't reach Platform over public HTTPS (private instance, HTTP, private CA, or private-only DNS), and warns when `sg_ingress_cidrs` doesn't include `0.0.0.0/0`.
         <br /><br />
 
         - Security
             - Temporarily suppressed 10 Checkov checks repo-wide in a new root `.checkov.yaml`, pending review. The file lists each check ID and why it is skipped. No infrastructure change.
             - SSM Session Manager is now a supported access path to the EC2 instance. The installer does not restrict who can connect: anyone in the AWS account with `ssm:StartSession` on the instance can open a shell as `ssm-user` (which has `sudo`). Control access, and set up session logging, at the account level. The role deliberately does not get `AmazonSSMManagedInstanceCore`, which would allow reading every SSM parameter in the account. See Design Decision 22.
+            - On Platform v26.2.0+, the lineage IAM policy adds the `LineageEnhancedPermissionsforv2620*` statements: SNS topic management and S3 `GetObject` / `ListBucket` on `<store_prefix>-*`, and `sqs:DeleteQueue` on `seqera-lineage-*` for Platform's SQS→SNS migration. The v26.1 SQS permissions are kept. **Pre-existing IAM role:** add the new statements to your role. See Design Decision 23.
         <br /><br />
 
         - Documentation
             - Added Design Decision 22 (`documentation/design_decisions.md`): the installer enables SSM Session Manager on the instance, and the AWS account owner controls who can connect.
             - `documentation/setup/optional_private_certificates.md`: `rootCA.crt` must be PEM-encoded, with a DER conversion command.
+            - Rewrote Design Decision 19 (lineage infrastructure is Platform's responsibility) to cover SNS, and added Design Decision 23 (data lineage on Platform v26.2.0+). `documentation/setup/optional_data_lineage.md` covers `data_lineage_options`, the v26.2 requirements, and upgrading a v26.1 lineage site.
         <br /><br />
 
         - Testing
@@ -57,6 +63,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - `test_tower_opt_in_flags_active` now also covers `tower_aws_secrets_kms_key_id` (set), and the baseline covers it unset. The variable-validation suite rejects an alias name, an alias ARN, and an uppercase key ID.
             - `test_tower_opt_in_flags_active` now also covers `tower_actions` (bucket `"0"`, schedule and pipeline-run restricted to workspace IDs, rate limit `50` per `2h`), and the baseline covers Platform's defaults (no allow-lists written, `20` per `1h`).
             - Added `test_studios_private_ca_active` (the `rootCA.crt` mount, `TOWER_SSL_CUSTOM_CA_CERT_FILE`, and the PEM check render together) and `test_studios_private_ca_without_private_cacert` (nothing renders without the private CA).
+            - The baseline covers lineage off on v26.2 (`-1`), and `test_data_lineage_active` covers the v26.2 lineage keys. Added `test_data_lineage_pre_26_2_active`, and `test_frontend_pre_26_2_active` now covers lineage off on v26.1.
 
 
 ### Configuration File Changes
@@ -73,6 +80,9 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 | New | Platform | `tower_aws_secrets_kms_key_id` | Installation-wide customer-managed KMS key for pipeline secrets (v26.2.0+). Key ARN or key ID; aliases are rejected. Required: add `tower_aws_secrets_kms_key_id = ""` to your `terraform.tfvars` to keep the AWS-managed key. |
 | New | Actions | `tower_actions` | Per-trigger workspace allow-lists and trigger rate limit for Actions (v26.2.0+). Required: copy the `tower_actions` block from `TEMPLATE_terraform.tfvars` into your `terraform.tfvars`. The template values keep Platform's defaults (all triggers on everywhere, 20 per `1h`). |
 | New | Studios | `flag_run_studios_via_private_ca` | Make Platform and Studios trust the private root CA (v26.2.0+). Requires `flag_use_private_cacert = true`. Required: add `flag_run_studios_via_private_ca = false` to your `terraform.tfvars` unless you use a private CA with Studios. |
+| Deleted | Data Lineage | `data_lineage_allowed_workspaces` | Replaced by `data_lineage_options.allowed_workspaces`. Move your value into the new block, then delete the line. |
+| New | Data Lineage | `data_lineage_options` | Lineage settings: `allowed_workspaces` (all versions), plus `store_prefix`, `sns_max_retries`, `sns_max_delay_seconds`, `migrate_sqs_transport`, and `global_search_enabled` (v26.2.0+). Required: copy the block from `TEMPLATE_terraform.tfvars`. |
+| Modified | Data Lineage | `flag_enable_data_lineage` | On v26.2.0+, `false` renders `TOWER_LINEAGE_ALLOWED_WORKSPACES=-1`, and `true` adds SNS permissions and needs public HTTPS. |
 
 
 ## 1.8.1 (July 2026)

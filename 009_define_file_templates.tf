@@ -67,8 +67,9 @@ locals {
       tower_enable_pipeline_versioning        = var.tower_enable_pipeline_versioning,
       pipeline_versioning_eligible_workspaces = var.pipeline_versioning_eligible_workspaces,
 
-      flag_enable_data_lineage        = var.flag_enable_data_lineage,
-      data_lineage_allowed_workspaces = var.data_lineage_allowed_workspaces,
+      flag_enable_data_lineage  = var.flag_enable_data_lineage,
+      data_lineage_options      = var.data_lineage_options,
+      tower_version_before_26_2 = local.tower_version_before_26_2,
 
       tower_compute_env_cleanup = var.tower_compute_env_cleanup,
       tower_audit_log_v2        = var.tower_audit_log_v2,

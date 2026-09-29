@@ -230,9 +230,21 @@ TOWER_PIPELINE_VERSIONING_ALLOWED_WORKSPACES=${pipeline_versioning_eligible_work
 # DATA LINEAGE (v26.1.0+)
 # ------------------------------------------------
 %{ if flag_enable_data_lineage == true ~}
-TOWER_LINEAGE_ALLOWED_WORKSPACES=${data_lineage_allowed_workspaces}
+TOWER_LINEAGE_ALLOWED_WORKSPACES=${data_lineage_options.allowed_workspaces}
+%{ if !tower_version_before_26_2 ~}
+TOWER_LINEAGE_STORE_PREFIX=${data_lineage_options.store_prefix}
+TOWER_LINEAGE_SNS_MAX_RETRIES=${data_lineage_options.sns_max_retries}
+TOWER_LINEAGE_SNS_MAX_DELAY_SECONDS=${data_lineage_options.sns_max_delay_seconds}
+TOWER_LINEAGE_MIGRATE_SQS_TRANSPORT=${data_lineage_options.migrate_sqs_transport}
+TOWER_GLOBAL_SEARCH_ENABLED=${data_lineage_options.global_search_enabled}
+%{ endif ~}
 %{ else ~}
+%{ if tower_version_before_26_2 ~}
 # TOWER_LINEAGE_NOT_ENABLED=DO_NOT_UNCOMMENT
+%{ else ~}
+# v26.2.0+: an unset value means all workspaces. -1 matches no workspace, so lineage stays off.
+TOWER_LINEAGE_ALLOWED_WORKSPACES=-1
+%{ endif ~}
 %{ endif }
 
 

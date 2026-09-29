@@ -176,10 +176,45 @@ def verify_workflow_cleanup_enabled(data: SimpleNamespace):
         log_error_and_exit("Workflow cleanup can only be enabled on Platform v25.1.0+")
 
 
+LINEAGE_SNS_MIN_PLATFORM = (26, 2, 0)
+# Settings that stop AWS SNS from reaching Platform over public HTTPS (Design Decision 23).
+LINEAGE_SNS_BLOCKERS = (
+    "flag_private_tower_without_eice",
+    "flag_make_instance_private",
+    "flag_do_not_use_https",
+    "flag_use_private_cacert",
+    "flag_create_route53_private_zone",
+    "flag_create_hosts_file_entry",
+)
+
+
 def verify_data_lineage_enabled(data: SimpleNamespace):
     """Check data lineage enablement scenarios."""
     if data.flag_enable_data_lineage and data.tower_container_version < "v26.1.0":
         log_error_and_exit("Data lineage can only be enabled on Platform v26.1.0+")
+
+    if not _meets_minimum(_version_tuple(data.tower_container_version), LINEAGE_SNS_MIN_PLATFORM):
+        return
+
+    if not data.flag_enable_data_lineage:
+        logger.warning(
+            "Data lineage is off. On Platform v26.2.0+ an unset TOWER_LINEAGE_ALLOWED_WORKSPACES means all "
+            "workspaces, so the installer sets it to `-1` (matches no workspace) to keep lineage off."
+        )
+        return
+
+    blockers = [flag for flag in LINEAGE_SNS_BLOCKERS if getattr(data, flag)]
+    if blockers:
+        log_error_and_exit(
+            "Data lineage on Platform v26.2.0+ needs a public HTTPS endpoint with a publicly trusted certificate "
+            f"that AWS SNS can reach. These settings prevent it: {', '.join(blockers)}."
+        )
+
+    if "0.0.0.0/0" not in data.sg_ingress_cidrs:
+        logger.warning(
+            "Data lineage on Platform v26.2.0+: AWS SNS pushes events to Platform over HTTPS, but "
+            "`sg_ingress_cidrs` does not include 0.0.0.0/0. Make sure it allows SNS."
+        )
 
 
 def verify_pipeline_secrets_kms_key(data: SimpleNamespace):
