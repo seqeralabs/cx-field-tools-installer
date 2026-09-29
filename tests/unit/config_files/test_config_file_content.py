@@ -29,6 +29,10 @@ from tests.unit.config_files.expected_deltas import (
     GROUNDSWELL_ACTIVE_ASSERTIONS,
     HOSTS_FILE_ENTRY_ACTIVE,
     HOSTS_FILE_ENTRY_ACTIVE_ASSERTIONS,
+    IDENTITY_FEDERATION_ACTIVE,
+    IDENTITY_FEDERATION_ACTIVE_ASSERTIONS,
+    IDENTITY_FEDERATION_WORKSPACE_RESTRICTION_ACTIVE,
+    IDENTITY_FEDERATION_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS,
     INSECURE_HTTP_ACTIVE,
     INSECURE_HTTP_ACTIVE_ASSERTIONS,
     PRIVATE_CA_REVERSE_PROXY_ACTIVE,
@@ -86,7 +90,10 @@ def test_confirm_baseline(generated_test_files):
 @pytest.mark.tower
 @pytest.mark.tfvars(BASELINE + TOWER_OPT_IN_FLAGS_ACTIVE)
 def test_tower_opt_in_flags_active(generated_test_files):
-    """Nine Tower-level settings on: instance creds, OpenAPI, pipeline versioning, auto-create users, cleanup, preflight, secrets KMS key, Actions trigger restrictions.
+    """Nine Tower-level settings on, tested together.
+
+    The settings: instance creds, OpenAPI, pipeline versioning, auto-create users, cleanup,
+    preflight, secrets KMS key, Actions trigger restrictions.
     Grouped as a single test for compactness — these are independent knobs with no
     cross-feature interactions. If any one grows complex (e.g. pipeline versioning gets
     workspace-restriction logic), break it out into its own `_active` test.
@@ -253,6 +260,31 @@ def test_studios_wave_active(generated_test_files):
 def test_data_explorer_active(generated_test_files):
     """Data Explorer on: TOWER_DATA_EXPLORER_ENABLED flips true, CLOUD_DISABLED_WORKSPACES surfaces empty."""
     expected = merge_deltas(BASELINE_ASSERTIONS, DATA_EXPLORER_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Workload Identity Federation (v26.2.0+)
+## ------------------------------------------------------------------------------------
+@pytest.mark.local
+@pytest.mark.tower
+@pytest.mark.tfvars(BASELINE + IDENTITY_FEDERATION_ACTIVE)
+def test_identity_federation_active(generated_test_files):
+    """Federation on, Studios off: OIDC key path and mount render, and the allow-list is empty (= all workspaces)."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, IDENTITY_FEDERATION_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+@pytest.mark.local
+@pytest.mark.tower
+@pytest.mark.tfvars(BASELINE + IDENTITY_FEDERATION_ACTIVE + IDENTITY_FEDERATION_WORKSPACE_RESTRICTION_ACTIVE)
+def test_identity_federation_workspace_restriction_active(generated_test_files):
+    """Federation on with a workspace list: TOWER_IDENTITY_FEDERATION_ALLOWED_WORKSPACES carries the CSV."""
+    expected = merge_deltas(
+        BASELINE_ASSERTIONS,
+        IDENTITY_FEDERATION_ACTIVE_ASSERTIONS,
+        IDENTITY_FEDERATION_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS,
+    )
     assert_all_deltas(generated_test_files, expected)
 
 

@@ -31,6 +31,7 @@ The Seqera CX team has developed a field tool to simplify deployment in two ways
   - [05: Using a Private Certificate Authority](#05-using-a-private-certificate-authority-advanced)
   - [06: Enable EC2 Instance Role Authentication](#06-enable-ec2-instance-role-authentication)
   - [07: Enable Data Lineage (Platform v26.1.0+)](#07-enable-data-lineage-platform-v2610)
+  - [08: Enable Workload Identity Federation (Platform v26.2.0+)](#08-enable-workload-identity-federation-platform-v2620)
 - [Execution Steps](#execution-steps)
   - [Deployment](#deployment)
   - [Teardown](#teardown)
@@ -164,6 +165,9 @@ The following configuration actions are encouraged but not mandatory.
 
 #### 07: Enable Data Lineage (Platform v26.1.0+)
 1. Follow the instructions in [Data Lineage](./documentation/setup/optional_data_lineage.md).
+
+#### 08: Enable Workload Identity Federation (Platform v26.2.0+)
+1. Follow the instructions in [Workload Identity Federation](./documentation/setup/optional_workload_identity_federation.md).
 
 <br />
 

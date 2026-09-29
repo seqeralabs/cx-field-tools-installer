@@ -262,6 +262,27 @@ def verify_actions_bucket_trigger(data: SimpleNamespace):
         )
 
 
+def verify_identity_federation(data: SimpleNamespace):
+    """Check workload identity federation settings (Platform v26.2.0+, Design Decision 24).
+
+    AWS/Google STS fetch `${TOWER_SERVER_URL}/api/.well-known/jwks.json` to verify Platform's tokens, so the
+    same settings that block SNS delivery for lineage block federation too. Warnings only: federation is
+    used per credential, and a site can enable it before any credential needs it.
+    """
+    if not data.tower_identity_federation_enabled:
+        return
+
+    if not _meets_minimum(_version_tuple(data.tower_container_version), (26, 2, 0)):
+        log_error_and_exit("`tower_identity_federation_enabled = true` requires `tower_container_version` >= v26.2.0.")
+
+    blockers = [flag for flag in LINEAGE_SNS_BLOCKERS if getattr(data, flag)]
+    if blockers:
+        logger.warning(
+            f"Workload identity federation is on but cannot work with {', '.join(blockers)}: AWS/Google STS must "
+            "reach `tower_server_url`/api/.well-known/* over public HTTPS with a publicly trusted certificate."
+        )
+
+
 def verify_studio_ssh_cidrs_set(data: SimpleNamespace):
     """Fail if Studios SSH is enabled but no client CIDRs were configured.
 
@@ -816,6 +837,7 @@ if __name__ == "__main__":
     verify_data_lineage_enabled(data)
     verify_pipeline_secrets_kms_key(data)
     verify_actions_bucket_trigger(data)
+    verify_identity_federation(data)
     verify_studio_ssh_cidrs_set(data)
     verify_aws_instance_credentials_platform_version(data)
     verify_compute_env_cleanup_platform_version(data)

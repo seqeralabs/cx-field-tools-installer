@@ -193,6 +193,14 @@ FRONTEND_PRE_26_2_ACTIVE = """
     tower_container_version = "v26.1.3"
 """
 
+IDENTITY_FEDERATION_ACTIVE = """
+    tower_identity_federation_enabled = true
+"""
+
+IDENTITY_FEDERATION_WORKSPACE_RESTRICTION_ACTIVE = """
+    tower_identity_federation_allowed_workspaces = "12,34"
+"""
+
 TELEMETRY_BASIC_ACTIVE = """
     flag_enable_standard_telemetry = "basic"
 """
@@ -286,6 +294,10 @@ BASELINE_ASSERTIONS = {
             "TOWER_ACTIONS_TRIGGER_RATE_WINDOW": "1h",
             # STUDIOS PRIVATE CA (off in BASELINE)
             "# TOWER_SSL_CUSTOM_CA_CERT_FILE_NOT_SET": "DO_NOT_UNCOMMENT",
+            # OIDC PROVIDER (off in BASELINE: no Studios, no workload identity federation)
+            "# TOWER_OIDC_PEM_PATH_NOT_SET": "DO_NOT_UNCOMMENT",
+            # WORKLOAD IDENTITY FEDERATION (v26.2.0+, off in BASELINE)
+            "TOWER_IDENTITY_FEDERATION_ALLOWED_WORKSPACES": "-1",
         },
         "omitted": {
             # PIPELINE SECRETS KMS KEY
@@ -425,6 +437,9 @@ BASELINE_ASSERTIONS = {
             # Studios via private CA only: the rootCA.crt mount in backend and cron.
             "services.backend.volumes[.%rootCA]",
             "services.cron.volumes[.%rootCA]",
+            # Studios or workload identity federation only: the OIDC signing key mount.
+            "services.backend.volumes[.%data-studios-rsa]",
+            "services.cron.volumes[.%data-studios-rsa]",
         },
     },
     "wave_lite_yml": {
@@ -557,6 +572,10 @@ REDIS_EXTERNAL_ACTIVE_ASSERTIONS = {
 }
 
 
+# OIDC signing key mount in backend and cron, present when Studios or workload identity federation is on.
+OIDC_KEY_MOUNT = "$HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem"
+
+
 # MARK: Studios
 # Activates Data Studios on top of BASELINE. Brings the entire Studios config online —
 # `data_studios_env` populates, `# STUDIOS_NOT_ENABLED` markers flip out, the matrix of
@@ -568,7 +587,8 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "TOWER_DATA_STUDIO_ENABLE_PATH_ROUTING": "false",
             "TOWER_DATA_STUDIO_CONNECT_URL": "https://connect.autodc.dev-seqera.net",
             "TOWER_OIDC_PEM_PATH": "/data-studios-rsa.pem",
-            "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN": "ipsemlorem",
+            # random_password.oidc_registration_token, stubbed in tests/utils/terraform/precompute.py.
+            "TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN": "mockoidcregistrationtoken",
             "TOWER_DATA_STUDIO_DEFAULT_LIFESPAN": "8",
             "TOWER_DATA_STUDIO_PRIVATE_STUDIO_BY_DEFAULT": "false",
             # Templates: JUPYTER
@@ -624,6 +644,8 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             # iframe and SSH key type vars not exposed by installer — omitted entirely (see Design Decision #21).
             "TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES",
             "# TOWER_DATA_STUDIO_CONNECT_IFRAME_ALLOWED_WORKSPACES_NOT_SET",
+            # Studios turns the OIDC provider on.
+            "# TOWER_OIDC_PEM_PATH_NOT_SET",
             # Wave Studios vars — only emitted when flag_use_wave=true.
             "TOWER_DATA_STUDIO_WAVE_DISALLOWED_REGISTRIES",
             # Vars not exposed by installer — omitted entirely (see Design Decision #21).
@@ -646,7 +668,7 @@ STUDIOS_ACTIVE_ASSERTIONS = {
             "# CONNECT_MANAGEMENT_PORT_NOT_SET": "DO_NOT_UNCOMMENT",
             "CONNECT_REDIS_ADDRESS": "redis:6379",
             "CONNECT_REDIS_DB": 1,
-            "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN": "ipsemlorem",
+            "CONNECT_OIDC_CLIENT_REGISTRATION_TOKEN": "mockoidcregistrationtoken",
             "CONNECT_LOG_LEVEL": "debug",
         },
         "omitted": {
@@ -678,6 +700,13 @@ STUDIOS_ACTIVE_ASSERTIONS = {
     },
     "ansible_02_update_file_configurations": {
         "present": {"Creating data directory on host for Studios."},
+        "omitted": set(),
+    },
+    "docker_compose": {
+        "present": {
+            "services.backend.volumes[.%data-studios-rsa]": OIDC_KEY_MOUNT,
+            "services.cron.volumes[.%data-studios-rsa]": OIDC_KEY_MOUNT,
+        },
         "omitted": set(),
     },
 }
@@ -1102,7 +1131,41 @@ FRONTEND_PRE_26_2_ACTIVE_ASSERTIONS = {
             "# TOWER_LINEAGE_NOT_ENABLED": "DO_NOT_UNCOMMENT",
             "TOWER_AUDIT_LOG_V2_WRITE_MODE": "dual",
         },
-        "omitted": {"TOWER_LINEAGE_ALLOWED_WORKSPACES", "# TOWER_AUDIT_LOG_V2_WRITE_MODE"},
+        "omitted": {
+            "TOWER_LINEAGE_ALLOWED_WORKSPACES",
+            "# TOWER_AUDIT_LOG_V2_WRITE_MODE",
+            "TOWER_IDENTITY_FEDERATION_ALLOWED_WORKSPACES",
+        },
+    },
+}
+
+
+# MARK: Workload Identity Federation
+# v26.2.0+ with Studios off: enabling federation turns the OIDC provider on (signing key path and mount)
+# and replaces the `-1` off value with the allow-list (empty = all workspaces).
+IDENTITY_FEDERATION_ACTIVE_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_OIDC_PEM_PATH": "/data-studios-rsa.pem",
+            "TOWER_IDENTITY_FEDERATION_ALLOWED_WORKSPACES": "",
+        },
+        "omitted": {"# TOWER_OIDC_PEM_PATH_NOT_SET"},
+    },
+    "docker_compose": {
+        "present": {
+            "services.backend.volumes[.%data-studios-rsa]": OIDC_KEY_MOUNT,
+            "services.cron.volumes[.%data-studios-rsa]": OIDC_KEY_MOUNT,
+        },
+        "omitted": set(),
+    },
+}
+
+
+# Sub-feature of Workload Identity Federation — requires `IDENTITY_FEDERATION_ACTIVE` stacked first.
+IDENTITY_FEDERATION_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS = {
+    "tower_env": {
+        "present": {"TOWER_IDENTITY_FEDERATION_ALLOWED_WORKSPACES": "12,34"},
+        "omitted": set(),
     },
 }
 

@@ -41,6 +41,7 @@ locals {
 
       flag_enable_data_studio                   = var.flag_enable_data_studio,
       tower_connect_server_url                  = module.connection_strings.tower_connect_server_url,
+      oidc_registration_token                   = random_password.oidc_registration_token.result,
       flag_limit_data_studio_to_some_workspaces = var.flag_limit_data_studio_to_some_workspaces,
       data_studio_eligible_workspaces           = var.data_studio_eligible_workspaces,
 
@@ -78,6 +79,10 @@ locals {
       flag_enable_preflight_checks   = var.flag_enable_preflight_checks,
       tower_aws_secrets_kms_key_id   = var.tower_aws_secrets_kms_key_id,
       tower_actions                  = var.tower_actions,
+
+      oidc_provider_enabled                        = local.oidc_provider_enabled,
+      tower_identity_federation_enabled            = var.tower_identity_federation_enabled,
+      tower_identity_federation_allowed_workspaces = var.tower_identity_federation_allowed_workspaces,
     }
   )
 
@@ -160,6 +165,7 @@ locals {
       connect_management_port     = var.connect_management_port,
       connect_management_auth_key = var.connect_management_auth_key,
       connect_log_level           = var.connect_log_level,
+      oidc_registration_token     = random_password.oidc_registration_token.result,
     }
   )
 
@@ -195,6 +201,7 @@ locals {
       oidc_consolidated              = local.oidc_consolidated,
       flag_enable_standard_telemetry = var.flag_enable_standard_telemetry,
       studios_private_ca_active      = local.studios_private_ca_active,
+      oidc_provider_enabled          = local.oidc_provider_enabled,
 
       db_database_name  = var.db_database_name,
       db_tower_user     = local.tower_secrets["TOWER_DB_USER"]["value"],
@@ -453,6 +460,13 @@ locals {
 resource "tls_private_key" "connect_pem" {
   algorithm = "RSA"
   rsa_bits  = 4096
+}
+
+# Initial access token Connect presents to register as an OIDC client of Platform. Generated once
+# and kept in state, so it stays the same across applies (it changes only on destroy or lost state).
+resource "random_password" "oidc_registration_token" {
+  length  = 32
+  special = false
 }
 
 resource "tls_private_key" "connect_ssh_host_key" {

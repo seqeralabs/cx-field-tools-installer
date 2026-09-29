@@ -987,6 +987,22 @@ tower_actions = {
   trigger_rate_window                 = "1h"
 }
 
+# Workload identity federation (v26.2.0+). AWS and Google Cloud credentials can hold only a role ARN
+# (AWS) or a service account and provider path (Google), instead of long-lived keys. Platform signs a
+# short-lived token that AWS/Google STS exchange for temporary cloud credentials.
+#   tower_identity_federation_enabled            false: off in every workspace (TOWER_IDENTITY_FEDERATION_ALLOWED_WORKSPACES=-1).
+#   tower_identity_federation_allowed_workspaces  "" = all workspaces, or "123,456" = only these (used when enabled).
+# Requirements when enabled:
+#   - AWS/Google STS must reach ${tower_server_url}/api/.well-known/openid-configuration and jwks.json
+#     over public HTTPS with a publicly trusted certificate (not private, HTTP-only, or private-CA installs).
+#   - The cloud side (AWS IAM OIDC provider + role trust policy, or a Google workload identity pool) is
+#     set up by you, not the installer. The issuer URL is ${tower_server_url}/api.
+# WARNING: existing Google Cloud WIF credentials present new token subjects (platform, data, studio,
+# workflow) in enabled workspaces. Bindings that match only the `workflow` subject stop working.
+# See documentation/setup/optional_workload_identity_federation.md.
+tower_identity_federation_enabled            = false
+tower_identity_federation_allowed_workspaces = ""
+
 # If enabled, set eligibility to "" for all workspaces, or "WSP1_ID,WSP2_ID,..."
 tower_enable_pipeline_versioning        = false
 pipeline_versioning_eligible_workspaces = ""
