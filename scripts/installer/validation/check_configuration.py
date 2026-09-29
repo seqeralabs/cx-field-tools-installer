@@ -2,6 +2,7 @@
 # NOTE: Some checks that were previously here have been moved to variables.tf validation blocks.
 
 from pathlib import Path
+import re
 import sys
 from types import SimpleNamespace
 
@@ -481,6 +482,73 @@ def verify_database_configuration(data: SimpleNamespace):
         )
 
 
+STUDIOS_PRIVATE_CA_MIN_PLATFORM = (26, 2, 0)
+STUDIOS_PRIVATE_CA_MIN_CONNECT = (0, 12, 2)  # data_studio_container_version (connect-proxy / connect-server)
+STUDIOS_PRIVATE_CA_MIN_IMAGE_CONNECT = (0, 13, 0)  # Connect client baked into each Studio image
+
+
+def _version_tuple(version: str) -> tuple[int, ...]:
+    """Return the numeric parts of a version: "v26.2.0-RC16" -> (26, 2, 0), "0.12" -> (0, 12)."""
+    match = re.match(r"^v?(\d+(?:\.\d+)*)", version)
+    if match is None:
+        raise ValueError(f"Cannot parse version {version!r}")
+    return tuple(int(part) for part in match.group(1).split("."))
+
+
+def _meets_minimum(version: tuple[int, ...], minimum: tuple[int, ...]) -> bool:
+    """Compare versions. A missing part (floating tag like "0.12") counts as the newest release of it."""
+    for have, need in zip(version, minimum, strict=False):
+        if have != need:
+            return have > need
+    return True
+
+
+def _studio_connect_version(container: str) -> tuple[int, ...] | None:
+    """Return the Connect version from a Studio image tag, or None if the tag has no Connect suffix.
+
+    Example: "…/data-studio-xpra:6.3.6-r0-1-0.14.0" -> (0, 14, 0). The Connect version is the part
+    after the last "-".
+    """
+    tag = container.rsplit(":", 1)[-1]
+    try:
+        return _version_tuple(tag.rsplit("-", 1)[-1])
+    except ValueError:
+        return None
+
+
+def verify_studios_private_ca(data: SimpleNamespace):
+    """Check prerequisites for `flag_run_studios_via_private_ca`.
+
+    Mirrors the cross-variable validations commented out in variables.tf (Terraform < 1.9 can't run them).
+    """
+    if not data.flag_run_studios_via_private_ca:
+        return
+
+    if not data.flag_use_private_cacert:
+        log_error_and_exit("`flag_run_studios_via_private_ca = true` requires `flag_use_private_cacert = true`.")
+
+    if not _meets_minimum(_version_tuple(data.tower_container_version), STUDIOS_PRIVATE_CA_MIN_PLATFORM):
+        log_error_and_exit("`flag_run_studios_via_private_ca = true` requires `tower_container_version` >= v26.2.0.")
+
+    if not _meets_minimum(_version_tuple(data.data_studio_container_version), STUDIOS_PRIVATE_CA_MIN_CONNECT):
+        log_error_and_exit(
+            "`flag_run_studios_via_private_ca = true` requires `data_studio_container_version` >= 0.12.2."
+        )
+
+    for name, option in data.data_studio_options.items():
+        connect_version = _studio_connect_version(option["container"])
+        if connect_version is None:
+            logger.warning(
+                f"Studio template `{name}` ({option['container']}): cannot read a Connect version from the tag. "
+                "Check that the image uses Connect 0.13.0+, or its sessions won't trust the private CA."
+            )
+        elif not _meets_minimum(connect_version, STUDIOS_PRIVATE_CA_MIN_IMAGE_CONNECT):
+            logger.warning(
+                f"Studio template `{name}` ({option['container']}) uses Connect "
+                f"{'.'.join(map(str, connect_version))}, below 0.13.0. Its sessions won't trust the private CA."
+            )
+
+
 def verify_data_studio(data: SimpleNamespace):
     """Verify fields related to Data Studio."""
     if data.flag_enable_data_studio:
@@ -695,6 +763,7 @@ if __name__ == "__main__":
     logger.info("-" * 50)
     verify_data_studio(data)
     verify_data_studio_ssh(data)
+    verify_studios_private_ca(data)
 
     # Verify database settings (last since this is the most critical component and most likely to be seen)
     print("\n")

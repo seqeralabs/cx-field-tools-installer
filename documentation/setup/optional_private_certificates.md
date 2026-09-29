@@ -31,7 +31,7 @@ In this flow, we create a new self-signed Certificate Authority and issue a leaf
 1. Collect DNS names.
 
     1. SP (_mandatory_)
-        1. The value specified in _terraform.tfvars_ `tower_server_url`. 
+        1. The value specified in _terraform.tfvars_ `tower_server_url`.
 
     1. Studios (_optional_)
         1. If using subdomain routing, the value will be `*.<VALUE_OF_tower_server_url>`<br />(_Project hardcodes `connect.<VALUE_OF_tower_server_url>` and actual Studios use `<RANDOM_ALPHANUMERIC>.<VALUE_OF_tower_server_url>`_).<br /><br />
@@ -47,7 +47,7 @@ In this flow, we create a new self-signed Certificate Authority and issue a leaf
     1. Execute the following (_omit the Studios and/or Wave-Lite entries if not applicable_): `./create_self_signed_cert.sh <SP_DNS> <STUDIOS_DNS> <WAVE_LITE_DNS>`. This will create your certificate assets.
 
         **Example:** `./create_self_signed_cert.sh autodc.dev-seqera.net autoconnect.dev-seqera.net autowave.dev-seqera.net` will create the following (_these will be used for illustration purposes in the rest of the steps_):
-        
+
         - `rootCA.crt`
         - `rootCA.key`
         - `autodc.dev-seqera.net.crt`
@@ -71,6 +71,9 @@ In this flow, we create a new self-signed Certificate Authority and issue a leaf
 
 
 #### Using a certificate from an existing CA
+
+> **Note:** `rootCA.crt` must be PEM-encoded (starts with `-----BEGIN CERTIFICATE-----`). The file name can stay `.crt`. To convert a DER file: `openssl x509 -inform der -in rootCA.crt -out rootCA.pem`, then rename it back to `rootCA.crt`.
+
 In this flow, you use a leaf certificate issued by an existing private CA managed by your organization. **Assumption: You previously evaluated what DNS names were required and included them in the certificate request.**
 
 1. Load certificate assets to S3.
@@ -88,7 +91,7 @@ In this flow, you use a leaf certificate issued by an existing private CA manage
 Manually update the IAM permissions granted to the EC2 instance so it can access your certificate-holding Bucket.
 
 1. Update `assets/src/aws/iam_role_policy_ec2.json.tpl`:
-    
+
     1. Modify Sid `AllObjectActions`, adding another ARN entry for your S3 prefix (_e.g. `arn:aws:s3::example_bucket/sp_cert_files/*`).
 
 

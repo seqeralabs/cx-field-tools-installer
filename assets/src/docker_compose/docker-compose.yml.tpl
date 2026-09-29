@@ -102,6 +102,10 @@ services:
       # outside ~/target, which each apply wipes.
       - $HOME/.tower/usage-metrics:/usage-metrics
 %{ endif ~}
+%{ if studios_private_ca_active ~}
+      # Private root CA, installed on the host by Ansible (02). TOWER_SSL_CUSTOM_CA_CERT_FILE points here.
+      - /etc/pki/ca-trust/source/anchors/rootCA.crt:/private-ca/rootCA.crt:ro
+%{ endif ~}
     env_file:
       # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
       - $HOME/target/tower_config/tower.env
@@ -130,6 +134,10 @@ services:
       - $HOME/target/tower_config/tower.yml:/tower.yml
 %{ if flag_enable_data_studio == true ~}
       - $HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem
+%{ endif ~}
+%{ if studios_private_ca_active ~}
+      # Private root CA, installed on the host by Ansible (02). TOWER_SSL_CUSTOM_CA_CERT_FILE points here.
+      - /etc/pki/ca-trust/source/anchors/rootCA.crt:/private-ca/rootCA.crt:ro
 %{ endif ~}
     env_file:
       - $HOME/target/tower_config/tower.env

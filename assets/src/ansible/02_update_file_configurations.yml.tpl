@@ -142,6 +142,21 @@
         aws s3 cp ${private_cacert_bucket_prefix}/${tower_base_url}.key ${tower_base_url}.key
 %{ endif ~}
 
+%{ if studios_private_ca_active ~}
+    - name: Check the private root CA is PEM-encoded.
+      # rootCA.crt is mounted into backend and cron for TOWER_SSL_CUSTOM_CA_CERT_FILE, which needs PEM.
+      # keytool and update-ca-trust also accept DER, so a DER file would otherwise only fail when Platform reads it.
+      ansible.builtin.shell: |
+        echo "Checking private root CA encoding."
+
+        if ! grep -q -- "-----BEGIN CERTIFICATE-----" /etc/pki/ca-trust/source/anchors/rootCA.crt; then
+          echo "ERROR: rootCA.crt is not PEM-encoded. Convert it with:" >&2
+          echo "  openssl x509 -inform der -in rootCA.crt -out rootCA.pem && mv rootCA.pem rootCA.crt" >&2
+          echo "then upload it to ${private_cacert_bucket_prefix}/rootCA.crt and remove the host copy in /etc/pki/ca-trust/source/anchors/." >&2
+          exit 1
+        fi
+%{ endif ~}
+
 %{ if flag_enable_data_studio ~}
     - name: Create Studio 0.8.2 data folder.
       # Act as root to avoid potential nth deployment conflicts
