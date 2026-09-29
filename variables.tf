@@ -652,6 +652,20 @@ variable "tower_actions" {
   }
 }
 
+variable "tower_identity_federation_enabled" {
+  type        = bool
+  description = "Workload identity federation (v26.2.0+) for AWS and Google Cloud credentials. When true, Platform's OIDC provider is configured and TOWER_IDENTITY_FEDERATION_ALLOWED_WORKSPACES is set from tower_identity_federation_allowed_workspaces. When false, it is set to -1 (no workspace)."
+}
+
+variable "tower_identity_federation_allowed_workspaces" {
+  type        = string
+  description = "Workspaces allowed to use workload identity federation when tower_identity_federation_enabled = true. Empty = all workspaces, or a comma-separated list of numeric workspace IDs."
+  validation {
+    condition     = var.tower_identity_federation_allowed_workspaces == "" || can(regex("^[0-9]+(,[0-9]+)*$", var.tower_identity_federation_allowed_workspaces))
+    error_message = "tower_identity_federation_allowed_workspaces must be empty or a comma-separated list of numeric workspace IDs (e.g., \"123\" or \"123,456\")."
+  }
+}
+
 variable "tower_workflow_cleanup_enabled" { type = bool }
 
 # Compute environment cleanup (v26.1.0+) — bundled object.

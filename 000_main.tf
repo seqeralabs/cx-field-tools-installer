@@ -205,6 +205,10 @@ locals {
   tower_version_before_26_2 = local.tower_version_major < 26 || (local.tower_version_major == 26 && local.tower_version_minor < 2)
   frontend_image_suffix     = local.tower_version_before_26_2 ? "-unprivileged" : ""
 
+  # Platform's built-in OIDC provider signs tokens for Studios and, from v26.2.0, for workload identity
+  # federation. It is on when TOWER_OIDC_PEM_PATH is set, so set it (and mount the key) when either needs it.
+  oidc_provider_enabled = var.flag_enable_data_studio || (var.tower_identity_federation_enabled && !local.tower_version_before_26_2)
+
 
   # OIDC
   # ---------------------------------------------------------------------------------------

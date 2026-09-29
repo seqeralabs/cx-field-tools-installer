@@ -94,7 +94,7 @@ services:
       - backend
     volumes:
       - $HOME/target/tower_config/tower.yml:/tower.yml
-%{ if flag_enable_data_studio == true ~}
+%{ if oidc_provider_enabled ~}
       - $HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem
 %{ endif ~}
 %{ if flag_enable_standard_telemetry == "air-gapped" ~}
@@ -132,7 +132,7 @@ services:
       - 8080
     volumes:
       - $HOME/target/tower_config/tower.yml:/tower.yml
-%{ if flag_enable_data_studio == true ~}
+%{ if oidc_provider_enabled ~}
       - $HOME/target/tower_config/data-studios-rsa.pem:/data-studios-rsa.pem
 %{ endif ~}
 %{ if studios_private_ca_active ~}

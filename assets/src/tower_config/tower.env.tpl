@@ -120,6 +120,13 @@ TOWER_DATA_EXPLORER_ENABLED=false
 # ------------------------------------------------
 # OIDC configuration activated via docker-compose.yml MICRONAUT_ENVIRONMENTS variable.
 
+# Signing key for Platform's built-in OIDC provider, used by Studios and workload identity federation.
+%{ if oidc_provider_enabled ~}
+TOWER_OIDC_PEM_PATH=/data-studios-rsa.pem
+%{ else ~}
+# TOWER_OIDC_PEM_PATH_NOT_SET=DO_NOT_UNCOMMENT
+%{ endif ~}
+
 
 #-------------------------------------------------
 # DATA STUDIO
@@ -139,8 +146,7 @@ TOWER_DATA_STUDIO_ALLOWED_WORKSPACES="${data_studio_eligible_workspaces}"
 %{ endif }
 
 TOWER_DATA_STUDIO_CONNECT_URL=${tower_connect_server_url}
-TOWER_OIDC_PEM_PATH=/data-studios-rsa.pem
-TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN="ipsemlorem"
+TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN="${oidc_registration_token}"
 
 TOWER_DATA_STUDIO_DEFAULT_LIFESPAN=${data_studio_default_lifespan}
 TOWER_DATA_STUDIO_PRIVATE_STUDIO_BY_DEFAULT=${flag_studio_private_by_default}
@@ -343,6 +349,20 @@ TOWER_ACTIONS_PIPELINE_TRIGGER_ALLOWED_WORKSPACES=${tower_actions.pipeline_trigg
 %{ endif ~}
 TOWER_ACTIONS_TRIGGER_RATE_MAX_PER_WINDOW=${tower_actions.trigger_rate_max_per_window}
 TOWER_ACTIONS_TRIGGER_RATE_WINDOW=${tower_actions.trigger_rate_window}
+
+
+#-------------------------------------------------
+# WORKLOAD IDENTITY FEDERATION (v26.2.0+)
+# Platform signs short-lived tokens that AWS/Google STS exchange for cloud credentials.
+# -1 matches no workspace, so federation stays off.
+# ------------------------------------------------
+%{ if !tower_version_before_26_2 ~}
+%{ if tower_identity_federation_enabled ~}
+TOWER_IDENTITY_FEDERATION_ALLOWED_WORKSPACES=${tower_identity_federation_allowed_workspaces}
+%{ else ~}
+TOWER_IDENTITY_FEDERATION_ALLOWED_WORKSPACES=-1
+%{ endif ~}
+%{ endif ~}
 
 
 # STUDIOS PRIVATE CA (v26.2.0+, Connect 0.12.2+)

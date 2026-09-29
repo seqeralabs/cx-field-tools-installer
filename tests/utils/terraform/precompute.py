@@ -55,6 +55,7 @@ _LOCALS_TO_SKIP = {
 }
 
 _TLS_KEY_STUBS = {"public_key_fingerprint_sha256": "SHA256:mocksshfingerprintfortesting"}
+_OIDC_REGISTRATION_TOKEN_STUBS = {"result": "mockoidcregistrationtoken"}
 
 # `all_template_files` key uses underscores; the actual on-disk filename uses hyphens.
 _WAVE_LITE_RDS_KEY = "wave_lite_rds"
@@ -67,7 +68,8 @@ _WAVE_LITE_RDS_FILENAME = "wave-lite-rds.sql"
 def _replace_refs(input_str: str, vars_dict: dict, pattern: str) -> str:
     """Substitute terraform references that console can't resolve in test mode.
 
-    Handles `local.<X>_secrets[...]["value"]` and `tls_private_key.connect_ssh_host_key.*`.
+    Handles `local.<X>_secrets[...]["value"]`, `tls_private_key.connect_ssh_host_key.*`, and
+    `random_password.oidc_registration_token.*`.
     Module outputs, vars, and other locals are left intact — console resolves them
     natively when evaluating the surrounding `templatefile()` expression.
     """
@@ -77,6 +79,7 @@ def _replace_refs(input_str: str, vars_dict: dict, pattern: str) -> str:
         "seqerakit_secrets": r'local\.seqerakit_secrets\["([^"]+)"\]\["[^"]+"\]',
         "wave_lite_secrets": r'local\.wave_lite_secrets\["([^"]+)"\]\["[^"]+"\]',
         "tls_connect_ssh_host_key": r"tls_private_key\.connect_ssh_host_key\.(\w+)",
+        "random_oidc_registration_token": r"random_password\.oidc_registration_token\.(\w+)",
     }
     pat = patterns.get(pattern)
     if not pat:
@@ -199,6 +202,7 @@ def _build_template_payload(raw_expression: str, secrets: dict) -> str:
     payload = _replace_refs(payload, secrets["seqerakit"], "seqerakit_secrets")
     payload = _replace_refs(payload, secrets["wave_lite"], "wave_lite_secrets")
     payload = _replace_refs(payload, _TLS_KEY_STUBS, "tls_connect_ssh_host_key")
+    payload = _replace_refs(payload, _OIDC_REGISTRATION_TOKEN_STUBS, "random_oidc_registration_token")
     # `terraform console` treats stdin newlines as submit-this-expression markers.
     return payload.replace("\n", "")
 
