@@ -916,6 +916,10 @@ tower_enable_openapi = true
 #                (/home/ec2-user/.tower/usage-metrics) every 24h and kept for 90 days.
 flag_enable_standard_telemetry = "standard"
 
+# Preflight checks (v26.2.0+). When true, Platform runs preflight checks and validates
+# credentials before launching a pipeline. Matches the upstream default.
+flag_enable_preflight_checks = true
+
 # If enabled, set eligibility to "" for all workspaces, or "WSP1_ID,WSP2_ID,..."
 tower_enable_pipeline_versioning        = false
 pipeline_versioning_eligible_workspaces = ""

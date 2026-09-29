@@ -561,6 +561,11 @@ variable "flag_enable_standard_telemetry" {
   }
 }
 
+variable "flag_enable_preflight_checks" {
+  type        = bool
+  description = "Platform preflight checks (v26.2.0+). When true, Platform runs preflight checks and validates credentials before a pipeline launch (TOWER_PREFLIGHT_CHECK_ENABLED, TOWER_CREDENTIALS_VALIDATION_ENABLED). Upstream default: true."
+}
+
 variable "tower_workflow_cleanup_enabled" { type = bool }
 
 # Compute environment cleanup (v26.1.0+) — bundled object.

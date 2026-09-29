@@ -284,6 +284,14 @@ TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_DIR=/usage-metrics
 TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_HISTORY=90
 
 
+#-------------------------------------------------
+# PREFLIGHT CHECKS (v26.2.0+)
+# Preflight checks and credential validation run before a pipeline launch. Both follow one flag.
+# ------------------------------------------------
+TOWER_PREFLIGHT_CHECK_ENABLED=${flag_enable_preflight_checks}
+TOWER_CREDENTIALS_VALIDATION_ENABLED=${flag_enable_preflight_checks}
+
+
 # ------------------------------------------------
 # TEMPORARY WORKAROUND FOR MIGRATION SCRIPT
 #  - Need to add database creds here due to migration script limitation (Dec 2023)

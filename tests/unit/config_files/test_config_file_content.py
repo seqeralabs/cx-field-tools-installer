@@ -83,7 +83,7 @@ def test_confirm_baseline(generated_test_files):
 @pytest.mark.tower
 @pytest.mark.tfvars(BASELINE + TOWER_OPT_IN_FLAGS_ACTIVE)
 def test_tower_opt_in_flags_active(generated_test_files):
-    """Six Tower-level config flags all on: instance creds, OpenAPI, pipeline versioning, auto-create users, cleanup.
+    """Seven Tower-level flags on: instance creds, OpenAPI, pipeline versioning, auto-create users, cleanup, preflight.
 
     Grouped as a single test for compactness — these are independent knobs with no
     cross-feature interactions. If any one grows complex (e.g. pipeline versioning gets

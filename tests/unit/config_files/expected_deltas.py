@@ -72,6 +72,7 @@ BASELINE = """
     flag_tower_enable_participant_auto_create_user = false
     flag_tower_enable_member_auto_create_user      = false
     tower_workflow_cleanup_enabled                 = false
+    flag_enable_preflight_checks                   = false
 """
 
 REDIS_EXTERNAL_ACTIVE = """
@@ -139,6 +140,7 @@ TOWER_OPT_IN_FLAGS_ACTIVE = """
     flag_tower_enable_participant_auto_create_user = true
     flag_tower_enable_member_auto_create_user      = true
     tower_workflow_cleanup_enabled                 = true
+    flag_enable_preflight_checks                   = true
 """
 
 PRIVATE_CA_REVERSE_PROXY_ACTIVE = """
@@ -253,6 +255,9 @@ BASELINE_ASSERTIONS = {
             "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_INTERVAL": "24h",
             "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_DIR": "/usage-metrics",
             "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_HISTORY": "90",
+            # PREFLIGHT CHECKS (off in BASELINE)
+            "TOWER_PREFLIGHT_CHECK_ENABLED": "false",
+            "TOWER_CREDENTIALS_VALIDATION_ENABLED": "false",
         },
         "omitted": {
             # DB                      Never generated in file
@@ -856,6 +861,8 @@ TOWER_OPT_IN_FLAGS_ACTIVE_ASSERTIONS = {
         "present": {
             "TOWER_ALLOW_INSTANCE_CREDENTIALS": "true",
             "TOWER_ENABLE_OPENAPI": "true",
+            "TOWER_PREFLIGHT_CHECK_ENABLED": "true",
+            "TOWER_CREDENTIALS_VALIDATION_ENABLED": "true",
             "TOWER_PIPELINE_VERSIONING_ALLOWED_WORKSPACES": "",
         },
         "omitted": {"# TOWER_PIPELINE_VERSIONING_NOT_ENABLED"},
