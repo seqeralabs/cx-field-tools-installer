@@ -327,12 +327,23 @@ def verify_audit_log_v2_platform_version(data: SimpleNamespace):
     vars are always emitted to `tower.env`. Pre-v26.1 Platform versions silently
     ignore unknown env vars — no functional harm, but worth flagging so deployers
     aren't surprised when their settings have no effect.
+
+    Platform v26.2.0+ writes only to the v2 table and removes the write mode, so any
+    `write_mode` other than "v2" is flagged: v1 readers get no new events.
     """
     if data.tower_container_version < "v26.1.0":
         logger.warning(
             "Platform version is < v26.1.0; Audit Log v2 settings (`tower_audit_log_v2`) "
             "will be emitted to `tower.env` but ignored by your Platform version. "
             "Upgrade to v26.1.0+ to use these features."
+        )
+
+    write_mode = data.tower_audit_log_v2.get("write_mode", "dual")
+    if _meets_minimum(_version_tuple(data.tower_container_version), (26, 2, 0)) and write_mode != "v2":
+        logger.warning(
+            f'`tower_audit_log_v2.write_mode = "{write_mode}"` is ignored: Platform v26.2.0+ writes audit events '
+            "to the v2 table only, so nothing new reaches the legacy `tw_audit_log` table. Move any readers of "
+            'that table to the v2 schema, then set `write_mode = "v2"` to silence this warning.'
         )
 
 

@@ -59,7 +59,7 @@ locals {
       data_studio_wave_disallowed_registries   = var.data_studio_wave_disallowed_registries,
       data_studio_wave_custom_image_registry   = var.data_studio_wave_custom_image_registry,
       data_studio_wave_custom_image_repository = var.data_studio_wave_custom_image_repository,
-      studios_private_ca_active      = local.studios_private_ca_active,  
+      studios_private_ca_active                = local.studios_private_ca_active,
 
       flag_allow_aws_instance_credentials = var.flag_allow_aws_instance_credentials,
       tower_enable_openapi                = var.tower_enable_openapi,

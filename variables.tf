@@ -561,6 +561,7 @@ variable "flag_tower_enable_member_auto_create_user" { type = bool }
 variable "tower_audit_retention_days" { type = number }
 
 # Audit Log v2 (v26.1.0+) — bundled object with nested `cleanup` sub-object.
+# `write_mode` applies to v26.1 only; v26.2.0+ writes v2 only and the setting is not rendered.
 # Pre-v26.1 Platform versions ignore the emitted env vars; `check_configuration.py`
 # emits a warning if `tower_container_version < v26.1.0`.
 variable "tower_audit_log_v2" {
@@ -577,8 +578,8 @@ variable "tower_audit_log_v2" {
   })
 
   validation {
-    condition     = contains(["v1", "v2", "dual"], var.tower_audit_log_v2.write_mode)
-    error_message = "tower_audit_log_v2.write_mode must be one of: \"v1\", \"v2\", \"dual\"."
+    condition     = contains(["v2", "dual"], var.tower_audit_log_v2.write_mode)
+    error_message = "tower_audit_log_v2.write_mode must be one of: \"v2\", \"dual\"."
   }
 
   validation {
