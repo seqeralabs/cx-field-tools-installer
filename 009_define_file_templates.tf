@@ -73,6 +73,7 @@ locals {
       tower_audit_log_v2        = var.tower_audit_log_v2,
 
       flag_enable_standard_telemetry = var.flag_enable_standard_telemetry,
+      flag_enable_preflight_checks   = var.flag_enable_preflight_checks,
     }
   )
 

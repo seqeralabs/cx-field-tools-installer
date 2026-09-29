@@ -190,6 +190,8 @@ tower_workflow_cleanup_enabled          = true
 
 tower_enable_openapi = true
 
+flag_enable_preflight_checks = true
+
 tower_enable_pipeline_versioning        = true
 pipeline_versioning_eligible_workspaces = ""
 
