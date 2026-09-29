@@ -920,6 +920,15 @@ flag_enable_standard_telemetry = "standard"
 # credentials before launching a pipeline. Matches the upstream default.
 flag_enable_preflight_checks = true
 
+# Customer-managed KMS key for pipeline secrets (v26.2.0+). Encrypts the temporary AWS Secrets
+# Manager secrets Platform creates for runs on AWS Batch and AWS Cloud compute environments.
+# Leave empty to use the AWS-managed key. Use a key ARN or key ID; aliases are not accepted.
+# Applies to every such compute environment without its own key (set per compute environment
+# under Advanced options > Pipeline secrets KMS key), so only set it when they all share the
+# key's account and region. The compute environment credentials need kms:GenerateDataKey and
+# kms:Decrypt on the key, and the compute environment execution role needs kms:Decrypt.
+tower_aws_secrets_kms_key_id = ""
+
 # If enabled, set eligibility to "" for all workspaces, or "WSP1_ID,WSP2_ID,..."
 tower_enable_pipeline_versioning        = false
 pipeline_versioning_eligible_workspaces = ""

@@ -292,6 +292,18 @@ TOWER_PREFLIGHT_CHECK_ENABLED=${flag_enable_preflight_checks}
 TOWER_CREDENTIALS_VALIDATION_ENABLED=${flag_enable_preflight_checks}
 
 
+#-------------------------------------------------
+# PIPELINE SECRETS KMS KEY (v26.2.0+)
+# Customer-managed key for the Secrets Manager secrets created for pipeline runs.
+# A compute environment's own key takes precedence.
+# ------------------------------------------------
+%{ if tower_aws_secrets_kms_key_id != "" ~}
+TOWER_AWS_SECRETS_KMS_KEY_ID=${tower_aws_secrets_kms_key_id}
+%{ else ~}
+# TOWER_AWS_SECRETS_KMS_KEY_ID_NOT_SET=DO_NOT_UNCOMMENT
+%{ endif ~}
+
+
 # ------------------------------------------------
 # TEMPORARY WORKAROUND FOR MIGRATION SCRIPT
 #  - Need to add database creds here due to migration script limitation (Dec 2023)

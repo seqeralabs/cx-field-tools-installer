@@ -35,6 +35,7 @@ SCENARIOS: dict[str, dict[str, tuple[str, str]]] = {
         "data_studio_ssh_eligible_workspaces": ("abc", "non-numeric value"),
         "pipeline_versioning_eligible_workspaces": ("abc", "non-numeric value"),
         "flag_enable_standard_telemetry": ("none", "not one of standard/basic/air-gapped"),
+        "tower_aws_secrets_kms_key_id": ("alias/my-key", "alias name"),
         "private_cacert_bucket_prefix": ("my-bucket", "missing s3:// prefix"),
     },
     "round_2": {
@@ -46,10 +47,12 @@ SCENARIOS: dict[str, dict[str, tuple[str, str]]] = {
         "data_studio_eligible_workspaces": ("1,abc", "mixed numeric/non-numeric"),
         "data_studio_ssh_eligible_workspaces": ("1,,2", "double comma"),
         "pipeline_versioning_eligible_workspaces": ("12 34", "space breaks the CSV"),
+        "tower_aws_secrets_kms_key_id": ("arn:aws:kms:us-east-1:123456789012:alias/my-key", "alias ARN"),
     },
     "round_3": {
         "tower_container_version": ("vfoo", "non-numeric after 'v'"),
         "data_studio_eligible_workspaces": ("12 34", "space breaks the CSV"),
+        "tower_aws_secrets_kms_key_id": ("1234ABCD-12AB-34CD-56EF-1234567890AB", "uppercase key id"),
     },
 }
 

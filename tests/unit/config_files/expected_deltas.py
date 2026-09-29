@@ -73,6 +73,7 @@ BASELINE = """
     flag_tower_enable_member_auto_create_user      = false
     tower_workflow_cleanup_enabled                 = false
     flag_enable_preflight_checks                   = false
+    tower_aws_secrets_kms_key_id                   = ""
 """
 
 REDIS_EXTERNAL_ACTIVE = """
@@ -141,6 +142,7 @@ TOWER_OPT_IN_FLAGS_ACTIVE = """
     flag_tower_enable_member_auto_create_user      = true
     tower_workflow_cleanup_enabled                 = true
     flag_enable_preflight_checks                   = true
+    tower_aws_secrets_kms_key_id                   = "arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab"
 """
 
 PRIVATE_CA_REVERSE_PROXY_ACTIVE = """
@@ -258,8 +260,12 @@ BASELINE_ASSERTIONS = {
             # PREFLIGHT CHECKS (off in BASELINE)
             "TOWER_PREFLIGHT_CHECK_ENABLED": "false",
             "TOWER_CREDENTIALS_VALIDATION_ENABLED": "false",
+            # PIPELINE SECRETS KMS KEY (unset in BASELINE)
+            "# TOWER_AWS_SECRETS_KMS_KEY_ID_NOT_SET": "DO_NOT_UNCOMMENT",
         },
         "omitted": {
+            # PIPELINE SECRETS KMS KEY
+            "TOWER_AWS_SECRETS_KMS_KEY_ID",
             # DB                      Never generated in file
             "TOWER_DB_USER",
             "TOWER_DB_PASSWORD",
@@ -863,9 +869,10 @@ TOWER_OPT_IN_FLAGS_ACTIVE_ASSERTIONS = {
             "TOWER_ENABLE_OPENAPI": "true",
             "TOWER_PREFLIGHT_CHECK_ENABLED": "true",
             "TOWER_CREDENTIALS_VALIDATION_ENABLED": "true",
+            "TOWER_AWS_SECRETS_KMS_KEY_ID": "arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab",
             "TOWER_PIPELINE_VERSIONING_ALLOWED_WORKSPACES": "",
         },
-        "omitted": {"# TOWER_PIPELINE_VERSIONING_NOT_ENABLED"},
+        "omitted": {"# TOWER_PIPELINE_VERSIONING_NOT_ENABLED", "# TOWER_AWS_SECRETS_KMS_KEY_ID_NOT_SET"},
     },
     "tower_yml": {
         "present": {

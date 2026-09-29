@@ -74,6 +74,7 @@ locals {
 
       flag_enable_standard_telemetry = var.flag_enable_standard_telemetry,
       flag_enable_preflight_checks   = var.flag_enable_preflight_checks,
+      tower_aws_secrets_kms_key_id   = var.tower_aws_secrets_kms_key_id,
     }
   )
 

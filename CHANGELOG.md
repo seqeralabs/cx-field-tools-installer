@@ -33,6 +33,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Studio templates: added the Connect 0.14.0 images (VSCode 1.105.1, Jupyter 4.6.0, RStudio 2026.01.2, Xpra 6.3.6) as `recommended`. The 0.12.2 images are now `deprecated`, and the 0.11.0 images are removed.
             - New `flag_enable_standard_telemetry` (Platform v26.2.0+): `"standard"` (default) sends standard and basic telemetry; `"basic"` sends basic telemetry only; `"air-gapped"` sends both and also writes usage-metric files every 24h (kept 90 days). In air-gapped mode, Ansible creates `/home/ec2-user/.tower/usage-metrics` on the host and mounts it into the `cron` container at `/usage-metrics`, outside `~/target`, which each apply replaces.
             - New `flag_enable_preflight_checks` (Platform v26.2.0+) sets both `TOWER_PREFLIGHT_CHECK_ENABLED` and `TOWER_CREDENTIALS_VALIDATION_ENABLED`. The template default, `true`, matches the upstream default.
+            - New `tower_aws_secrets_kms_key_id` (Platform v26.2.0+) sets `TOWER_AWS_SECRETS_KMS_KEY_ID`, an installation-wide customer-managed KMS key that encrypts the temporary AWS Secrets Manager secrets Platform creates for pipeline runs. It applies to every AWS Batch and AWS Cloud compute environment that does not set its own key (Advanced options > Pipeline secrets KMS key), including existing ones. Key ARN or key ID only; aliases are rejected. Empty (the template default) keeps the AWS-managed key. `variables.tf` validates the format, because Platform will not start with an invalid value. No installer IAM change: the compute environment credentials and execution role use the key, not the installer's EC2 role. [`#435`](https://github.com/seqeralabs/cx-field-tools-installer/issues/435)
         <br /><br />
 
         - Security
@@ -49,6 +50,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
             - Test data now pins `tower_container_version = "v26.2.0-RC16"`. The baseline checks the frontend image, and the Xpra keys in the baseline's omitted list are fixed (they had typos). Added `test_frontend_pre_26_2_active` for the `-unprivileged` tag on Platform < v26.2.0.
             - Added `test_telemetry_basic_active` and `test_telemetry_air_gapped_active`. The baseline checks the telemetry keys for the default `"standard"` mode. The variable-validation suite rejects values other than `standard` / `basic` / `air-gapped`.
             - `test_tower_opt_in_flags_active` now also covers `flag_enable_preflight_checks` (`true`), and the baseline covers `false`.
+            - `test_tower_opt_in_flags_active` now also covers `tower_aws_secrets_kms_key_id` (set), and the baseline covers it unset. The variable-validation suite rejects an alias name, an alias ARN, and an uppercase key ID.
 
 
 ### Configuration File Changes
@@ -62,6 +64,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 | Modified | Studios | `data_studio_options` | Added the 0.14.0 templates (`recommended`), marked 0.12.2 `deprecated`, and removed 0.11.0. Copy the new block from `TEMPLATE_terraform.tfvars` into your `terraform.tfvars`. |
 | New | Telemetry | `flag_enable_standard_telemetry` | Telemetry mode for Platform v26.2.0+: `"standard"`, `"basic"`, or `"air-gapped"`. Required: add `flag_enable_standard_telemetry = "standard"` to your `terraform.tfvars` to keep Platform's default behaviour. |
 | New | Platform | `flag_enable_preflight_checks` | Enables Platform preflight checks and credential validation before pipeline launch (v26.2.0+). Required: add `flag_enable_preflight_checks = true` to your `terraform.tfvars` to keep Platform's default behaviour. |
+| New | Platform | `tower_aws_secrets_kms_key_id` | Installation-wide customer-managed KMS key for pipeline secrets (v26.2.0+). Key ARN or key ID; aliases are rejected. Required: add `tower_aws_secrets_kms_key_id = ""` to your `terraform.tfvars` to keep the AWS-managed key. |
 
 
 ## 1.8.1 (July 2026)
