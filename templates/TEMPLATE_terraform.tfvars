@@ -972,7 +972,7 @@ tower_aws_secrets_kms_key_id = ""
 #
 # To turn a trigger on or off, set its *_allowed_workspaces value:
 #   ""          on in every workspace (Platform default)
-#   "0"         off everywhere
+#   "-1"        off everywhere (no workspace has this ID; same off value as lineage and WIF)
 #   "123,456"   on only in these numeric workspace IDs (`tw workspaces list`)
 # Restricting a trigger pauses that trigger's existing Actions in the excluded workspaces.
 # GitHub webhook and Tower launch hook Actions are not affected.

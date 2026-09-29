@@ -172,7 +172,7 @@ def verify_email_login_disablement(data: SimpleNamespace):
 
 def verify_workflow_cleanup_enabled(data: SimpleNamespace):
     """Check workflow cleanup enablement scenarios."""
-    if data.tower_workflow_cleanup_enabled and data.tower_container_version < "v25.1.0":
+    if data.tower_workflow_cleanup_enabled and _is_before(data.tower_container_version, (25, 1, 0)):
         log_error_and_exit("Workflow cleanup can only be enabled on Platform v25.1.0+")
 
 
@@ -190,7 +190,7 @@ LINEAGE_SNS_BLOCKERS = (
 
 def verify_data_lineage_enabled(data: SimpleNamespace):
     """Check data lineage enablement scenarios."""
-    if data.flag_enable_data_lineage and data.tower_container_version < "v26.1.0":
+    if data.flag_enable_data_lineage and _is_before(data.tower_container_version, (26, 1, 0)):
         log_error_and_exit("Data lineage can only be enabled on Platform v26.1.0+")
 
     if not _meets_minimum(_version_tuple(data.tower_container_version), LINEAGE_SNS_MIN_PLATFORM):
@@ -222,7 +222,7 @@ def verify_pipeline_secrets_kms_key(data: SimpleNamespace):
 
     The key format is validated in variables.tf.
     """
-    if data.tower_aws_secrets_kms_key_id and data.tower_container_version < "v26.2.0":
+    if data.tower_aws_secrets_kms_key_id and _is_before(data.tower_container_version, (26, 2, 0)):
         log_error_and_exit("`tower_aws_secrets_kms_key_id` can only be set on Platform v26.2.0+")
 
 
@@ -230,13 +230,13 @@ def verify_actions_bucket_trigger(data: SimpleNamespace):
     """Warn when bucket-event Actions are on but can't work on this deployment.
 
     Platform turns the bucket trigger on everywhere unless
-    `tower_actions.bucket_trigger_allowed_workspaces = "0"`. AWS SNS pushes each bucket event to
+    `tower_actions.bucket_trigger_allowed_workspaces = "-1"`. AWS SNS pushes each bucket event to
     `${TOWER_SERVER_URL}/api/actions/<id>/bucket` over HTTPS and only accepts publicly trusted
     certificates, and the trigger needs Data Explorer. Warnings only: schedule and pipeline-run
     triggers are unaffected.
     """
     actions = getattr(data, "tower_actions", {})
-    if data.tower_container_version < "v26.2.0" or actions.get("bucket_trigger_allowed_workspaces") == "0":
+    if _is_before(data.tower_container_version, (26, 2, 0)) or actions.get("bucket_trigger_allowed_workspaces") == "-1":
         return
 
     blockers = [
@@ -253,12 +253,12 @@ def verify_actions_bucket_trigger(data: SimpleNamespace):
         logger.warning(
             f"Bucket-event Actions are on but cannot work with {', '.join(blockers)}: AWS SNS must reach "
             "Platform over public HTTPS with a publicly trusted certificate. "
-            'Set tower_actions.bucket_trigger_allowed_workspaces = "0" to turn them off.'
+            'Set tower_actions.bucket_trigger_allowed_workspaces = "-1" to turn them off.'
         )
     if not data.flag_data_explorer_enabled:
         logger.warning(
             "Bucket-event Actions are on but need Data Explorer: set flag_data_explorer_enabled = true, "
-            'or set tower_actions.bucket_trigger_allowed_workspaces = "0" to turn them off.'
+            'or set tower_actions.bucket_trigger_allowed_workspaces = "-1" to turn them off.'
         )
 
 
@@ -332,7 +332,7 @@ def verify_compute_env_cleanup_platform_version(data: SimpleNamespace):
     but the deployer should know their setting is being ignored.
     """
     cleanup = getattr(data, "tower_compute_env_cleanup", {})
-    if cleanup.get("enabled", False) and data.tower_container_version < "v26.1.0":
+    if cleanup.get("enabled", False) and _is_before(data.tower_container_version, (26, 1, 0)):
         logger.warning(
             "tower_compute_env_cleanup.enabled = true but Platform version is < v26.1.0. "
             "The TOWER_COMPUTE_ENV_CLEANUP_* env vars will be emitted but ignored by "
@@ -352,7 +352,7 @@ def verify_audit_log_v2_platform_version(data: SimpleNamespace):
     Platform v26.2.0+ writes only to the v2 table and removes the write mode, so any
     `write_mode` other than "v2" is flagged: v1 readers get no new events.
     """
-    if data.tower_container_version < "v26.1.0":
+    if _is_before(data.tower_container_version, (26, 1, 0)):
         logger.warning(
             "Platform version is < v26.1.0; Audit Log v2 settings (`tower_audit_log_v2`) "
             "will be emitted to `tower.env` but ignored by your Platform version. "
@@ -376,7 +376,7 @@ def verify_nextflow_parser_v2_advisory(data: SimpleNamespace):
     compute environments, so the installer cannot validate them. Warn only so the
     deployer knows to audit their pipeline configurations.
     """
-    if data.tower_container_version >= "v26.1.0":
+    if not _is_before(data.tower_container_version, (26, 1, 0)):
         logger.warning(
             f"Platform {data.tower_container_version} ships with Nextflow 26.04 and a new syntax parser. "
             "Configured pipelines may need to update their Nextflow parser version setting to remain compatible. "
@@ -606,6 +606,18 @@ def _meets_minimum(version: tuple[int, ...], minimum: tuple[int, ...]) -> bool:
     return True
 
 
+def _is_before(version: str, minimum: tuple[int, ...]) -> bool:
+    """Return True if a version string is older than `minimum`, compared numerically.
+
+    Replaces string comparisons such as `version < "0.8.2"`, which sort "0.14.0" before "0.8.2".
+    Pre-release tags count as their release ("v26.2.0-RC16" is not before (26, 2, 0)).
+    """
+    try:
+        return not _meets_minimum(_version_tuple(version), minimum)
+    except ValueError:
+        log_error_and_exit(f"Cannot read version {version!r}: expected a form like 'v26.2.0' or '0.14.0'.")
+
+
 def _studio_connect_version(container: str) -> tuple[int, ...] | None:
     """Return the Connect version from a Studio image tag, or None if the tag has no Connect suffix.
 
@@ -664,12 +676,12 @@ def verify_data_studio(data: SimpleNamespace):
         #   subdomain deeper than Tower server URL
 
         if data.flag_studio_enable_path_routing:
-            if data.tower_container_version < "v25.2.0":
+            if _is_before(data.tower_container_version, (25, 2, 0)):
                 log_error_and_exit(
                     "To use Studios path-based routing, `tower_container_version` must be at least '25.2.0'."
                 )
 
-            if data.data_studio_container_version < "0.8.2":
+            if _is_before(data.data_studio_container_version, (0, 8, 2)):
                 log_error_and_exit(
                     "To use Studios path-based routing, `data_studio_container_version` must be at least '0.8.2'."
                 )
@@ -699,10 +711,10 @@ def verify_data_studio_ssh(data: SimpleNamespace):
                 "Studios SSH requires NLB."
             )
 
-        if data.tower_container_version < "v25.3.3":
+        if _is_before(data.tower_container_version, (25, 3, 3)):
             log_error_and_exit("Studios SSH (`flag_enable_data_studio_ssh`) requires Platform v25.3.3 or higher.")
 
-        if data.data_studio_container_version < "0.10.0":
+        if _is_before(data.data_studio_container_version, (0, 10, 0)):
             logger.warning(
                 "Studios SSH requires connect-proxy >= 0.10.0. Please verify your `data_studio_container_version`."
             )
@@ -765,7 +777,7 @@ def verify_production_deployment(data: SimpleNamespace):
 
 def verify_container_registry_credentials(data: SimpleNamespace):
     """Warn about Harbor registry credential requirements for Platform v26.1+."""
-    if data.tower_container_version >= "v26.1":
+    if not _is_before(data.tower_container_version, (26, 1)):
         logger.warning(
             "Platform v26.1+ images are hosted at cr.seqera.io/enterprise/platform/ and require "
             "new enterprise Harbor credentials. Credentials for cr.seqera.io/private/nf-tower-enterprise/ "
@@ -787,7 +799,7 @@ def verify_insecure_platform(data: SimpleNamespace):
 
 def warn_if_entra_id_error_possible(data: SimpleNamespace):
     """Warn that Platform < 25.3 with Entra ID (Azure AD) requires an extra config snippet."""
-    if (data.tower_container_version < "v25.3") and data.flag_oidc_use_generic:
+    if _is_before(data.tower_container_version, (25, 3)) and data.flag_oidc_use_generic:
         logger.warning(
             "If you are using Entra ID (Azure AD) as your IDP, please consult text related to "
             "Issue 267 in `tower.yml` for a mandatory configuration change."
@@ -796,7 +808,7 @@ def warn_if_entra_id_error_possible(data: SimpleNamespace):
 
 def verify_pipeline_versioning(data: SimpleNamespace):
     """Conduct checks if pipeline versioning is active."""
-    if data.tower_enable_pipeline_versioning and data.tower_container_version < "v25.3.0":
+    if data.tower_enable_pipeline_versioning and _is_before(data.tower_container_version, (25, 3, 0)):
         logger.warning("Your Platform version is too old to support pipeline versioning. Must be >= v25.3.0.")
 
 

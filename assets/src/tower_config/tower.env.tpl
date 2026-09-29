@@ -329,7 +329,7 @@ TOWER_AWS_SECRETS_KMS_KEY_ID=${tower_aws_secrets_kms_key_id}
 #-------------------------------------------------
 # ACTIONS (v26.2.0+)
 # Bucket, schedule (cron) and pipeline-run triggers are on in every workspace unless an
-# allow-list is set. "0" turns a trigger off everywhere; a comma-separated list limits it
+# allow-list is set. "-1" turns a trigger off everywhere; a comma-separated list limits it
 # to those workspace IDs. An allow-list is only written when it restricts something.
 # ------------------------------------------------
 %{ if tower_actions.bucket_trigger_allowed_workspaces != "" ~}
