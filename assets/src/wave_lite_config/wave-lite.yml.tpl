@@ -13,7 +13,7 @@ wave:
     anonymous-access: false
     # false: no image augmentation or pass-through pulls; clients must use `wave.freeze = true`.
     ephemeral-token: true
-    # false: Wave can't use registry credentials to pull manifests (public registries only).
+    # false: Wave cannot use registry credentials to pull manifests (public registries only).
     credentials-federation: true
     # false: the /view/** HTML pages (build and inspect views) return 404.
     web-views: true
@@ -23,7 +23,7 @@ wave:
     uri: "${wave_lite_db_url}"
     user: "${wave_lite_db_limited_user}" # "postgres"
     password: "${wave_lite_db_limited_password}" # "mypass"
-  # Authenticating egress proxy (Wave 1.38.0+) for Wave's own outbound HTTP: registry calls and
+  # Authenticating egress proxy (Wave 1.38.0+) for outbound HTTP from Wave itself: registry calls and
   # Platform API calls. Unset means direct egress. The HTTPS_PROXY/NO_PROXY environment variables
   # apply the proxy JVM-wide instead, including AWS SDK (ECR/S3) traffic.
   # httpclient:
@@ -50,7 +50,7 @@ license:
   server:
     url: "https://licenses.seqera.io"
 micronaut:
-  # Dedicated pool for blob streaming, so large layer transfers can't starve the default event loop.
+  # Dedicated pool for blob streaming, so large layer transfers cannot starve the default event loop.
   executors:
     stream-executor:
       type: FIXED

@@ -120,7 +120,7 @@ TOWER_DATA_EXPLORER_ENABLED=false
 # ------------------------------------------------
 # OIDC configuration activated via docker-compose.yml MICRONAUT_ENVIRONMENTS variable.
 
-# Signing key for Platform's built-in OIDC provider, used by Studios and workload identity federation.
+# Signing key for the built-in Platform OIDC provider, used by Studios and workload identity federation.
 %{ if oidc_provider_enabled ~}
 TOWER_OIDC_PEM_PATH=/data-studios-rsa.pem
 %{ else ~}
@@ -317,7 +317,7 @@ TOWER_CREDENTIALS_VALIDATION_ENABLED=${flag_enable_preflight_checks}
 #-------------------------------------------------
 # PIPELINE SECRETS KMS KEY (v26.2.0+)
 # Customer-managed key for the Secrets Manager secrets created for pipeline runs.
-# A compute environment's own key takes precedence.
+# A key set on the compute environment itself takes precedence.
 # ------------------------------------------------
 %{ if tower_aws_secrets_kms_key_id != "" ~}
 TOWER_AWS_SECRETS_KMS_KEY_ID=${tower_aws_secrets_kms_key_id}
