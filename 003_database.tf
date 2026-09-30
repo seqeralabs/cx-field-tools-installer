@@ -60,6 +60,14 @@ module "rds" {
   # major_engine_version = var.db_engine_version                      # DB option grou
   major_engine_version = regex("^\\d+\\.\\d+", var.db_engine_version) # DB option group
 
+  # MySQL 8.0 -> 8.4 in-place upgrade (Design Decision 25). Both default to false; set true only for
+  # the upgrade apply. These modify the instance in place; they never replace it.
+  allow_major_version_upgrade = var.db_allow_major_version_upgrade
+  apply_immediately           = var.db_apply_immediately
+
+  # TLS on MySQL 8.4+ (db_enforce_tls): the DB refuses plaintext connections.
+  parameters = local.db_tls_active ? [{ name = "require_secure_transport", value = "1", apply_method = "immediate" }] : []
+
   # Deletion protection
   deletion_protection = var.db_deletion_protection
   skip_final_snapshot = var.skip_final_snapshot

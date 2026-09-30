@@ -3,7 +3,11 @@ services:
 
 %{ if flag_use_container_db == true ~}
   db:
-    image: ${db_container_engine}:${db_container_engine_version} #mysql:8.0
+    image: ${db_container_engine}:${db_container_engine_version} #mysql:8.4
+%{ if db_tls_active ~}
+    # MySQL 8.4+ with db_enforce_tls: refuse plaintext clients (the image generates its own certificate).
+    command: ["--require-secure-transport=ON"]
+%{ endif ~}
     networks:
       - backend
     expose:

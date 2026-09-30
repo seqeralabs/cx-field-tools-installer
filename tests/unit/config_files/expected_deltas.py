@@ -197,6 +197,14 @@ IDENTITY_FEDERATION_ACTIVE = """
     tower_identity_federation_enabled = true
 """
 
+DB_TLS_DISABLED_ACTIVE = """
+    db_enforce_tls = false
+"""
+
+DB_8_0_ACTIVE = """
+    db_container_engine_version = "8.0"
+"""
+
 IDENTITY_FEDERATION_WORKSPACE_RESTRICTION_ACTIVE = """
     tower_identity_federation_allowed_workspaces = "12,34"
 """
@@ -232,7 +240,7 @@ BASELINE_ASSERTIONS = {
             "TOWER_CONTACT_EMAIL": "graham.wright@seqera.io",
             "TOWER_ENABLE_PLATFORMS": "awsbatch-platform,slurm-platform",
             "TOWER_ROOT_USERS": "graham.wright@seqera.io,gwright99@hotmail.com",
-            "TOWER_DB_URL": "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_URL": "jdbc:mysql://db:3306/tower?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true",
             "TOWER_DB_DRIVER": "org.mariadb.jdbc.Driver",
             "TOWER_DB_DIALECT": "io.seqera.util.MySQL55DialectCollateBin",
             "TOWER_DB_MIN_POOL_SIZE": 5,
@@ -425,6 +433,9 @@ BASELINE_ASSERTIONS = {
         "present": {
             # v26.2.0+ (test pin `v26.2.0-RC16`): the default frontend tag is unprivileged, so no suffix.
             "services.frontend.image": "cr.seqera.io/enterprise/platform/frontend:v26.2.0-RC16",
+            # Container MySQL 8.4 with db_enforce_tls (template defaults): plaintext clients refused.
+            "services.db.image": "mysql:8.4",
+            "services.db.command[0]": "--require-secure-transport=ON",
         },
         "omitted": {
             "services.reverseproxy",
@@ -526,7 +537,7 @@ BASELINE_ASSERTIONS = {
 DB_EXTERNAL_NEW_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
-            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true",
         },
         "omitted": set(),
     },
@@ -534,6 +545,7 @@ DB_EXTERNAL_NEW_ACTIVE_ASSERTIONS = {
         "present": {"Populating external Platform DB."},
         "omitted": set(),
     },
+    "docker_compose": {"present": {}, "omitted": {"services.db"}},
 }
 
 
@@ -547,7 +559,7 @@ DB_EXTERNAL_NEW_ACTIVE_ASSERTIONS = {
 DB_EXTERNAL_EXISTING_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
-            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true",
         },
         "omitted": set(),
     },
@@ -555,6 +567,7 @@ DB_EXTERNAL_EXISTING_ACTIVE_ASSERTIONS = {
         "present": {"Populating external Platform DB."},
         "omitted": set(),
     },
+    "docker_compose": {"present": {}, "omitted": {"services.db"}},
 }
 
 
@@ -880,7 +893,7 @@ GROUNDSWELL_ACTIVE_ASSERTIONS = {
     },
     "groundswell_env": {
         "present": {
-            "TOWER_DB_URL": "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_URL": "jdbc:mysql://db:3306/tower?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true",
             "TOWER_DB_USER": "tower_test_user",
             "TOWER_DB_PASSWORD": "tower_test_password",
             "SWELL_DB_URL": "mysql://db:3306/swell",
@@ -1170,6 +1183,31 @@ IDENTITY_FEDERATION_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS = {
 }
 
 
+# MARK: Database TLS (Design Decision 25)
+# TLS is off: Platform uses the plaintext JDBC suffix, and the container DB accepts plaintext.
+# `DB_8_0_ACTIVE_ASSERTIONS` adds the 8.0 image; on 8.0, TLS stays off even with db_enforce_tls = true.
+DB_TLS_OFF_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_DB_URL": "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+        },
+        "omitted": set(),
+    },
+    "docker_compose": {
+        "present": {},
+        # Both keys: the merge doesn't treat `[0]` as a child of `services.db.command`.
+        "omitted": {"services.db.command", "services.db.command[0]"},
+    },
+}
+
+DB_8_0_ACTIVE_ASSERTIONS = {
+    "docker_compose": {
+        "present": {"services.db.image": "mysql:8.0"},
+        "omitted": set(),
+    },
+}
+
+
 # Telemetry "basic": standard telemetry off. Basic stays on, and the file collector stays off.
 TELEMETRY_BASIC_ACTIVE_ASSERTIONS = {
     "tower_env": {
@@ -1240,7 +1278,7 @@ STUDIOS_PRIVATE_CA_ACTIVE_ASSERTIONS = {
 DB_EXTERNAL_NEW_X_GROUNDSWELL_DELTA = {
     "groundswell_env": {
         "present": {
-            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true",
             "SWELL_DB_URL": "mysql://mock.tower-db.com:3306/swell",
         },
     },
@@ -1259,7 +1297,7 @@ DB_EXTERNAL_NEW_X_GROUNDSWELL_DELTA = {
 DB_EXTERNAL_EXISTING_X_GROUNDSWELL_DELTA = {
     "groundswell_env": {
         "present": {
-            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true",
+            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true",
             "SWELL_DB_URL": "mysql://existing.tower-db.com:3306/swell",
         },
     },

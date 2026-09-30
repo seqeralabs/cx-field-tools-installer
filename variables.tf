@@ -396,6 +396,21 @@ variable "db_engine_version" {
   }
 }
 variable "db_param_group" { type = string }
+
+variable "db_enforce_tls" {
+  type        = bool
+  description = "If true and the MySQL version is 8.4 or later, Platform connects to the DB with TLS, and an installer-created RDS instance or container DB refuses plaintext connections. Ignored on MySQL 8.0."
+}
+
+variable "db_allow_major_version_upgrade" {
+  type        = bool
+  description = "Allow RDS to upgrade the engine to a new major version (for example 8.0 to 8.4). Set true only for the upgrade apply, then back to false."
+}
+
+variable "db_apply_immediately" {
+  type        = bool
+  description = "Apply RDS changes immediately instead of in the next maintenance window. Set true for a planned upgrade apply, then back to false."
+}
 variable "db_instance_class" { type = string }
 variable "db_allocated_storage" { type = number }
 

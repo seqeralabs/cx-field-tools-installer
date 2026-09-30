@@ -15,7 +15,7 @@ from tests.utils.filehandling.filehandling import FileHelper
 
 
 # Container-side client images. Match the images Ansible uses (02_update_file_configurations.yml.tpl).
-MYSQL_CLIENT_IMAGE = "mysql:8.0"
+MYSQL_CLIENT_IMAGE = "mysql:8.4"
 POSTGRES_CLIENT_IMAGE = "postgres:17.6"
 
 
@@ -113,7 +113,7 @@ def test_tower_sql_population(generated_test_files):
     tower_db_name = "tower"
 
     with (
-        MySqlContainer("mysql:8.0", root_password=master_password)
+        MySqlContainer("mysql:8.4", root_password=master_password)
         .with_env("MYSQL_USER", master_user)
         .with_env("MYSQL_PASSWORD", master_password)
         .with_env("MYSQL_DATABASE", master_db_name)
@@ -162,7 +162,7 @@ def test_tower_sql_rerun(generated_test_files):
     query = generated_test_files["tower_sql"]["content"]
 
     with (
-        MySqlContainer("mysql:8.0", root_password=master_password)
+        MySqlContainer("mysql:8.4", root_password=master_password)
         .with_env("MYSQL_USER", master_user)
         .with_env("MYSQL_PASSWORD", master_password)
         .with_env("MYSQL_DATABASE", "test")
@@ -196,7 +196,7 @@ def test_tower_sql_rerun_resets_password(generated_test_files):
     query = generated_test_files["tower_sql"]["content"]
 
     with (
-        MySqlContainer("mysql:8.0", root_password=master_password)
+        MySqlContainer("mysql:8.4", root_password=master_password)
         .with_env("MYSQL_USER", master_user)
         .with_env("MYSQL_PASSWORD", master_password)
         .with_env("MYSQL_DATABASE", "test")
@@ -250,7 +250,7 @@ def assert_swell_db_populated():
 def swell_mysql_container():
     """Return a MySQL testcontainer configured like the Platform container DB."""
     return (
-        MySqlContainer("mysql:8.0", root_password=SWELL_MASTER_PASSWORD)
+        MySqlContainer("mysql:8.4", root_password=SWELL_MASTER_PASSWORD)
         .with_env("MYSQL_USER", SWELL_MASTER_USER)
         .with_env("MYSQL_PASSWORD", SWELL_MASTER_PASSWORD)
         .with_env("MYSQL_DATABASE", "test")

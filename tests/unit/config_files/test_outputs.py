@@ -34,7 +34,7 @@ def test_outputs_baseline_all_enabled(scenario_outputs):
     assert outputs["tower_db_dns"] == "db"
     assert (
         outputs["tower_db_url"]
-        == "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true"
+        == "jdbc:mysql://db:3306/tower?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true"
     )
 
     assert outputs["tower_redis_dns"] == "redis"
@@ -78,7 +78,7 @@ def test_outputs_baseline_all_disabled(scenario_outputs):
     assert outputs["tower_db_dns"] == "db"
     assert (
         outputs["tower_db_url"]
-        == "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true"
+        == "jdbc:mysql://db:3306/tower?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true"
     )
 
     assert outputs["tower_redis_dns"] == "redis"
@@ -120,7 +120,7 @@ def test_outputs_no_https_all_enabled(scenario_outputs):
     assert outputs["tower_db_dns"] == "db"
     assert (
         outputs["tower_db_url"]
-        == "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true"
+        == "jdbc:mysql://db:3306/tower?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true"
     )
 
     assert outputs["tower_redis_dns"] == "redis"
@@ -163,7 +163,7 @@ def test_outputs_no_https_all_disabled(scenario_outputs):
     assert outputs["tower_db_dns"] == "db"
     assert (
         outputs["tower_db_url"]
-        == "jdbc:mysql://db:3306/tower?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true"
+        == "jdbc:mysql://db:3306/tower?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true"
     )
 
     assert outputs["tower_redis_dns"] == "redis"
