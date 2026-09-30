@@ -485,10 +485,12 @@ def test_wave_containers(generated_test_files):
     filename = os.path.basename(wave_docker_compose_path)
 
     # Start docker-compose deployment and run tests
-    with DockerCompose(context=folder_path, compose_file_name=filename, pull=True) as compose:  # noqa: F841  (kept for readability)
+    # wait=False sends `up --detach`: podman-compose's `up --wait` never returns (podman-compose #1535).
+    # Readiness is polled below instead.
+    with DockerCompose(context=folder_path, compose_file_name=filename, pull=True, wait=False) as compose:  # noqa: F841  (kept for readability)
         # Test wave-lite service-info endpoint
         service_url = "http://localhost:9099/service-info"
-        max_retries = 10
+        max_retries = 20  # Give more retries to give time for db & redis to start
         delay = 3
 
         for attempt in range(max_retries):
@@ -503,9 +505,10 @@ def test_wave_containers(generated_test_files):
                 service_info = response_data["serviceInfo"]
                 assert "version" in service_info
                 assert "commitId" in service_info
+                break
 
             except (urllib.error.URLError, json.JSONDecodeError, AssertionError) as e:
-                if attempt == max_retries:
+                if attempt == max_retries - 1:
                     pytest.fail(
                         f"Failed to connect to wave-lite service at {service_url} after {max_retries} retries: {e}"
                     )
