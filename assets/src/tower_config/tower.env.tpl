@@ -296,14 +296,16 @@ TOWER_CRON_AUDIT_LOG_CLEAN_UP_ENABLED=false
 
 #-------------------------------------------------
 # TELEMETRY (v26.2.0+)
-# standard: standard + basic. basic: basic only. air-gapped: standard + basic, plus usage metrics to local files.
+# standard: standard + basic. basic: basic only. air-gapped: standard only, plus usage metrics to local files.
+# In every mode, including air-gapped, Platform still attempts a call to the Seqera telemetry server.
+# Without a route to it, the call fails and is logged; Platform keeps running.
 # ------------------------------------------------
 TOWER_TELEMETRY_STANDARD_ENABLED=${flag_enable_standard_telemetry == "basic" ? "false" : "true"}
-TOWER_TELEMETRY_BASIC_ENABLED=true
-TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_ENABLED=${flag_enable_standard_telemetry == "air-gapped" ? "true" : "false"}
-TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_INTERVAL=24h
-TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_DIR=/usage-metrics
-TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_HISTORY=90
+TOWER_TELEMETRY_BASIC_ENABLED=${flag_enable_standard_telemetry == "air-gapped" ? "false" : "true"}
+TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_ENABLED=${flag_enable_standard_telemetry == "air-gapped" ? "true" : "false"}
+TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_INTERVAL=24h
+TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_DIR=/usage-metrics
+TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_HISTORY=90
 
 
 #-------------------------------------------------

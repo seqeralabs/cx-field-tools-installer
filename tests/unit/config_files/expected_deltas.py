@@ -285,10 +285,10 @@ BASELINE_ASSERTIONS = {
             # TELEMETRY (TEMPLATE default: "standard")
             "TOWER_TELEMETRY_STANDARD_ENABLED": "true",
             "TOWER_TELEMETRY_BASIC_ENABLED": "true",
-            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_ENABLED": "false",
-            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_INTERVAL": "24h",
-            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_DIR": "/usage-metrics",
-            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_HISTORY": "90",
+            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_ENABLED": "false",
+            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_INTERVAL": "24h",
+            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_DIR": "/usage-metrics",
+            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_HISTORY": "90",
             # PREFLIGHT CHECKS (off in BASELINE)
             "TOWER_PREFLIGHT_CHECK_ENABLED": "false",
             "TOWER_CREDENTIALS_VALIDATION_ENABLED": "false",
@@ -310,6 +310,11 @@ BASELINE_ASSERTIONS = {
         "omitted": {
             # PIPELINE SECRETS KMS KEY
             "TOWER_AWS_SECRETS_KMS_KEY_ID",
+            # TELEMETRY               Wrong doubled names used before the 2026-09-30 fix
+            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_ENABLED",
+            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_INTERVAL",
+            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_DIR",
+            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_HISTORY",
             # ACTIONS (allow-lists only written when they restrict)
             "TOWER_ACTIONS_BUCKET_TRIGGER_ALLOWED_WORKSPACES",
             "TOWER_ACTIONS_CRON_TRIGGER_ALLOWED_WORKSPACES",
@@ -1217,11 +1222,14 @@ TELEMETRY_BASIC_ACTIVE_ASSERTIONS = {
 }
 
 
-# Telemetry "air-gapped": standard + basic stay on, and the usage-metrics file collector turns on.
+# Telemetry "air-gapped": standard stays on, basic turns off, and the usage-metrics file collector turns on.
 # Ansible (02) creates the host folder, and docker-compose mounts it into cron at /usage-metrics.
 TELEMETRY_AIR_GAPPED_ACTIVE_ASSERTIONS = {
     "tower_env": {
-        "present": {"TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_ENABLED": "true"},
+        "present": {
+            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_ENABLED": "true",
+            "TOWER_TELEMETRY_BASIC_ENABLED": "false",
+        },
         "omitted": set(),
     },
     "docker_compose": {

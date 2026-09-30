@@ -111,15 +111,16 @@ Deploy a new stack with Studios, Groundswell, and Wave-Lite on.
 
 The fresh stack uses the default (`standard`). For the `air-gapped` checks, set `flag_enable_standard_telemetry = "air-gapped"` and apply again. That also covers the mode-switch checks below.
 
-- [x] **Variable names.** The `TOWER_TELEMETRY_*` and `TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_*` names match the v26.2 release notes, including the doubled `FILE_COLLECTOR_FILE_COLLECTOR`. Confirmed 2026-09-29.
+- [ ] **Variable names.** The `TOWER_TELEMETRY_*` and `TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_*` names match the v26.2 release notes, with a single `FILE_COLLECTOR`. The doubled `FILE_COLLECTOR_FILE_COLLECTOR` form was wrong and was corrected on 2026-09-30.
 - [ ] **`standard` (default).** `tower.env` has `TOWER_TELEMETRY_STANDARD_ENABLED=true` and `TOWER_TELEMETRY_BASIC_ENABLED=true`, Platform starts, and Seqera receives standard telemetry for the instance.
 - [ ] **`basic`.** `TOWER_TELEMETRY_STANDARD_ENABLED=false`. Platform starts, and only basic telemetry arrives.
+- [ ] **`air-gapped`: flags.** `tower.env` has `TOWER_TELEMETRY_STANDARD_ENABLED=true`, `TOWER_TELEMETRY_BASIC_ENABLED=false`, and `TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_ENABLED=true`.
 - [ ] **`air-gapped`: host folder.** After apply, `/home/ec2-user/.tower/usage-metrics` exists with mode `777`, and `docker inspect ec2-user-cron-1` shows it mounted at `/usage-metrics`.
 - [ ] **`air-gapped`: files written.** After the first collection run (up to 24h, or sooner if Platform runs it at startup), usage-metric files appear in `/home/ec2-user/.tower/usage-metrics` on the host.
 - [ ] **`air-gapped`: files survive an apply.** A second `terraform apply` (which replaces `~/target`) leaves the files in place.
 - [ ] **`air-gapped`: 90-day history.** Files older than 90 days are pruned. This is long-running; confirm by setting the host clock or by checking Platform's collector logs.
 - [ ] **`air-gapped` with Studios on.** `docker inspect ec2-user-cron-1` shows both the `data-studios-rsa.pem` mount and the `/usage-metrics` mount, and `cron` starts.
-- [ ] **`air-gapped` with no route to Seqera.** Both telemetry flags stay `true` in this mode (by design). With outbound traffic to Seqera blocked (security group or NACL), Platform and `cron` keep running, telemetry failures only appear as log lines, and usage-metric files are still written.
+- [ ] **`air-gapped` with no route to Seqera.** In this mode `TOWER_TELEMETRY_STANDARD_ENABLED=true` and `TOWER_TELEMETRY_BASIC_ENABLED=false`, but Platform still attempts a call to the Seqera telemetry server. With outbound traffic to Seqera blocked (security group or NACL), the call fails and is logged, Platform and `cron` keep running, and usage-metric files are still written.
 - [ ] **Switch `standard` → `air-gapped` on a running stack.** The next apply creates the host folder, recreates `cron` with the new mount, and the collector starts writing files.
 - [ ] **Switch `air-gapped` → `standard`.** The next apply recreates `cron` without the mount. `/home/ec2-user/.tower/usage-metrics` and its files stay on the host (nothing deletes them), and the collector is off (`…FILE_COLLECTOR_ENABLED=false`).
 
