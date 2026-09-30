@@ -94,6 +94,8 @@ def _compute_static_hash_part() -> str:
       - The four secret JSON fixtures (tower / groundswell / seqerakit / wave_lite)
       - Locals source (`000_main.tf`) and template source (`009_define_file_templates.tf`)
       - Every `.tpl` file under `assets/src/`
+      - `wave-lite-rds.sql` and `sedalternative.py`, which render it outside templatefile()
+      - `tests/utils/terraform/precompute.py`, whose Python-side stubs change rendered output
 
     Changing any of these invalidates every templatefile cache entry. Cached per-process
     via lru_cache — these inputs are stable across a pytest session. Workers (separate
@@ -110,6 +112,10 @@ def _compute_static_hash_part() -> str:
         FileHelper.read_file(f"{FP.ROOT}/009_define_file_templates.tf"),
     ]
     parts.extend(tpl.read_text() for tpl in sorted(Path(f"{FP.ROOT}/assets/src").rglob("*.tpl")))
+    # Rendered outside templatefile() (sedalternative.py), or changed by precompute's Python-side stubs.
+    parts.append(FileHelper.read_file(f"{FP.ROOT}/assets/src/wave_lite_config/wave-lite-rds.sql"))
+    parts.append(FileHelper.read_file(f"{FP.ROOT}/scripts/installer/utils/sedalternative.py"))
+    parts.append(FileHelper.read_file(f"{FP.ROOT}/tests/utils/terraform/precompute.py"))
     return hashlib.sha256("".join(parts).encode("utf-8")).hexdigest()
 
 

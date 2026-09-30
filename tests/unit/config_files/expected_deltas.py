@@ -144,7 +144,7 @@ TOWER_OPT_IN_FLAGS_ACTIVE = """
     flag_tower_enable_member_auto_create_user      = true
     tower_workflow_cleanup_enabled                 = true
     flag_enable_preflight_checks                   = true
-    tower_actions = { bucket_trigger_allowed_workspaces = "0", cron_trigger_allowed_workspaces = "12,34", pipeline_trigger_allowed_workspaces = "56", trigger_rate_max_per_window = 50, trigger_rate_window = "2h" }
+    tower_actions = { bucket_trigger_allowed_workspaces = "-1", cron_trigger_allowed_workspaces = "12,34", pipeline_trigger_allowed_workspaces = "56", trigger_rate_max_per_window = 50, trigger_rate_window = "2h" }
     tower_aws_secrets_kms_key_id = "arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab"
 """  # noqa: E501
 
@@ -939,7 +939,7 @@ TOWER_OPT_IN_FLAGS_ACTIVE_ASSERTIONS = {
             "TOWER_ENABLE_OPENAPI": "true",
             "TOWER_PREFLIGHT_CHECK_ENABLED": "true",
             "TOWER_CREDENTIALS_VALIDATION_ENABLED": "true",
-            "TOWER_ACTIONS_BUCKET_TRIGGER_ALLOWED_WORKSPACES": "0",
+            "TOWER_ACTIONS_BUCKET_TRIGGER_ALLOWED_WORKSPACES": "-1",
             "TOWER_ACTIONS_CRON_TRIGGER_ALLOWED_WORKSPACES": "12,34",
             "TOWER_ACTIONS_PIPELINE_TRIGGER_ALLOWED_WORKSPACES": "56",
             "TOWER_ACTIONS_TRIGGER_RATE_MAX_PER_WINDOW": "50",
