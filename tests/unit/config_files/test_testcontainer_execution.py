@@ -1,9 +1,9 @@
+import http.client
 import json
 import os
 import subprocess
 import tempfile
 import time
-import urllib.error  # TODO: Assess if this is right or should use urllib3?
 import urllib.request  # TODO: Assess if this is right or should use urllib3?
 
 import pytest
@@ -507,7 +507,8 @@ def test_wave_containers(generated_test_files):
                 assert "commitId" in service_info
                 break
 
-            except (urllib.error.URLError, json.JSONDecodeError, AssertionError) as e:
+            # OSError covers URLError, connection resets and timeouts; HTTPException covers truncated responses.
+            except (OSError, http.client.HTTPException, json.JSONDecodeError, AssertionError) as e:
                 if attempt == max_retries - 1:
                     pytest.fail(
                         f"Failed to connect to wave-lite service at {service_url} after {max_retries} retries: {e}"
