@@ -610,7 +610,7 @@ variable "tower_audit_log_v2" {
 
 variable "flag_enable_standard_telemetry" {
   type        = string
-  description = "Platform telemetry (v26.2.0+). \"standard\": standard + basic telemetry. \"basic\": basic telemetry only. \"air-gapped\": standard + basic telemetry, plus usage metrics written to files on the instance (`/home/ec2-user/.tower/usage-metrics`)."
+  description = "Platform telemetry (v26.2.0+). \"standard\": standard + basic telemetry. \"basic\": basic telemetry only. \"air-gapped\": standard telemetry only (basic off), plus usage metrics written to files on the instance (`/home/ec2-user/.tower/usage-metrics`). In every mode Platform still attempts a call to the Seqera telemetry server."
 
   validation {
     condition     = contains(["standard", "basic", "air-gapped"], var.flag_enable_standard_telemetry)

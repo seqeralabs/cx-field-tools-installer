@@ -949,8 +949,10 @@ tower_enable_openapi = true
 # Telemetry (v26.2.0+). One of: "standard" | "basic" | "air-gapped".
 #   standard   : standard + basic telemetry is sent to Seqera.
 #   basic      : only basic telemetry is sent.
-#   air-gapped : standard + basic telemetry, plus usage metrics written to files on the instance
-#                (/home/ec2-user/.tower/usage-metrics) every 24h and kept for 90 days.
+#   air-gapped : standard telemetry only (basic off), plus usage metrics written to files on the
+#                instance (/home/ec2-user/.tower/usage-metrics) every 24h and kept for 90 days.
+# Note: in every mode, including air-gapped, Platform still attempts a call to the Seqera telemetry
+# server. Without a route to it, the call fails and is logged; Platform keeps running.
 flag_enable_standard_telemetry = "standard"
 
 # Preflight checks (v26.2.0+). When true, Platform runs preflight checks and validates
