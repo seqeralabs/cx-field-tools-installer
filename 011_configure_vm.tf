@@ -51,10 +51,11 @@ resource "null_resource" "configure_vm" {
       # cloud-init adds ec2-user to the `docker` group (launch_template_ec2.tpl). Wait for it to
       # finish (max 10 min), then close the ControlMaster so the next SSH session picks up the group.
       # `cloud-init status` exit codes: 0 = done, 2 = done with non-fatal warnings, 124 = timeout.
+      # sudo: cloud-init 22.x reads the root-only /run/cloud-init/cloud.cfg even for `status`.
       ssh -T ${var.app_name} '
-        timeout 600 cloud-init status --wait > /dev/null; rc=$?
+        sudo -n timeout 600 cloud-init status --wait > /dev/null; rc=$?
         if [ $rc -ne 0 ] && [ $rc -ne 2 ]; then
-          echo "cloud-init did not finish cleanly (exit=$rc)"; cloud-init status --long; exit 1
+          echo "cloud-init did not finish cleanly (exit=$rc)"; sudo -n cloud-init status --long; exit 1
         fi'
       ssh -O exit ${var.app_name} 2>/dev/null || true
       echo "==== STAGE OK:    ssh_probe ===="

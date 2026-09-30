@@ -71,7 +71,7 @@ Deploy a new stack with Studios, Groundswell, and Wave-Lite on.
 
 ### VM pipeline (#418 follow-up fixes)
 
-- [ ] **cloud-init wait.** During `terraform apply`, the `ssh_probe` stage waits for `cloud-init status --wait`, then prints `==== STAGE OK:    ssh_probe ====`.
+- [ ] **cloud-init wait.** During `terraform apply`, the `ssh_probe` stage waits for `sudo cloud-init status --wait`, then prints `==== STAGE OK:    ssh_probe ====`. Without `sudo`, cloud-init 22.2.2 on AL2023 fails with `PermissionError: … /run/cloud-init/cloud.cfg` (fixed 2026-09-30).
 - [ ] **Docker group.** On the host, `id ec2-user` lists `docker`. No Ansible step fails with `permission denied … /var/run/docker.sock`.
 - [ ] **ControlMaster socket.** `<project_root>/.ssh-control/` exists with mode `700` and holds a `cm-*` socket during the apply.
 - [ ] **Stage markers.** The apply output shows `STAGE START` / `STAGE OK` for `ssh_probe`, `file_transfer`, and `remote_orchestrator`. The on-host log `/home/ec2-user/tower-installer-logs/apply-<UTC>.log` shows the same markers for each Ansible stage.
@@ -90,6 +90,7 @@ Deploy a new stack with Studios, Groundswell, and Wave-Lite on.
 - [ ] **Installer secrets still readable.** From the same session, `aws ssm get-parameter --name /seqera/<app_name>/db-master-user --with-decryption` succeeds. The new statement didn't break the existing scoped access.
 - [ ] **Access is controlled by the account.** A principal without `ssm:StartSession` gets `AccessDeniedException` from `aws ssm start-session`. A principal with it gets a shell.
 - [ ] **`ssm-user` has `sudo`.** In a session, `sudo -n true` succeeds. This confirms the root-equivalent access documented in Design Decision 22.
+- [ ] **Docker from a session.** As `ssm-user`, `docker ps -a` fails with `permission denied … /var/run/docker.sock` (expected: not in the `docker` group). After `sudo -iu ec2-user`, `docker ps -a` lists the containers and `cd ~ && docker compose ps` works.
 - [ ] **Port forwarding.** `aws ssm start-session --target <instance-id> --document-name AWS-StartPortForwardingSession --parameters portNumber=8000,localPortNumber=8000` reaches the Platform frontend at `http://localhost:8000`.
 
 ### Images (update-platform-and-studio-images)

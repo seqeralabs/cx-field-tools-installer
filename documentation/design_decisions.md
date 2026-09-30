@@ -349,6 +349,9 @@ In addition to the general design decisions noted above, there are a few decisio
     - Session logging (S3 or CloudWatch) and session encryption are account-level Session Manager preferences, not installer settings.
     - Sites that set `flag_iam_use_prexisting_role_arn = true` must add the five actions to their own role.
     - Private instances without a NAT need VPC interface endpoints for `ssm` and `ssmmessages` (add them to `vpc_interface_endpoints_tower`).
+    - `ssm-user` is not in the `docker` group, so `docker` commands fail with a permission error on `/var/run/docker.sock`. Run `sudo -iu ec2-user` first: the deployment (`~/docker-compose.yml`, `~/target/`, the installer's `.bashrc` exports, `~/tower-installer-logs/`) belongs to `ec2-user`, which is in the `docker` group. `sudo docker …` also works, without that environment.
+
+    We deliberately do not add `ssm-user` to the `docker` group. The SSM agent creates `ssm-user` at the first session, after cloud-init has run, so the launch template would have to pre-create the user, which changes how the agent sets it up. It would also grant nothing new: `docker` group membership is root-equivalent, and `ssm-user` already has `sudo`.
 
 23. **Data lineage on Platform v26.2.0+**
 
