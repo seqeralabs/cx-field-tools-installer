@@ -283,6 +283,43 @@ def verify_identity_federation(data: SimpleNamespace):
         )
 
 
+def verify_database_version(data: SimpleNamespace):
+    """Check the MySQL version and the 8.0 -> 8.4 upgrade settings (Design Decision 25).
+
+    `db_param_group` must match `db_engine_version`; a cross-variable check isn't possible in
+    `variables.tf` on the minimum Terraform version, so it lives here.
+    """
+    if data.flag_create_external_db:
+        expected_family = "mysql" + ".".join(str(part) for part in _version_tuple(data.db_engine_version)[:2])
+        if data.db_param_group != expected_family:
+            log_error_and_exit(
+                f'`db_param_group = "{data.db_param_group}"` doesn\'t match `db_engine_version = '
+                f'"{data.db_engine_version}"`. Set `db_param_group = "{expected_family}"`.'
+            )
+
+    db_version = data.db_container_engine_version if data.flag_use_container_db else data.db_engine_version
+    db_before_8_4 = _is_before(db_version, (8, 4))
+
+    if db_before_8_4 and not _is_before(data.tower_container_version, (26, 1, 0)):
+        logger.warning(
+            f"MySQL {db_version} isn't supported by Platform v26.1+, which supports only MySQL 8.4. "
+            "Upgrade the database: see documentation/setup/upgrade_mysql_8_4.md."
+        )
+
+    if data.db_enforce_tls and not db_before_8_4 and data.flag_enable_groundswell:
+        logger.warning(
+            "The Platform DB refuses plaintext connections (`db_enforce_tls = true` on MySQL 8.4), and Groundswell "
+            "hasn't been confirmed to connect with TLS. If Groundswell can't reach the DB, "
+            "set `db_enforce_tls = false`."
+        )
+
+    if data.db_allow_major_version_upgrade:
+        logger.warning(
+            "`db_allow_major_version_upgrade = true`. After the upgrade finishes, set it (and `db_apply_immediately`) "
+            "back to false."
+        )
+
+
 def verify_studio_ssh_cidrs_set(data: SimpleNamespace):
     """Fail if Studios SSH is enabled but no client CIDRs were configured.
 
@@ -850,6 +887,7 @@ if __name__ == "__main__":
     verify_pipeline_secrets_kms_key(data)
     verify_actions_bucket_trigger(data)
     verify_identity_federation(data)
+    verify_database_version(data)
     verify_studio_ssh_cidrs_set(data)
     verify_aws_instance_credentials_platform_version(data)
     verify_compute_env_cleanup_platform_version(data)

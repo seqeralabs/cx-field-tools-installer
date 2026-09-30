@@ -633,11 +633,9 @@ db_database_name = "tower"
 This section added to handle new connection string requirements for Tower v24.1.0+
 */
 db_container_engine = "mysql"
-# TODO(#332): confirm the container DB engine version paired with the v26.1.x release set.
-# NOTE: MySQL 8.0 is approaching end-of-life. See CHANGELOG → 1.8.0 Forward Roadmap
-# Guidance and [#271](https://github.com/seqeralabs/cx-field-tools-installer/issues/271)
-# for the upgrade pathway (shipping out-of-band from this release).
-db_container_engine_version = "8.0"
+# Platform v26.1+ supports only MySQL 8.4. Upgrading an existing 8.0 container DB changes its data
+# files one way, so back them up first: see documentation/setup/upgrade_mysql_8_4.md.
+db_container_engine_version = "8.4"
 
 /*
 ## ------------------------------------------------------------------------------------
@@ -661,17 +659,25 @@ WARNING:
 */
 
 db_engine = "mysql"
-# TODO(#332): confirm the RDS engine version & matching param group paired with the v26.1.x release set.
-# NOTE: MySQL 8.0 is approaching end-of-life. See CHANGELOG → 1.8.0 Forward Roadmap
-# Guidance and [#271](https://github.com/seqeralabs/cx-field-tools-installer/issues/271)
-# for the upgrade pathway (shipping out-of-band from this release).
-db_engine_version    = "8.0"
-db_param_group       = "mysql8.0"
+# Platform v26.1+ supports only MySQL 8.4. Use major.minor ("8.4"), not a patch version, so
+# automatic minor upgrades don't show as Terraform drift. db_param_group must match: "mysql8.4".
+# To upgrade an existing 8.0 instance in place, follow documentation/setup/upgrade_mysql_8_4.md.
+db_engine_version    = "8.4"
+db_param_group       = "mysql8.4"
 db_instance_class    = "db.m5.large"
 db_allocated_storage = 30
 
 db_deletion_protection = true
 skip_final_snapshot    = false
+
+# TLS (MySQL 8.4+ only; ignored on 8.0). When true, Platform connects with TLS (encrypted; the
+# server certificate isn't verified), and an installer-created RDS instance or container DB
+# refuses plaintext connections. Also applies to the container DB (db_container_engine_version).
+db_enforce_tls = true
+
+# 8.0 -> 8.4 upgrade switches. Set both true only for the upgrade apply, then back to false.
+db_allow_major_version_upgrade = false
+db_apply_immediately           = false
 
 db_backup_retention_period  = 7
 db_enable_storage_encrypted = true

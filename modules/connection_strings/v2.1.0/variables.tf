@@ -97,6 +97,12 @@ variable "platform_db_engine" {
   type        = string
 }
 
+variable "platform_db_tls" {
+  description = "If true, the MySQL 8.x JDBC suffix connects with TLS (encrypted, server certificate not verified). If false, it connects without TLS."
+  type        = bool
+  default     = false
+}
+
 variable "data_studio_path_routing_url" {
   description = "Domain where Connect Proxy is available. Only consulted when studio_mode = 'path'."
   type        = string

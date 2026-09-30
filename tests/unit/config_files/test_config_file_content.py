@@ -15,6 +15,8 @@ from tests.unit.config_files.expected_deltas import (
     DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE,
     DATA_LINEAGE_WORKSPACE_RESTRICTION_ACTIVE_ASSERTIONS,
     DATA_LINEAGE_X_PRE_26_2_DELTA,
+    DB_8_0_ACTIVE,
+    DB_8_0_ACTIVE_ASSERTIONS,
     DB_EXTERNAL_EXISTING_ACTIVE,
     DB_EXTERNAL_EXISTING_ACTIVE_ASSERTIONS,
     DB_EXTERNAL_EXISTING_X_GROUNDSWELL_DELTA,
@@ -23,6 +25,8 @@ from tests.unit.config_files.expected_deltas import (
     DB_EXTERNAL_NEW_ACTIVE_ASSERTIONS,
     DB_EXTERNAL_NEW_X_GROUNDSWELL_DELTA,
     DB_EXTERNAL_NEW_X_WAVE_LITE_DELTA,
+    DB_TLS_DISABLED_ACTIVE,
+    DB_TLS_OFF_ASSERTIONS,
     FRONTEND_PRE_26_2_ACTIVE,
     FRONTEND_PRE_26_2_ACTIVE_ASSERTIONS,
     GROUNDSWELL_ACTIVE,
@@ -260,6 +264,28 @@ def test_studios_wave_active(generated_test_files):
 def test_data_explorer_active(generated_test_files):
     """Data Explorer on: TOWER_DATA_EXPLORER_ENABLED flips true, CLOUD_DISABLED_WORKSPACES surfaces empty."""
     expected = merge_deltas(BASELINE_ASSERTIONS, DATA_EXPLORER_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+## ------------------------------------------------------------------------------------
+## MARK: Database TLS (Design Decision 25)
+## ------------------------------------------------------------------------------------
+## TLS on (container MySQL 8.4, template default) is covered by `test_confirm_baseline`.
+@pytest.mark.local
+@pytest.mark.db
+@pytest.mark.tfvars(BASELINE + DB_TLS_DISABLED_ACTIVE)
+def test_db_tls_disabled_active(generated_test_files):
+    """db_enforce_tls = false on MySQL 8.4: plaintext JDBC suffix, and no --require-secure-transport."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, DB_TLS_OFF_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+@pytest.mark.local
+@pytest.mark.db
+@pytest.mark.tfvars(BASELINE + DB_8_0_ACTIVE)
+def test_db_8_0_active(generated_test_files):
+    """MySQL 8.0 keeps today's plaintext connection even with db_enforce_tls = true."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, DB_TLS_OFF_ASSERTIONS, DB_8_0_ACTIVE_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
 

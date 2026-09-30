@@ -1,4 +1,4 @@
-.PHONY: verify check_upgrade plan apply extract_hcl2json
+.PHONY: verify check_upgrade check_db_replacement plan apply extract_hcl2json
 
 # Phases 1+2 of #352: extract the hcl2json Go binary from the vendored container once at
 # setup time and place it at HCL2JSON_BIN. `scripts/installer/utils/extractors.py:hcl_to_json`
@@ -44,6 +44,10 @@ verify-full: verify
 check_upgrade: extract_hcl2json
 	@echo "Checking 'terraform.tfvars' completeness against 'variables.tf'."
 	@python3 scripts/installer/validation/check_upgrade.py
+
+# Run before a database upgrade apply: fails if the plan deletes or replaces an RDS instance.
+check_db_replacement: verify
+	@python3 scripts/installer/validation/check_db_replacement.py
 
 plan: verify
 	@echo "Invoking 'terraform plan'"

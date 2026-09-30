@@ -5,11 +5,6 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": false,
-    // E402 - module level import not at top of file (done because need to mess with filepaths).
-    "flake8.args": [
-        "--max-line-length=120",
-        "--ignore=E202,E402"
-    ],
     "python.autoComplete.extraPaths": [
         "/home/deeplearning/.pyenv/versions/3.10.0/lib/python3.10/site-packages",
     ],
@@ -25,5 +20,15 @@
         "*yml.tpl": "yaml",
     },
     "yaml.validate": false, // Did this to shutup noise from Ansible .yml.tpl 
-    "python.formatting.provider": "black"
+    // Added this to stop project Ruff from fighting system ruff
+    "ruff.configuration": "/home/deeplearning/.config/precommit/ruff.toml",
+    "ruff.configurationPreference": "editorOnly", // ignore the repo's ruff.toml; use only the file above
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
+    }
 }

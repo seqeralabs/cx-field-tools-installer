@@ -194,6 +194,12 @@ locals {
   # Fed into the connection_strings module to select the correct JDBC suffix.
   db_engine = var.flag_use_container_db ? var.db_container_engine_version : var.db_engine_version
 
+  # TLS to the Platform DB applies only from MySQL 8.4, so 8.0 sites keep today's plaintext
+  # connection until they upgrade (Design Decision 25). shape: "8.4" -> ["8", "4"]
+  db_engine_major_minor = split(".", local.db_engine)
+  db_version_ge_8_4     = tonumber(local.db_engine_major_minor[0]) > 8 || (tonumber(local.db_engine_major_minor[0]) == 8 && tonumber(local.db_engine_major_minor[1]) >= 4)
+  db_tls_active         = var.db_enforce_tls && local.db_version_ge_8_4
+
   # Frontend image tag suffix.
   # Before v26.2.0, the unprivileged frontend shipped as a separate `<version>-unprivileged` tag.
   # From v26.2.0, the default tag is unprivileged, so no suffix is needed.
@@ -326,7 +332,7 @@ locals {
 # under "console-based templatefile evaluation") and proj:testing_strategy.md
 # for the broader rationale and contributor guidance.
 module "connection_strings" {
-  source = "./modules/connection_strings/v2.0.0"
+  source = "./modules/connection_strings/v2.1.0"
 
   # Mode strings (caller resolves user-facing flags into modes)
   platform_security_mode    = local.cs_platform_security_mode
@@ -342,6 +348,7 @@ module "connection_strings" {
   platform_existing_db_url = local.platform_existing_db_url
   platform_db_schema_name  = var.db_database_name
   platform_db_engine       = local.db_engine
+  platform_db_tls          = local.db_tls_active
 
   # Per-component values
   data_studio_path_routing_url = var.data_studio_path_routing_url

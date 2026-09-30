@@ -1,3 +1,5 @@
+# tflint-ignore-file: terraform_required_version
+# Pre-existing: the module inherits the root's required_version. Suppressed until the V2 module layout.
 locals {
   # ═════════════════════════════════════════════════════════════════════════════
   # Three sections, each with a single role:
@@ -27,9 +29,11 @@ locals {
     existing  = var.platform_existing_db_url
   }
 
+  # "8-tls": encrypted, server certificate not verified (Platform's documented form; Design Decision 25).
   platform_db_connstring_options = {
-    "8" = "?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true"
-    "5" = ""
+    "8"     = "?allowPublicKeyRetrieval=true&useSSL=false&permitMysqlScheme=true"
+    "8-tls" = "?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true"
+    "5"     = ""
   }
 
   platform_redis_dns_options = {
@@ -78,7 +82,7 @@ locals {
 
   # Inferred values derived from existing inputs. TODO: promote remaining ones to dedicated module variables in a later pass.
   redis_security_mode_inferred = "insecure" # TODO: var.platform_redis_security_mode (then add "secure" support)
-  platform_db_engine_key       = startswith(var.platform_db_engine, "8.") ? "8" : "5"
+  platform_db_engine_key       = startswith(var.platform_db_engine, "8.") ? (var.platform_db_tls ? "8-tls" : "8") : "5"
 
   # Pure dispatch — table[mode]. One step per resource, no composition.
   resolved_platform_config        = local.platform_url_options[var.platform_security_mode]
