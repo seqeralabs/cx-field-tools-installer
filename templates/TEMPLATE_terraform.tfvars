@@ -400,6 +400,7 @@ Enable to allow pipeline optimization.
 
 flag_enable_groundswell = true
 
+# Minimum 0.4.15: earlier images cannot connect to a MySQL DB that requires TLS.
 swell_container_version = "0.4.15"
 swell_database_name     = "swell"
 ## swell_db_user                        = "DO_NOT_UNCOMMENT_ME"
@@ -852,6 +853,8 @@ tower_enable_platforms = "awsbatch-platform,k8s-platform,slurm-platform"
 #  - If using pre-existing external RDS instance, include the RDS Endpoint string only (no port or /xxx... URI modifier)
 #  - If a new RDS is created as part of this deployment, any populated string is acceptable
 #    (this variable isn't used by cant be omitted).
+#  - A pre-existing external DB must be Amazon RDS. With db_enforce_tls = true, use the RDS endpoint name
+#    (ending in .rds.amazonaws.com), not a CNAME or alias. Platform and Groundswell verify the certificate.
 tower_db_url           = "db:3306"
 tower_db_driver        = "org.mariadb.jdbc.Driver"
 tower_db_dialect       = "io.seqera.util.MySQL55DialectCollateBin"

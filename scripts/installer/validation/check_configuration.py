@@ -283,6 +283,9 @@ def verify_identity_federation(data: SimpleNamespace):
         )
 
 
+RDS_ENDPOINT_SUFFIXES = (".rds.amazonaws.com", ".rds.amazonaws.com.cn")
+
+
 def verify_database_version(data: SimpleNamespace):
     """Check the MySQL version and the 8.0 -> 8.4 upgrade settings (Design Decision 25).
 
@@ -306,12 +309,17 @@ def verify_database_version(data: SimpleNamespace):
             "Upgrade the database: see documentation/setup/upgrade_mysql_8_4.md."
         )
 
-    if data.db_enforce_tls and not db_before_8_4 and data.flag_enable_groundswell:
-        logger.warning(
-            "The Platform DB refuses plaintext connections (`db_enforce_tls = true` on MySQL 8.4), and Groundswell "
-            "hasn't been confirmed to connect with TLS. If Groundswell can't reach the DB, "
-            "set `db_enforce_tls = false`."
-        )
+    # Python stand-in for the commented-out `tower_db_url` validation in variables.tf.
+    # Remove when the minimum Terraform version supports cross-variable checks (Terraform 1.9+).
+    # ASSUMPTION: an existing external DB is Amazon RDS, reached by its RDS endpoint name.
+    if data.db_enforce_tls and not db_before_8_4 and data.flag_use_existing_external_db:
+        host = data.tower_db_url.split(":")[0]
+        if not host.endswith(RDS_ENDPOINT_SUFFIXES):
+            log_error_and_exit(
+                f'`tower_db_url = "{data.tower_db_url}"` is not an Amazon RDS endpoint. With `db_enforce_tls = true`, '
+                "the installer assumes an existing DB is RDS and verifies its certificate against the Amazon RDS CA "
+                "bundle, so the URL must be the RDS endpoint name (ending in .rds.amazonaws.com), not a CNAME or alias."
+            )
 
     if data.db_allow_major_version_upgrade:
         logger.warning(

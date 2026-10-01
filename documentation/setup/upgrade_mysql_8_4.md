@@ -7,7 +7,7 @@ See Design Decision 25 in [design_decisions.md](../design_decisions.md) for why 
 ## What changes
 
 - The engine version moves from 8.0 to 8.4, and the RDS parameter and option groups move to their 8.4 families.
-- With `db_enforce_tls = true` (the template default), Platform connects with TLS, and the database refuses plaintext connections. The connection is encrypted, but Platform doesn't verify the server certificate.
+- With `db_enforce_tls = true` (the template default), Platform connects with TLS, and the database refuses plaintext connections. On RDS, Platform and Groundswell verify the server certificate against the Amazon RDS CA bundle, which Ansible downloads to the instance. The instance needs outbound HTTPS to `truststore.pki.rds.amazonaws.com`.
 - The upgrade can't be reversed. RDS rolls back only if the upgrade itself fails.
 
 ## Before you start
@@ -44,7 +44,7 @@ See Design Decision 25 in [design_decisions.md](../design_decisions.md) for why 
 7. Check the result:
    - `aws rds describe-db-instances --db-instance-identifier DB_INSTANCE_ID --query 'DBInstances[0].EngineVersion'` prints an 8.4 version.
    - Platform starts and shows existing workspaces and runs.
-   - If Groundswell is on, it connects. If it can't connect with TLS enforced, set `db_enforce_tls = false` and apply.
+   - If Groundswell is on, it connects and stays up. It needs `swell_container_version` 0.4.15 or later.
 
 ## Upgrade a container database
 

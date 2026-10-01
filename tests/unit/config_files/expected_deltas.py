@@ -461,6 +461,10 @@ BASELINE_ASSERTIONS = {
             "services.wave-redis",
             # Air-gapped telemetry only: the cron container's usage-metrics mount.
             "services.cron.volumes[.%usage-metrics]",
+            # RDS with TLS only: the Amazon RDS CA bundle mount.
+            "services.migrate.volumes[.%rds-ca]",
+            "services.cron.volumes[.%rds-ca]",
+            "services.backend.volumes[.%rds-ca]",
             # Studios via private CA only: the rootCA.crt mount in backend and cron.
             "services.backend.volumes[.%rootCA]",
             "services.cron.volumes[.%rootCA]",
@@ -491,8 +495,17 @@ BASELINE_ASSERTIONS = {
     "groundswell_env": {
         "present": {
             "SWELL_DB_URL": "N/A",
+            # Container DB with TLS (template defaults): encrypted, self-signed certificate not verified.
+            "TOWER_DB_SSL_NOVERIFY": "true",
+            "SWELL_DB_SSL_NOVERIFY": "true",
         },
-        "omitted": set(),
+        "omitted": {
+            # RDS only: verify against the Amazon RDS CA bundle.
+            "TOWER_DB_SSL_CA",
+            "SWELL_DB_SSL_CA",
+            # TLS off only.
+            "# TOWER_DB_SSL_NOT_ACTIVE",
+        },
     },
     "groundswell_sql": {
         # Whole expected file as one substring (same sentinel pattern as `tower_sql`).
@@ -515,6 +528,7 @@ BASELINE_ASSERTIONS = {
             "Creating data directory on host for Studios.",
             "Creating usage-metrics directory on host.",
             "Checking private root CA encoding.",
+            "Downloading the Amazon RDS CA bundle.",
         },
     },
     "ansible_03_pull_containers_and_run_tower": {"present": {}, "omitted": set()},
@@ -544,6 +558,10 @@ BASELINE_ASSERTIONS = {
 ## ------------------------------------------------------------------------------------
 
 
+# Compose mount for the Amazon RDS CA bundle (RDS with TLS), shared by migrate, cron, backend, and groundswell.
+RDS_CA_BUNDLE_MOUNT = "$HOME/.tower/rds-ca/global-bundle.pem:/rds-ca/global-bundle.pem:ro"
+
+
 # MARK: DB (New)
 # Activates a Terraform-provisioned new RDS instance on top of BASELINE. Universal effect:
 # `TOWER_DB_URL` points at the mock new-RDS host. Groundswell-aware and Wave-Lite-aware DB
@@ -553,15 +571,30 @@ BASELINE_ASSERTIONS = {
 DB_EXTERNAL_NEW_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
-            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true",
+            # RDS with TLS: certificate chain and hostname verified against the Amazon RDS CA bundle.
+            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?sslMode=verify-full&serverSslCert=/rds-ca/global-bundle.pem&permitMysqlScheme=true",
         },
         "omitted": set(),
     },
     "ansible_02_update_file_configurations": {
-        "present": {"Populating external Platform DB."},
+        "present": {"Populating external Platform DB.", "Downloading the Amazon RDS CA bundle."},
         "omitted": set(),
     },
-    "docker_compose": {"present": {}, "omitted": {"services.db"}},
+    "docker_compose": {
+        "present": {
+            "services.migrate.volumes[.%rds-ca]": RDS_CA_BUNDLE_MOUNT,
+            "services.cron.volumes[.%rds-ca]": RDS_CA_BUNDLE_MOUNT,
+            "services.backend.volumes[.%rds-ca]": RDS_CA_BUNDLE_MOUNT,
+        },
+        "omitted": {"services.db"},
+    },
+    "groundswell_env": {
+        "present": {
+            "TOWER_DB_SSL_CA": "/rds-ca/global-bundle.pem",
+            "SWELL_DB_SSL_CA": "/rds-ca/global-bundle.pem",
+        },
+        "omitted": {"TOWER_DB_SSL_NOVERIFY", "SWELL_DB_SSL_NOVERIFY"},
+    },
 }
 
 
@@ -575,15 +608,30 @@ DB_EXTERNAL_NEW_ACTIVE_ASSERTIONS = {
 DB_EXTERNAL_EXISTING_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {
-            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true",
+            # RDS with TLS: certificate chain and hostname verified against the Amazon RDS CA bundle.
+            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?sslMode=verify-full&serverSslCert=/rds-ca/global-bundle.pem&permitMysqlScheme=true",
         },
         "omitted": set(),
     },
     "ansible_02_update_file_configurations": {
-        "present": {"Populating external Platform DB."},
+        "present": {"Populating external Platform DB.", "Downloading the Amazon RDS CA bundle."},
         "omitted": set(),
     },
-    "docker_compose": {"present": {}, "omitted": {"services.db"}},
+    "docker_compose": {
+        "present": {
+            "services.migrate.volumes[.%rds-ca]": RDS_CA_BUNDLE_MOUNT,
+            "services.cron.volumes[.%rds-ca]": RDS_CA_BUNDLE_MOUNT,
+            "services.backend.volumes[.%rds-ca]": RDS_CA_BUNDLE_MOUNT,
+        },
+        "omitted": {"services.db"},
+    },
+    "groundswell_env": {
+        "present": {
+            "TOWER_DB_SSL_CA": "/rds-ca/global-bundle.pem",
+            "SWELL_DB_SSL_CA": "/rds-ca/global-bundle.pem",
+        },
+        "omitted": {"TOWER_DB_SSL_NOVERIFY", "SWELL_DB_SSL_NOVERIFY"},
+    },
 }
 
 
@@ -925,6 +973,15 @@ GROUNDSWELL_ACTIVE_ASSERTIONS = {
         "present": {"Patching container db with groundswell init script."},
         "omitted": set(),
     },
+    "docker_compose": {
+        "present": {
+            "services.groundswell.command": 'sh -c "pip install cryptography; bin/migrate-db.sh; bin/serve.sh"',
+            # Container DB: compose waits for the MySQL healthcheck (the image has no bash for wait-for-it.sh).
+            "services.groundswell.depends_on.db.condition": "service_healthy",
+            "services.groundswell.depends_on.backend.condition": "service_started",
+        },
+        "omitted": {"services.groundswell.volumes[.%rds-ca]"},
+    },
 }
 
 
@@ -1214,6 +1271,10 @@ DB_TLS_OFF_ASSERTIONS = {
         # Both keys: the merge doesn't treat `[0]` as a child of `services.db.command`.
         "omitted": {"services.db.command", "services.db.command[0]"},
     },
+    "groundswell_env": {
+        "present": {"# TOWER_DB_SSL_NOT_ACTIVE": "DO_NOT_UNCOMMENT"},
+        "omitted": {"TOWER_DB_SSL_NOVERIFY", "SWELL_DB_SSL_NOVERIFY"},
+    },
 }
 
 DB_8_0_ACTIVE_ASSERTIONS = {
@@ -1311,9 +1372,13 @@ STUDIOS_PRIVATE_CA_ACTIVE_ASSERTIONS = {
 DB_EXTERNAL_NEW_X_GROUNDSWELL_DELTA = {
     "groundswell_env": {
         "present": {
-            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true",
+            "TOWER_DB_URL": "jdbc:mysql://mock.tower-db.com:3306/tower?sslMode=verify-full&serverSslCert=/rds-ca/global-bundle.pem&permitMysqlScheme=true",
             "SWELL_DB_URL": "mysql://mock.tower-db.com:3306/swell",
         },
+    },
+    "docker_compose": {
+        "present": {"services.groundswell.volumes[.%rds-ca]": RDS_CA_BUNDLE_MOUNT},
+        "omitted": {"services.groundswell.depends_on"},
     },
     "ansible_02_update_file_configurations": {
         "present": {"Populating external DB with Groundswell."},
@@ -1330,9 +1395,13 @@ DB_EXTERNAL_NEW_X_GROUNDSWELL_DELTA = {
 DB_EXTERNAL_EXISTING_X_GROUNDSWELL_DELTA = {
     "groundswell_env": {
         "present": {
-            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true",
+            "TOWER_DB_URL": "jdbc:mysql://existing.tower-db.com:3306/tower?sslMode=verify-full&serverSslCert=/rds-ca/global-bundle.pem&permitMysqlScheme=true",
             "SWELL_DB_URL": "mysql://existing.tower-db.com:3306/swell",
         },
+    },
+    "docker_compose": {
+        "present": {"services.groundswell.volumes[.%rds-ca]": RDS_CA_BUNDLE_MOUNT},
+        "omitted": {"services.groundswell.depends_on"},
     },
     "ansible_02_update_file_configurations": {
         "present": {"Populating external DB with Groundswell."},

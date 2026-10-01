@@ -49,23 +49,27 @@ services:
 %{ if flag_enable_groundswell == true ~}
   groundswell:
     image: cr.seqera.io/enterprise/platform/pipeline-optimization:${swell_container_version}
-%{ if flag_use_container_db == true ~}
-    # NOTE: `pipeline-optimization` (v26.1+) ships with sh only — no bash.
-    # The previously-named `groundswell` image had bash; renaming swapped to a slimmer base.
-    command: sh -c "pip install cryptography; bin/wait-for-it.sh db:3306 -t 60; bin/migrate-db.sh; bin/serve.sh"
-%{ else ~}
+    # NOTE: `pipeline-optimization` (v26.1+) ships with sh only — no bash, so bin/wait-for-it.sh cannot run.
+    # With the container DB, depends_on (service_healthy) below waits for MySQL instead.
     command: sh -c "pip install cryptography; bin/migrate-db.sh; bin/serve.sh"
-%{ endif }
     networks:
       - backend
     ports:
       - 8090:8090
     env_file:
       - $HOME/target/groundswell_config/groundswell.env
+%{ if db_tls_verify_active ~}
+    volumes:
+      # Amazon RDS CA bundle, downloaded to the host by Ansible (02). TOWER_DB_SSL_CA and SWELL_DB_SSL_CA point here.
+      - $HOME/.tower/rds-ca/global-bundle.pem:/rds-ca/global-bundle.pem:ro
+%{ endif ~}
     restart: always
 %{ if flag_use_container_db == true ~}
     depends_on:
-      - backend
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_started
 %{ endif ~}
 %{ endif ~}
 
@@ -79,6 +83,10 @@ services:
       - backend
     volumes:
       - $HOME/target/tower_config/tower.yml:/tower.yml
+%{ if db_tls_verify_active ~}
+      # Amazon RDS CA bundle, downloaded to the host by Ansible (02). serverSslCert in TOWER_DB_URL points here.
+      - $HOME/.tower/rds-ca/global-bundle.pem:/rds-ca/global-bundle.pem:ro
+%{ endif ~}
     env_file:
       # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
       - $HOME/target/tower_config/tower.env
@@ -109,6 +117,10 @@ services:
 %{ if studios_private_ca_active ~}
       # Private root CA, installed on the host by Ansible (02). TOWER_SSL_CUSTOM_CA_CERT_FILE points here.
       - /etc/pki/ca-trust/source/anchors/rootCA.crt:/private-ca/rootCA.crt:ro
+%{ endif ~}
+%{ if db_tls_verify_active ~}
+      # Amazon RDS CA bundle, downloaded to the host by Ansible (02). serverSslCert in TOWER_DB_URL points here.
+      - $HOME/.tower/rds-ca/global-bundle.pem:/rds-ca/global-bundle.pem:ro
 %{ endif ~}
     env_file:
       # Seqera environment variables — see https://docs.seqera.io/platform/latest/enterprise/configuration/overview for details
@@ -142,6 +154,10 @@ services:
 %{ if studios_private_ca_active ~}
       # Private root CA, installed on the host by Ansible (02). TOWER_SSL_CUSTOM_CA_CERT_FILE points here.
       - /etc/pki/ca-trust/source/anchors/rootCA.crt:/private-ca/rootCA.crt:ro
+%{ endif ~}
+%{ if db_tls_verify_active ~}
+      # Amazon RDS CA bundle, downloaded to the host by Ansible (02). serverSslCert in TOWER_DB_URL points here.
+      - $HOME/.tower/rds-ca/global-bundle.pem:/rds-ca/global-bundle.pem:ro
 %{ endif ~}
     env_file:
       - $HOME/target/tower_config/tower.env

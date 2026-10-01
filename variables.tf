@@ -257,7 +257,23 @@ variable "sg_egress_interface_endpoint" { type = list(string) }
 
 variable "flag_enable_groundswell" { type = bool }
 
-variable "swell_container_version" { type = string }
+variable "swell_container_version" {
+  type        = string
+  description = "Groundswell (pipeline-optimization) image tag. Minimum 0.4.15: earlier images cannot connect to a MySQL DB that requires TLS (db_enforce_tls = true on 8.4). Images before 0.4.12 have no DB TLS settings, and 0.4.12 to 0.4.14 pass the TLS settings as a dict instead of an ssl.SSLContext (fixed in 0.4.15, groundswell #154)."
+
+  # Floor of 0.4.15: TLS DB settings arrived in 0.4.12 (groundswell #142) and only work from 0.4.15 (groundswell #154).
+  # try(): a tag that does not parse as X.Y.Z fails the check instead of erroring.
+  validation {
+    condition = try(
+      tonumber(split(".", var.swell_container_version)[0]) > 0 ||
+      tonumber(split(".", var.swell_container_version)[1]) > 4 ||
+      (tonumber(split(".", var.swell_container_version)[1]) == 4 && tonumber(split(".", var.swell_container_version)[2]) >= 15),
+      false
+    )
+    error_message = "swell_container_version must be 0.4.15 or later. Earlier Groundswell images cannot connect to a MySQL DB that requires TLS (0.4.12 added the TLS settings; 0.4.15 fixed them)."
+  }
+}
+
 variable "swell_database_name" { type = string }
 
 
@@ -532,6 +548,18 @@ variable "tower_db_url" {
     condition     = !startswith(var.tower_db_url, "jdbc:") && !startswith(var.tower_db_url, "mysql:")
     error_message = "tower_db_url must not include a protocol prefix. Start with hostname."
   }
+
+  # TODO: uncomment when the minimum Terraform version supports cross-variable checks (Terraform 1.9+;
+  # 000_main.tf currently allows >= 1.1.0). Until then, check_configuration.py (verify_database_version)
+  # enforces the same rule at `make verify` and exits with an error. Remove that Python check when this is active.
+  #
+  # ASSUMPTION: an existing external DB is Amazon RDS, reached by its RDS endpoint name. With TLS on,
+  # Platform and Groundswell verify the certificate against the Amazon RDS CA bundle, and the hostname must match.
+  #
+  # validation {
+  #   condition     = !var.flag_use_existing_external_db || !var.db_enforce_tls || can(regex("\\.rds\\.amazonaws\\.com(\\.cn)?(:[0-9]+)?$", var.tower_db_url))
+  #   error_message = "tower_db_url must be an Amazon RDS endpoint (ending in .rds.amazonaws.com) when flag_use_existing_external_db = true and db_enforce_tls = true."
+  # }
 }
 
 variable "tower_db_driver" {

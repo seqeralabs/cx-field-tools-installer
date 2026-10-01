@@ -31,7 +31,8 @@ def _db_data(**overrides) -> SimpleNamespace:
         "db_container_engine_version": "8.4",
         "db_enforce_tls": True,
         "db_allow_major_version_upgrade": False,
-        "flag_enable_groundswell": False,
+        "flag_use_existing_external_db": False,
+        "tower_db_url": "db:3306",
         "tower_container_version": "v26.2.0-RC16",
     }
     values.update(overrides)
@@ -65,16 +66,36 @@ def test_mysql_8_0_warns_on_platform_26(caplog):
     assert "isn't supported by Platform v26.1+" in caplog.text
 
 
-def test_groundswell_with_tls_warns(caplog):
-    """TLS enforced on 8.4 with Groundswell on warns about the unconfirmed Groundswell driver."""
-    cc.verify_database_version(_db_data(flag_enable_groundswell=True))
-    assert "Groundswell" in caplog.text
+def _existing_db(tower_db_url: str, **overrides) -> SimpleNamespace:
+    """An existing external DB at `tower_db_url`, MySQL 8.4, TLS on."""
+    return _db_data(
+        flag_use_container_db=False, flag_use_existing_external_db=True, tower_db_url=tower_db_url, **overrides
+    )
 
 
-def test_groundswell_on_8_0_no_tls_warning(caplog):
-    """On MySQL 8.0, TLS isn't active, so there's no Groundswell TLS warning."""
-    cc.verify_database_version(_db_data(flag_enable_groundswell=True, db_container_engine_version="8.0"))
-    assert "Groundswell" not in caplog.text
+@pytest.mark.parametrize(
+    "tower_db_url",
+    [
+        "mydb.abcdefghijkl.us-east-1.rds.amazonaws.com",
+        "mydb.abcdefghijkl.us-east-1.rds.amazonaws.com:3306",
+        "mydb.abcdefghijkl.cn-north-1.rds.amazonaws.com.cn",
+    ],
+)
+def test_existing_db_rds_endpoint_passes(tower_db_url):
+    """An RDS endpoint name, with or without a port, passes the existing-DB check."""
+    cc.verify_database_version(_existing_db(tower_db_url))
+
+
+def test_existing_db_cname_fails():
+    """A CNAME or alias fails: certificate hostname verification needs the RDS endpoint name."""
+    with pytest.raises(SystemExit):
+        cc.verify_database_version(_existing_db("db.example.com"))
+
+
+@pytest.mark.parametrize("overrides", [{"db_enforce_tls": False}, {"db_engine_version": "8.0"}])
+def test_existing_db_check_skipped_without_tls(overrides):
+    """With TLS off (disabled, or MySQL 8.0), any existing-DB hostname passes."""
+    cc.verify_database_version(_existing_db("db.example.com", **overrides))
 
 
 def test_upgrade_switch_reminder(caplog):

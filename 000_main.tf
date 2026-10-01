@@ -199,6 +199,9 @@ locals {
   db_engine_major_minor = split(".", local.db_engine)
   db_version_ge_8_4     = tonumber(local.db_engine_major_minor[0]) > 8 || (tonumber(local.db_engine_major_minor[0]) == 8 && tonumber(local.db_engine_major_minor[1]) >= 4)
   db_tls_active         = var.db_enforce_tls && local.db_version_ge_8_4
+  # RDS (new or existing) verifies the server certificate against the Amazon RDS CA bundle.
+  # The container DB uses a self-signed certificate, so it is encrypted but not verified (Design Decision 25).
+  db_tls_verify_active = local.db_tls_active && !var.flag_use_container_db
 
   # Frontend image tag suffix.
   # Before v26.2.0, the unprivileged frontend shipped as a separate `<version>-unprivileged` tag.

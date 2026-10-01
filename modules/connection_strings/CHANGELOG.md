@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.1.0] - 2026-09-30
 
 ### Added
-- `platform_db_tls` input (bool, default `false`). When `true`, the MySQL 8.x JDBC suffix connects with TLS: `?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true` (encrypted; the server certificate isn't verified). When `false`, the suffix is unchanged from 2.0.0, so existing callers get identical output. See the installer's Design Decision 25.
+- `platform_db_tls` input (bool, default `false`). When `true`, the MySQL 8.x JDBC suffix connects with TLS. The form depends on `platform_db_deployment`:
+  - `container`: `?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true` (encrypted; the self-signed server certificate isn't verified).
+  - `new` or `existing` (RDS): `?sslMode=verify-full&serverSslCert=/rds-ca/global-bundle.pem&permitMysqlScheme=true` (certificate chain and hostname verified against the Amazon RDS CA bundle, which the caller must mount at that path).
+
+  When `false`, the suffix is unchanged from 2.0.0, so existing callers get identical output. See the installer's Design Decision 25.
 
 ## [2.0.0] - 2026-06 (installer 1.8.0)
 

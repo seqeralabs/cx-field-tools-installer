@@ -306,11 +306,20 @@ docker rm -f tlscheck
 
 **Fresh deployment (8.4, `db_enforce_tls = true`):**
 
-- [ ] **Platform connects with TLS.** `tower.env` has `TOWER_DB_URL=…?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true`, Platform starts, and `SELECT * FROM performance_schema.status_by_thread WHERE VARIABLE_NAME = 'Ssl_version';` (or `SHOW STATUS LIKE 'Ssl_cipher'` from a Platform-user session) shows TLS on Platform's connections.
+- [ ] **Platform connects with TLS.** `tower.env` has `TOWER_DB_URL=…?useSSL=true&trustServerCertificate=true&permitMysqlScheme=true` (container DB) or `…?sslMode=verify-full&serverSslCert=/rds-ca/global-bundle.pem&permitMysqlScheme=true` (RDS), Platform starts, and `SELECT * FROM performance_schema.status_by_thread WHERE VARIABLE_NAME = 'Ssl_version';` (or `SHOW STATUS LIKE 'Ssl_cipher'` from a Platform-user session) shows TLS on Platform's connections.
 - [ ] **Plaintext refused (RDS).** `mysql --ssl-mode=DISABLED -h <rds-endpoint> -u <user> -p` fails with `Connections using insecure transport are prohibited while --require_secure_transport=ON`. The RDS parameter group has `require_secure_transport = 1`.
 - [ ] **Plaintext refused (container DB).** `docker exec ec2-user-db-1 mysql --ssl-mode=DISABLED -u root -e 'select 1'` fails with the same error, and `docker inspect ec2-user-db-1` shows `--require-secure-transport=ON`.
 - [ ] **DB population works with TLS.** On a new RDS instance, the "Populate RDS" and "Populate Groundswell" steps succeed with the `mysql:8.4` client.
-- [ ] **Groundswell with TLS.** With Groundswell on, it starts and connects. If it can't, record the error: `make verify` already warns about this, and the workaround is `db_enforce_tls = false`.
+- [ ] **Groundswell with TLS (container DB).** `groundswell.env` has `TOWER_DB_SSL_NOVERIFY=true` and `SWELL_DB_SSL_NOVERIFY=true`. Groundswell starts and stays up (`docker compose ps` shows no restarts), and its logs have no `OperationalError 3159`.
+- [ ] **Groundswell with TLS (RDS).** `groundswell.env` has `TOWER_DB_SSL_CA=/rds-ca/global-bundle.pem` and `SWELL_DB_SSL_CA=/rds-ca/global-bundle.pem`, and no `NOVERIFY` lines. Groundswell starts and stays up.
+- [ ] **Groundswell accepts the JDBC options.** Groundswell parses `TOWER_DB_URL`, which now carries `sslMode` and `serverSslCert` on RDS. It must ignore them, as it ignores `useSSL` today, and not fail on an unknown option.
+- [ ] **Groundswell waits for the container DB.** On a fresh container-DB deployment, Groundswell starts only after `db` is `healthy`, its logs have no `env: can't execute 'bash'` line, and the migration succeeds on the first start.
+- [ ] **RDS CA bundle on the host.** After apply, `/home/ec2-user/.tower/rds-ca/global-bundle.pem` exists, starts with `-----BEGIN CERTIFICATE-----`, and `docker inspect` shows it mounted read-only at `/rds-ca/global-bundle.pem` in `migrate`, `cron`, `backend`, and `groundswell`. The Ansible log shows `Downloading the Amazon RDS CA bundle.`
+- [ ] **Every RDS session uses TLS.** On RDS, `SELECT t.PROCESSLIST_USER, t.CONNECTION_TYPE FROM performance_schema.threads t WHERE t.TYPE = 'FOREGROUND';` shows `SSL/TLS` for every `tower` and `swell` session.
+- [ ] **Verification is enforced (RDS).** Replace the host bundle with an unrelated CA certificate and run `docker compose restart backend`. Platform must fail to connect with a certificate error. Restore the bundle (or run `terraform apply`) and confirm that Platform reconnects.
+- [ ] **Bundle download failure stops the apply.** With outbound HTTPS to `truststore.pki.rds.amazonaws.com` blocked, the apply fails at `Download the Amazon RDS CA bundle.` with `ERROR: cannot download the Amazon RDS CA bundle`.
+- [ ] **Existing DB must be an RDS endpoint.** With `flag_use_existing_external_db = true` and TLS on, a CNAME `tower_db_url` fails `make verify` with `is not an Amazon RDS endpoint`. The RDS endpoint name passes.
+- [ ] **Groundswell version floor.** `swell_container_version = "0.4.14"` fails `terraform plan` with `must be 0.4.15 or later`.
 - [ ] **Access token helper.** With `flag_run_seqerakit = true`, the step that runs `get_access_token.py` reads the token successfully from an RDS 8.4 instance that refuses plaintext. It still uses a `mysql:8.0` client, which negotiates TLS by default.
 - [ ] **TLS off.** With `db_enforce_tls = false`, `TOWER_DB_URL` has `useSSL=false`, the parameter group has no `require_secure_transport`, and plaintext connections succeed.
 
