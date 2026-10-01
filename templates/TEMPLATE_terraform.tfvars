@@ -953,7 +953,18 @@ tower_enable_openapi = true
 #                instance (/home/ec2-user/.tower/usage-metrics) every 24h and kept for 90 days.
 # Note: in every mode, including air-gapped, Platform still attempts a call to the Seqera telemetry
 # server. Without a route to it, the call fails and is logged; Platform keeps running.
+# Air-gapped also sets LICENSE_SERVER_URL to "" and LICENSE_CERTS_AIRGAPPED_BUNDLE to
+# /etc/seqera/license-bundle.pem. You must supply the bundle file.
 flag_enable_standard_telemetry = "standard"
+
+# telemetry_options (tower.env variable in brackets). Applies in every telemetry mode.
+#   window_days           Telemetry window in days.                        (TOWER_TELEMETRY_WINDOW_DAYS)
+#   file_collector_delay  Wait before the first usage-metrics collection    (TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_DELAY)
+#                         after Platform starts. Later runs are every 24h.
+telemetry_options = {
+  window_days          = 7
+  file_collector_delay = "5s"
+}
 
 # Preflight checks (v26.2.0+). When true, Platform runs preflight checks and validates
 # credentials before launching a pipeline. Matches the upstream default.

@@ -76,6 +76,7 @@ locals {
       tower_audit_log_v2        = var.tower_audit_log_v2,
 
       flag_enable_standard_telemetry = var.flag_enable_standard_telemetry,
+      telemetry_options              = var.telemetry_options,
       flag_enable_preflight_checks   = var.flag_enable_preflight_checks,
       tower_aws_secrets_kms_key_id   = var.tower_aws_secrets_kms_key_id,
       tower_actions                  = var.tower_actions,

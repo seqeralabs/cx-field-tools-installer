@@ -60,6 +60,8 @@ from tests.unit.config_files.expected_deltas import (
     TELEMETRY_AIR_GAPPED_ACTIVE_ASSERTIONS,
     TELEMETRY_BASIC_ACTIVE,
     TELEMETRY_BASIC_ACTIVE_ASSERTIONS,
+    TELEMETRY_OPTIONS_CUSTOM_ACTIVE,
+    TELEMETRY_OPTIONS_CUSTOM_ACTIVE_ASSERTIONS,
     TOWER_OPT_IN_FLAGS_ACTIVE,
     TOWER_OPT_IN_FLAGS_ACTIVE_ASSERTIONS,
     WAVE_LITE_ACTIVE,
@@ -134,6 +136,14 @@ def test_telemetry_basic_active(generated_test_files):
 def test_telemetry_air_gapped_active(generated_test_files):
     """Air-gapped: telemetry on, file collector on, host folder created by Ansible and mounted into cron."""
     expected = merge_deltas(BASELINE_ASSERTIONS, TELEMETRY_AIR_GAPPED_ACTIVE_ASSERTIONS)
+    assert_all_deltas(generated_test_files, expected)
+
+
+@pytest.mark.tower
+@pytest.mark.tfvars(BASELINE + TELEMETRY_OPTIONS_CUSTOM_ACTIVE)
+def test_telemetry_options_custom_active(generated_test_files):
+    """telemetry_options values reach tower.env in place of the template defaults."""
+    expected = merge_deltas(BASELINE_ASSERTIONS, TELEMETRY_OPTIONS_CUSTOM_ACTIVE_ASSERTIONS)
     assert_all_deltas(generated_test_files, expected)
 
 

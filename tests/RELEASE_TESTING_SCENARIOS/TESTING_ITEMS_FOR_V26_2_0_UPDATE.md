@@ -112,9 +112,12 @@ Deploy a new stack with Studios, Groundswell, and Wave-Lite on.
 The fresh stack uses the default (`standard`). For the `air-gapped` checks, set `flag_enable_standard_telemetry = "air-gapped"` and apply again. That also covers the mode-switch checks below.
 
 - [ ] **Variable names.** The `TOWER_TELEMETRY_*` and `TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_*` names match the v26.2 release notes, with a single `FILE_COLLECTOR`. The doubled `FILE_COLLECTOR_FILE_COLLECTOR` form was wrong and was corrected on 2026-09-30.
-- [ ] **`standard` (default).** `tower.env` has `TOWER_TELEMETRY_STANDARD_ENABLED=true` and `TOWER_TELEMETRY_BASIC_ENABLED=true`, Platform starts, and Seqera receives standard telemetry for the instance.
+- [ ] **`standard` (default).** `tower.env` has `TOWER_TELEMETRY_STANDARD_ENABLED=true` and `TOWER_TELEMETRY_BASIC_ENABLED=true`, `LICENSE_SERVER_URL=https://licenses.seqera.io`, and `# LICENSE_CERTS_AIRGAPPED_BUNDLE=NOT_ACTIVE_DO_NOT_UNCOMMENT`. Platform starts, and Seqera receives standard telemetry for the instance.
 - [ ] **`basic`.** `TOWER_TELEMETRY_STANDARD_ENABLED=false`. Platform starts, and only basic telemetry arrives.
-- [ ] **`air-gapped`: flags.** `tower.env` has `TOWER_TELEMETRY_STANDARD_ENABLED=true`, `TOWER_TELEMETRY_BASIC_ENABLED=false`, and `TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_ENABLED=true`.
+- [ ] **`air-gapped`: flags.** `tower.env` has `TOWER_TELEMETRY_STANDARD_ENABLED=true`, `TOWER_TELEMETRY_BASIC_ENABLED=false`, `TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_ENABLED=true`, `LICENSE_SERVER_URL=""`, and `LICENSE_CERTS_AIRGAPPED_BUNDLE=/etc/seqera/license-bundle.pem`.
+- [ ] **`air-gapped`: licence bundle.** With the bundle file in place at `/etc/seqera/license-bundle.pem` inside the containers, Platform starts and validates the licence with no route to `licenses.seqera.io`. Without the file, record what Platform does. The installer does not mount this file yet.
+- [ ] **First collection delay.** With `file_collector_delay = "5s"`, the first usage-metrics file appears within a minute of `cron` starting, not after 24h.
+- [ ] **Window days.** `tower.env` has `TOWER_TELEMETRY_WINDOW_DAYS=7`, and Platform starts.
 - [ ] **`air-gapped`: host folder.** After apply, `/home/ec2-user/.tower/usage-metrics` exists with mode `777`, and `docker inspect ec2-user-cron-1` shows it mounted at `/usage-metrics`.
 - [ ] **`air-gapped`: files written.** After the first collection run (up to 24h, or sooner if Platform runs it at startup), usage-metric files appear in `/home/ec2-user/.tower/usage-metrics` on the host.
 - [ ] **`air-gapped`: files survive an apply.** A second `terraform apply` (which replaces `~/target`) leaves the files in place.
