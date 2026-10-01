@@ -337,7 +337,8 @@ docker rm -f tlscheck
 
 ### Databases (#434)
 
-- [ ] **New external RDS, first apply.** `tower` and `swell` databases and users exist. Tower and Groundswell start.
+- [ ] **New external RDS, first apply.** `tower` and `swell` databases and users exist, both users can log in (they are created locked, then unlocked by `ALTER USER`), and Tower and Groundswell start.
+- [ ] **Upgraded RDS (8.0 → 8.4), next apply.** On an instance with Platform data (so the view `tower.tw_task_vw`, owned by `tower`, exists), the "Populate RDS" and "Populate Groundswell" steps succeed. Before the fix, "Populate RDS" failed with `ERROR 4006 … referenced as a definer account in a view`.
 - [ ] **New external RDS, second apply.** The "Populate RDS" and "Populate Groundswell" steps succeed with no MySQL errors (the `|| true` suffixes are gone, so an error would fail the apply).
 - [ ] **Container DB with Groundswell.** On every apply, the `05` step `docker exec ec2-user-db-1 … < init.sql` succeeds. This confirms the container is still named `ec2-user-db-1`.
 - [ ] **Groundswell turned on after the first deploy.** Deploy with `flag_enable_groundswell = false`, then set it to `true` and apply. The `swell` database and user get created, and Groundswell starts.

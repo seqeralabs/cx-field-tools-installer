@@ -54,11 +54,13 @@ module "rds" {
   # Don't understand why I have to do this but the RDS module screams if I don't
   # family               = "${var.db_engine}${var.db_engine_version}" # DB parameter group
   family = var.db_param_group # DB parameter group
-  # May 14/25 - Getting Option Group errors when db_engine_version includes patch:
-  #  creating DB Option Group: InvalidParameterValue: Only the major engine version may be specified (e.g. 8.0), not the full engine version.
-  # Using regex to chop patch (e.g. `.42` from `8.0.42`) so as to not require new variable in tfvars.
-  # major_engine_version = var.db_engine_version                      # DB option grou
-  major_engine_version = regex("^\\d+\\.\\d+", var.db_engine_version) # DB option group
+  # DB option group: use the AWS default group for the major version (for example default:mysql-8-4),
+  # not a custom group. The installer sets no options, so a custom group was always empty, and RDS
+  # cannot delete an option group while any snapshot refers to it, which blocked the 8.0 -> 8.4
+  # upgrade (Design Decision 25). The name is set explicitly so a major upgrade sends the new group
+  # together with the new engine version, as RDS requires. Major version only: 8.0.42 -> 8-0.
+  create_db_option_group = false
+  option_group_name      = "default:${var.db_engine}-${replace(regex("^\\d+\\.\\d+", var.db_engine_version), ".", "-")}"
 
   # MySQL 8.0 -> 8.4 in-place upgrade (Design Decision 25). Both default to false; set true only for
   # the upgrade apply. These modify the instance in place; they never replace it.
