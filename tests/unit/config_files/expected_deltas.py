@@ -217,6 +217,13 @@ TELEMETRY_AIR_GAPPED_ACTIVE = """
     flag_enable_standard_telemetry = "air-gapped"
 """
 
+TELEMETRY_OPTIONS_CUSTOM_ACTIVE = """
+    telemetry_options = {
+      window_days          = 30
+      file_collector_delay = "10m"
+    }
+"""
+
 STUDIOS_PRIVATE_CA_ACTIVE = """
     flag_run_studios_via_private_ca = true
 """
@@ -235,7 +242,6 @@ BASELINE_ASSERTIONS = {
     "tower_env": {
         "present": {
             "TOWER_ENABLE_AWS_SSM": "true",
-            "LICENSE_SERVER_URL": "https://licenses.seqera.io",
             "TOWER_SERVER_URL": "https://autodc.dev-seqera.net",
             "TOWER_CONTACT_EMAIL": "graham.wright@seqera.io",
             "TOWER_ENABLE_PLATFORMS": "awsbatch-platform,slurm-platform",
@@ -285,7 +291,11 @@ BASELINE_ASSERTIONS = {
             # TELEMETRY (TEMPLATE default: "standard")
             "TOWER_TELEMETRY_STANDARD_ENABLED": "true",
             "TOWER_TELEMETRY_BASIC_ENABLED": "true",
+            "TOWER_TELEMETRY_WINDOW_DAYS": "7",
+            "LICENSE_SERVER_URL": "https://licenses.seqera.io",
+            "# LICENSE_CERTS_AIRGAPPED_BUNDLE": "NOT_ACTIVE_DO_NOT_UNCOMMENT",
             "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_ENABLED": "false",
+            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_DELAY": "5s",
             "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_INTERVAL": "24h",
             "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_DIR": "/usage-metrics",
             "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_HISTORY": "90",
@@ -315,6 +325,7 @@ BASELINE_ASSERTIONS = {
             "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_INTERVAL",
             "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_DIR",
             "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_FILE_COLLECTOR_HISTORY",
+            "LICENSE_CERTS_AIRGAPPED_BUNDLE",
             # ACTIONS (allow-lists only written when they restrict)
             "TOWER_ACTIONS_BUCKET_TRIGGER_ALLOWED_WORKSPACES",
             "TOWER_ACTIONS_CRON_TRIGGER_ALLOWED_WORKSPACES",
@@ -1229,8 +1240,10 @@ TELEMETRY_AIR_GAPPED_ACTIVE_ASSERTIONS = {
         "present": {
             "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_ENABLED": "true",
             "TOWER_TELEMETRY_BASIC_ENABLED": "false",
+            "LICENSE_SERVER_URL": "",
+            "LICENSE_CERTS_AIRGAPPED_BUNDLE": "/etc/seqera/license-bundle.pem",
         },
-        "omitted": set(),
+        "omitted": {"# LICENSE_CERTS_AIRGAPPED_BUNDLE"},
     },
     "docker_compose": {
         "present": {"services.cron.volumes[.%usage-metrics]": "$HOME/.tower/usage-metrics:/usage-metrics"},
@@ -1238,6 +1251,18 @@ TELEMETRY_AIR_GAPPED_ACTIVE_ASSERTIONS = {
     },
     "ansible_02_update_file_configurations": {
         "present": {"Creating usage-metrics directory on host."},
+        "omitted": set(),
+    },
+}
+
+
+# Telemetry options: non-default values reach tower.env, so they are not hard-coded in the template.
+TELEMETRY_OPTIONS_CUSTOM_ACTIVE_ASSERTIONS = {
+    "tower_env": {
+        "present": {
+            "TOWER_TELEMETRY_WINDOW_DAYS": "30",
+            "TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_DELAY": "10m",
+        },
         "omitted": set(),
     },
 }

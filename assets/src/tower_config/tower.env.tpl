@@ -3,8 +3,6 @@
 # ------------------------------------------------
 TOWER_ENABLE_AWS_SSM=true
 
-LICENSE_SERVER_URL=https://licenses.seqera.io
-
 TOWER_SERVER_URL=${tower_server_url}
 TOWER_CONTACT_EMAIL=${tower_contact_email}
 TOWER_ENABLE_PLATFORMS=${tower_enable_platforms}
@@ -299,10 +297,20 @@ TOWER_CRON_AUDIT_LOG_CLEAN_UP_ENABLED=false
 # standard: standard + basic. basic: basic only. air-gapped: standard only, plus usage metrics to local files.
 # In every mode, including air-gapped, Platform still attempts a call to the Seqera telemetry server.
 # Without a route to it, the call fails and is logged; Platform keeps running.
+# Air-gapped also clears LICENSE_SERVER_URL and checks the licence against a local certificate bundle.
 # ------------------------------------------------
 TOWER_TELEMETRY_STANDARD_ENABLED=${flag_enable_standard_telemetry == "basic" ? "false" : "true"}
 TOWER_TELEMETRY_BASIC_ENABLED=${flag_enable_standard_telemetry == "air-gapped" ? "false" : "true"}
+TOWER_TELEMETRY_WINDOW_DAYS=${telemetry_options.window_days}
+LICENSE_SERVER_URL=${flag_enable_standard_telemetry == "air-gapped" ? "\"\"" : "https://licenses.seqera.io"}
+%{ if flag_enable_standard_telemetry == "air-gapped" ~}
+LICENSE_CERTS_AIRGAPPED_BUNDLE=/etc/seqera/license-bundle.pem
+%{ else ~}
+# LICENSE_CERTS_AIRGAPPED_BUNDLE=NOT_ACTIVE_DO_NOT_UNCOMMENT
+%{ endif ~}
 TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_ENABLED=${flag_enable_standard_telemetry == "air-gapped" ? "true" : "false"}
+# DELAY sets only the wait before the first collection after Platform starts. After that, the collector runs every INTERVAL.
+TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_DELAY=${telemetry_options.file_collector_delay}
 TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_INTERVAL=24h
 TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_DIR=/usage-metrics
 TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_HISTORY=90

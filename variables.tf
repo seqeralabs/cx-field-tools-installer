@@ -618,6 +618,24 @@ variable "flag_enable_standard_telemetry" {
   }
 }
 
+variable "telemetry_options" {
+  type = object({
+    window_days          = number
+    file_collector_delay = string
+  })
+  description = "Telemetry settings (v26.2.0+), rendered to tower.env in every telemetry mode. window_days: TOWER_TELEMETRY_WINDOW_DAYS. file_collector_delay: TOWER_CRON_USAGE_METRICS_FILE_COLLECTOR_DELAY, the wait before the first usage-metrics collection after Platform starts; later runs follow the 24h interval."
+
+  validation {
+    condition     = var.telemetry_options.window_days >= 1 && floor(var.telemetry_options.window_days) == var.telemetry_options.window_days
+    error_message = "telemetry_options.window_days must be a whole number of 1 or more."
+  }
+
+  validation {
+    condition     = can(regex("^[0-9]+(ms|s|m|h|d)$", var.telemetry_options.file_collector_delay))
+    error_message = "telemetry_options.file_collector_delay must be a duration such as \"5s\", \"10m\", or \"1h\"."
+  }
+}
+
 variable "flag_enable_preflight_checks" {
   type        = bool
   description = "Platform preflight checks (v26.2.0+). When true, Platform runs preflight checks and validates credentials before a pipeline launch (TOWER_PREFLIGHT_CHECK_ENABLED, TOWER_CREDENTIALS_VALIDATION_ENABLED). Upstream default: true."
