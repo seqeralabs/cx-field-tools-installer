@@ -1,6 +1,6 @@
 # Upgrade the Platform database from MySQL 8.0 to 8.4
 
-Platform v26.1 and later support only MySQL 8.4. RDS for MySQL 8.0 left standard support on 2026-07-31 and now runs under paid Extended Support. This runbook upgrades an existing deployment in place: the RDS instance or container database keeps its data, name, and endpoint.
+Platform v26.1 and later support only officially support RDS MySQL 8.4. This runbook upgrades an existing deployment in place: the RDS instance or container database keeps its data, name, and endpoint.
 
 See Design Decision 25 in [design_decisions.md](../design_decisions.md) for why the upgrade works this way.
 
@@ -27,11 +27,13 @@ See Design Decision 25 in [design_decisions.md](../design_decisions.md) for why 
    ```
 
    Replace `DB_INSTANCE_ID` with the instance identifier (`<global_prefix>-db`).
+
 3. In `terraform.tfvars`, set these values:
 
    ```hcl
    db_engine_version              = "8.4"
    db_param_group                 = "mysql8.4"
+   
    db_allow_major_version_upgrade = true
    db_apply_immediately           = true
    ```

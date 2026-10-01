@@ -697,7 +697,7 @@ wave_lite_db_enable_storage_encrypted = true
 ## ------------------------------------------------------------------------------------
 ## MARK:  Database (External -- Platform Upgrade)
 ## ------------------------------------------------------------------------------------
-# 8.0 -> 8.4 upgrade switches. 
+# 8.0 -> 8.4 upgrade switches. See upgrade guide at: [../documentation/setup/upgrade_mysql_8_4.md](../documentation/setup/upgrade_mysql_8_4.md)
 # WARNING!!! Make sure BOTH are set 'true' for the upgrade deployment. Apply, then set back to false.
 #
 # If you leave 'db_allow_major_version_upgrade = true', your DB will upgrade immediately once a next release is available.
