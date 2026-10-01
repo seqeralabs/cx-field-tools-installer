@@ -674,9 +674,9 @@ skip_final_snapshot    = false
 db_backup_retention_period  = 7
 db_enable_storage_encrypted = true
 
-# TLS (MySQL 8.4+ only; ignored on 8.0). When true, Platform connects with TLS (encrypted; the
-# server certificate isn't verified), and an installer-created RDS instance or container DB
-# refuses plaintext connections. Also applies to the container DB (db_container_engine_version).
+# TLS (MySQL 8.4+ only; ignored on 8.0). When true, Platform connects with TLS.
+# Also applies to the container DB (db_container_engine_version).
+# RDS certificate is verified against AWS global bundle; container cert is implicitly trusted.
 db_enforce_tls = true
 
 
@@ -700,7 +700,7 @@ wave_lite_db_enable_storage_encrypted = true
 # 8.0 -> 8.4 upgrade switches. See upgrade guide at: [../documentation/setup/upgrade_mysql_8_4.md](../documentation/setup/upgrade_mysql_8_4.md)
 # WARNING!!! Make sure BOTH are set 'true' for the upgrade deployment. Apply, then set back to false.
 #
-# If you leave 'db_allow_major_version_upgrade = true', your DB will upgrade immediately once a next release is available.
+# If you leave 'db_allow_major_version_upgrade = true', your DB will upgrade immediately once a next major release is available.
 # IF you leave 'db_apply_immediately = false', upgrade will not occur until your next maintenance window starts.
 */
 
