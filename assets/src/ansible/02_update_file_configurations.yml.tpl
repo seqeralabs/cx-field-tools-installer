@@ -29,6 +29,27 @@
 
         ansible-galaxy collection install community.docker:==3.7.0
 
+%{ if db_tls_verify_active ~}
+    - name: Download the Amazon RDS CA bundle.
+      # Mounted read-only into migrate, cron, backend, and groundswell at /rds-ca/global-bundle.pem
+      # (docker-compose.yml.tpl). Downloaded on every apply, so new AWS CAs arrive with the next apply.
+      # Lives outside ~/target, which each apply replaces.
+      ansible.builtin.shell: |
+        echo "Downloading the Amazon RDS CA bundle."
+
+        mkdir -p /home/ec2-user/.tower/rds-ca
+        if ! curl -fsS --retry 3 -o /home/ec2-user/.tower/rds-ca/global-bundle.pem.new https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem; then
+          echo "ERROR: cannot download the Amazon RDS CA bundle from truststore.pki.rds.amazonaws.com." >&2
+          exit 1
+        fi
+        if ! grep -q -- "-----BEGIN CERTIFICATE-----" /home/ec2-user/.tower/rds-ca/global-bundle.pem.new; then
+          echo "ERROR: the downloaded Amazon RDS CA bundle is not PEM-encoded." >&2
+          exit 1
+        fi
+        mv /home/ec2-user/.tower/rds-ca/global-bundle.pem.new /home/ec2-user/.tower/rds-ca/global-bundle.pem
+        chmod 644 /home/ec2-user/.tower/rds-ca/global-bundle.pem
+
+%{ endif ~}
     - name: Populate SP env file with DB connection variables.
       become: true
       become_user: ec2-user

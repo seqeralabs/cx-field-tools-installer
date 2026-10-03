@@ -98,7 +98,7 @@ variable "platform_db_engine" {
 }
 
 variable "platform_db_tls" {
-  description = "If true, the MySQL 8.x JDBC suffix connects with TLS (encrypted, server certificate not verified). If false, it connects without TLS."
+  description = "If true, the MySQL 8.x JDBC suffix connects with TLS. Container DB: encrypted, server certificate not verified. RDS (new or existing): certificate chain and hostname verified against the Amazon RDS CA bundle at /rds-ca/global-bundle.pem. If false, it connects without TLS."
   type        = bool
   default     = false
 }

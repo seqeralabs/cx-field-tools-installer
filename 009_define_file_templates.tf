@@ -152,6 +152,8 @@ locals {
 
       flag_use_container_db = var.flag_use_container_db,
       db_engine_version     = var.db_engine_version,
+      db_tls_active         = local.db_tls_active,
+      db_tls_verify_active  = local.db_tls_verify_active,
     }
   )
 
@@ -218,6 +220,7 @@ locals {
       db_container_engine         = var.db_container_engine,
       db_container_engine_version = var.db_container_engine_version,
       db_tls_active               = local.db_tls_active,
+      db_tls_verify_active        = local.db_tls_verify_active,
 
       flag_enable_data_studio       = var.flag_enable_data_studio,
       flag_enable_data_studio_ssh   = var.flag_enable_data_studio_ssh,
@@ -369,6 +372,7 @@ locals {
 
       flag_enable_standard_telemetry = var.flag_enable_standard_telemetry,
       studios_private_ca_active      = local.studios_private_ca_active,
+      db_tls_verify_active           = local.db_tls_verify_active,
     }
   )
 
