@@ -705,7 +705,7 @@ wave_lite_db_enable_storage_encrypted = true
 */
 
 db_allow_major_version_upgrade = false
-db_apply_immediately           = true
+db_apply_immediately           = false
 
 
 /*
