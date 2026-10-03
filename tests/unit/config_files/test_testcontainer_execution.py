@@ -25,11 +25,21 @@ POSTGRES_CLIENT_IMAGE = "postgres:17.6"
 def run_mysql_query(query, user, password):
     """Run SQL against the testcontainer MySQL via a throwaway client container; return stdout.
 
+    Fails the test if the client exits non-zero. `mysql` stops at the first failing statement.
+    """
+    result = run_mysql_client(query, user, password)
+    assert result.returncode == 0, f"mysql exited {result.returncode}: {result.stdout} {result.stderr}"
+    return result.stdout.strip()
+
+
+def run_mysql_client(query, user, password):
+    """Run SQL against the testcontainer MySQL via a throwaway client container; return the completed process.
+
     - Writes the SQL to a temporary file.
     - Mounts that file into a MySQL client container (for access to the CLI).
     - Connects to the testcontainer MySQL and runs the file.
 
-    Fails the test if the client exits non-zero. `mysql` stops at the first failing statement.
+    Does not check the exit code, so a test can assert on an expected MySQL error.
     """
     with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as query_sql:
         query_sql.write(query)
@@ -48,9 +58,7 @@ def run_mysql_query(query, user, password):
         MYSQL_CLIENT_IMAGE,
         "-c", mysql_invoke,
     ]  # fmt: skip
-    result = subprocess.run(mysql_cmd, check=False, capture_output=True, text=True, timeout=30)  # noqa: S603  (docker from PATH; args are test fixtures)
-    assert result.returncode == 0, f"mysql exited {result.returncode}: {result.stdout} {result.stderr}"
-    return result.stdout.strip()
+    return subprocess.run(mysql_cmd, check=False, capture_output=True, text=True, timeout=30)  # noqa: S603  (docker from PATH; args are test fixtures)
 
 
 def run_postgres_query(query, user, password, database, stop_on_error=False):
@@ -214,6 +222,65 @@ def test_tower_sql_rerun_resets_password(generated_test_files):
         # SECOND RUN: the SSM password must work again.
         run_mysql_query(query, master_user, master_password)
         assert run_mysql_query("SELECT 1", tower_db_user, tower_db_password) == "1"
+
+
+@pytest.mark.local
+@pytest.mark.testcontainer
+def test_tower_sql_rerun_without_definer_privilege(generated_test_files):
+    """tower.sql works for a master user without ALLOW_NONEXISTENT_DEFINER, like the RDS 8.4 master user.
+
+    On MySQL 8.4, CREATE USER checks for view definers before it honours IF NOT EXISTS, and that
+    check needs ALLOW_NONEXISTENT_DEFINER. Platform views are owned by the Tower DB user, so the old
+    `CREATE USER IF NOT EXISTS` failed with ERROR 4006 on RDS. tower.sql now creates the user only
+    when it is missing (see documentation/setup/upgrade_mysql_8_4.md).
+    """
+    # WARNING: DONT CHANGE THESE OR TEST FAILS. Same values as `test_tower_sql_population`.
+    root_password = "test"  # noqa: S105  (test fixture)
+    tower_db_user = "tower_test_user"
+    tower_db_password = "tower_test_password"  # noqa: S105  (test fixture)
+    # A master user like the RDS one: everything except ALLOW_NONEXISTENT_DEFINER.
+    master_user = "rds_like_master"
+    master_password = "rds_like_master_password"  # noqa: S105  (test fixture)
+    query = generated_test_files["tower_sql"]["content"]
+
+    setup_master = (
+        f"CREATE USER '{master_user}'@'%' IDENTIFIED BY '{master_password}';"
+        f"GRANT ALL PRIVILEGES ON *.* TO '{master_user}'@'%' WITH GRANT OPTION;"
+        f"REVOKE ALLOW_NONEXISTENT_DEFINER ON *.* FROM '{master_user}'@'%';"
+        # Log every statement to mysql.general_log, to check that the Tower password never appears.
+        "SET GLOBAL log_output = 'TABLE'; SET GLOBAL general_log = 'ON';"
+    )
+    # A Platform-style view owned by the Tower DB user.
+    create_view = f"CREATE DEFINER = '{tower_db_user}'@'%' VIEW tower.definer_check_vw AS SELECT 1 AS one;"
+    # The pre-fix CREATE USER line, with a different password so it can't match the general-log check.
+    old_create_user = f'CREATE USER IF NOT EXISTS "{tower_db_user}" IDENTIFIED BY "old_sql_password";'
+    password_logged = (
+        "SELECT COUNT(*) FROM mysql.general_log "  # noqa: S608  (test fixture; values hardcoded)
+        f"WHERE CONVERT(argument USING utf8mb4) LIKE '%{tower_db_password}%';"
+    )
+
+    with MySqlContainer("mysql:8.4", root_password=root_password).with_bind_ports(3306, 3306):
+        run_mysql_query(setup_master, "root", root_password)
+
+        # FIRST INSTALL: the user is missing, so tower.sql creates it, sets its password, and unlocks it.
+        run_mysql_query(query, master_user, master_password)
+        assert run_mysql_query("SELECT 1", tower_db_user, tower_db_password) == "1"
+
+        # The user now owns a view, as on a Platform database after its first migration.
+        run_mysql_query(create_view, "root", root_password)
+
+        # The old CREATE USER line fails with ERROR 4006 for this master user, as on RDS 8.4.
+        result = run_mysql_client(old_create_user, master_user, master_password)
+        assert result.returncode != 0, "old CREATE USER IF NOT EXISTS line unexpectedly succeeded"
+        assert "ERROR 4006" in result.stdout + result.stderr, f"expected ERROR 4006: {result.stdout} {result.stderr}"
+
+        # RE-RUNS: tower.sql succeeds twice, and the user can still log in.
+        run_mysql_query(query, master_user, master_password)
+        run_mysql_query(query, master_user, master_password)
+        assert run_mysql_query("SELECT 1", tower_db_user, tower_db_password) == "1"
+
+        # The Tower password never appears in the statement log (ALTER USER masks it; no dynamic SQL holds it).
+        assert run_mysql_query(password_logged, "root", root_password) == "0"
 
 
 ## ------------------------------------------------------------------------------------
