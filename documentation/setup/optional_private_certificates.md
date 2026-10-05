@@ -97,6 +97,8 @@ Manually update the IAM permissions granted to the EC2 instance so it can access
 
 ## Prepare Compute Assets
 ### Studios Custom Images with Private Certificates
+> **Note:** Installer 1.9.0 includes `flag_run_studios_via_private_ca`, which is meant to let Studios trust your private CA without custom images. It doesn't work in 1.9.0 ([#460](https://github.com/seqeralabs/cx-field-tools-installer/issues/460)), and `make verify` fails if you turn it on. Use the custom images described in this section.
+
 When using private certificates with Studios, you must create custom container images that include your root CA certificate. This project provides a helper script to automate this process.
 
 **Prerequisites:**

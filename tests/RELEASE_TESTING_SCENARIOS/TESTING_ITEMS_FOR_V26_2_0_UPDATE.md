@@ -150,6 +150,10 @@ Needs an AWS Batch compute environment and a pipeline that uses pipeline secrets
 
 ### Studios via private CA (support-private-certs-in-studio-images)
 
+**Deferred to a later release (#460).** Skip the items below for 1.9.0, except this one:
+
+- [ ] **`make verify` rejects the flag.** With `flag_run_studios_via_private_ca = true`, `make verify` exits with the #460 error. With the line commented out, it passes.
+
 Needs `flag_use_private_cacert = true` (private CA set up per `documentation/setup/optional_private_certificates.md`), `flag_run_studios_via_private_ca = true`, and Studios on.
 
 - [ ] **Containers start with the CA.** `backend` and `cron` start. `docker exec ec2-user-backend-1 head -1 /private-ca/rootCA.crt` prints `-----BEGIN CERTIFICATE-----`, and `docker exec ec2-user-backend-1 env | grep TOWER_SSL_CUSTOM_CA_CERT_FILE` shows `/private-ca/rootCA.crt`. Same in `cron`.

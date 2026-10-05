@@ -676,13 +676,25 @@ def _studio_connect_version(container: str) -> tuple[int, ...] | None:
         return None
 
 
+# The feature doesn't work in 1.9.0 (issue #460). Set to False to turn it back on.
+STUDIOS_PRIVATE_CA_DISABLED = True
+
+
 def verify_studios_private_ca(data: SimpleNamespace):
     """Check prerequisites for `flag_run_studios_via_private_ca`.
 
     Mirrors the cross-variable validations commented out in variables.tf (Terraform < 1.9 can't run them).
+    The template comments the flag out, so a missing value means false.
     """
-    if not data.flag_run_studios_via_private_ca:
+    if not getattr(data, "flag_run_studios_via_private_ca", False):
         return
+
+    if STUDIOS_PRIVATE_CA_DISABLED:
+        log_error_and_exit(
+            "`flag_run_studios_via_private_ca = true` doesn't work in installer 1.9.0 (issue #460). Remove the line "
+            "or set it to false. For Studios with a private CA, use custom Studio images "
+            "(documentation/setup/optional_private_certificates.md)."
+        )
 
     if not data.flag_use_private_cacert:
         log_error_and_exit("`flag_run_studios_via_private_ca = true` requires `flag_use_private_cacert = true`.")

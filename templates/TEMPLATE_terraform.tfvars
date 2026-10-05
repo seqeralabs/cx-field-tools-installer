@@ -279,11 +279,15 @@ If you choose to generate a new private CA, please following the instructions in
 # Include s3:// and omit trailing slash
 private_cacert_bucket_prefix = "REPLACE_ME_IF_NEEDED"
 
+# NOT WORKING IN 1.9.0 (issue #460): leave this line commented out. `make verify` fails if it is true.
+# Studios can't use the private CA until Seqera publishes patched Connect images. Until then, bake your
+# root CA into custom Studio images (documentation/setup/optional_private_certificates.md).
+#
 # Make Platform and Studios trust your private root CA (rootCA.crt in the bucket above, PEM-encoded).
 # Requires: flag_use_private_cacert = true, tower_container_version >= v26.2.0,
 # data_studio_container_version >= 0.12.2, and Studio images built on Connect 0.13.0+
 # (checked by `make verify`; older images only get a warning).
-flag_run_studios_via_private_ca = false
+# flag_run_studios_via_private_ca = false
 
 
 /*
