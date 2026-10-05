@@ -303,7 +303,7 @@ BASELINE_ASSERTIONS = {
             "TOWER_PREFLIGHT_CHECK_ENABLED": "false",
             "TOWER_CREDENTIALS_VALIDATION_ENABLED": "false",
             # PIPELINE SECRETS KMS KEY (unset in BASELINE)
-            "# TOWER_AWS_SECRETS_KMS_KEY_ID_NOT_SET": "DO_NOT_UNCOMMENT",
+            "# TOWER_AWS_SECRETS_KMS_KEY_ID": "NO_SET_DO_NOT_UNCOMMENT",
             # ACTIONS (Platform defaults in BASELINE: all triggers on everywhere, 20 per 1h)
             "# TOWER_ACTIONS_BUCKET_TRIGGER_ALL_WORKSPACES": "DO_NOT_UNCOMMENT",
             "# TOWER_ACTIONS_CRON_TRIGGER_ALL_WORKSPACES": "DO_NOT_UNCOMMENT",
@@ -311,7 +311,7 @@ BASELINE_ASSERTIONS = {
             "TOWER_ACTIONS_TRIGGER_RATE_MAX_PER_WINDOW": "20",
             "TOWER_ACTIONS_TRIGGER_RATE_WINDOW": "1h",
             # STUDIOS PRIVATE CA (off in BASELINE)
-            "# TOWER_SSL_CUSTOM_CA_CERT_FILE_NOT_SET": "DO_NOT_UNCOMMENT",
+            "# TOWER_SSL_CUSTOM_CA_CERT_FILE": "NOT_SET_DO_NOT_UNCOMMENT",
             # OIDC PROVIDER (off in BASELINE: no Studios, no workload identity federation)
             "# TOWER_OIDC_PEM_PATH_NOT_SET": "DO_NOT_UNCOMMENT",
             # WORKLOAD IDENTITY FEDERATION (v26.2.0+, off in BASELINE)
@@ -1035,7 +1035,7 @@ TOWER_OPT_IN_FLAGS_ACTIVE_ASSERTIONS = {
         },
         "omitted": {
             "# TOWER_PIPELINE_VERSIONING_NOT_ENABLED",
-            "# TOWER_AWS_SECRETS_KMS_KEY_ID_NOT_SET",
+            "# TOWER_AWS_SECRETS_KMS_KEY_ID",
             "# TOWER_ACTIONS_BUCKET_TRIGGER_ALL_WORKSPACES",
             "# TOWER_ACTIONS_CRON_TRIGGER_ALL_WORKSPACES",
             "# TOWER_ACTIONS_PIPELINE_TRIGGER_ALL_WORKSPACES",
@@ -1335,7 +1335,7 @@ TELEMETRY_OPTIONS_CUSTOM_ACTIVE_ASSERTIONS = {
 STUDIOS_PRIVATE_CA_ACTIVE_ASSERTIONS = {
     "tower_env": {
         "present": {"TOWER_SSL_CUSTOM_CA_CERT_FILE": "/private-ca/rootCA.crt"},
-        "omitted": {"# TOWER_SSL_CUSTOM_CA_CERT_FILE_NOT_SET"},
+        "omitted": {"# TOWER_SSL_CUSTOM_CA_CERT_FILE"},
     },
     "docker_compose": {
         "present": {
