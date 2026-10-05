@@ -97,7 +97,12 @@ variable "flag_use_private_cacert" { type = bool }
 
 variable "flag_run_studios_via_private_ca" {
   type        = bool
-  description = "Make Platform and Studios trust the private root CA (Platform v26.2.0+, data_studio_container_version 0.12.2+, Studio images on Connect 0.13.0+). Mounts rootCA.crt into backend and cron and sets TOWER_SSL_CUSTOM_CA_CERT_FILE. Requires flag_use_private_cacert = true."
+  description = "Make Platform and Studios trust the private root CA (Platform v26.2.0+, data_studio_container_version 0.12.2+, Studio images on Connect 0.13.0+). Mounts rootCA.crt into backend and cron and sets TOWER_SSL_CUSTOM_CA_CERT_FILE. Requires flag_use_private_cacert = true. NOT WORKING in 1.9.0 (issue #460): make verify fails if set to true."
+
+  # Exception to the no-defaults rule (variable_default_values.md): the feature doesn't work in 1.9.0 (issue #460),
+  # so it must be off for every site, including sites that leave it out of terraform.tfvars.
+  # Remove the default when the feature is turned back on.
+  default = false
 
   # TODO: uncomment when the minimum Terraform version supports cross-variable checks (Terraform 1.9+;
   # 000_main.tf currently allows >= 1.1.0). Until then, check_configuration.py (verify_studios_private_ca)
