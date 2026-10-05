@@ -26,7 +26,7 @@ def _ca_data(**overrides) -> SimpleNamespace:
     values = {
         "flag_run_studios_via_private_ca": True,
         "flag_use_private_cacert": True,
-        "tower_container_version": "v26.2.0-RC16",
+        "tower_container_version": "v26.2.1",
         "data_studio_container_version": "0.14.0",
         "data_studio_options": {},
     }

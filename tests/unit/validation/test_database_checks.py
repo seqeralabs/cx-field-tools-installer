@@ -33,7 +33,7 @@ def _db_data(**overrides) -> SimpleNamespace:
         "db_allow_major_version_upgrade": False,
         "flag_use_existing_external_db": False,
         "tower_db_url": "db:3306",
-        "tower_container_version": "v26.2.0-RC16",
+        "tower_container_version": "v26.2.1",
     }
     values.update(overrides)
     return SimpleNamespace(**values)

@@ -59,7 +59,7 @@ def _studios_data(**overrides) -> SimpleNamespace:
         "flag_enable_data_studio": True,
         "flag_studio_enable_path_routing": True,
         "flag_use_private_cacert": False,
-        "tower_container_version": "v26.2.0-RC16",
+        "tower_container_version": "v26.2.1",
         "data_studio_container_version": "0.14.0",
         "data_studio_path_routing_url": "connect.example.com",
         "flag_enable_data_studio_ssh": False,
@@ -86,5 +86,5 @@ def test_kms_key_rejected_before_v26_2():
             SimpleNamespace(tower_aws_secrets_kms_key_id="mrk-" + "0" * 32, tower_container_version="v26.1.3")
         )
     cc.verify_pipeline_secrets_kms_key(
-        SimpleNamespace(tower_aws_secrets_kms_key_id="mrk-" + "0" * 32, tower_container_version="v26.2.0-RC16")
+        SimpleNamespace(tower_aws_secrets_kms_key_id="mrk-" + "0" * 32, tower_container_version="v26.2.1")
     )

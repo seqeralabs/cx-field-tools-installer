@@ -40,7 +40,7 @@ aws_region  = "REPLACE_ME"
 aws_profile = "REPLACE_ME"
 
 # TODO(#435): switch to the v26.2.0 GA tag once it is published.
-tower_container_version = "v26.2.0-RC16"
+tower_container_version = "v26.2.1"
 
 
 /*
