@@ -15,7 +15,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
     - **CX Installer**
         - General
             - Platform v26.2 support
-                - Default images for Platform v26.2: Platform `v26.2.0-RC16`, Connect `0.14.0`, Wave-Lite `v1.38.0`. Groundswell stays at `0.4.15`. [`#440`](https://github.com/seqeralabs/cx-field-tools-installer/pull/440)
+                - Default images for Platform v26.2: Platform `v26.2.1`, Connect `0.14.0`, Wave-Lite `v1.38.0`. Groundswell stays at `0.4.15`. [`#440`](https://github.com/seqeralabs/cx-field-tools-installer/pull/440)
                 - The frontend image tag gets the `-unprivileged` suffix only before Platform v26.2.0. From v26.2.0, the default image is unprivileged. [`#440`](https://github.com/seqeralabs/cx-field-tools-installer/pull/440)
                 - Studio templates: added the Connect 0.14.0 images (VSCode, Jupyter, RStudio, Xpra) as `recommended`, marked 0.12.2 `deprecated`, and removed 0.11.0. [`#440`](https://github.com/seqeralabs/cx-field-tools-installer/pull/440)
                 - New `flag_enable_standard_telemetry` (Platform v26.2.0+): `"standard"` (default), `"basic"`, or `"air-gapped"`. [`#441`](https://github.com/seqeralabs/cx-field-tools-installer/pull/441)
@@ -76,7 +76,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
         <br /><br />
 
         - Testing
-            - Test data now pins `v26.2.0-RC16` and runs on container MySQL 8.4 with TLS. New tests cover each new v26.2 setting, on both sides of the version gate where it matters. The variable-validation suite covers the new validations. [`#440`](https://github.com/seqeralabs/cx-field-tools-installer/pull/440)
+            - Test data now pins `v26.2.1` and runs on container MySQL 8.4 with TLS. New tests cover each new v26.2 setting, on both sides of the version gate where it matters. The variable-validation suite covers the new validations. [`#440`](https://github.com/seqeralabs/cx-field-tools-installer/pull/440)
             - New database tests cover TLS off, MySQL 8.0, RDS certificate verification, and the `make verify` database checks. [`#452`](https://github.com/seqeralabs/cx-field-tools-installer/pull/452) [`#455`](https://github.com/seqeralabs/cx-field-tools-installer/pull/455)
             - New container tests run each SQL file twice, check the password reset, and reproduce the RDS 8.4 `ERROR 4006` case. They now use `mysql:8.4`. [`#434`](https://github.com/seqeralabs/cx-field-tools-installer/issues/434) [`#438`](https://github.com/seqeralabs/cx-field-tools-installer/pull/438) [`#457`](https://github.com/seqeralabs/cx-field-tools-installer/pull/457)
             - New `test_version_checks.py` (16 cases) covers the numeric version checks. [`#451`](https://github.com/seqeralabs/cx-field-tools-installer/pull/451)
@@ -89,7 +89,7 @@ $ git log origin/master..origin/gwright99/25_2_0_update --oneline
 | Status | Component | Parameter Name | Description |
 | ------ | --------- | -------------- | ----------- |
 | Deleted | Platform | `tower_server_port` | Unused since 1.6.0. Delete the line; if you keep it, Terraform prints a warning. |
-| Modified | Platform | `tower_container_version` | Default `v26.1.3` → `v26.2.0-RC16`. Switch to `v26.2.0` once it's published. |
+| Modified | Platform | `tower_container_version` | Default `v26.1.3` → `v26.2.1`. |
 | Modified | Studios | `data_studio_container_version` | Default `0.11.0` → `0.14.0`. |
 | Modified | Wave-Lite | `wave_lite_container_version` | Default `v1.33.0` → `v1.38.0`. |
 | Modified | Studios | `data_studio_options` | New 0.14.0 templates. Copy the block from `TEMPLATE_terraform.tfvars`. |

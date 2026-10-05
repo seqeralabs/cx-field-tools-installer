@@ -44,7 +44,7 @@ aws_account = "128997144437"
 aws_region  = "us-east-1"
 aws_profile = "development"
 
-tower_container_version                 = "v26.2.0-RC16"
+tower_container_version                 = "v26.2.1"
 
 
 ## ------------------------------------------------------------------------------------

@@ -274,12 +274,12 @@ BASELINE_ASSERTIONS = {
             # PIPELINE_VERSIONING
             "# TOWER_PIPELINE_VERSIONING_NOT_ENABLED": "DO_NOT_UNCOMMENT",
             # DATA_LINEAGE
-            # v26.2.0+ (test pin `v26.2.0-RC16`): lineage off renders `-1`, since unset means all workspaces.
+            # v26.2.0+ (test pin `v26.2.1`): lineage off renders `-1`, since unset means all workspaces.
             "TOWER_LINEAGE_ALLOWED_WORKSPACES": "-1",
             # COMPUTE_ENV_CLEANUP
             "# TOWER_COMPUTE_ENV_CLEANUP_NOT_ENABLED": "DO_NOT_UNCOMMENT",
             # AUDIT_LOG_V2
-            # v26.2.0+ (test pin `v26.2.0-RC16`): the write mode is removed upstream.
+            # v26.2.0+ (test pin `v26.2.1`): the write mode is removed upstream.
             "# TOWER_AUDIT_LOG_V2_WRITE_MODE": "NOT_AVAILABLE_DO_NOT_UNCOMMENT",
             "TOWER_AUDIT_LOG_V2_CSV_EXPORT_MAX_LOGS": "500000",
             "TOWER_AUDIT_LOG_V2_PRE_POST_CHANGE_ENABLED": "false",
@@ -447,8 +447,8 @@ BASELINE_ASSERTIONS = {
     },
     "docker_compose": {
         "present": {
-            # v26.2.0+ (test pin `v26.2.0-RC16`): the default frontend tag is unprivileged, so no suffix.
-            "services.frontend.image": "cr.seqera.io/enterprise/platform/frontend:v26.2.0-RC16",
+            # v26.2.0+ (test pin `v26.2.1`): the default frontend tag is unprivileged, so no suffix.
+            "services.frontend.image": "cr.seqera.io/enterprise/platform/frontend:v26.2.1",
             # Container MySQL 8.4 with db_enforce_tls (template defaults): plaintext clients refused.
             "services.db.image": "mysql:8.4",
             "services.db.command[0]": "--require-secure-transport=ON",

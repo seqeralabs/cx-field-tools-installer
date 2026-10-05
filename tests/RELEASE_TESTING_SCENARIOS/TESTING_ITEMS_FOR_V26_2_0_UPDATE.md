@@ -48,7 +48,7 @@ data_lineage_options = {
 
 | Variable | From (1.8.x) | To (1.9.0) |
 |---|---|---|
-| `tower_container_version` | `"v26.1.3"` | `"v26.2.0-RC16"` (use `"v26.2.0"` once it's published) |
+| `tower_container_version` | `"v26.1.3"` | `"v26.2.1"` |
 | `data_studio_container_version` | `"0.11.0"` | `"0.14.0"` |
 | `wave_lite_container_version` | `"v1.33.0"` | `"v1.38.0"` |
 | `data_studio_options` | 1.8.x block | Copy the whole block from `TEMPLATE_terraform.tfvars` (adds the 0.14.0 templates, marks 0.12.2 deprecated, removes 0.11.0) |
@@ -95,7 +95,7 @@ Deploy a new stack with Studios, Groundswell, and Wave-Lite on.
 
 ### Images (update-platform-and-studio-images)
 
-- [ ] **All images pull.** `docker compose pull` on the host succeeds for `backend`, `cron`, `migrate-db` (`v26.2.0-RC16`), `frontend` (`v26.2.0-RC16`, no `-unprivileged` suffix), `connect-proxy` / `connect-server` (`0.14.0`), `wave-lite` (`v1.38.0`), and `groundswell` (`pipeline-optimization:0.4.15`).
+- [ ] **All images pull.** `docker compose pull` on the host succeeds for `backend`, `cron`, `migrate-db` (`v26.2.1`), `frontend` (`v26.2.1`, no `-unprivileged` suffix), `connect-proxy` / `connect-server` (`0.14.0`), `wave-lite` (`v1.38.0`), and `groundswell` (`pipeline-optimization:0.4.15`).
 - [ ] **Frontend without the suffix.** The v26.2 default `frontend` image serves the UI on port `8000` (compose maps `8000:8000`), and the Platform UI loads through the ALB.
 - [ ] **New Studio templates.** Each 0.14.0 template (VSCode 1.105.1, Jupyter 4.6.0, RStudio 2026.01.2, Xpra 6.3.6) shows as `recommended` and starts a session.
 - [ ] **Deprecated Studio templates.** Each 0.12.2 template shows as `deprecated` and still starts a session.
@@ -105,7 +105,7 @@ Deploy a new stack with Studios, Groundswell, and Wave-Lite on.
 - [ ] **Wave-Lite v1.38.0.** `curl http://localhost:9099/service-info` on the host returns a `serviceInfo.version` of `1.38.0`. Also check whether v1.38.0 needs new settings such as `wave.capabilities` (open question in #435).
 - [ ] **Pre-v26.2 frontend suffix.** With `tower_container_version = "v26.1.3"`, the rendered `docker-compose.yml` uses `frontend:v26.1.3-unprivileged`, and that tag pulls.
 - [ ] **Groundswell 0.4.15 on Platform v26.2.** Groundswell starts, and pipeline optimization shows in the Platform UI for a workspace.
-- [ ] **`make verify` with template defaults.** With `TEMPLATE_terraform.tfvars` defaults filled in, `make verify` passes. Version checks in `check_configuration.py` now compare numerically, and `v26.2.0-RC16` counts as v26.2.0.
+- [ ] **`make verify` with template defaults.** With `TEMPLATE_terraform.tfvars` defaults filled in, `make verify` passes. Version checks in `check_configuration.py` now compare numerically, and pre-release tags such as `v26.2.0-RC16` count as their release.
 
 ### Telemetry (enable-augmented-telemetry)
 
@@ -146,7 +146,7 @@ Needs an AWS Batch compute environment and a pipeline that uses pipeline secrets
 - [ ] **Compute-environment key wins.** A compute environment with its own key (Advanced options > Pipeline secrets KMS key) uses its own key, not the installation-wide one.
 - [ ] **Missing KMS permissions.** With `kms:Decrypt` removed from the execution role, the run fails with a clear KMS `AccessDenied` error, not a silent hang.
 - [ ] **Compute environment in another account or region.** With the installation-wide key set, a compute environment in a different account or region (and no key of its own) fails its run with a clear KMS error. This confirms the template advice to set the key only when every such compute environment shares the key's account and region.
-- [ ] **Version gate.** With a key set, `make verify` passes on `v26.2.0-RC16` and fails on `v26.1.3` with "can only be set on Platform v26.2.0+". The pre-release tag counts as v26.2.0.
+- [ ] **Version gate.** With a key set, `make verify` passes on `v26.2.1` and fails on `v26.1.3` with "can only be set on Platform v26.2.0+".
 
 ### Studios via private CA (support-private-certs-in-studio-images)
 
@@ -382,8 +382,8 @@ docker rm -f tlscheck
 - [ ] **No-op refactors.** After the tflint clean-up (removed locals, duplicate map keys, `timestamp()` without interpolation), `terraform plan` shows no infrastructure changes except the new SSM IAM statement.
 - [ ] **SSM IAM plan diff.** `terraform plan` shows an in-place update to the EC2 role's main policy (`aws_iam_policy.main_policy`) that adds `AllowSSMSessionManagerAgent`, and no instance replacement.
 - [ ] **SSM IAM in place.** The IAM change applies on the next `terraform apply`. On the running instance, `sudo dnf install -y amazon-ssm-agent && sudo systemctl enable --now amazon-ssm-agent`, then start a session.
-- [ ] **Platform v26.1.3 → v26.2.0-RC16.** The `migrate-db` container completes the DB migration, and `backend` and `cron` start. Existing workspaces, pipelines, and run history are intact.
-- [ ] **Frontend tag switch.** The upgrade replaces `frontend:v26.1.3-unprivileged` with `frontend:v26.2.0-RC16`, and the UI still loads on port `8000`.
+- [ ] **Platform v26.1.3 → v26.2.1.** The `migrate-db` container completes the DB migration, and `backend` and `cron` start. Existing workspaces, pipelines, and run history are intact.
+- [ ] **Frontend tag switch.** The upgrade replaces `frontend:v26.1.3-unprivileged` with `frontend:v26.2.1`, and the UI still loads on port `8000`.
 - [ ] **Connect 0.11.0 → 0.14.0.** After the upgrade, `connect-proxy` and `connect-server` run `0.14.0`, and Studios still open through the proxy.
 - [ ] **Wave-Lite v1.33.0 → v1.38.0.** Wave-Lite starts against its existing database (container or RDS) without schema errors, and `service-info` reports `1.38.0`.
 - [ ] **Wave-Lite anonymous access turned off.** On an upgraded site, Nextflow clients that used Wave-Lite without a Platform token stop working after the upgrade. Record the error they see, so the CHANGELOG can tell upgraders what to expect.
@@ -405,4 +405,4 @@ docker rm -f tlscheck
 
 ## After v26.2.0 GA (follow-up to `TODO(#435)`)
 
-- [ ] **GA tag.** With `tower_container_version = "v26.2.0"` (template and `generate_core_data.sh` bumped, baseline frontend image updated), all Platform images pull, `frontend:v26.2.0` has no suffix, and an RC16 site upgrades to GA cleanly.
+- [ ] **RC16 → v26.2.1.** A site deployed on `v26.2.0-RC16` upgrades to `v26.2.1` cleanly: all Platform images pull, `migrate-db` completes, and `frontend:v26.2.1` has no suffix.
