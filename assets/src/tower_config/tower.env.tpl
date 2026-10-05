@@ -148,6 +148,15 @@ TOWER_OIDC_REGISTRATION_INITIAL_ACCESS_TOKEN="${oidc_registration_token}"
 
 TOWER_DATA_STUDIO_DEFAULT_LIFESPAN=${data_studio_default_lifespan}
 TOWER_DATA_STUDIO_PRIVATE_STUDIO_BY_DEFAULT=${flag_studio_private_by_default}
+
+%{ for ds in data_studio_options ~}
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_ICON="${ds.icon}"
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_REPOSITORY="${ds.container}"
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_TOOL="${ds.tool != null ? ds.tool : ""}"
+TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_STATUS="${ds.status != null ? ds.status : ""}"
+%{ endfor ~}
+
+
 #-------------------------------------------------
 # DATA STUDIO - METRICS
 # ------------------------------------------------
@@ -157,15 +166,8 @@ TOWER_STUDIO_METRICS_ENABLED_WORKSPACES="${data_studio_metrics_eligible_workspac
 # TOWER_STUDIO_METRICS_ENABLED_WORKSPACES_NOT_SET=DO_NOT_UNCOMMENT
 %{ endif ~}
 
-%{ for ds in data_studio_options ~}
-TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_ICON="${ds.icon}"
-TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_REPOSITORY="${ds.container}"
-TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_TOOL="${ds.tool != null ? ds.tool : ""}"
-TOWER_DATA_STUDIO_TEMPLATES_${ds.qualifier}_STATUS="${ds.status != null ? ds.status : ""}"
-%{ endfor ~}
 
 %{ if flag_use_wave == true ~}
-
 #-------------------------------------------------
 # DATA STUDIO - WAVE INTEGRATION
 # ------------------------------------------------
@@ -180,11 +182,10 @@ TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REPOSITORY=${data_studio_wave_custom_image_r
 %{ else ~}
 # TOWER_DATA_STUDIO_WAVE_CUSTOM_IMAGE_REPOSITORY_NOT_SET=DO_NOT_UNCOMMENT
 %{ endif ~}
-
 %{ endif ~}
 
-%{ if flag_enable_data_studio_ssh == true ~}
 
+%{ if flag_enable_data_studio_ssh == true ~}
 #-------------------------------------------------
 # DATA STUDIO - SSH ACCESS
 # ------------------------------------------------
@@ -332,7 +333,7 @@ TOWER_CREDENTIALS_VALIDATION_ENABLED=${flag_enable_preflight_checks}
 %{ if tower_aws_secrets_kms_key_id != "" ~}
 TOWER_AWS_SECRETS_KMS_KEY_ID=${tower_aws_secrets_kms_key_id}
 %{ else ~}
-# TOWER_AWS_SECRETS_KMS_KEY_ID_NOT_SET=DO_NOT_UNCOMMENT
+# TOWER_AWS_SECRETS_KMS_KEY_ID=NO_SET_DO_NOT_UNCOMMENT
 %{ endif ~}
 
 
@@ -381,7 +382,7 @@ TOWER_IDENTITY_FEDERATION_ALLOWED_WORKSPACES=-1
 %{ if studios_private_ca_active ~}
 TOWER_SSL_CUSTOM_CA_CERT_FILE=/private-ca/rootCA.crt
 %{ else ~}
-# TOWER_SSL_CUSTOM_CA_CERT_FILE_NOT_SET=DO_NOT_UNCOMMENT
+# TOWER_SSL_CUSTOM_CA_CERT_FILE=NOT_SET_DO_NOT_UNCOMMENT
 %{ endif ~}
 
 
