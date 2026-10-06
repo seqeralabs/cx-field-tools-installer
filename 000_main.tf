@@ -7,7 +7,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.12.0"
+      version = "~> 6.67.0"
     }
 
     # Pins are the lowest version our features need, and block the next major version.
