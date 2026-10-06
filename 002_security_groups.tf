@@ -23,7 +23,7 @@
 ## ------------------------------------------------------------------------------------
 module "sg_eice" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   name        = "${local.global_prefix}_eice_sg"
   description = "EICE traffic."
@@ -44,7 +44,7 @@ module "sg_eice" {
 ## ------------------------------------------------------------------------------------
 module "sg_ec2_core" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   name        = "${local.global_prefix}_ec2_core"
   description = "Core EC2 traffic (SSH & Egress)."
@@ -66,7 +66,7 @@ module "sg_ec2_core" {
 # This means the code is a bit more complicated than I would like, but seems worth it for security.
 module "sg_ec2_noalb_with_private_certificate" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   count = var.flag_create_load_balancer == false && var.flag_use_private_cacert ? 1 : 0
 
@@ -80,7 +80,7 @@ module "sg_ec2_noalb_with_private_certificate" {
 
 module "sg_ec2_noalb_no_https" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   count = var.flag_create_load_balancer == false && var.flag_do_not_use_https ? 1 : 0
 
@@ -95,7 +95,7 @@ module "sg_ec2_noalb_no_https" {
 
 module "sg_ec2_noalb_connect" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   count = var.flag_create_load_balancer == false && var.flag_enable_data_studio == true ? 1 : 0
 
@@ -119,7 +119,7 @@ module "sg_ec2_noalb_connect" {
 
 module "sg_from_alb_core" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   count = var.flag_create_load_balancer == true ? 1 : 0
 
@@ -151,7 +151,7 @@ module "sg_from_alb_core" {
 ## ------------------------------------------------------------------------------------
 module "sg_nlb_ssh" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   count = var.flag_create_load_balancer == true && var.flag_enable_data_studio_ssh == true ? 1 : 0
 
@@ -183,7 +183,7 @@ module "sg_nlb_ssh" {
 ## ------------------------------------------------------------------------------------
 module "sg_from_nlb_ssh" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   count = var.flag_create_load_balancer == true && var.flag_enable_data_studio_ssh == true ? 1 : 0
 
@@ -206,7 +206,7 @@ module "sg_from_nlb_ssh" {
 
 module "sg_from_alb_connect" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   count = var.flag_create_load_balancer == true && var.flag_enable_data_studio == true ? 1 : 0
 
@@ -230,7 +230,7 @@ module "sg_from_alb_connect" {
 # Wave Lite only currently supported via ALB
 module "sg_from_alb_wave" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   count = var.flag_create_load_balancer == true && var.flag_use_wave_lite == true ? 1 : 0
 
@@ -256,7 +256,7 @@ module "sg_from_alb_wave" {
 ## ------------------------------------------------------------------------------------
 module "sg_alb_core" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   count = var.flag_create_load_balancer == true ? 1 : 0
 
@@ -275,7 +275,7 @@ module "sg_alb_core" {
 ## ------------------------------------------------------------------------------------
 module "sg_db" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   count = var.flag_create_external_db == true ? 1 : 0
 
@@ -303,7 +303,7 @@ module "sg_db" {
 ## ------------------------------------------------------------------------------------
 module "sg_batch" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   name        = "${local.global_prefix}_batch"
   description = "Security group for Tower Batch instance."
@@ -325,7 +325,7 @@ module "sg_batch" {
 ## ------------------------------------------------------------------------------------
 module "sg_redis" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   count = var.flag_create_external_redis == true ? 1 : 0
 
@@ -348,7 +348,7 @@ module "sg_redis" {
 ## ------------------------------------------------------------------------------------
 module "sg_vpc_endpoint" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   name        = "${local.global_prefix}_vpc_interface"
   description = "Seqera Platform VPC Endpoint traffic."
@@ -387,7 +387,7 @@ prior to upgrading to any future release > 1.6.1
 ## ------------------------------------------------------------------------------------
 module "tower_eice_ingress_sg" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   name        = "${local.global_prefix}_eice_sg"
   description = "Allowed ingress CIDRS EC2 Instance Connect endpoint."
@@ -400,7 +400,7 @@ module "tower_eice_ingress_sg" {
 
 module "tower_eice_egress_sg" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   name        = "${local.global_prefix}_ec2_egress_sg"
   description = "Allowed egress CIDRS EC2 Instance Connect endpoint."
@@ -415,7 +415,7 @@ module "tower_eice_egress_sg" {
 ## ------------------------------------------------------------------------------------
 module "tower_ec2_ssh_sg" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   name        = "${local.global_prefix}_ec2_ssh_sg"
   description = "Allowed SSH ingress to EC2 instance (EICE only)."
@@ -428,7 +428,7 @@ module "tower_ec2_ssh_sg" {
 
 module "tower_ec2_egress_sg" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   name        = "${local.global_prefix}_ec2_egress_sg"
   description = "Tower EC2 host egress."
@@ -441,7 +441,7 @@ module "tower_ec2_egress_sg" {
 
 module "tower_ec2_direct_sg" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   name        = "${local.global_prefix}_ec2_direct_sg"
   description = "Direct HTTP to Tower EC2 host."
@@ -453,7 +453,7 @@ module "tower_ec2_direct_sg" {
 
 module "tower_ec2_direct_connect_sg" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   count = var.flag_enable_data_studio == true ? 1 : 0
 
@@ -467,7 +467,7 @@ module "tower_ec2_direct_connect_sg" {
 
 module "tower_ec2_alb_sg" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   name        = "${local.global_prefix}_ec2_alb_sg"
   description = "ALB HTTP to Tower EC2 host."
@@ -488,7 +488,7 @@ module "tower_ec2_alb_sg" {
 ## ------------------------------------------------------------------------------------
 module "tower_alb_sg" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   name        = "${local.global_prefix}_alb_sg"
   description = "HTTP to Tower ALB instance."
@@ -502,7 +502,7 @@ module "tower_alb_sg" {
 
 module "tower_ec2_alb_connect_sg" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   count = var.flag_enable_data_studio == true ? 1 : 0
 
@@ -521,7 +521,7 @@ module "tower_ec2_alb_connect_sg" {
 ## ------------------------------------------------------------------------------------
 module "tower_db_sg" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   name        = "${local.global_prefix}_rds_sg"
   description = "Security group for Tower RDS instance."
@@ -542,7 +542,7 @@ module "tower_db_sg" {
 ## ------------------------------------------------------------------------------------
 module "tower_batch_sg" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   name        = "${local.global_prefix}_batch_sg"
   description = "Security group for Tower Batch instance."
@@ -565,7 +565,7 @@ module "tower_batch_sg" {
 ## ------------------------------------------------------------------------------------
 module "tower_redis_sg" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   name        = "${local.global_prefix}_redis_sg"
   description = "Security group for Tower Elasticache instance."
@@ -586,7 +586,7 @@ module "tower_redis_sg" {
 ## ------------------------------------------------------------------------------------
 module "tower_interface_endpoint_sg" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
+  version = "6.0.0"
 
   name        = "${local.global_prefix}_interface_sg"
   description = "Allowed ingress on VPC endpoints in Tower Subnet."
